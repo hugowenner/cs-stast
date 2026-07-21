@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Sparkles, CheckCircle, AlertTriangle, Lightbulb, RefreshCw, Cpu } from "lucide-react";
 import { Skeleton } from "@/components/ui/loading-skeleton";
 import type { CoachReportDTO } from "@/server/dtos/coachReport.dto";
@@ -10,13 +10,28 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
+  const requestKeyRef = useRef<string | null>(null);
+  const ignoreRef = useRef(false);
 
   useEffect(() => {
+    const requestKey = `${apiUrl}:${retryKey}`;
+    if (requestKeyRef.current === requestKey) {
+      // React StrictMode reexecuta o efeito em dev; evita disparar uma segunda
+      // chamada real à API (que consome cota/rate-limit) para o mesmo pedido.
+      // Precisa resetar ignoreRef aqui: o cleanup do efeito fantasma anterior
+      // já rodou e marcou ignoreRef=true, então sem isso o fetch original
+      // (o único que segue em voo) teria seu resultado sempre descartado.
+      ignoreRef.current = false;
+      return;
+    }
+    requestKeyRef.current = requestKey;
+    ignoreRef.current = false;
+
     setLoading(true);
     setError(null);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 35000); // 35s timeout no cliente
+    const timeoutId = setTimeout(() => controller.abort(), 240000); // alinhado com DEEPSEEK_TIMEOUT_MS
 
     fetch(apiUrl, { signal: controller.signal })
       .then((res) => {
@@ -29,11 +44,13 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
         return res.json();
       })
       .then((data) => {
+        if (ignoreRef.current) return;
         setReport(data);
         setLoading(false);
       })
       .catch((err) => {
         clearTimeout(timeoutId);
+        if (ignoreRef.current) return;
         if (err.name === "AbortError") {
           setError("A requisição expirou. O modelo demorou muito para responder.");
         } else {
@@ -43,8 +60,11 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
       });
 
     return () => {
+      ignoreRef.current = true;
       clearTimeout(timeoutId);
-      controller.abort();
+      // Não aborta a requisição em voo aqui: no StrictMode isso cancelaria a
+      // única chamada real, forçando a reexecução do efeito a disparar outra.
+      // O timeout de 240s acima continua sendo a rede de segurança para travamentos reais.
     };
   }, [apiUrl, retryKey]);
 

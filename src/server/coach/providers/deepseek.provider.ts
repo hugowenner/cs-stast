@@ -2,11 +2,14 @@ import { AIConfig } from "@/server/config/ai";
 import type { CoachProvider } from "./coach-provider";
 import type { CoachReportDTO } from "@/server/dtos/coachReport.dto";
 
+const BACKOFF_SCHEDULE_MS = [15000, 45000, 90000];
+
 export class DeepseekCoachProvider implements CoachProvider {
   async generate(prompt: string): Promise<CoachReportDTO> {
     const startTime = Date.now();
     let attempts = 0;
-    const maxAttempts = 2;
+    const maxAttempts = AIConfig.maxAttempts;
+    let retryAfterMs: number | null = null;
 
     while (attempts < maxAttempts) {
       attempts++;
@@ -43,6 +46,16 @@ export class DeepseekCoachProvider implements CoachProvider {
 
         if (!response.ok) {
           const errText = await response.text();
+          if (response.status === 429) {
+            const retryAfterHeader = response.headers.get("Retry-After");
+            retryAfterMs = retryAfterHeader ? parseInt(retryAfterHeader, 10) * 1000 : null;
+            console.warn("Coach DeepSeek 429 — headers de rate limit:", {
+              "retry-after": retryAfterHeader,
+              "x-ratelimit-limit": response.headers.get("x-ratelimit-limit"),
+              "x-ratelimit-remaining": response.headers.get("x-ratelimit-remaining"),
+              "x-ratelimit-reset": response.headers.get("x-ratelimit-reset"),
+            });
+          }
           throw new Error(`HTTP Error ${response.status}: ${errText}`);
         }
 
@@ -75,8 +88,9 @@ export class DeepseekCoachProvider implements CoachProvider {
         if (attempts >= maxAttempts) {
           throw new Error(`DeepSeek Coach Provider falhou após ${maxAttempts} tentativas: ${(err as Error).message}`);
         }
-        // Aguardar 2s antes do retry
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        const waitMs = retryAfterMs ?? BACKOFF_SCHEDULE_MS[attempts - 1] ?? BACKOFF_SCHEDULE_MS[BACKOFF_SCHEDULE_MS.length - 1];
+        retryAfterMs = null;
+        await new Promise((resolve) => setTimeout(resolve, waitMs));
       }
     }
 

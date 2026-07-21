@@ -8,4 +8,5 @@ export const AIConfig = {
   promptVersion: process.env.DEEPSEEK_PROMPT_VERSION || "v1",
   temperature: parseFloat(process.env.DEEPSEEK_TEMPERATURE || "0.2"),
   maxTokens: parseInt(process.env.DEEPSEEK_MAX_TOKENS || "4096", 10),
+  maxAttempts: parseInt(process.env.DEEPSEEK_MAX_ATTEMPTS || "3", 10),
 };
