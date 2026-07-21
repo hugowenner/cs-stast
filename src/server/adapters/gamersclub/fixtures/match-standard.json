@@ -1,0 +1,71 @@
+{
+  "_note": "NÃO VERIFICADO contra uma resposta real da Gamers Club — estrutura de melhor esforço baseada em investigação, ver docs/COMPANION.md. Substituir por uma captura real assim que disponível.",
+  "id": 27451220,
+  "status": "Finalizado",
+  "data": "2026-07-14T22:10:00Z",
+  "jogos": {
+    "score_a": 13,
+    "score_b": 9,
+    "map_name": "Inferno",
+    "demo": "27451220.dem",
+    "players": {
+      "team_a": [
+        {
+          "player": { "id": 481336, "plSteamID64": "76561198000000001", "nick": "sAtisfa" },
+          "nb_kill": 24,
+          "death": 15,
+          "assist": 4,
+          "adr": 88.4,
+          "pkast": 74.0,
+          "hit_headshots": 12,
+          "firstkill": 3,
+          "clutch_won": 1
+        },
+        {
+          "player": { "id": 231545, "plSteamID64": "76561198000000002", "nick": "biguzera" },
+          "nb_kill": 18,
+          "death": 17,
+          "assist": 6,
+          "adr": 72.1,
+          "pkast": 65.0,
+          "hit_headshots": 8,
+          "firstkill": 1,
+          "clutch_won": 0
+        }
+      ],
+      "team_b": [
+        {
+          "player": { "id": 125456, "plSteamID64": "76561198000000003", "nick": "rivalzin" },
+          "nb_kill": 15,
+          "death": 19,
+          "assist": 3,
+          "adr": 65.0,
+          "pkast": 58.0,
+          "hit_headshots": 5,
+          "firstkill": 2,
+          "clutch_won": 0
+        }
+      ]
+    }
+  },
+  "rounds": [
+    {
+      "position": 1,
+      "scoreTeamA": 1,
+      "scoreTeamB": 0,
+      "winnerTeam": "CT",
+      "winnerMode": "kill",
+      "aliveA": 3,
+      "aliveB": 0
+    },
+    {
+      "position": 2,
+      "scoreTeamA": 1,
+      "scoreTeamB": 1,
+      "winnerTeam": "TERRORIST",
+      "winnerMode": "bomb_exploded",
+      "aliveA": 0,
+      "aliveB": 2
+    }
+  ]
+}

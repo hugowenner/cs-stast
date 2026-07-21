@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cs2-stats-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cs2stats
+      POSTGRES_PASSWORD: cs2stats
+      POSTGRES_DB: cs2stats
+    ports:
+      - "5432:5432"
+    volumes:
+      - cs2-stats-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  cs2-stats-postgres-data:

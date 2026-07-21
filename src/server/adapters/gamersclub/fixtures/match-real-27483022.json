@@ -1,0 +1,181 @@
+{
+  "_note": "Captura REAL de GET https://gamersclub.com.br/lobby/match/27483022/1, colada pelo usuário em 2026-07-20. Primeira resposta real do endpoint que o projeto já viu.",
+  "success": true,
+  "message": null,
+  "id": "27483022",
+  "link": "https://gamersclub.com.br/lobby/match/27483022",
+  "status": "Finalizado",
+  "data": "20/07/2026 19:22",
+  "time_a": "Time matheuzinho",
+  "time_b": "Time LorD",
+  "formato": "MD1",
+  "game": "cs2",
+  "jogos": {
+    "score_a": "4",
+    "score_b": "13",
+    "map_name": "de_overpass",
+    "demo": "2026-07-20__2226__1__27483022__de_overpass__team-matheuzinho__vs__team-lord.dem",
+    "players": {
+      "team_a": [
+        {
+          "idplayer": "757573",
+          "nb_kill": "16",
+          "assist": "4",
+          "death": "13",
+          "hs": "6",
+          "firstkill": "1",
+          "damage": "1939",
+          "clutch_won": "0",
+          "rounds_played": "17",
+          "kast": "11",
+          "trade": "0",
+          "flash_assist": "0",
+          "hit_headshots": "6",
+          "kdr": "1.23",
+          "phs": "38",
+          "adr": "114.06",
+          "pkast": "65",
+          "multikills": "5",
+          "banido": false,
+          "player": {
+            "id": "757573",
+            "avatar": "players/avatar/757573/757573",
+            "nationality": "BR",
+            "banned": false,
+            "nick": "Costa",
+            "plSteamID64": "76561198806269620",
+            "level": "14",
+            "plSteamID": "STEAM_1:0:423001946"
+          }
+        },
+        {
+          "idplayer": "1722837",
+          "nb_kill": "9",
+          "assist": "2",
+          "death": "15",
+          "hs": "6",
+          "firstkill": "2",
+          "damage": "1080",
+          "clutch_won": "0",
+          "rounds_played": "17",
+          "kast": "9",
+          "trade": "0",
+          "flash_assist": "0",
+          "hit_headshots": "6",
+          "kdr": "0.60",
+          "phs": "67",
+          "adr": "63.53",
+          "pkast": "53",
+          "multikills": "1",
+          "banido": false,
+          "player": {
+            "id": "1722837",
+            "avatar": "players/avatar/1722837/1722837",
+            "nationality": "AF",
+            "banned": false,
+            "nick": "snow",
+            "plSteamID64": "76561198349966492",
+            "level": "10",
+            "plSteamID": "STEAM_1:0:194850382"
+          }
+        }
+      ],
+      "team_b": [
+        {
+          "idplayer": "481336",
+          "nb_kill": "19",
+          "assist": "5",
+          "death": "10",
+          "hs": "6",
+          "firstkill": "6",
+          "damage": "1871",
+          "clutch_won": "0",
+          "rounds_played": "17",
+          "kast": "15",
+          "trade": "0",
+          "flash_assist": "0",
+          "hit_headshots": "6",
+          "kdr": "1.90",
+          "phs": "32",
+          "adr": "110.06",
+          "pkast": "88",
+          "multikills": "5",
+          "banido": false,
+          "player": {
+            "id": "481336",
+            "avatar": "players/avatar/481336/481336",
+            "nationality": "BR",
+            "banned": false,
+            "nick": "TRAVIS SCOUTTT",
+            "plSteamID64": "76561198377914358",
+            "level": "14",
+            "plSteamID": "STEAM_1:0:208824315"
+          }
+        },
+        {
+          "idplayer": "125397",
+          "nb_kill": "9",
+          "assist": "6",
+          "death": "10",
+          "hs": "6",
+          "firstkill": "1",
+          "damage": "1226",
+          "clutch_won": "0",
+          "rounds_played": "17",
+          "kast": "14",
+          "trade": "0",
+          "flash_assist": "0",
+          "hit_headshots": "6",
+          "kdr": "0.90",
+          "phs": "67",
+          "adr": "72.12",
+          "pkast": "82",
+          "multikills": "3",
+          "banido": false,
+          "player": {
+            "id": "125397",
+            "avatar": "players/avatar/125397/125397",
+            "nationality": "BR",
+            "banned": false,
+            "nick": "LorD",
+            "plSteamID64": "76561198077054740",
+            "level": "11",
+            "plSteamID": "STEAM_1:0:58394506"
+          }
+        }
+      ]
+    },
+    "rounds": [
+      {
+        "aliveA": 0,
+        "aliveB": 0,
+        "position": -1,
+        "teamAWin": true,
+        "teamBWin": false,
+        "finishedAt": "2026-07-20T22:27:48.907Z",
+        "scoreTeamA": 0,
+        "scoreTeamB": 0,
+        "winnerMode": "kill",
+        "winnerTeam": "CT"
+      },
+      {
+        "aliveA": 0,
+        "aliveB": 4,
+        "position": 2,
+        "teamAWin": false,
+        "teamBWin": true,
+        "finishedAt": "2026-07-20T22:29:17.102045779Z",
+        "scoreTeamA": 0,
+        "scoreTeamB": 1,
+        "winnerMode": "kill",
+        "winnerTeam": "TERRORIST"
+      }
+    ]
+  },
+  "karma": {
+    "hasExpired": true,
+    "hasVoted": false
+  },
+  "hasCurrentPlayerInMatch": true,
+  "demoAvailable": true
+}

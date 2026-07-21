@@ -1,0 +1,269 @@
+// Modelo de dados do CS2 Stats Hub — ver docs/DATABASE.md para o racional de cada entidade.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Player {
+  id           String   @id @default(cuid())
+  steamId      String   @unique
+  nickname     String
+  avatarUrl    String?
+  gamersClubId String?  @unique
+  createdAt    DateTime @default(now())
+
+  user           User?
+  matchStats     PlayerMatchStats[]
+  events         Event[]             @relation("EventActor")
+  eventsAsVictim Event[]             @relation("EventVictim")
+  achievements   PlayerAchievement[]
+  rivalriesAsA   Rivalry[]           @relation("RivalryPlayerA")
+  rivalriesAsB   Rivalry[]           @relation("RivalryPlayerB")
+  trackedPlayer  TrackedPlayer?
+}
+
+/// Reservado para autenticação na Fase 2. Sem fluxo de login no MVP.
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  playerId  String?  @unique
+  player    Player?  @relation(fields: [playerId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+/// Agregado raiz de uma noite de jogo (ex: "Mix de Quinta").
+model Session {
+  id        String   @id @default(cuid())
+  name      String
+  date      DateTime
+  createdAt DateTime @default(now())
+
+  matches Match[]
+}
+
+model Map {
+  id       String  @id @default(cuid())
+  name     String  @unique
+  imageUrl String?
+
+  matches Match[]
+}
+
+enum MatchTeam {
+  A
+  B
+}
+
+model Match {
+  id                String   @id @default(cuid())
+  sessionId         String
+  session           Session  @relation(fields: [sessionId], references: [id])
+  mapId             String
+  map               Map      @relation(fields: [mapId], references: [id])
+  gamersClubMatchId String?  @unique
+  playedAt          DateTime
+  scoreTeamA        Int
+  scoreTeamB        Int
+  durationSeconds   Int
+
+  playerStats  PlayerMatchStats[]
+  events       Event[]
+  achievements PlayerAchievement[]
+
+  @@index([sessionId])
+  @@index([playedAt])
+}
+
+/// Estatísticas de um jogador em uma partida — granularidade base de todo o sistema;
+/// estatísticas agregadas (winrate, performance por mapa/horário/parceiro, etc.) são
+/// sempre derivadas a partir daqui, nunca armazenadas de forma redundante.
+model PlayerMatchStats {
+  id       String    @id @default(cuid())
+  matchId  String
+  match    Match     @relation(fields: [matchId], references: [id])
+  playerId String
+  player   Player    @relation(fields: [playerId], references: [id])
+  team     MatchTeam
+
+  kills     Int
+  deaths    Int
+  assists   Int
+  headshots Int
+
+  adr    Float
+  rating Float
+  kast   Float
+  impact Float
+
+  entryKills  Int
+  entryDeaths Int
+  tradeKills  Int
+
+  clutch1v1Attempts Int @default(0)
+  clutch1v1Wins     Int @default(0)
+  clutch1v2Attempts Int @default(0)
+  clutch1v2Wins     Int @default(0)
+  clutch1v3Attempts Int @default(0)
+  clutch1v3Wins     Int @default(0)
+  clutch1v4Attempts Int @default(0)
+  clutch1v4Wins     Int @default(0)
+  clutch1v5Attempts Int @default(0)
+  clutch1v5Wins     Int @default(0)
+
+  eloBefore Int
+  eloAfter  Int
+
+  @@unique([matchId, playerId])
+  @@index([playerId])
+  @@index([matchId])
+}
+
+/// Catálogo de conquistas. Definido em código/seed, não editável via UI no MVP.
+model Achievement {
+  id          String  @id @default(cuid())
+  code        String  @unique
+  name        String
+  description String
+  iconUrl     String?
+  tier        String
+
+  playerAchievements PlayerAchievement[]
+}
+
+/// Registro de conquista obtida. Conquistas por partida usam matchId; conquistas
+/// cumulativas (ex: "1000 kills") usam matchId = null e devem ser únicas por jogador —
+/// a unicidade do caso matchId nulo é garantida por um índice parcial adicionado
+/// manualmente na migration (Postgres trata NULL como distinto em @@unique comum),
+/// não pelo constraint abaixo.
+model PlayerAchievement {
+  id            String      @id @default(cuid())
+  playerId      String
+  player        Player      @relation(fields: [playerId], references: [id])
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  matchId       String?
+  match         Match?      @relation(fields: [matchId], references: [id])
+  earnedAt      DateTime    @default(now())
+
+  @@unique([playerId, achievementId, matchId])
+  @@index([playerId])
+}
+
+/// Head-to-head agregado entre dois jogadores. Por convenção de aplicação, playerAId
+/// é sempre o menor id (ordenação lexicográfica) para evitar registros duplicados
+/// invertidos — responsabilidade do RivalryEngine, não do banco.
+model Rivalry {
+  id        String @id @default(cuid())
+  playerAId String
+  playerA   Player @relation("RivalryPlayerA", fields: [playerAId], references: [id])
+  playerBId String
+  playerB   Player @relation("RivalryPlayerB", fields: [playerBId], references: [id])
+
+  killsAOnB       Int      @default(0)
+  killsBOnA       Int      @default(0)
+  matchesTogether Int      @default(0)
+  matchesAgainst  Int      @default(0)
+  updatedAt       DateTime @updatedAt
+
+  @@unique([playerAId, playerBId])
+}
+
+enum EventType {
+  KILL
+  ACE
+  CLUTCH_1V1
+  CLUTCH_1V2
+  CLUTCH_1V3
+  CLUTCH_1V4
+  CLUTCH_1V5
+  MULTI_KILL_3
+  MULTI_KILL_4
+  MULTI_KILL_5
+}
+
+/// Evento de uma partida. `KILL` carrega `victimId` e alimenta o RivalryEngine
+/// (head-to-head por par de jogadores); os demais tipos são eventos notáveis que
+/// alimentam feed/highlights e disparam o AchievementEngine.
+model Event {
+  id          String    @id @default(cuid())
+  matchId     String
+  match       Match     @relation(fields: [matchId], references: [id])
+  playerId    String
+  player      Player    @relation("EventActor", fields: [playerId], references: [id])
+  victimId    String?
+  victim      Player?   @relation("EventVictim", fields: [victimId], references: [id])
+  type        EventType
+  roundNumber Int
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+
+  @@index([matchId])
+  @@index([playerId])
+  @@index([victimId])
+}
+
+enum ImportStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+/// Log de cada execução de sincronização. Guarda o payload bruto recebido do provedor
+/// (ex: JSON original da Gamers Club) além do resultado — permite reprocessar,
+/// recalcular estatísticas/conquistas/ELO ou depurar sem precisar de uma nova
+/// sincronização, e sobrevive a mudanças futuras no formato do provedor.
+model Import {
+  id              String       @id @default(cuid())
+  source          String
+  providerVersion Int          @default(1)
+  rawPayload      Json?
+  status          ImportStatus @default(PENDING)
+  startedAt       DateTime     @default(now())
+  finishedAt      DateTime?
+  matchesImported Int          @default(0)
+  errorMessage    String?
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+}
+
+model Log {
+  id        String   @id @default(cuid())
+  level     LogLevel
+  message   String
+  context   Json?
+  createdAt DateTime @default(now())
+
+  @@index([level])
+  @@index([createdAt])
+}
+
+/// Chave/valor para parâmetros de sistema (K-factor do ELO, ID do grupo Gamers Club, thresholds).
+model Configuration {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model TrackedPlayer {
+  id           String   @id @default(cuid())
+  gamersClubId String   @unique @map("gamersclub_id")
+  active       Boolean  @default(true)
+  nickname     String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  playerId     String?  @unique @map("player_id")
+
+  player       Player?  @relation(fields: [playerId], references: [id])
+
+  @@map("tracked_players")
+}

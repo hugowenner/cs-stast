@@ -1,0 +1,20 @@
+{
+  "_note": "Fixture sintético para testar degradação graciosa: campos faltando, nomes alternativos (kills/deaths em vez de nb_kill/death), sem plSteamID64.",
+  "id": "99999",
+  "jogos": {
+    "score_a": 16,
+    "score_b": 14,
+    "map": "Nuke",
+    "players": {
+      "team_a": [
+        {
+          "player": { "id": 555, "nickname": "semSteamId" },
+          "kills": 10,
+          "deaths": 12,
+          "assists": 2
+        }
+      ],
+      "team_b": []
+    }
+  }
+}

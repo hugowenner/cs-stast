@@ -1,0 +1,89 @@
+{
+  "_note": "Segunda partida sintética (não capturada) reaproveitando os 4 jogadores reais de match-real-27483022.json, mas com id/mapa/placar diferentes — usada só para testar deduplicação, ELO contínuo e reconhecimento de mapa novo, não como fixture de contrato.",
+  "id": "27483099",
+  "status": "Finalizado",
+  "data": "21/07/2026 20:00",
+  "jogos": {
+    "score_a": "13",
+    "score_b": "7",
+    "map_name": "de_mirage",
+    "players": {
+      "team_a": [
+        {
+          "nb_kill": "22",
+          "assist": "3",
+          "death": "10",
+          "hit_headshots": "9",
+          "firstkill": "4",
+          "clutch_won": "1",
+          "kast": "78",
+          "trade": "0",
+          "adr": "95.5",
+          "pkast": "78",
+          "player": {
+            "id": "757573",
+            "avatar": "players/avatar/757573/757573",
+            "nick": "Costa",
+            "plSteamID64": "76561198806269620"
+          }
+        },
+        {
+          "nb_kill": "14",
+          "assist": "5",
+          "death": "12",
+          "hit_headshots": "5",
+          "firstkill": "2",
+          "clutch_won": "0",
+          "kast": "70",
+          "trade": "0",
+          "adr": "75.2",
+          "pkast": "70",
+          "player": {
+            "id": "1722837",
+            "avatar": "players/avatar/1722837/1722837",
+            "nick": "snow",
+            "plSteamID64": "76561198349966492"
+          }
+        }
+      ],
+      "team_b": [
+        {
+          "nb_kill": "12",
+          "assist": "4",
+          "death": "16",
+          "hit_headshots": "4",
+          "firstkill": "1",
+          "clutch_won": "0",
+          "kast": "55",
+          "trade": "0",
+          "adr": "68.1",
+          "pkast": "55",
+          "player": {
+            "id": "481336",
+            "avatar": "players/avatar/481336/481336",
+            "nick": "TRAVIS SCOUTTT",
+            "plSteamID64": "76561198377914358"
+          }
+        },
+        {
+          "nb_kill": "10",
+          "assist": "6",
+          "death": "17",
+          "hit_headshots": "3",
+          "firstkill": "0",
+          "clutch_won": "0",
+          "kast": "50",
+          "trade": "0",
+          "adr": "60.4",
+          "pkast": "50",
+          "player": {
+            "id": "125397",
+            "avatar": "players/avatar/125397/125397",
+            "nick": "LorD",
+            "plSteamID64": "76561198077054740"
+          }
+        }
+      ]
+    }
+  }
+}
