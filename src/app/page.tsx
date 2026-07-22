@@ -15,7 +15,7 @@ import * as competitiveService from "@/server/services/competitive.service";
 import * as achievementService from "@/server/services/achievement.service";
 import * as rivalryService from "@/server/services/rivalry.service";
 import Link from "next/link";
-import { Trophy, TrendingUp, ShieldAlert, Flame, ArrowRight, TrendingDown, Minus, ShieldCheck, Zap } from "lucide-react";
+import { Trophy, TrendingUp, ShieldAlert, Flame, ArrowRight, TrendingDown, Minus, Calendar } from "lucide-react";
 
 const SEASON_LABEL = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(
   new Date(),
@@ -37,6 +37,8 @@ export default async function DashboardPage() {
     mapWinrates,
     recentAchievements,
     topRivalries,
+    weeklyHighlights,
+    records,
   ] = await Promise.all([
     safeQuery(
       () => dashboardService.getDashboardSummary(),
@@ -64,6 +66,8 @@ export default async function DashboardPage() {
     safeQuery(() => statsService.getMapWinrates(), []),
     safeQuery(() => achievementService.listRecent(6), []),
     safeQuery(() => rivalryService.listTopRivalriesWithH2H(4), []),
+    safeQuery(() => competitiveService.getWeeklyHighlights(), []),
+    safeQuery(() => competitiveService.getHallOfFameRecords(), []),
   ]);
 
   // Identifica melhor e pior mapa
@@ -86,6 +90,35 @@ export default async function DashboardPage() {
           dominantMap={summary.dominantMap}
         />
       </FadeIn>
+
+      {/* 🔥 Jornal da Temporada / Destaques da Semana */}
+      {weeklyHighlights.length > 0 && (
+        <FadeIn delay={0.02}>
+          <div className="glass-panel p-4 rounded-xl border border-white/5 bg-gradient-to-br from-white/[0.01] to-transparent flex flex-col gap-3">
+            <div className="flex items-center gap-1.5 text-xs text-primary font-bold">
+              <Calendar className="size-3.5" /> Destaques Recentes (Jornal da Semana)
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {weeklyHighlights.slice(0, 3).map((hl) => (
+                <div
+                  key={hl.id}
+                  className="p-3 border border-white/5 bg-white/[0.01] rounded-xl flex flex-col justify-between"
+                >
+                  <div>
+                    <span className="text-[9px] text-muted-foreground uppercase font-black tracking-wider block mb-1">
+                      {hl.meta}
+                    </span>
+                    <h4 className="text-xs font-bold text-white mb-1">{hl.title}</h4>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      {hl.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </FadeIn>
+      )}
 
       {/* Grid Principal - 12 Colunas */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
@@ -120,6 +153,9 @@ export default async function DashboardPage() {
           {/* 2. Power Ranking da Temporada & Corrida pelo MVP */}
           <FadeIn delay={0.08}>
             <SectionCard title="🏆 Power Ranking & Corrida pelo MVP">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3 px-1 font-semibold">
+                Score de 0-100 ponderado por Rating (40%), Impacto (20%), Winrate (20%), ADR (10%) e KAST (10%)
+              </p>
               <div className="flex flex-col gap-3">
                 {powerRanking.map((entry, index) => {
                   const medals = ["🥇", "🥈", "🥉"];
@@ -154,8 +190,9 @@ export default async function DashboardPage() {
                           </span>
                         </div>
                         <div className="text-right">
-                          <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Power Score</span>
-                          <p className="text-lg font-black text-accent-violet">{entry.powerScore}</p>
+                          <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider block">Power Score</span>
+                          <p className="text-lg font-black text-accent-violet">{entry.powerScore} / 100</p>
+                          <span className="text-[9px] font-bold text-muted-foreground uppercase">{entry.levelLabel}</span>
                         </div>
                       </div>
 
@@ -199,7 +236,6 @@ export default async function DashboardPage() {
                     const isUp = entry.status === "up";
                     const isDown = entry.status === "down";
                     const colorClass = isUp ? "text-status-good" : isDown ? "text-status-critical" : "text-muted-foreground";
-                    const Icon = isUp ? TrendingUp : isDown ? TrendingDown : Minus;
                     return (
                       <div
                         key={entry.player.id}
@@ -218,10 +254,10 @@ export default async function DashboardPage() {
                         </div>
                         <div className="grid grid-cols-2 gap-2 border-t border-white/5 pt-1.5 mt-0.5 text-[10px] text-muted-foreground">
                           <div>
-                            Rating: <span className="font-semibold text-white">{entry.priorRating.toFixed(2)} → {entry.recentRating.toFixed(2)}</span>
+                            Rating: <span className={`font-semibold ${isUp ? "text-status-good" : isDown ? "text-status-critical" : "text-white"}`}>{entry.ratingChangeText}</span>
                           </div>
                           <div className="text-right">
-                            Winrate: <span className="font-semibold text-white">{entry.priorWinrate}% → {entry.recentWinrate}%</span>
+                            Winrate: <span className={`font-semibold ${entry.recentWinrate > entry.priorWinrate ? "text-status-good" : entry.recentWinrate < entry.priorWinrate ? "text-status-critical" : "text-white"}`}>{entry.winrateChangeText}</span>
                           </div>
                         </div>
                       </div>
@@ -256,8 +292,12 @@ export default async function DashboardPage() {
                         </div>
                         <div className="flex items-center justify-between text-[10px] text-muted-foreground border-t border-white/5 pt-1.5 mt-0.5">
                           <span>Aberturas: {entry.entryKills}</span>
-                          <span>Trades: {entry.tradeKills}</span>
-                          <span>Clutches: {entry.clutchWins}</span>
+                          {!entry.hideTradesAndClutches && (
+                            <>
+                              <span>Trades: {entry.tradeKills}</span>
+                              <span>Clutches: {entry.clutchWins}</span>
+                            </>
+                          )}
                         </div>
                       </div>
                     );
@@ -290,6 +330,7 @@ export default async function DashboardPage() {
                           <div className="min-w-0">
                             <p className="text-sm font-bold text-white truncate">{entry.player.nickname}</p>
                             <p className="text-[11px] text-accent-violet font-semibold mt-0.5">{entry.label}</p>
+                            <p className="text-[9px] text-muted-foreground mt-0.5 font-medium">{entry.rankText}</p>
                           </div>
                         </div>
                         <div className="text-right shrink-0">
@@ -347,12 +388,7 @@ export default async function DashboardPage() {
 
           </div>
 
-          {/* 5. Insight da Semana - Coach IA */}
-          <FadeIn delay={0.17}>
-            <CoachReportCard apiUrl="/api/coach/dashboard" />
-          </FadeIn>
-
-          {/* 6. Confrontos Quentes (Rivalidades) */}
+          {/* 5. Confrontos Quentes (Rivalidades) */}
           <FadeIn delay={0.19}>
             <SectionCard title="⚔️ Confrontos Quentes">
               {topRivalries.length === 0 ? (
@@ -393,8 +429,8 @@ export default async function DashboardPage() {
                       <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 rounded-md px-1.5 py-0.5 font-bold uppercase">
                         Power Score: {jogadorDaSemana.powerScore}
                       </span>
-                      <span className="text-[10px] text-status-good font-bold">
-                        +{jogadorDaSemana.evolution}% evolução
+                      <span className="text-[10px] text-status-good font-bold bg-status-good/10 px-2 py-0.5 rounded-md border border-status-good/15">
+                        {jogadorDaSemana.evolutionText}
                       </span>
                     </div>
                   </div>
@@ -443,53 +479,8 @@ export default async function DashboardPage() {
             </SectionCard>
           </FadeIn>
 
-          {/* 3. Destaques da Temporada (Recordes) */}
+          {/* 3. Melhores Parcerias */}
           <FadeIn delay={0.25}>
-            <SectionCard title="⭐ Recordes da Temporada">
-              <div className="flex flex-col gap-3 text-xs">
-                {summary.highlights.streak && (
-                  <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/[0.01] border border-white/5">
-                    <div>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Maior Win Streak</p>
-                      <p className="font-bold text-white mt-0.5">{summary.highlights.streak.player}</p>
-                    </div>
-                    <span className="text-sm font-black text-status-warning shrink-0">
-                      {summary.highlights.streak.value} vitórias
-                    </span>
-                  </div>
-                )}
-                {summary.highlights.kills && (
-                  <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/[0.01] border border-white/5">
-                    <div>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Mais Kills em um Jogo</p>
-                      <p className="font-bold text-white mt-0.5">
-                        {summary.highlights.kills.player} <span className="text-muted-foreground font-normal">({summary.highlights.kills.mapName})</span>
-                      </p>
-                    </div>
-                    <span className="text-sm font-black text-accent-cyan shrink-0">
-                      {summary.highlights.kills.value} kills
-                    </span>
-                  </div>
-                )}
-                {summary.highlights.clutch && (
-                  <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/[0.01] border border-white/5">
-                    <div>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Melhor Clutch</p>
-                      <p className="font-bold text-white mt-0.5">
-                        {summary.highlights.clutch.player} <span className="text-muted-foreground font-normal">({summary.highlights.clutch.mapName})</span>
-                      </p>
-                    </div>
-                    <span className="text-sm font-black text-accent-violet shrink-0">
-                      {summary.highlights.clutch.type} vencido
-                    </span>
-                  </div>
-                )}
-              </div>
-            </SectionCard>
-          </FadeIn>
-
-          {/* 4. Melhores Duplas */}
-          <FadeIn delay={0.27}>
             <SectionCard title="🤝 Melhores Parcerias">
               {duos.length === 0 ? (
                 <EmptyState message="Sem duplas com dados suficientes." />
@@ -531,9 +522,9 @@ export default async function DashboardPage() {
             </SectionCard>
           </FadeIn>
 
-          {/* 5. Trio Dominante */}
+          {/* 4. Trio Dominante */}
           {dominantTrio && (
-            <FadeIn delay={0.28}>
+            <FadeIn delay={0.27}>
               <SectionCard title="🤝 Trio Dominante" variant="highlight">
                 <div className="p-3 border border-white/5 bg-white/[0.01] rounded-xl flex flex-col gap-3">
                   <div className="flex items-center justify-between">
@@ -563,8 +554,8 @@ export default async function DashboardPage() {
             </FadeIn>
           )}
 
-          {/* 6. Especialistas de Mapas */}
-          <FadeIn delay={0.29}>
+          {/* 5. Especialistas de Mapas */}
+          <FadeIn delay={0.28}>
             <SectionCard title="🗺️ Especialistas de Mapas">
               {mapSpecialists.length === 0 ? (
                 <EmptyState message="Sem especialistas de mapas definidos." />
@@ -589,6 +580,32 @@ export default async function DashboardPage() {
                   ))}
                 </div>
               )}
+            </SectionCard>
+          </FadeIn>
+
+          {/* 6. Recordes Históricos (Hall da Fama) */}
+          <FadeIn delay={0.29}>
+            <SectionCard title="⭐ Recordes Históricos">
+              <div className="flex flex-col gap-2.5 text-xs">
+                {records.map((r, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-2.5 rounded-lg bg-white/[0.01] border border-white/5"
+                  >
+                    <div>
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">
+                        {r.category}
+                      </p>
+                      <p className="font-bold text-white mt-0.5">
+                        {r.playerName} <span className="text-muted-foreground font-normal">({r.detail})</span>
+                      </p>
+                    </div>
+                    <span className="text-xs font-black text-accent-cyan shrink-0">
+                      {r.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </SectionCard>
           </FadeIn>
 
@@ -634,6 +651,14 @@ export default async function DashboardPage() {
         </div>
 
       </div>
+
+      {/* 🤖 Fechamento: Insight da Semana - Coach IA */}
+      <FadeIn delay={0.36}>
+        <div className="mt-4">
+          <CoachReportCard apiUrl="/api/coach/dashboard" />
+        </div>
+      </FadeIn>
+
     </div>
   );
 }

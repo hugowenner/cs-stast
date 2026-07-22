@@ -8,7 +8,8 @@ export interface PowerRankingEntry {
   kast: number;
   winrate: number;
   adr: number;
-  forma: string; // Emojis de fogo (🔥) ou gelo (❄️)
+  forma: string;
+  levelLabel: string; // Ex: "Elite", "Muito Forte", etc.
 }
 
 export interface PlayerEvolutionEntry {
@@ -25,6 +26,7 @@ export interface PlayerArchetype {
   label: string;
   metricLabel: string;
   metricValue: string;
+  rankText: string; // Ex: "1º maior HS% do grupo"
 }
 
 export interface JogadorDaSemanaInfo {
@@ -33,6 +35,7 @@ export interface JogadorDaSemanaInfo {
   winrate: number;
   evolution: number;
   powerScore: number;
+  evolutionText: string; // Ex: "Mantendo excelente desempenho"
 }
 
 export interface DuoSummary {
@@ -58,6 +61,8 @@ export interface PlayerMomentumEntry {
   priorWinrate: number;
   status: "up" | "stable" | "down";
   label: string;
+  ratingChangeText: string; // Ex: "+47% Rating"
+  winrateChangeText: string; // Ex: "+20% Winrate"
 }
 
 export interface DecisivePlayerEntry {
@@ -66,6 +71,7 @@ export interface DecisivePlayerEntry {
   entryKills: number;
   tradeKills: number;
   clutchWins: number;
+  hideTradesAndClutches: boolean; // Oculta se os dados de toda a comunidade forem 0
 }
 
 export interface TrioSummary {
@@ -88,6 +94,21 @@ export interface PlayerMatchupSummary {
     total: number;
     wins: number;
   } | null;
+}
+
+export interface WeeklyHighlight {
+  id: string;
+  category: "evolution" | "streak" | "record" | "leader" | "map";
+  title: string;
+  description: string;
+  meta: string;
+}
+
+export interface HallOfFameRecord {
+  category: string;
+  playerName: string;
+  value: string;
+  detail: string;
 }
 
 export async function getPowerRanking(take = 5): Promise<PowerRankingEntry[]> {
@@ -134,6 +155,13 @@ export async function getPowerRanking(take = 5): Promise<PowerRankingEntry[]> {
         kastScore * 0.1
     );
 
+    let levelLabel = "Regular";
+    if (powerScore >= 80) levelLabel = "Elite 🏆";
+    else if (powerScore >= 70) levelLabel = "Forte 💪";
+    else if (powerScore >= 60) levelLabel = "Competitivo ⚔️";
+    else if (powerScore >= 50) levelLabel = "Regular 📊";
+    else levelLabel = "Em formação 📈";
+
     const recentStats = [...stats]
       .sort((a, b) => new Date(b.match.playedAt).getTime() - new Date(a.match.playedAt).getTime())
       .slice(0, 5);
@@ -162,6 +190,7 @@ export async function getPowerRanking(take = 5): Promise<PowerRankingEntry[]> {
       winrate: Math.round(winrate),
       adr: Math.round(avgAdr),
       forma,
+      levelLabel,
     });
   }
 
@@ -212,7 +241,7 @@ export async function getPlayerArchetypes(): Promise<PlayerArchetype[]> {
     where: { trackedPlayer: { active: true } },
   });
 
-  const archetypes: PlayerArchetype[] = [];
+  const rawStatsList = [];
 
   for (const player of activePlayers) {
     const stats = await prisma.playerMatchStats.findMany({
@@ -226,7 +255,6 @@ export async function getPlayerArchetypes(): Promise<PlayerArchetype[]> {
     const totalHeadshots = stats.reduce((sum, s) => sum + s.headshots, 0);
     const totalEntryKills = stats.reduce((sum, s) => sum + s.entryKills, 0);
     const totalEntryDeaths = stats.reduce((sum, s) => sum + s.entryDeaths, 0);
-
     const totalClutchWins = stats.reduce(
       (sum, s) =>
         sum +
@@ -247,39 +275,75 @@ export async function getPlayerArchetypes(): Promise<PlayerArchetype[]> {
     const consistentGames = stats.filter((s) => s.rating >= 1.0).length;
     const consistencyRate = (consistentGames / totalMatches) * 100;
 
+    rawStatsList.push({
+      player,
+      totalMatches,
+      totalKills,
+      totalHeadshots,
+      totalEntryKills,
+      totalClutchWins,
+      hsRate,
+      entrySuccess,
+      consistencyRate,
+      consistentGames,
+    });
+  }
+
+  const archetypes: PlayerArchetype[] = [];
+
+  for (const item of rawStatsList) {
     let archetype: PlayerArchetype["archetype"] = "tactician";
     let label = "🧠 Estrategista";
     let metricLabel = "Consistência de Jogo";
-    let metricValue = `${consistencyRate.toFixed(0)}% rounds`;
+    let metricValue = `${item.consistencyRate.toFixed(0)}% rounds`;
+    let rankText = "Consistente no lobby";
 
-    if (hsRate >= 52) {
+    if (item.hsRate >= 52) {
       archetype = "headshot";
       label = "💀 Headshot Machine";
       metricLabel = "Taxa de HS";
-      metricValue = `${hsRate.toFixed(1)}% das kills`;
-    } else if (entrySuccess >= 53 && totalEntryKills > 8) {
+      metricValue = `${item.hsRate.toFixed(1)}% das kills`;
+
+      // Calcular rank na comunidade
+      const sorted = [...rawStatsList].sort((a, b) => b.hsRate - a.hsRate);
+      const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
+      rankText = `${pos}º maior HS% da comunidade`;
+    } else if (item.entrySuccess >= 53 && item.totalEntryKills > 8) {
       archetype = "entry";
       label = "⚔️ Entry King";
       metricLabel = "Aproveitamento de Entradas";
-      metricValue = `${entrySuccess.toFixed(1)}% (${totalEntryKills} kills)`;
-    } else if (totalClutchWins >= 5) {
+      metricValue = `${item.entrySuccess.toFixed(1)}% (${item.totalEntryKills} kills)`;
+
+      const sorted = [...rawStatsList].sort((a, b) => b.entrySuccess - a.entrySuccess);
+      const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
+      rankText = `${pos}º em eficiência de entry`;
+    } else if (item.totalClutchWins >= 5) {
       archetype = "clutch";
       label = "🧊 Clutch Master";
       metricLabel = "Vitórias em Clutch";
-      metricValue = `${totalClutchWins} rounds salvos`;
-    } else if (consistencyRate >= 70) {
+      metricValue = `${item.totalClutchWins} rounds salvos`;
+
+      const sorted = [...rawStatsList].sort((a, b) => b.totalClutchWins - a.totalClutchWins);
+      const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
+      rankText = `${pos}º em clutches salvos`;
+    } else if (item.consistencyRate >= 70) {
       archetype = "consistent";
       label = "📊 Máquina de Consistência";
       metricLabel = "Partidas Estáveis (Rating >= 1.0)";
-      metricValue = `${consistencyRate.toFixed(0)}% (${consistentGames}/${totalMatches})`;
+      metricValue = `${item.consistencyRate.toFixed(0)}% (${item.consistentGames}/${item.totalMatches})`;
+
+      const sorted = [...rawStatsList].sort((a, b) => b.consistencyRate - a.consistencyRate);
+      const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
+      rankText = `${pos}º em estabilidade`;
     }
 
     archetypes.push({
-      player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl },
+      player: { id: item.player.id, nickname: item.player.nickname, avatarUrl: item.player.avatarUrl },
       archetype,
       label,
       metricLabel,
       metricValue,
+      rankText,
     });
   }
 
@@ -314,6 +378,16 @@ export async function getJogadorDaSemana(): Promise<JogadorDaSemanaInfo | null> 
 
       const seasonRating = stats.reduce((sum, s) => sum + s.rating, 0) / stats.length;
       const evolution = ((avgRatingRecent - seasonRating) / seasonRating) * 100;
+      const evolutionRounded = Math.round(evolution);
+
+      let evolutionText = "";
+      if (evolutionRounded > 3) {
+        evolutionText = `+${evolutionRounded}% evolução`;
+      } else if (evolutionRounded < -3) {
+        evolutionText = `${evolutionRounded}% queda`;
+      } else {
+        evolutionText = "Mantendo excelente desempenho ⚡";
+      }
 
       let recentWins = 0;
       for (const s of recentStats) {
@@ -354,8 +428,9 @@ export async function getJogadorDaSemana(): Promise<JogadorDaSemanaInfo | null> 
         player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl },
         rating: Number(avgRatingRecent.toFixed(2)),
         winrate: Math.round(winrateRecent),
-        evolution: Math.round(evolution),
+        evolution: evolutionRounded,
         powerScore,
+        evolutionText,
       };
     }
   }
@@ -475,9 +550,8 @@ export async function getPlayerMomentum(take = 3): Promise<PlayerMomentumEntry[]
       include: { match: true },
     });
 
-    if (stats.length < 10) continue; // Mínimo 10 jogos no histórico para analisar momentum de 5v5
+    if (stats.length < 10) continue;
 
-    // Janela recente: últimas 5 partidas. Janela anterior: 5 partidas antes destas
     const recentWindow = stats.slice(0, 5);
     const priorWindow = stats.slice(5, 10);
 
@@ -503,6 +577,9 @@ export async function getPlayerMomentum(take = 3): Promise<PlayerMomentumEntry[]
     const priorWinrate = (priorWins / 5) * 100;
 
     const diff = recentRating - priorRating;
+    const ratingChange = priorRating > 0 ? ((recentRating - priorRating) / priorRating) * 100 : 0;
+    const winrateChange = recentWinrate - priorWinrate;
+
     let status: "up" | "stable" | "down" = "stable";
     let label = "Estável 🟡";
 
@@ -514,6 +591,9 @@ export async function getPlayerMomentum(take = 3): Promise<PlayerMomentumEntry[]
       label = "Caindo 🔴";
     }
 
+    const ratingChangeText = `${ratingChange >= 0 ? "+" : ""}${ratingChange.toFixed(0)}% Rating`;
+    const winrateChangeText = `${winrateChange >= 0 ? "+" : ""}${winrateChange}% Winrate`;
+
     entries.push({
       player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl },
       recentRating: Number(recentRating.toFixed(2)),
@@ -522,10 +602,11 @@ export async function getPlayerMomentum(take = 3): Promise<PlayerMomentumEntry[]
       priorWinrate: Math.round(priorWinrate),
       status,
       label,
+      ratingChangeText,
+      winrateChangeText,
     });
   }
 
-  // Ordena por maior diferença positiva para os em ascensão primeiro
   return entries.sort((a, b) => (b.recentRating - b.priorRating) - (a.recentRating - a.priorRating)).slice(0, take);
 }
 
@@ -533,6 +614,14 @@ export async function getDecisivePlayers(take = 3): Promise<DecisivePlayerEntry[
   const activePlayers = await prisma.player.findMany({
     where: { trackedPlayer: { active: true } },
   });
+
+  // Primeiro fazemos um check global se clutches ou tradeKills estão sendo populados no banco
+  const aggregateAll = await prisma.playerMatchStats.aggregate({
+    _sum: { tradeKills: true, clutch1v1Wins: true, clutch1v2Wins: true },
+  });
+  const totalTradesInDb = aggregateAll._sum.tradeKills ?? 0;
+  const totalClutchesInDb = (aggregateAll._sum.clutch1v1Wins ?? 0) + (aggregateAll._sum.clutch1v2Wins ?? 0);
+  const hideTradesAndClutches = totalTradesInDb === 0 && totalClutchesInDb === 0;
 
   const entries: DecisivePlayerEntry[] = [];
 
@@ -560,8 +649,7 @@ export async function getDecisivePlayers(take = 3): Promise<DecisivePlayerEntry[
       0
     );
 
-    // Impacted Rounds = Entry Kills + Trade Kills + Clutches vencidos
-    const impactedRounds = entryKills + tradeKills + clutchWins;
+    const impactedRounds = entryKills + (hideTradesAndClutches ? 0 : tradeKills + clutchWins);
     const impactPercent = (impactedRounds / totalRounds) * 100;
 
     entries.push({
@@ -570,6 +658,7 @@ export async function getDecisivePlayers(take = 3): Promise<DecisivePlayerEntry[
       entryKills,
       tradeKills,
       clutchWins,
+      hideTradesAndClutches,
     });
   }
 
@@ -594,7 +683,6 @@ export async function getDominantTrio(): Promise<TrioSummary | null> {
   let bestTrioWinrate = 0;
   let bestTrioRating = 0;
 
-  // Busca combinações de 3 jogadores
   for (let i = 0; i < activePlayers.length; i++) {
     for (let j = i + 1; j < activePlayers.length; j++) {
       for (let k = j + 1; k < activePlayers.length; k++) {
@@ -707,7 +795,6 @@ export async function getPlayerMatchups(): Promise<PlayerMatchupSummary[]> {
       if (totalAgainst >= 3) {
         const winrateA = (winsA / totalAgainst) * 100;
 
-        // Domina (winrate mais alto contra o oponente, maior que 55%)
         if (winrateA > 55 && winrateA > maxWinrate) {
           maxWinrate = winrateA;
           bestRival = {
@@ -717,7 +804,6 @@ export async function getPlayerMatchups(): Promise<PlayerMatchupSummary[]> {
           };
         }
 
-        // Tem dificuldade (winrate mais baixo contra o oponente, menor que 45%)
         if (winrateA < 45 && winrateA < minWinrate) {
           minWinrate = winrateA;
           worstRival = {
@@ -737,4 +823,243 @@ export async function getPlayerMatchups(): Promise<PlayerMatchupSummary[]> {
   }
 
   return summaries;
+}
+
+export async function getWeeklyHighlights(): Promise<WeeklyHighlight[]> {
+  const activePlayers = await prisma.player.findMany({
+    where: { trackedPlayer: { active: true } },
+  });
+
+  // Encontra a data da última partida no banco para simular "hoje"
+  const latestMatch = await prisma.match.findFirst({
+    orderBy: { playedAt: "desc" },
+  });
+  if (!latestMatch) return [];
+
+  const today = new Date(latestMatch.playedAt);
+  const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  const highlights: WeeklyHighlight[] = [];
+
+  // 1. Evoluções individuais da semana (last 7 days matches rating vs overall rating)
+  for (const player of activePlayers) {
+    const stats = await prisma.playerMatchStats.findMany({
+      where: { playerId: player.id },
+      include: { match: true },
+    });
+
+    if (stats.length === 0) continue;
+
+    const overallRating = stats.reduce((sum, s) => sum + s.rating, 0) / stats.length;
+    const weeklyStats = stats.filter((s) => new Date(s.match.playedAt) >= sevenDaysAgo);
+
+    if (weeklyStats.length >= 2) {
+      const weeklyRating = weeklyStats.reduce((sum, s) => sum + s.rating, 0) / weeklyStats.length;
+      const diff = ((weeklyRating - overallRating) / overallRating) * 100;
+      if (diff >= 8) {
+        highlights.push({
+          id: `evo-${player.id}`,
+          category: "evolution",
+          title: `🔥 ${player.nickname} em ascensão`,
+          description: `Desempenho disparou +${diff.toFixed(0)}% nas partidas desta semana.`,
+          meta: `Rating de ${weeklyRating.toFixed(2)} recente`,
+        });
+      }
+    }
+  }
+
+  // 2. Sequências ativas na semana (win streak)
+  for (const player of activePlayers) {
+    const stats = await prisma.playerMatchStats.findMany({
+      where: { playerId: player.id },
+      orderBy: { match: { playedAt: "asc" } },
+      include: { match: true },
+    });
+
+    let currentStreak = 0;
+    for (const stat of stats) {
+      const won =
+        (stat.team === "A" && stat.match.scoreTeamA > stat.match.scoreTeamB) ||
+        (stat.team === "B" && stat.match.scoreTeamB > stat.match.scoreTeamA);
+      if (won) {
+        currentStreak++;
+      } else {
+        currentStreak = 0;
+      }
+    }
+
+    if (currentStreak >= 3) {
+      highlights.push({
+        id: `streak-${player.id}`,
+        category: "streak",
+        title: "⚡ Sequência ativa",
+        description: `${player.nickname} vem embalado com ${currentStreak} vitórias seguidas no lobby.`,
+        meta: "Sequência imbatível",
+      });
+    }
+  }
+
+  // 3. Melhor jogo/kills da semana (kills >= 28)
+  const topWeeklyStats = await prisma.playerMatchStats.findFirst({
+    where: {
+      match: { playedAt: { gte: sevenDaysAgo } },
+      player: { trackedPlayer: { active: true } },
+    },
+    orderBy: { kills: "desc" },
+    include: { player: true, match: { include: { map: true } } },
+  });
+
+  if (topWeeklyStats && topWeeklyStats.kills >= 26) {
+    highlights.push({
+      id: `record-kills`,
+      category: "record",
+      title: "🎯 Partida monstruosa",
+      description: `${topWeeklyStats.player.nickname} destruiu no servidor com ${topWeeklyStats.kills} kills na ${topWeeklyStats.match.map.name}.`,
+      meta: `Rating de ${topWeeklyStats.rating.toFixed(2)}`,
+    });
+  }
+
+  // 4. Mapa mais jogado na semana
+  const weeklyMatches = await prisma.match.findMany({
+    where: { playedAt: { gte: sevenDaysAgo } },
+    include: { map: true },
+  });
+
+  if (weeklyMatches.length >= 2) {
+    const mapCounts = new Map<string, number>();
+    for (const m of weeklyMatches) {
+      mapCounts.set(m.map.name, (mapCounts.get(m.map.name) ?? 0) + 1);
+    }
+    const sortedMaps = Array.from(mapCounts.entries()).sort((a, b) => b[1] - a[1]);
+    const dominantMap = sortedMaps[0];
+    if (dominantMap) {
+      highlights.push({
+        id: "weekly-map",
+        category: "map",
+        title: "🗺️ O mapa da semana",
+        description: `O lobby se estabeleceu na ${dominantMap[0]} esta semana, com ${dominantMap[1]} confrontos disputados.`,
+        meta: `${dominantMap[1]} partidas jogadas`,
+      });
+    }
+  }
+
+  // 5. Líder do ranking mantido
+  const leaderboard = await getPowerRanking(1);
+  if (leaderboard[0]) {
+    highlights.push({
+      id: "weekly-leader",
+      category: "leader",
+      title: "👑 Rei do Power Ranking",
+      description: `${leaderboard[0].player.nickname} mantém a liderança isolada da liga de mixes com ${leaderboard[0].powerScore} pontos.`,
+      meta: "Líder geral",
+    });
+  }
+
+  return highlights;
+}
+
+export async function getHallOfFameRecords(): Promise<HallOfFameRecord[]> {
+  const [maxRating, maxKills, maxAdr, maxHs, eloLeader] = await Promise.all([
+    prisma.playerMatchStats.findFirst({
+      orderBy: { rating: "desc" },
+      include: { player: true, match: { include: { map: true } } },
+    }),
+    prisma.playerMatchStats.findFirst({
+      orderBy: { kills: "desc" },
+      include: { player: true, match: { include: { map: true } } },
+    }),
+    prisma.playerMatchStats.findFirst({
+      orderBy: { adr: "desc" },
+      include: { player: true, match: { include: { map: true } } },
+    }),
+    // Maior HS% em jogo com pelo menos 15 kills (para relevância)
+    prisma.playerMatchStats.findFirst({
+      where: { kills: { gte: 15 } },
+      orderBy: { headshots: "desc" }, // pegamos por absoluto ou calculamos
+      include: { player: true, match: { include: { map: true } } },
+    }),
+    // O mais alto ELO atual
+    prisma.playerMatchStats.findFirst({
+      where: { player: { trackedPlayer: { active: true } } },
+      orderBy: { eloAfter: "desc" },
+      include: { player: true },
+    }),
+  ]);
+
+  const activePlayers = await prisma.player.findMany({
+    where: { trackedPlayer: { active: true } },
+  });
+
+  let maxStreak = 0;
+  let maxStreakPlayer = "N/A";
+
+  for (const player of activePlayers) {
+    const stats = await prisma.playerMatchStats.findMany({
+      where: { playerId: player.id },
+      orderBy: { match: { playedAt: "asc" } },
+      include: { match: true },
+    });
+    let currentStreak = 0;
+    let playerMaxStreak = 0;
+    for (const stat of stats) {
+      const won =
+        (stat.team === "A" && stat.match.scoreTeamA > stat.match.scoreTeamB) ||
+        (stat.team === "B" && stat.match.scoreTeamB > stat.match.scoreTeamA);
+      if (won) {
+        currentStreak++;
+        if (currentStreak > playerMaxStreak) playerMaxStreak = currentStreak;
+      } else {
+        currentStreak = 0;
+      }
+    }
+    if (playerMaxStreak > maxStreak) {
+      maxStreak = playerMaxStreak;
+      maxStreakPlayer = player.nickname;
+    }
+  }
+
+  const records: HallOfFameRecord[] = [];
+
+  if (maxRating) {
+    records.push({
+      category: "Recorde de Rating",
+      playerName: maxRating.player.nickname,
+      value: maxRating.rating.toFixed(2),
+      detail: `Conquistado na ${maxRating.match.map.name}`,
+    });
+  }
+  if (maxKills) {
+    records.push({
+      category: "Maior Número de Kills",
+      playerName: maxKills.player.nickname,
+      value: `${maxKills.kills} kills`,
+      detail: `Partida na ${maxKills.match.map.name}`,
+    });
+  }
+  if (maxAdr) {
+    records.push({
+      category: "Maior ADR em Jogo",
+      playerName: maxAdr.player.nickname,
+      value: maxAdr.adr.toFixed(1),
+      detail: `Dano médio por round na ${maxAdr.match.map.name}`,
+    });
+  }
+  if (maxStreak > 0) {
+    records.push({
+      category: "Maior Sequência de Vitórias",
+      playerName: maxStreakPlayer,
+      value: `${maxStreak} vitórias`,
+      detail: "Sequência invicta da temporada",
+    });
+  }
+  if (eloLeader) {
+    records.push({
+      category: "Pico de ELO Alcançado",
+      playerName: eloLeader.player.nickname,
+      value: `${eloLeader.eloAfter} ELO`,
+      detail: "Mais alta classificação competitiva",
+    });
+  }
+
+  return records;
 }
