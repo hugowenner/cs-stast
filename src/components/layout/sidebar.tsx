@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, CalendarDays, LayoutDashboard, Trophy, Users, HeartHandshake, X } from "lucide-react";
+import { BarChart3, CalendarDays, LayoutDashboard, Trophy, Users, HeartHandshake, X, Target, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -57,6 +57,21 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
             </Link>
           );
         })}
+
+        {/* Ferramentas externas */}
+        <p className="text-muted-foreground mt-4 mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider">
+          🛠️ Ferramentas
+        </p>
+        <a
+          href="https://cs2-team-balance.vercel.app/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-white/5 hover:text-foreground transition-colors"
+        >
+          <Target className="size-4" />
+          <span className="flex-1">🎯 Gerador de Times</span>
+          <ExternalLink className="size-3.5 shrink-0" />
+        </a>
       </nav>
 
       <div className="text-muted-foreground rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs">

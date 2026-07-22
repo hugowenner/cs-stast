@@ -4,6 +4,7 @@ export interface PlayerProfileDTO {
     nickname: string;
     avatarUrl: string | null;
     gamersClubId: string | null;
+    levelGc: number | null;
   };
   overview: {
     totalMatches: number;

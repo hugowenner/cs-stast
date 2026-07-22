@@ -1,3 +1,4 @@
+import { prisma } from "@/server/db";
 import type { SyncMatchInput } from "@/server/dtos/sync.dto";
 import * as playerRepo from "@/server/repositories/player.repository";
 import * as mapRepo from "@/server/repositories/map.repository";
@@ -182,6 +183,7 @@ export async function ingestMatchSync(
         clutch1v5Wins: p.clutches?.["1v5"]?.wins ?? 0,
         eloBefore: elo.eloBefore,
         eloAfter: elo.eloAfter,
+        levelGc: p.levelGc ?? null,
       };
     });
 
@@ -281,6 +283,29 @@ export async function ingestMatchSync(
 
     const grants = evaluateMatchAchievements(match.id, achievementInputs);
     await grantAchievements(grants);
+
+    // Condicionalmente atualiza o Player.levelGc se este jogo for o mais recente na timeline
+    for (const p of input.players) {
+      const player = playerBySteamId.get(p.steamId)!;
+      if (p.levelGc !== undefined && p.levelGc !== null) {
+        const newerMatchCount = await prisma.playerMatchStats.count({
+          where: {
+            playerId: player.id,
+            match: {
+              playedAt: {
+                gt: input.playedAt,
+              },
+            },
+          },
+        });
+        if (newerMatchCount === 0) {
+          await prisma.player.update({
+            where: { id: player.id },
+            data: { levelGc: p.levelGc },
+          });
+        }
+      }
+    }
 
     await importRepo.completeImportLog(importLog.id, { status: "SUCCESS", matchesImported: 1 });
 

@@ -54,11 +54,26 @@ export async function getEloLeaderboard(take = 20) {
 
 export type RankingMetric = "rating" | "adr" | "kast" | "impact";
 
-export function getRankingByMetric(metric: RankingMetric, take = 20) {
+export async function getRankingByMetric(metric: RankingMetric, take = 20) {
+  const latestMatch = await prisma.match.findFirst({
+    orderBy: { playedAt: "desc" },
+  });
+  const today = latestMatch ? new Date(latestMatch.playedAt) : new Date();
+  const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  const whereClause = {
+    ...trackedPlayerStatsWhere(),
+    match: {
+      playedAt: {
+        gte: thirtyDaysAgo,
+      },
+    },
+  };
+
   switch (metric) {
     case "rating":
       return prisma.playerMatchStats.groupBy({
-        where: trackedPlayerStatsWhere(),
+        where: whereClause,
         by: ["playerId"],
         _avg: { rating: true },
         _count: { _all: true },
@@ -67,7 +82,7 @@ export function getRankingByMetric(metric: RankingMetric, take = 20) {
       });
     case "adr":
       return prisma.playerMatchStats.groupBy({
-        where: trackedPlayerStatsWhere(),
+        where: whereClause,
         by: ["playerId"],
         _avg: { adr: true },
         _count: { _all: true },
@@ -76,7 +91,7 @@ export function getRankingByMetric(metric: RankingMetric, take = 20) {
       });
     case "kast":
       return prisma.playerMatchStats.groupBy({
-        where: trackedPlayerStatsWhere(),
+        where: whereClause,
         by: ["playerId"],
         _avg: { kast: true },
         _count: { _all: true },
@@ -85,7 +100,7 @@ export function getRankingByMetric(metric: RankingMetric, take = 20) {
       });
     case "impact":
       return prisma.playerMatchStats.groupBy({
-        where: trackedPlayerStatsWhere(),
+        where: whereClause,
         by: ["playerId"],
         _avg: { impact: true },
         _count: { _all: true },

@@ -91,6 +91,7 @@ describe("normalizeGamersClubMatch", () => {
       adr: 114.06,
       kast: 65,
       entryKills: 1,
+      levelGc: 14,
     });
     // player.avatar é path relativo ("players/avatar/757573/757573"), não URL — omitido.
     expect(costa?.avatarUrl).toBeUndefined();

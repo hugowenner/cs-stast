@@ -17,6 +17,7 @@ export const syncPlayerMatchStatsSchema = z.object({
   gamersClubId: z.string().min(1).optional(),
   nickname: z.string().min(1),
   avatarUrl: z.string().url().optional(),
+  levelGc: z.number().int().min(1).max(21).optional(),
   team: matchTeamSchema,
   kills: z.number().int().min(0),
   deaths: z.number().int().min(0),

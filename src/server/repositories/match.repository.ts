@@ -80,6 +80,7 @@ export interface CreateMatchPlayerStatInput {
   clutch1v5Wins: number;
   eloBefore: number;
   eloAfter: number;
+  levelGc?: number | null;
 }
 
 export interface CreateMatchEventInput {

@@ -15,6 +15,7 @@ model Player {
   nickname     String
   avatarUrl    String?
   gamersClubId String?  @unique
+  levelGc      Int?
   createdAt    DateTime @default(now())
 
   user           User?
@@ -115,6 +116,7 @@ model PlayerMatchStats {
   clutch1v5Attempts Int @default(0)
   clutch1v5Wins     Int @default(0)
 
+  levelGc   Int?
   eloBefore Int
   eloAfter  Int
 

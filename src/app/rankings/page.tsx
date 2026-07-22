@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 const METRICS = [
   { value: "rating", label: "Rating" },
-  { value: "elo", label: "ELO" },
+  { value: "elo", label: "Rating do Hub" },
   { value: "adr", label: "ADR" },
   { value: "kast", label: "KAST" },
   { value: "impact", label: "Impact" },
@@ -68,6 +68,7 @@ export default async function RankingsPage({
                     key={entry.player.id}
                     position={index + 1}
                     podium
+                    href={`/players/${entry.player.id}`}
                     icon={
                       <PlayerAvatar
                         nickname={entry.player.nickname}
@@ -75,7 +76,16 @@ export default async function RankingsPage({
                         size="sm"
                       />
                     }
-                    title={entry.player.nickname}
+                    title={
+                      <span className="flex items-center gap-1.5">
+                        <span className="font-semibold text-white">{entry.player.nickname}</span>
+                        {entry.player.levelGc !== null && entry.player.levelGc !== undefined && (
+                          <span className="text-[8px] font-bold px-1.5 py-0.5 bg-primary/10 border border-primary/20 rounded-md text-primary inline-block">
+                            LVL {entry.player.levelGc}
+                          </span>
+                        )}
+                      </span>
+                    }
                     trailing={
                       <span className="text-sm font-semibold tabular-nums text-white">
                         {entry.value}

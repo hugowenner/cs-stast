@@ -1,7 +1,7 @@
 import { prisma } from "@/server/db";
 
 export interface PowerRankingEntry {
-  player: { id: string; nickname: string; avatarUrl: string | null };
+  player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null };
   powerScore: number;
   rating: number;
   impact: number;
@@ -13,7 +13,7 @@ export interface PowerRankingEntry {
 }
 
 export interface PlayerEvolutionEntry {
-  player: { id: string; nickname: string; avatarUrl: string | null };
+  player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null };
   seasonRating: number;
   recentRating: number;
   diffPercent: number;
@@ -21,7 +21,7 @@ export interface PlayerEvolutionEntry {
 }
 
 export interface PlayerArchetype {
-  player: { id: string; nickname: string; avatarUrl: string | null };
+  player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null };
   archetype: "entry" | "clutch" | "headshot" | "consistent" | "tactician";
   label: string;
   metricLabel: string;
@@ -30,7 +30,7 @@ export interface PlayerArchetype {
 }
 
 export interface JogadorDaSemanaInfo {
-  player: { id: string; nickname: string; avatarUrl: string | null };
+  player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null };
   rating: number;
   winrate: number;
   evolution: number;
@@ -120,7 +120,7 @@ export interface HallOfFameRecord {
 // inteira). Agora: 2 queries no total (jogadores + stats), reaproveitadas por tudo.
 // ---------------------------------------------------------------------------
 
-type PlayerRow = { id: string; nickname: string; avatarUrl: string | null };
+type PlayerRow = { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null };
 
 async function loadCompetitiveDataset() {
   const activePlayers = await prisma.player.findMany({
@@ -205,7 +205,7 @@ function getPowerRankingFromDataset(
     else if (recentWins === 1) forma = "🔥";
 
     entries.push({
-      player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl },
+      player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl, levelGc: player.levelGc },
       powerScore,
       rating: Number(avgRating.toFixed(2)),
       impact: Number(avgImpact.toFixed(2)),
@@ -239,7 +239,7 @@ function getPlayerEvolutionsFromDataset(
     const trend = diffPercent > 3 ? "up" : diffPercent < -3 ? "down" : "stable";
 
     entries.push({
-      player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl },
+      player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl, levelGc: player.levelGc },
       seasonRating: Number(seasonRating.toFixed(2)),
       recentRating: Number(recentRating.toFixed(2)),
       diffPercent: Math.round(diffPercent),
@@ -343,7 +343,7 @@ function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): PlayerArch
     }
 
     archetypes.push({
-      player: { id: item.player.id, nickname: item.player.nickname, avatarUrl: item.player.avatarUrl },
+      player: { id: item.player.id, nickname: item.player.nickname, avatarUrl: item.player.avatarUrl, levelGc: item.player.levelGc },
       archetype,
       label,
       metricLabel,
@@ -409,7 +409,7 @@ function getJogadorDaSemanaFromDataset(dataset: CompetitiveDataset): JogadorDaSe
       );
 
       bestPlayer = {
-        player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl },
+        player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl, levelGc: player.levelGc },
         rating: Number(avgRatingRecent.toFixed(2)),
         winrate: Math.round(winrateRecent),
         evolution: evolutionRounded,
@@ -917,10 +917,10 @@ function getHallOfFameRecordsFromDataset(dataset: CompetitiveDataset): HallOfFam
   }
   if (eloLeader) {
     records.push({
-      category: "Pico de ELO Alcançado",
+      category: "Pico de Rating do Hub",
       playerName: playerName(eloLeader),
-      value: `${eloLeader.eloAfter} ELO`,
-      detail: "Mais alta classificação competitiva",
+      value: `${eloLeader.eloAfter}`,
+      detail: "Rating calculado pelo CS2 Stats Hub",
     });
   }
 

@@ -15,7 +15,7 @@ import * as competitiveService from "@/server/services/competitive.service";
 import * as achievementService from "@/server/services/achievement.service";
 import * as rivalryService from "@/server/services/rivalry.service";
 import Link from "next/link";
-import { Trophy, TrendingUp, ShieldAlert, Flame, ArrowRight, TrendingDown, Minus, Calendar } from "lucide-react";
+import { Trophy, TrendingUp, ShieldAlert, Flame, ArrowRight, TrendingDown, Minus, Calendar, Target, ExternalLink } from "lucide-react";
 
 const SEASON_LABEL = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(
   new Date(),
@@ -89,6 +89,24 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* 👑 Centro de Inteligência Competitiva Hero */}
+      <FadeIn>
+        <div className="glass-panel p-6 sm:p-8 rounded-2xl border border-white/10 bg-gradient-to-r from-primary/10 via-accent-violet/5 to-transparent flex flex-col gap-2 relative overflow-hidden">
+          <div className="absolute right-0 top-0 w-64 h-64 bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
+          <div className="absolute left-1/3 bottom-0 w-48 h-48 bg-accent-violet/10 rounded-full blur-[90px] pointer-events-none" />
+          
+          <div className="text-[10px] uppercase font-bold tracking-widest text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full w-fit">
+            Inteligência Analítica
+          </div>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight mt-1 max-w-2xl leading-tight">
+            Seu centro de inteligência competitiva no CS2
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground max-w-3xl leading-relaxed mt-1">
+            Monitore desempenho, evolução dos jogadores, rankings, rivalidades e histórico das suas partidas de forma integrada e profissional.
+          </p>
+        </div>
+      </FadeIn>
+
       {/* Hero de Temporada (Destaques e MVP) */}
       <FadeIn>
         <SeasonHero
@@ -188,6 +206,11 @@ export default async function DashboardPage() {
                             <span className="font-bold text-sm text-white group-hover:text-primary transition-colors">
                               {entry.player.nickname}
                             </span>
+                            {entry.player.levelGc !== null && entry.player.levelGc !== undefined && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 bg-primary/10 border border-primary/20 rounded-md text-primary ml-1 inline-block">
+                                GC LVL {entry.player.levelGc}
+                              </span>
+                            )}
                           </Link>
                           {index > 0 && powerRanking[0] && (
                             <span className="text-[10px] font-bold text-status-critical bg-status-critical/10 border border-status-critical/15 px-1.5 py-0.5 rounded-md">
@@ -337,7 +360,14 @@ export default async function DashboardPage() {
                             size="sm"
                           />
                           <div className="min-w-0">
-                            <p className="text-sm font-bold text-white truncate">{entry.player.nickname}</p>
+                            <p className="text-sm font-bold text-white truncate">
+                              {entry.player.nickname}
+                              {entry.player.levelGc !== null && entry.player.levelGc !== undefined && (
+                                <span className="text-[8px] font-bold px-1.5 py-0.5 bg-primary/10 border border-primary/20 rounded-md text-primary ml-1.5 inline-block align-middle">
+                                  LVL {entry.player.levelGc}
+                                </span>
+                              )}
+                            </p>
                             <p className="text-[11px] text-accent-violet font-semibold mt-0.5">{entry.label}</p>
                             <p className="text-[9px] text-muted-foreground mt-0.5 font-medium">{entry.rankText}</p>
                           </div>
@@ -417,6 +447,33 @@ export default async function DashboardPage() {
         {/* LADO DIREITO: Jogador da Semana, Map Pool, Destaques, Duplas, Trios, Especialistas, Conquistas e Histórico (4 colunas) */}
         <div className="lg:col-span-4 flex flex-col gap-4">
 
+          {/* 0. Ferramentas */}
+          <FadeIn delay={0.2}>
+            <SectionCard title="🛠️ Ferramentas">
+              <div className="p-3 border border-white/5 bg-white/[0.01] rounded-xl flex flex-col gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent-cyan/15 text-accent-cyan">
+                    <Target className="size-4.5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-white">🎯 Gerador de Times</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Crie times equilibrados para o lobby
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href="https://cs2-team-balance.vercel.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary/15 border border-primary/30 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/25 transition-colors"
+                >
+                  Abrir Gerador <ExternalLink className="size-3.5" />
+                </a>
+              </div>
+            </SectionCard>
+          </FadeIn>
+
           {/* 1. Jogador da Semana */}
           {jogadorDaSemana && (
             <FadeIn delay={0.21}>
@@ -433,6 +490,11 @@ export default async function DashboardPage() {
                       className="text-base font-black hover:text-primary transition-colors block text-white"
                     >
                       {jogadorDaSemana.player.nickname}
+                      {jogadorDaSemana.player.levelGc !== null && jogadorDaSemana.player.levelGc !== undefined && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 bg-primary/10 border border-primary/20 rounded-md text-primary ml-1.5 inline-block align-middle">
+                          GC LVL {jogadorDaSemana.player.levelGc}
+                        </span>
+                      )}
                     </Link>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                       <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 rounded-md px-1.5 py-0.5 font-bold uppercase">

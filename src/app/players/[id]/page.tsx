@@ -55,7 +55,16 @@ export default async function PlayerDetailPage({ params }: { params: Promise<{ i
       <FadeIn>
         <PageHeader
           title={player.nickname}
-          subtitle={`Gamers Club ID: ${player.gamersClubId ?? "Não associado"}`}
+          subtitle={
+            <>
+              <span>Gamers Club ID: {player.gamersClubId ?? "Não associado"}</span>
+              {player.levelGc !== null && player.levelGc !== undefined && (
+                <span className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 rounded-md px-2 py-0.5 font-bold text-xs text-primary">
+                  Gamers Club LVL {player.levelGc}
+                </span>
+              )}
+            </>
+          }
           icon={<PlayerAvatar nickname={player.nickname} avatarUrl={player.avatarUrl} size="lg" />}
           actions={
             <div className="text-right">

@@ -55,6 +55,7 @@ export async function getPlayerDetail(id: string): Promise<PlayerProfileDTO | nu
       nickname: player.nickname,
       avatarUrl: player.avatarUrl,
       gamersClubId: player.gamersClubId,
+      levelGc: player.levelGc,
     },
     overview,
     maps,

@@ -17,6 +17,7 @@ export interface GamersClubPlayerProfile {
   nickname?: string;
   /** Path relativo (`players/avatar/{id}/{id}`), não URL completa — ver toAbsoluteUrl em normalize.ts. */
   avatar?: string;
+  level?: number | string;
   banned?: boolean;
 }
 
