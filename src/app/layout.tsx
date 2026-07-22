@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Sidebar } from "@/components/layout/sidebar";
+import { LayoutShell } from "@/components/layout/layout-shell";
 import { Providers } from "@/app/providers";
 import "./globals.css";
 
@@ -32,10 +32,7 @@ export default function RootLayout({
     >
       <body className="min-h-full">
         <Providers>
-          <div className="mx-auto flex max-w-[1600px] gap-4 p-4">
-            <Sidebar />
-            <main className="min-w-0 flex-1 pb-12">{children}</main>
-          </div>
+          <LayoutShell>{children}</LayoutShell>
         </Providers>
       </body>
     </html>

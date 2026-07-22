@@ -8,6 +8,12 @@ const PODIUM_STYLE: Record<number, string> = {
   3: "bg-[#d9772b]/15 text-[#d9772b] border border-[#d9772b]/30",
 };
 
+const MEDALS: Record<number, string> = {
+  1: "🥇",
+  2: "🥈",
+  3: "🥉",
+};
+
 export function RankRow({
   href,
   position,
@@ -27,6 +33,7 @@ export function RankRow({
   podium?: boolean;
 }) {
   const podiumStyle = podium && position ? PODIUM_STYLE[position] : undefined;
+  const isMedal = podium && position && [1, 2, 3].includes(position);
 
   const content = (
     <>
@@ -34,22 +41,24 @@ export function RankRow({
         <span
           className={cn(
             "flex size-6 shrink-0 items-center justify-center rounded-md text-xs font-bold tabular-nums",
-            podiumStyle ?? "text-muted-foreground",
+            isMedal
+              ? "text-base bg-transparent border-none"
+              : podiumStyle ?? "text-muted-foreground bg-white/5 border border-white/10",
           )}
         >
-          {position}
+          {isMedal ? MEDALS[position!] : position}
         </span>
       )}
       {icon && <div className="shrink-0">{icon}</div>}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{title}</p>
-        {subtitle && <p className="text-muted-foreground truncate text-xs">{subtitle}</p>}
+        <p className="truncate text-sm font-semibold">{title}</p>
+        {subtitle && <p className="text-muted-foreground truncate text-[11px] mt-0.5">{subtitle}</p>}
       </div>
       {trailing && <div className="shrink-0">{trailing}</div>}
     </>
   );
 
-  const rowClass = "flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors";
+  const rowClass = "flex items-center gap-2 sm:gap-3 rounded-xl px-2.5 sm:px-3 py-2 sm:py-2.5 transition-colors";
 
   if (href) {
     return (

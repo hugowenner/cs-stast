@@ -86,7 +86,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
       </FadeIn>
 
       {/* Grid de Visão Geral (Overview) */}
-      <FadeIn delay={0.05} className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <FadeIn delay={0.05} className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
         <StatTile
           label="Partidas (V/D/E)"
           value={`${overview.totalMatches} (${overview.wins}V-${overview.losses}D)`}
@@ -121,7 +121,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
           {/* Tendências da Noite */}
           <FadeIn delay={0.08}>
             <SectionCard title="Tendências vs Histórico">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {trends.map((t) => {
                   const Icon = t.direction === "up" ? TrendingUp : t.direction === "down" ? TrendingDown : Minus;
                   const colorClass = t.direction === "up" ? "text-status-good bg-status-good/10" : t.direction === "down" ? "text-status-critical bg-status-critical/10" : "text-muted-foreground bg-white/5";

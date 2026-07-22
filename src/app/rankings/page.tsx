@@ -37,7 +37,7 @@ export default async function RankingsPage({
         <PageHeader title="🏆 Rankings" subtitle="Liga interna baseada nas últimas partidas sincronizadas" />
       </FadeIn>
 
-      <FadeIn delay={0.05} className="flex gap-2">
+      <FadeIn delay={0.05} className="flex gap-2 overflow-x-auto pb-1 scrollbar-none whitespace-nowrap flex-nowrap shrink-0">
         {METRICS.map((m) => (
           <Link
             key={m.value}

@@ -71,7 +71,7 @@ export default async function PlayerDetailPage({ params }: { params: Promise<{ i
       </FadeIn>
 
       {/* Grid de Métricas Principais */}
-      <FadeIn delay={0.05} className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <FadeIn delay={0.05} className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
         <StatTile
           label="Partidas Disputadas"
           value={overview.totalMatches}
@@ -110,7 +110,7 @@ export default async function PlayerDetailPage({ params }: { params: Promise<{ i
       </FadeIn>
 
       {/* Métricas Avançadas */}
-      <FadeIn delay={0.1} className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <FadeIn delay={0.1} className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
         <StatTile
           label="Rating"
           value={overview.ratingAvg.toFixed(2)}

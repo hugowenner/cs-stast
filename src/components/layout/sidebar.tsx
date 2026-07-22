@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, CalendarDays, LayoutDashboard, Trophy, Users, HeartHandshake } from "lucide-react";
+import { BarChart3, CalendarDays, LayoutDashboard, Trophy, Users, HeartHandshake, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -14,17 +14,28 @@ const NAV_ITEMS = [
   { href: "/achievements", label: "Conquistas", icon: Trophy },
 ] as const;
 
-export function Sidebar() {
+export function Sidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
 
   return (
-    <aside className="glass-panel sticky top-4 flex h-[calc(100vh-2rem)] w-64 shrink-0 flex-col gap-1 p-4">
-      <Link href="/" className="mb-6 flex items-center gap-2 px-2">
-        <span className="text-gradient text-xl font-bold tracking-tight">CS2 Stats</span>
-        <span className="text-muted-foreground rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold">
-          HUB
-        </span>
-      </Link>
+    <aside className="glass-panel lg:sticky lg:top-4 flex h-full lg:h-[calc(100vh-2rem)] w-full lg:w-64 flex-col gap-1 p-4 bg-[#0a0b0d] lg:bg-transparent">
+      <div className="mb-6 flex items-center justify-between px-2">
+        <Link href="/" className="flex items-center gap-2">
+          <span className="text-gradient text-xl font-bold tracking-tight">CS2 Stats</span>
+          <span className="text-muted-foreground rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold">
+            HUB
+          </span>
+        </Link>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="lg:hidden p-1 rounded-lg hover:bg-white/5 text-muted-foreground hover:text-white transition-colors"
+            aria-label="Fechar menu"
+          >
+            <X className="size-5" />
+          </button>
+        )}
+      </div>
 
       <nav className="flex flex-1 flex-col gap-1">
         {NAV_ITEMS.map((item) => {

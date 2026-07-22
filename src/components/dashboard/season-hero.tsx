@@ -25,10 +25,10 @@ export function SeasonHero({
         </div>
       </div>
 
-      <div className="flex items-center gap-6 sm:gap-8">
-        <SeasonStat value={totalMatches} label="partidas analisadas" />
-        <SeasonStat value={totalPlayers} label="jogadores" />
-        <SeasonStat value={totalSessions} label="sessões" />
+      <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-8">
+        <SeasonStat value={totalMatches} label="Partidas" />
+        <SeasonStat value={totalPlayers} label="Jogadores" />
+        <SeasonStat value={totalSessions} label="Sessões" />
       </div>
     </div>
   );
@@ -36,9 +36,9 @@ export function SeasonHero({
 
 function SeasonStat({ value, label }: { value: number; label: string }) {
   return (
-    <div className="text-right">
-      <p className="text-2xl font-bold tabular-nums text-white">{value}</p>
-      <p className="text-[11px] text-muted-foreground whitespace-nowrap">{label}</p>
+    <div className="text-center sm:text-right">
+      <p className="text-2xl font-black tabular-nums text-white leading-none">{value}</p>
+      <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-1 block uppercase tracking-wider font-semibold">{label}</p>
     </div>
   );
 }
