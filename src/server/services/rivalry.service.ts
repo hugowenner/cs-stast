@@ -14,6 +14,12 @@ export interface RivalryH2HSummary {
   winsA: number;
   winsB: number;
   winrateA: number;
+  lastMatch: {
+    id: string;
+    mapName: string;
+    scoreA: number;
+    scoreB: number;
+  } | null;
 }
 
 /**
@@ -35,6 +41,32 @@ export async function listTopRivalriesWithH2H(take = 5): Promise<RivalryH2HSumma
       const winsB = h2h.against.wins[r.playerBId] ?? 0;
       const total = h2h.against.total;
 
+      // Localiza o último confronto direto (quando jogaram em times opostos)
+      const matchesBMap = new Map(outcomesB.map((o) => [o.match.id, o]));
+      const againstMatches = outcomesA
+        .filter((oa) => {
+          const ob = matchesBMap.get(oa.match.id);
+          return ob && oa.team !== ob.team;
+        })
+        .sort((a, b) => new Date(b.match.playedAt).getTime() - new Date(a.match.playedAt).getTime());
+
+      const lastMatch = againstMatches[0]?.match ?? null;
+      let lastMatchDetail = null;
+
+      if (lastMatch) {
+        const statA = outcomesA.find((o) => o.match.id === lastMatch.id);
+        if (statA) {
+          const scoreA = statA.team === "A" ? lastMatch.scoreTeamA : lastMatch.scoreTeamB;
+          const scoreB = statA.team === "A" ? lastMatch.scoreTeamB : lastMatch.scoreTeamA;
+          lastMatchDetail = {
+            id: lastMatch.id,
+            mapName: lastMatch.map.name,
+            scoreA,
+            scoreB,
+          };
+        }
+      }
+
       return {
         id: r.id,
         playerA: { id: r.playerA.id, nickname: r.playerA.nickname, avatarUrl: r.playerA.avatarUrl },
@@ -43,6 +75,7 @@ export async function listTopRivalriesWithH2H(take = 5): Promise<RivalryH2HSumma
         winsA,
         winsB,
         winrateA: total > 0 ? Math.round((winsA / total) * 100) : 0,
+        lastMatch: lastMatchDetail,
       };
     })
   );
