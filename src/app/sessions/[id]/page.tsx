@@ -302,7 +302,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
 
           {/* Leaderboard da Sessão */}
           <FadeIn delay={0.14}>
-            <SectionCard title="Performance dos Jogadores na Sessão">
+            <SectionCard title="Performance dos Jogadores na Sessão" variant="highlight">
               {players.length === 0 ? (
                 <EmptyState message="Sem dados de jogadores." />
               ) : (

@@ -1,5 +1,7 @@
 import { Trophy } from "lucide-react";
 import { SectionCard } from "@/components/ui/section-card";
+import { PageHeader } from "@/components/ui/page-header";
+import { RankRow } from "@/components/ui/rank-row";
 import { FadeIn } from "@/components/motion/fade-in";
 import { AchievementFeedItem } from "@/components/achievements/achievement-feed-item";
 import { safeQuery } from "@/server/safeQuery";
@@ -22,7 +24,7 @@ export default async function AchievementsPage() {
   return (
     <div className="flex flex-col gap-4">
       <FadeIn>
-        <h1 className="text-2xl font-bold tracking-tight">Conquistas</h1>
+        <PageHeader title="🏆 Mural da Fama" subtitle="Catálogo de conquistas e quem desbloqueou o quê" />
       </FadeIn>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -35,25 +37,21 @@ export default async function AchievementsPage() {
             ) : (
               <div className="flex flex-col gap-1">
                 {catalog.map((achievement) => (
-                  <div
+                  <RankRow
                     key={achievement.id}
-                    className="flex items-center gap-3 rounded-xl px-2 py-2"
-                  >
-                    <div
-                      className={cn(
-                        "flex size-9 shrink-0 items-center justify-center rounded-lg",
-                        TIER_STYLE[achievement.tier] ?? "text-foreground bg-white/10",
-                      )}
-                    >
-                      <Trophy className="size-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{achievement.name}</p>
-                      <p className="text-muted-foreground truncate text-xs">
-                        {achievement.description}
-                      </p>
-                    </div>
-                  </div>
+                    icon={
+                      <div
+                        className={cn(
+                          "flex size-9 shrink-0 items-center justify-center rounded-lg",
+                          TIER_STYLE[achievement.tier] ?? "text-foreground bg-white/10",
+                        )}
+                      >
+                        <Trophy className="size-4" />
+                      </div>
+                    }
+                    title={achievement.name}
+                    subtitle={achievement.description}
+                  />
                 ))}
               </div>
             )}
@@ -61,7 +59,7 @@ export default async function AchievementsPage() {
         </FadeIn>
 
         <FadeIn delay={0.1}>
-          <SectionCard title="Desbloqueadas recentemente">
+          <SectionCard title="Desbloqueadas recentemente" variant="highlight">
             {recent.length === 0 ? (
               <p className="text-muted-foreground py-8 text-center text-sm">
                 Nenhuma conquista ainda.

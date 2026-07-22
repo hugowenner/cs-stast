@@ -14,10 +14,10 @@ export function CoachSummaryCard({ data }: { data: CoachSummaryData }) {
   const trendBgClass = isTrendPositive ? "bg-status-good/10" : "bg-status-critical/10";
 
   return (
-    <div className="glass-panel flex flex-col gap-4 p-5 border border-white/10 bg-white/[0.01]">
+    <div className="glass-panel glow-ring-primary flex flex-col gap-4 p-5 border border-primary/20 bg-primary/[0.02]">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
-          Análise Técnica · Coach IA
+        <h3 className="text-sm font-semibold tracking-wider text-white uppercase">
+          🧠 Coach IA
         </h3>
         <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
           Baseline Beta
@@ -31,7 +31,7 @@ export function CoachSummaryCard({ data }: { data: CoachSummaryData }) {
             <Gamepad2 className="size-5" />
           </div>
           <div>
-            <p className="text-muted-foreground text-xs font-medium">Últimos 10 Jogos</p>
+            <p className="text-muted-foreground text-xs font-medium">🔥 Forma Atual</p>
             {data.last10Winrate ? (
               <>
                 <p className="text-sm font-bold mt-0.5">
@@ -109,7 +109,7 @@ export function CoachSummaryCard({ data }: { data: CoachSummaryData }) {
             <Users className="size-5" />
           </div>
           <div>
-            <p className="text-muted-foreground text-xs font-medium">Parceiro Favorito</p>
+            <p className="text-muted-foreground text-xs font-medium">🤝 Dupla do Crime</p>
             {data.favoritePartner ? (
               <>
                 <p className="text-sm font-bold mt-0.5">{data.favoritePartner.nickname}</p>

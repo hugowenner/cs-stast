@@ -75,7 +75,7 @@ export default async function ComparePage({
           {/* Coluna da Esquerda: Insights, Compatibilidade e Radar */}
           <div className="lg:col-span-4 flex flex-col gap-6">
             {/* Bloco de Compatibilidade / Sinergia */}
-            <FadeIn delay={0.1} className="glass-panel p-5 border border-white/10 bg-white/[0.01] rounded-2xl flex items-center justify-between">
+            <FadeIn delay={0.1} className="surface-2 p-5 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex size-10 items-center justify-center rounded-lg bg-status-good/10 text-status-good border border-status-good/20">
                   <HeartHandshake className="size-5" />

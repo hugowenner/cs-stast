@@ -1,6 +1,5 @@
-import { Gamepad2, Swords, Trophy, Users } from "lucide-react";
-import { StatTile } from "@/components/ui/stat-tile";
 import { SectionCard } from "@/components/ui/section-card";
+import { RankRow } from "@/components/ui/rank-row";
 import { FadeIn } from "@/components/motion/fade-in";
 import { MatchRow } from "@/components/matches/match-row";
 import { PlayerAvatar } from "@/components/players/player-avatar";
@@ -8,12 +7,17 @@ import { RatingBadge } from "@/components/players/rating-badge";
 import { AchievementFeedItem } from "@/components/achievements/achievement-feed-item";
 import { RivalryRow } from "@/components/rivalries/rivalry-row";
 import { MapWinrateChart } from "@/components/charts/map-winrate-chart";
+import { SeasonHero } from "@/components/dashboard/season-hero";
 import { safeQuery } from "@/server/safeQuery";
 import * as dashboardService from "@/server/services/dashboard.service";
 import * as matchService from "@/server/services/match.service";
 import * as statsService from "@/server/services/stats.service";
 import * as achievementService from "@/server/services/achievement.service";
 import * as rivalryService from "@/server/services/rivalry.service";
+
+const SEASON_LABEL = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(
+  new Date(),
+);
 
 export default async function DashboardPage() {
   const [summary, recentMatches, topRating, mapWinrates, recentAchievements, topRivalries] =
@@ -28,37 +32,25 @@ export default async function DashboardPage() {
       safeQuery(() => statsService.getRanking("rating", 5), []),
       safeQuery(() => statsService.getMapWinrates(), []),
       safeQuery(() => achievementService.listRecent(6), []),
-      safeQuery(() => rivalryService.listTopRivalries(5), []),
+      safeQuery(() => rivalryService.listTopRivalriesWithH2H(5), []),
     ]);
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Hero de Temporada */}
       <FadeIn>
-        <div className="flex items-baseline justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground text-sm">
-            {summary.latestSession
-              ? `Última sessão: ${summary.latestSession.name}`
-              : "Nenhuma partida sincronizada ainda"}
-          </p>
-        </div>
-      </FadeIn>
-
-      <FadeIn delay={0.05} className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatTile label="Partidas" value={summary.totalMatches} icon={Gamepad2} accent="violet" />
-        <StatTile label="Jogadores" value={summary.totalPlayers} icon={Users} accent="cyan" />
-        <StatTile label="Sessões" value={summary.totalSessions} icon={Trophy} accent="violet" />
-        <StatTile
-          label="Rivalidades ativas"
-          value={topRivalries.length}
-          icon={Swords}
-          accent="cyan"
+        <SeasonHero
+          seasonLabel={SEASON_LABEL}
+          totalMatches={summary.totalMatches}
+          totalPlayers={summary.totalPlayers}
+          totalSessions={summary.totalSessions}
         />
       </FadeIn>
 
+      {/* Destaque principal: Quem Tá Voando + Últimas Batalhas */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <FadeIn delay={0.1} className="lg:col-span-2">
-          <SectionCard title="Últimos jogos">
+        <FadeIn delay={0.08} className="lg:col-span-2">
+          <SectionCard title="🎮 Últimas Batalhas" variant="highlight">
             {recentMatches.length === 0 ? (
               <EmptyState message="Nenhuma partida sincronizada ainda. Conecte o GC Companion para começar." />
             ) : (
@@ -71,26 +63,28 @@ export default async function DashboardPage() {
           </SectionCard>
         </FadeIn>
 
-        <FadeIn delay={0.15}>
-          <SectionCard title="Top jogadores · Rating">
+        <FadeIn delay={0.12}>
+          <SectionCard title="🔥 Quem Tá Voando" variant="highlight">
             {topRating.length === 0 ? (
               <EmptyState message="Sem dados suficientes ainda." />
             ) : (
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
                 {topRating.map((entry, index) =>
                   entry.player ? (
-                    <div key={entry.player.id} className="flex items-center gap-3">
-                      <span className="text-muted-foreground w-4 text-xs font-semibold">
-                        {index + 1}
-                      </span>
-                      <PlayerAvatar
-                        nickname={entry.player.nickname}
-                        avatarUrl={entry.player.avatarUrl}
-                        size="sm"
-                      />
-                      <span className="flex-1 truncate text-sm">{entry.player.nickname}</span>
-                      <RatingBadge rating={entry.value} />
-                    </div>
+                    <RankRow
+                      key={entry.player.id}
+                      position={index + 1}
+                      podium
+                      icon={
+                        <PlayerAvatar
+                          nickname={entry.player.nickname}
+                          avatarUrl={entry.player.avatarUrl}
+                          size="sm"
+                        />
+                      }
+                      title={entry.player.nickname}
+                      trailing={<RatingBadge rating={entry.value} />}
+                    />
                   ) : null,
                 )}
               </div>
@@ -99,15 +93,31 @@ export default async function DashboardPage() {
         </FadeIn>
       </div>
 
+      {/* Confrontos Quentes */}
+      <FadeIn delay={0.16}>
+        <SectionCard title="⚔️ Confrontos Quentes">
+          {topRivalries.length === 0 ? (
+            <EmptyState message="Ainda não há confrontos suficientes para formar rivalidades." />
+          ) : (
+            <div className="flex flex-col divide-y divide-white/5">
+              {topRivalries.map((rivalry) => (
+                <RivalryRow key={rivalry.id} rivalry={rivalry} />
+              ))}
+            </div>
+          )}
+        </SectionCard>
+      </FadeIn>
+
+      {/* Grid secundário */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <FadeIn delay={0.2}>
-          <SectionCard title="Winrate por mapa">
+          <SectionCard title="Winrate por Mapa">
             <MapWinrateChart data={mapWinrates} />
           </SectionCard>
         </FadeIn>
 
         <FadeIn delay={0.25}>
-          <SectionCard title="Conquistas recentes">
+          <SectionCard title="🏆 Mural da Fama">
             {recentAchievements.length === 0 ? (
               <EmptyState message="Nenhuma conquista desbloqueada ainda." />
             ) : (
@@ -120,20 +130,6 @@ export default async function DashboardPage() {
           </SectionCard>
         </FadeIn>
       </div>
-
-      <FadeIn delay={0.3}>
-        <SectionCard title="Rivalidades em destaque">
-          {topRivalries.length === 0 ? (
-            <EmptyState message="Ainda não há confrontos suficientes para formar rivalidades." />
-          ) : (
-            <div className="flex flex-col divide-y divide-white/5">
-              {topRivalries.map((rivalry) => (
-                <RivalryRow key={rivalry.id} rivalry={rivalry} />
-              ))}
-            </div>
-          )}
-        </SectionCard>
-      </FadeIn>
     </div>
   );
 }

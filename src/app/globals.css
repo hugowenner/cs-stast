@@ -52,6 +52,9 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-highlight: var(--surface-highlight);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -66,6 +69,9 @@
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
+  --surface-1: oklch(0.99 0 0);
+  --surface-2: oklch(0.97 0 0);
+  --surface-highlight: oklch(0.96 0.01 288);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
   --primary: oklch(0.205 0 0);
@@ -95,7 +101,7 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
   --accent-violet: #4a3aa7;
-  --accent-cyan: #1baf7a;
+  --accent-cyan: #0891a8;
   --series-1: #2a78d6;
   --series-2: #1baf7a;
   --series-3: #eda100;
@@ -110,10 +116,15 @@
 }
 
 .dark {
-  --background: oklch(0.13 0.012 285);
+  --background: oklch(0.13 0.004 260);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.19 0.016 285 / 0.6);
+  --card: oklch(0.18 0.005 260 / 0.6);
   --card-foreground: oklch(0.985 0 0);
+  /* Camadas de superfície: cada nível sobe ~4-5 pontos de lightness sobre o fundo,
+     dando contraste real entre background/card/destaque em vez de tudo "flutuando no preto". */
+  --surface-1: oklch(0.20 0.006 260 / 0.78);
+  --surface-2: oklch(0.245 0.008 260 / 0.82);
+  --surface-highlight: oklch(0.22 0.025 288 / 0.55);
   --popover: oklch(0.19 0.016 285);
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.62 0.19 288);
@@ -142,7 +153,7 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.62 0.19 288);
   --accent-violet: #9085e9;
-  --accent-cyan: #199e70;
+  --accent-cyan: #22c3e6;
   --series-1: #3987e5;
   --series-2: #199e70;
   --series-3: #c98500;
@@ -174,7 +185,14 @@
 
 @layer utilities {
   .glass-panel {
-    @apply bg-card/60 rounded-2xl border border-white/10 shadow-lg shadow-black/20 backdrop-blur-xl;
+    @apply bg-surface-1 rounded-2xl border border-white/10 shadow-lg shadow-black/20 backdrop-blur-xl;
+  }
+  .surface-2 {
+    @apply bg-surface-2 rounded-2xl border border-white/12 shadow-lg shadow-black/25 backdrop-blur-xl;
+  }
+  .surface-highlight {
+    @apply bg-surface-highlight rounded-2xl border shadow-lg shadow-black/25 backdrop-blur-xl;
+    border-color: color-mix(in oklch, var(--primary) 30%, transparent);
   }
   .text-gradient {
     background: linear-gradient(135deg, var(--accent-violet), var(--accent-cyan));
@@ -186,5 +204,30 @@
     box-shadow:
       0 0 0 1px oklch(1 0 0 / 8%),
       0 8px 30px -12px var(--accent-violet);
+  }
+  .glow-ring-primary {
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--primary) 25%, transparent),
+      0 8px 34px -10px var(--primary);
+  }
+  .glow-ring-cyan {
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--accent-cyan) 25%, transparent),
+      0 8px 34px -10px var(--accent-cyan);
+  }
+  .progress-bar-indeterminate {
+    animation: progress-indeterminate 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes progress-indeterminate {
+  0% {
+    transform: translateX(-100%) scaleX(0.4);
+  }
+  50% {
+    transform: translateX(20%) scaleX(0.6);
+  }
+  100% {
+    transform: translateX(100%) scaleX(0.4);
   }
 }

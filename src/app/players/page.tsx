@@ -1,5 +1,6 @@
-import Link from "next/link";
 import { SectionCard } from "@/components/ui/section-card";
+import { PageHeader } from "@/components/ui/page-header";
+import { RankRow } from "@/components/ui/rank-row";
 import { FadeIn } from "@/components/motion/fade-in";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import { safeQuery } from "@/server/safeQuery";
@@ -11,7 +12,7 @@ export default async function PlayersPage() {
   return (
     <div className="flex flex-col gap-4">
       <FadeIn>
-        <h1 className="text-2xl font-bold tracking-tight">Jogadores</h1>
+        <PageHeader title="👥 Jogadores" subtitle={`${players.length} jogadores monitorados`} />
       </FadeIn>
 
       <FadeIn delay={0.05}>
@@ -23,14 +24,12 @@ export default async function PlayersPage() {
           ) : (
             <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3">
               {players.map((player) => (
-                <Link
+                <RankRow
                   key={player.id}
                   href={`/players/${player.id}`}
-                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-white/5"
-                >
-                  <PlayerAvatar nickname={player.nickname} avatarUrl={player.avatarUrl} />
-                  <span className="truncate text-sm font-medium">{player.nickname}</span>
-                </Link>
+                  icon={<PlayerAvatar nickname={player.nickname} avatarUrl={player.avatarUrl} />}
+                  title={player.nickname}
+                />
               ))}
             </div>
           )}

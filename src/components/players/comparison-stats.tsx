@@ -9,9 +9,9 @@ interface MetricConfig {
 const METRICS_LIST: MetricConfig[] = [
   { key: "rating", label: "Rating Médio", format: (v) => v.toFixed(2) },
   { key: "kd", label: "K/D Ratio", format: (v) => v.toFixed(2) },
-  { key: "adr", label: "ADR Médio", format: (v) => v.toFixed(1) },
-  { key: "kast", label: "KAST %", format: (v) => `${v.toFixed(1)}%` },
-  { key: "hsPercentage", label: "Headshot %", format: (v) => `${v.toFixed(1)}%` },
+  { key: "adr", label: "ADR", format: (v) => v.toFixed(1) },
+  { key: "kast", label: "KAST", format: (v) => `${v.toFixed(1)}%` },
+  { key: "hsPercentage", label: "HS%", format: (v) => `${v.toFixed(1)}%` },
   { key: "impact", label: "Impacto", format: (v) => v.toFixed(2) },
   { key: "winrate", label: "Winrate Geral", format: (v) => `${v.toFixed(1)}%` },
 ];

@@ -30,7 +30,7 @@ export class DeepseekCoachProvider implements CoachProvider {
               {
                 role: "system",
                 content:
-                  "Você é um Coach profissional de CS2. Responda APENAS com o JSON estruturado conforme as instruções, sem tags markdown ou explicações adicionais.",
+                  "Você é um Coach de CS2 com experiência competitiva. Analise dados estatísticos e transforme números em uma avaliação clara, técnica e com personalidade de comunidade brasileira de Counter-Strike. Responda APENAS com o JSON estruturado conforme as instruções, sem tags markdown ou explicações adicionais.",
               },
               { role: "user", content: prompt },
             ],

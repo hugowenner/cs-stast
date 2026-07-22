@@ -32,7 +32,7 @@ export function MatchSummary({
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
       {/* Bloco de Resultado */}
-      <div className={`glass-panel flex flex-col justify-center p-5 border ${outcomeBgClass}`}>
+      <div className={`surface-2 flex flex-col justify-center p-5 border ${outcomeBgClass}`}>
         <span className="text-[10px] font-semibold uppercase tracking-wider opacity-75">
           Resultado do Grupo
         </span>

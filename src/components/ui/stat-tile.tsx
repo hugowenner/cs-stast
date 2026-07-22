@@ -6,11 +6,14 @@ export function StatTile({
   value,
   icon: Icon,
   accent = "violet",
+  context,
 }: {
   label: string;
   value: string | number;
   icon: LucideIcon;
   accent?: "violet" | "cyan";
+  /** Frase curta que complementa o número (ex.: "🔥 Forma consistente"). Nunca substitui o valor. */
+  context?: string;
 }) {
   return (
     <div className="glass-panel flex items-center gap-4 p-5">
@@ -29,6 +32,9 @@ export function StatTile({
           {label}
         </p>
         <p className="text-2xl font-bold tabular-nums">{value}</p>
+        {context && (
+          <p className="text-[11px] text-primary/80 font-medium mt-0.5 truncate">{context}</p>
+        )}
       </div>
     </div>
   );

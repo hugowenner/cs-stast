@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getMatchDetail } from "@/server/services/match.service";
-import { getCoachReport } from "@/server/coach/services/coach.service";
+import { getCoachReport, peekCoachReport } from "@/server/coach/services/coach.service";
 import { buildMatchPrompt } from "@/server/coach/builders/match.builder";
 
 export async function GET(
@@ -17,7 +17,31 @@ export async function GET(
       );
     }
 
-    const report = await getCoachReport(detail, buildMatchPrompt);
+    const status = peekCoachReport(detail, `match:${id}`);
+    return NextResponse.json(status);
+  } catch (err) {
+    return NextResponse.json(
+      { error: `Falha ao verificar análise da partida: ${(err as Error).message}` },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const detail = await getMatchDetail(id);
+    if (!detail) {
+      return NextResponse.json(
+        { error: "Partida não encontrada." },
+        { status: 404 }
+      );
+    }
+
+    const report = await getCoachReport(detail, buildMatchPrompt, `match:${id}`);
     return NextResponse.json(report);
   } catch (err) {
     return NextResponse.json(

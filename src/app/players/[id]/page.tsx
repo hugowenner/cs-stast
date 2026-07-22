@@ -15,6 +15,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { safeQuery } from "@/server/safeQuery";
 import * as playerService from "@/server/services/player.service";
+import { winrateContext, ratingContext, adrContext, kastContext, hsContext } from "@/lib/statContext";
 
 export default async function PlayerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -88,6 +89,7 @@ export default async function PlayerDetailPage({ params }: { params: Promise<{ i
           value={`${overview.winrate}%`}
           icon={Percent}
           accent="violet"
+          context={winrateContext(overview.winrate)}
         />
         <StatTile
           label="K/D Ratio"
@@ -110,28 +112,32 @@ export default async function PlayerDetailPage({ params }: { params: Promise<{ i
       {/* Métricas Avançadas */}
       <FadeIn delay={0.1} className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatTile
-          label="Rating Médio"
+          label="Rating"
           value={overview.ratingAvg.toFixed(2)}
           icon={Trophy}
           accent="violet"
+          context={ratingContext(overview.ratingAvg)}
         />
         <StatTile
-          label="ADR Médio"
+          label="ADR"
           value={overview.adrAvg.toFixed(1)}
           icon={Target}
           accent="cyan"
+          context={adrContext(overview.adrAvg)}
         />
         <StatTile
-          label="KAST Médio"
+          label="KAST"
           value={`${overview.kastAvg.toFixed(1)}%`}
           icon={Percent}
           accent="violet"
+          context={kastContext(overview.kastAvg)}
         />
         <StatTile
-          label="Headshot %"
+          label="HS%"
           value={`${overview.hsPercentage.toFixed(1)}%`}
           icon={Skull}
           accent="cyan"
+          context={hsContext(overview.hsPercentage)}
         />
       </FadeIn>
 

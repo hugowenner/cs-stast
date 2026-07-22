@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { SectionCard } from "@/components/ui/section-card";
+import { PageHeader } from "@/components/ui/page-header";
+import { RankRow } from "@/components/ui/rank-row";
 import { FadeIn } from "@/components/motion/fade-in";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import { safeQuery } from "@/server/safeQuery";
@@ -32,7 +34,7 @@ export default async function RankingsPage({
   return (
     <div className="flex flex-col gap-4">
       <FadeIn>
-        <h1 className="text-2xl font-bold tracking-tight">Rankings</h1>
+        <PageHeader title="🏆 Rankings" subtitle="Liga interna baseada nas últimas partidas sincronizadas" />
       </FadeIn>
 
       <FadeIn delay={0.05} className="flex gap-2">
@@ -53,7 +55,7 @@ export default async function RankingsPage({
       </FadeIn>
 
       <FadeIn delay={0.1}>
-        <SectionCard>
+        <SectionCard variant="highlight">
           {ranking.length === 0 ? (
             <p className="text-muted-foreground py-8 text-center text-sm">
               Sem dados suficientes ainda.
@@ -62,23 +64,24 @@ export default async function RankingsPage({
             <div className="flex flex-col gap-1">
               {ranking.map((entry, index) =>
                 entry.player ? (
-                  <div
+                  <RankRow
                     key={entry.player.id}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2"
-                  >
-                    <span className="text-muted-foreground w-6 text-sm font-semibold">
-                      {index + 1}
-                    </span>
-                    <PlayerAvatar
-                      nickname={entry.player.nickname}
-                      avatarUrl={entry.player.avatarUrl}
-                      size="sm"
-                    />
-                    <span className="flex-1 truncate text-sm font-medium">
-                      {entry.player.nickname}
-                    </span>
-                    <span className="text-sm font-semibold tabular-nums">{entry.value}</span>
-                  </div>
+                    position={index + 1}
+                    podium
+                    icon={
+                      <PlayerAvatar
+                        nickname={entry.player.nickname}
+                        avatarUrl={entry.player.avatarUrl}
+                        size="sm"
+                      />
+                    }
+                    title={entry.player.nickname}
+                    trailing={
+                      <span className="text-sm font-semibold tabular-nums text-white">
+                        {entry.value}
+                      </span>
+                    }
+                  />
                 ) : null,
               )}
             </div>
