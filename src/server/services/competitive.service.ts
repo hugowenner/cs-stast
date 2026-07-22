@@ -111,19 +111,54 @@ export interface HallOfFameRecord {
   detail: string;
 }
 
-export async function getPowerRanking(take = 5): Promise<PowerRankingEntry[]> {
+// ---------------------------------------------------------------------------
+// Dataset compartilhado — carrega jogadores ativos + TODAS as PlayerMatchStats
+// deles (com match+map) em UMA única query, uma única vez. Todas as funções de
+// cálculo abaixo recebem esse dataset em memória em vez de consultar o banco
+// individualmente por jogador. Antes: cada função abaixo fazia 1 findMany por
+// jogador ativo (até 9 funções x 11 jogadores = ~99 queries só nisso, na Dashboard
+// inteira). Agora: 2 queries no total (jogadores + stats), reaproveitadas por tudo.
+// ---------------------------------------------------------------------------
+
+type PlayerRow = { id: string; nickname: string; avatarUrl: string | null };
+
+async function loadCompetitiveDataset() {
   const activePlayers = await prisma.player.findMany({
     where: { trackedPlayer: { active: true } },
   });
 
+  const allStats = await prisma.playerMatchStats.findMany({
+    where: { playerId: { in: activePlayers.map((p) => p.id) } },
+    include: { match: { include: { map: true } } },
+    orderBy: { match: { playedAt: "desc" } },
+  });
+
+  const statsByPlayer = new Map<string, typeof allStats>();
+  for (const p of activePlayers) statsByPlayer.set(p.id, []);
+  for (const s of allStats) {
+    statsByPlayer.get(s.playerId)?.push(s);
+  }
+
+  return { activePlayers, statsByPlayer, allStats };
+}
+
+type CompetitiveDataset = Awaited<ReturnType<typeof loadCompetitiveDataset>>;
+
+function isWin(s: { team: string; match: { scoreTeamA: number; scoreTeamB: number } }): boolean {
+  return (
+    (s.team === "A" && s.match.scoreTeamA > s.match.scoreTeamB) ||
+    (s.team === "B" && s.match.scoreTeamB > s.match.scoreTeamA)
+  );
+}
+
+function getPowerRankingFromDataset(
+  dataset: CompetitiveDataset,
+  take = 5
+): PowerRankingEntry[] {
   const entries: PowerRankingEntry[] = [];
 
-  for (const player of activePlayers) {
-    const stats = await prisma.playerMatchStats.findMany({
-      where: { playerId: player.id },
-      include: { match: true },
-    });
-
+  for (const player of dataset.activePlayers) {
+    const stats = dataset.statsByPlayer.get(player.id) ?? [];
     if (stats.length === 0) continue;
 
     const totalMatches = stats.length;
@@ -133,12 +168,7 @@ export async function getPowerRanking(take = 5): Promise<PowerRankingEntry[]> {
     const avgKast = stats.reduce((sum, s) => sum + s.kast, 0) / totalMatches;
 
     let wins = 0;
-    for (const s of stats) {
-      const won =
-        (s.team === "A" && s.match.scoreTeamA > s.match.scoreTeamB) ||
-        (s.team === "B" && s.match.scoreTeamB > s.match.scoreTeamA);
-      if (won) wins++;
-    }
+    for (const s of stats) if (isWin(s)) wins++;
     const winrate = (wins / totalMatches) * 100;
 
     const ratingScore = Math.min(100, (avgRating / 1.6) * 100);
@@ -162,17 +192,10 @@ export async function getPowerRanking(take = 5): Promise<PowerRankingEntry[]> {
     else if (powerScore >= 50) levelLabel = "Regular 📊";
     else levelLabel = "Em formação 📈";
 
-    const recentStats = [...stats]
-      .sort((a, b) => new Date(b.match.playedAt).getTime() - new Date(a.match.playedAt).getTime())
-      .slice(0, 5);
-
+    // stats já vem ordenado desc por playedAt (dataset), então os 5 primeiros já são os mais recentes.
+    const recentStats = stats.slice(0, 5);
     let recentWins = 0;
-    for (const s of recentStats) {
-      const won =
-        (s.team === "A" && s.match.scoreTeamA > s.match.scoreTeamB) ||
-        (s.team === "B" && s.match.scoreTeamB > s.match.scoreTeamA);
-      if (won) recentWins++;
-    }
+    for (const s of recentStats) if (isWin(s)) recentWins++;
 
     let forma = "❄️";
     if (recentWins === 5) forma = "🔥🔥🔥🔥🔥";
@@ -197,31 +220,22 @@ export async function getPowerRanking(take = 5): Promise<PowerRankingEntry[]> {
   return entries.sort((a, b) => b.powerScore - a.powerScore).slice(0, take);
 }
 
-export async function getPlayerEvolutions(take = 3): Promise<PlayerEvolutionEntry[]> {
-  const activePlayers = await prisma.player.findMany({
-    where: { trackedPlayer: { active: true } },
-  });
-
+function getPlayerEvolutionsFromDataset(
+  dataset: CompetitiveDataset,
+  take = 3
+): PlayerEvolutionEntry[] {
   const entries: PlayerEvolutionEntry[] = [];
 
-  for (const player of activePlayers) {
-    const stats = await prisma.playerMatchStats.findMany({
-      where: { playerId: player.id },
-      include: { match: true },
-    });
-
+  for (const player of dataset.activePlayers) {
+    const stats = dataset.statsByPlayer.get(player.id) ?? [];
     if (stats.length < 5) continue;
 
     const totalMatches = stats.length;
     const seasonRating = stats.reduce((sum, s) => sum + s.rating, 0) / totalMatches;
-
-    const recentStats = [...stats]
-      .sort((a, b) => new Date(b.match.playedAt).getTime() - new Date(a.match.playedAt).getTime())
-      .slice(0, 10);
-
+    const recentStats = stats.slice(0, 10);
     const recentRating = recentStats.reduce((sum, s) => sum + s.rating, 0) / recentStats.length;
 
-    const diffPercent = ((recentRating - seasonRating) / seasonRating) * 100;
+    const diffPercent = seasonRating > 0 ? ((recentRating - seasonRating) / seasonRating) * 100 : 0;
     const trend = diffPercent > 3 ? "up" : diffPercent < -3 ? "down" : "stable";
 
     entries.push({
@@ -236,42 +250,33 @@ export async function getPlayerEvolutions(take = 3): Promise<PlayerEvolutionEntr
   return entries.sort((a, b) => Math.abs(b.diffPercent) - Math.abs(a.diffPercent)).slice(0, take);
 }
 
-export async function getPlayerArchetypes(): Promise<PlayerArchetype[]> {
-  const activePlayers = await prisma.player.findMany({
-    where: { trackedPlayer: { active: true } },
-  });
+function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): PlayerArchetype[] {
+  const rawStatsList: {
+    player: PlayerRow;
+    totalMatches: number;
+    totalKills: number;
+    totalEntryKills: number;
+    totalClutchWins: number;
+    hsRate: number;
+    consistencyRate: number;
+    consistentGames: number;
+  }[] = [];
 
-  const rawStatsList = [];
-
-  for (const player of activePlayers) {
-    const stats = await prisma.playerMatchStats.findMany({
-      where: { playerId: player.id },
-    });
-
+  for (const player of dataset.activePlayers) {
+    const stats = dataset.statsByPlayer.get(player.id) ?? [];
     if (stats.length === 0) continue;
 
     const totalMatches = stats.length;
     const totalKills = stats.reduce((sum, s) => sum + s.kills, 0);
     const totalHeadshots = stats.reduce((sum, s) => sum + s.headshots, 0);
     const totalEntryKills = stats.reduce((sum, s) => sum + s.entryKills, 0);
-    const totalEntryDeaths = stats.reduce((sum, s) => sum + s.entryDeaths, 0);
     const totalClutchWins = stats.reduce(
       (sum, s) =>
-        sum +
-        s.clutch1v1Wins +
-        s.clutch1v2Wins +
-        s.clutch1v3Wins +
-        s.clutch1v4Wins +
-        s.clutch1v5Wins,
+        sum + s.clutch1v1Wins + s.clutch1v2Wins + s.clutch1v3Wins + s.clutch1v4Wins + s.clutch1v5Wins,
       0
     );
 
     const hsRate = totalKills > 0 ? (totalHeadshots / totalKills) * 100 : 0;
-    const entrySuccess =
-      totalEntryKills + totalEntryDeaths > 0
-        ? (totalEntryKills / (totalEntryKills + totalEntryDeaths)) * 100
-        : 0;
-
     const consistentGames = stats.filter((s) => s.rating >= 1.0).length;
     const consistencyRate = (consistentGames / totalMatches) * 100;
 
@@ -279,11 +284,9 @@ export async function getPlayerArchetypes(): Promise<PlayerArchetype[]> {
       player,
       totalMatches,
       totalKills,
-      totalHeadshots,
       totalEntryKills,
       totalClutchWins,
       hsRate,
-      entrySuccess,
       consistencyRate,
       consistentGames,
     });
@@ -304,7 +307,6 @@ export async function getPlayerArchetypes(): Promise<PlayerArchetype[]> {
       metricLabel = "Taxa de HS";
       metricValue = `${item.hsRate.toFixed(1)}% das kills`;
 
-      // Calcular rank na comunidade
       const sorted = [...rawStatsList].sort((a, b) => b.hsRate - a.hsRate);
       const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
       rankText = `${pos}º maior HS% da comunidade`;
@@ -353,24 +355,13 @@ export async function getPlayerArchetypes(): Promise<PlayerArchetype[]> {
   return archetypes;
 }
 
-export async function getJogadorDaSemana(): Promise<JogadorDaSemanaInfo | null> {
-  const activePlayers = await prisma.player.findMany({
-    where: { trackedPlayer: { active: true } },
-  });
-
+function getJogadorDaSemanaFromDataset(dataset: CompetitiveDataset): JogadorDaSemanaInfo | null {
   let bestPlayer: JogadorDaSemanaInfo | null = null;
   let highestRecentRating = 0;
 
-  for (const player of activePlayers) {
-    const stats = await prisma.playerMatchStats.findMany({
-      where: { playerId: player.id },
-      include: { match: true },
-    });
-
-    const recentStats = [...stats]
-      .sort((a, b) => new Date(b.match.playedAt).getTime() - new Date(a.match.playedAt).getTime())
-      .slice(0, 10);
-
+  for (const player of dataset.activePlayers) {
+    const stats = dataset.statsByPlayer.get(player.id) ?? [];
+    const recentStats = stats.slice(0, 10);
     if (recentStats.length < 3) continue;
 
     const recentMatchesCount = recentStats.length;
@@ -380,7 +371,7 @@ export async function getJogadorDaSemana(): Promise<JogadorDaSemanaInfo | null> 
       highestRecentRating = avgRatingRecent;
 
       const seasonRating = stats.reduce((sum, s) => sum + s.rating, 0) / stats.length;
-      const evolution = ((avgRatingRecent - seasonRating) / seasonRating) * 100;
+      const evolution = seasonRating > 0 ? ((avgRatingRecent - seasonRating) / seasonRating) * 100 : 0;
       const evolutionRounded = Math.round(evolution);
 
       let evolutionText = "";
@@ -393,24 +384,14 @@ export async function getJogadorDaSemana(): Promise<JogadorDaSemanaInfo | null> 
       }
 
       let recentWins = 0;
-      for (const s of recentStats) {
-        const won =
-          (s.team === "A" && s.match.scoreTeamA > s.match.scoreTeamB) ||
-          (s.team === "B" && s.match.scoreTeamB > s.match.scoreTeamA);
-        if (won) recentWins++;
-      }
+      for (const s of recentStats) if (isWin(s)) recentWins++;
       const winrateRecent = (recentWins / recentMatchesCount) * 100;
 
       const avgImpact = stats.reduce((sum, s) => sum + s.impact, 0) / stats.length;
       const avgAdr = stats.reduce((sum, s) => sum + s.adr, 0) / stats.length;
       const avgKast = stats.reduce((sum, s) => sum + s.kast, 0) / stats.length;
       let totalWins = 0;
-      for (const s of stats) {
-        const won =
-          (s.team === "A" && s.match.scoreTeamA > s.match.scoreTeamB) ||
-          (s.team === "B" && s.match.scoreTeamB > s.match.scoreTeamA);
-        if (won) totalWins++;
-      }
+      for (const s of stats) if (isWin(s)) totalWins++;
       const winrateSeason = (totalWins / stats.length) * 100;
 
       const ratingScore = Math.min(100, (seasonRating / 1.6) * 100);
@@ -441,28 +422,16 @@ export async function getJogadorDaSemana(): Promise<JogadorDaSemanaInfo | null> 
   return bestPlayer;
 }
 
-export async function getDuoLeaderboard(take = 3): Promise<DuoSummary[]> {
-  const activePlayers = await prisma.player.findMany({
-    where: { trackedPlayer: { active: true } },
-  });
-
-  const playerStatsMap = new Map<string, any[]>();
-  for (const p of activePlayers) {
-    const stats = await prisma.playerMatchStats.findMany({
-      where: { playerId: p.id },
-      include: { match: true },
-    });
-    playerStatsMap.set(p.id, stats);
-  }
-
+function getDuoLeaderboardFromDataset(dataset: CompetitiveDataset, take = 3): DuoSummary[] {
   const duos: DuoSummary[] = [];
+  const { activePlayers, statsByPlayer } = dataset;
 
   for (let i = 0; i < activePlayers.length; i++) {
     for (let j = i + 1; j < activePlayers.length; j++) {
       const pA = activePlayers[i];
       const pB = activePlayers[j];
-      const statsA = playerStatsMap.get(pA.id) || [];
-      const statsB = playerStatsMap.get(pB.id) || [];
+      const statsA = statsByPlayer.get(pA.id) ?? [];
+      const statsB = statsByPlayer.get(pB.id) ?? [];
       const statsBByMatch = new Map(statsB.map((s) => [s.matchId, s]));
 
       let togetherTotal = 0;
@@ -473,10 +442,7 @@ export async function getDuoLeaderboard(take = 3): Promise<DuoSummary[]> {
         const sB = statsBByMatch.get(sA.matchId);
         if (sB && sA.team === sB.team) {
           togetherTotal++;
-          const won =
-            (sA.team === "A" && sA.match.scoreTeamA > sA.match.scoreTeamB) ||
-            (sA.team === "B" && sA.match.scoreTeamB > sA.match.scoreTeamA);
-          if (won) togetherWins++;
+          if (isWin(sA)) togetherWins++;
           ratingSum += (sA.rating + sB.rating) / 2;
         }
       }
@@ -497,27 +463,28 @@ export async function getDuoLeaderboard(take = 3): Promise<DuoSummary[]> {
   return duos.sort((a, b) => b.winrate - a.winrate || b.avgRating - a.avgRating).slice(0, take);
 }
 
-export async function getMapSpecialists(): Promise<MapSpecialist[]> {
-  const maps = await prisma.map.findMany();
+function getMapSpecialistsFromDataset(dataset: CompetitiveDataset): MapSpecialist[] {
+  const byMap = new Map<string, Map<string, { player: PlayerRow; ratings: number[] }>>();
+
+  for (const s of dataset.allStats) {
+    const mapName = s.match.map.name;
+    const player = dataset.activePlayers.find((p) => p.id === s.playerId);
+    if (!player) continue;
+
+    const playerMapStats = byMap.get(mapName) ?? new Map<string, { player: PlayerRow; ratings: number[] }>();
+    const entry = playerMapStats.get(s.playerId) ?? { player, ratings: [] };
+    entry.ratings.push(s.rating);
+    playerMapStats.set(s.playerId, entry);
+    byMap.set(mapName, playerMapStats);
+  }
+
   const specialists: MapSpecialist[] = [];
 
-  for (const map of maps) {
-    const stats = await prisma.playerMatchStats.findMany({
-      where: { match: { mapId: map.id }, player: { trackedPlayer: { active: true } } },
-      include: { player: true },
-    });
-
-    const playerMapStats = new Map<string, { player: any; ratings: number[] }>();
-    for (const s of stats) {
-      const entry = playerMapStats.get(s.playerId) || { player: s.player, ratings: [] };
-      entry.ratings.push(s.rating);
-      playerMapStats.set(s.playerId, entry);
-    }
-
+  for (const [mapName, playerMapStats] of byMap.entries()) {
     let bestRating = 0;
-    let bestPlayer = null;
+    let bestPlayer: PlayerRow | null = null;
 
-    for (const [_, entry] of playerMapStats.entries()) {
+    for (const entry of playerMapStats.values()) {
       if (entry.ratings.length >= 5) {
         const avg = entry.ratings.reduce((sum, r) => sum + r, 0) / entry.ratings.length;
         if (avg > bestRating) {
@@ -529,7 +496,7 @@ export async function getMapSpecialists(): Promise<MapSpecialist[]> {
 
     if (bestPlayer) {
       specialists.push({
-        mapName: map.name,
+        mapName,
         player: { id: bestPlayer.id, nickname: bestPlayer.nickname, avatarUrl: bestPlayer.avatarUrl },
         rating: Number(bestRating.toFixed(2)),
       });
@@ -539,20 +506,12 @@ export async function getMapSpecialists(): Promise<MapSpecialist[]> {
   return specialists;
 }
 
-export async function getPlayerMomentum(take = 3): Promise<PlayerMomentumEntry[]> {
-  const activePlayers = await prisma.player.findMany({
-    where: { trackedPlayer: { active: true } },
-  });
-
+function getPlayerMomentumFromDataset(dataset: CompetitiveDataset, take = 3): PlayerMomentumEntry[] {
   const entries: PlayerMomentumEntry[] = [];
 
-  for (const player of activePlayers) {
-    const stats = await prisma.playerMatchStats.findMany({
-      where: { playerId: player.id },
-      orderBy: { match: { playedAt: "desc" } },
-      include: { match: true },
-    });
-
+  for (const player of dataset.activePlayers) {
+    // stats já vem ordenado desc por playedAt.
+    const stats = dataset.statsByPlayer.get(player.id) ?? [];
     if (stats.length < 10) continue;
 
     const recentWindow = stats.slice(0, 5);
@@ -562,21 +521,11 @@ export async function getPlayerMomentum(take = 3): Promise<PlayerMomentumEntry[]
     const priorRating = priorWindow.reduce((sum, s) => sum + s.rating, 0) / 5;
 
     let recentWins = 0;
-    for (const s of recentWindow) {
-      const won =
-        (s.team === "A" && s.match.scoreTeamA > s.match.scoreTeamB) ||
-        (s.team === "B" && s.match.scoreTeamB > s.match.scoreTeamA);
-      if (won) recentWins++;
-    }
+    for (const s of recentWindow) if (isWin(s)) recentWins++;
     const recentWinrate = (recentWins / 5) * 100;
 
     let priorWins = 0;
-    for (const s of priorWindow) {
-      const won =
-        (s.team === "A" && s.match.scoreTeamA > s.match.scoreTeamB) ||
-        (s.team === "B" && s.match.scoreTeamB > s.match.scoreTeamA);
-      if (won) priorWins++;
-    }
+    for (const s of priorWindow) if (isWin(s)) priorWins++;
     const priorWinrate = (priorWins / 5) * 100;
 
     const diff = recentRating - priorRating;
@@ -613,12 +562,12 @@ export async function getPlayerMomentum(take = 3): Promise<PlayerMomentumEntry[]
   return entries.sort((a, b) => (b.recentRating - b.priorRating) - (a.recentRating - a.priorRating)).slice(0, take);
 }
 
-export async function getDecisivePlayers(take = 3): Promise<DecisivePlayerEntry[]> {
-  const activePlayers = await prisma.player.findMany({
-    where: { trackedPlayer: { active: true } },
-  });
-
-  // Primeiro fazemos um check global se clutches ou tradeKills estão sendo populados no banco
+async function getDecisivePlayersFromDataset(
+  dataset: CompetitiveDataset,
+  take = 3
+): Promise<DecisivePlayerEntry[]> {
+  // Check global (todo o banco, não só jogadores ativos) se clutches/trades estão populados —
+  // mantido como query separada e leve para preservar o escopo original desse sanity-check.
   const aggregateAll = await prisma.playerMatchStats.aggregate({
     _sum: { tradeKills: true, clutch1v1Wins: true, clutch1v2Wins: true },
   });
@@ -628,12 +577,8 @@ export async function getDecisivePlayers(take = 3): Promise<DecisivePlayerEntry[
 
   const entries: DecisivePlayerEntry[] = [];
 
-  for (const player of activePlayers) {
-    const stats = await prisma.playerMatchStats.findMany({
-      where: { playerId: player.id },
-      include: { match: true },
-    });
-
+  for (const player of dataset.activePlayers) {
+    const stats = dataset.statsByPlayer.get(player.id) ?? [];
     if (stats.length === 0) continue;
 
     const totalRounds = stats.reduce((sum, s) => sum + s.match.scoreTeamA + s.match.scoreTeamB, 0);
@@ -643,12 +588,7 @@ export async function getDecisivePlayers(take = 3): Promise<DecisivePlayerEntry[
     const tradeKills = stats.reduce((sum, s) => sum + s.tradeKills, 0);
     const clutchWins = stats.reduce(
       (sum, s) =>
-        sum +
-        s.clutch1v1Wins +
-        s.clutch1v2Wins +
-        s.clutch1v3Wins +
-        s.clutch1v4Wins +
-        s.clutch1v5Wins,
+        sum + s.clutch1v1Wins + s.clutch1v2Wins + s.clutch1v3Wins + s.clutch1v4Wins + s.clutch1v5Wins,
       0
     );
 
@@ -671,19 +611,8 @@ export async function getDecisivePlayers(take = 3): Promise<DecisivePlayerEntry[
   return entries.sort((a, b) => b.impactPercent - a.impactPercent).slice(0, take);
 }
 
-export async function getDominantTrio(): Promise<TrioSummary | null> {
-  const activePlayers = await prisma.player.findMany({
-    where: { trackedPlayer: { active: true } },
-  });
-
-  const playerStatsMap = new Map<string, any[]>();
-  for (const p of activePlayers) {
-    const stats = await prisma.playerMatchStats.findMany({
-      where: { playerId: p.id },
-      include: { match: true },
-    });
-    playerStatsMap.set(p.id, stats);
-  }
+function getDominantTrioFromDataset(dataset: CompetitiveDataset): TrioSummary | null {
+  const { activePlayers, statsByPlayer } = dataset;
 
   let bestTrio: TrioSummary | null = null;
   let bestTrioWinrate = 0;
@@ -696,9 +625,9 @@ export async function getDominantTrio(): Promise<TrioSummary | null> {
         const pB = activePlayers[j];
         const pC = activePlayers[k];
 
-        const statsA = playerStatsMap.get(pA.id) || [];
-        const statsB = playerStatsMap.get(pB.id) || [];
-        const statsC = playerStatsMap.get(pC.id) || [];
+        const statsA = statsByPlayer.get(pA.id) ?? [];
+        const statsB = statsByPlayer.get(pB.id) ?? [];
+        const statsC = statsByPlayer.get(pC.id) ?? [];
 
         const statsBByMatch = new Map(statsB.map((s) => [s.matchId, s]));
         const statsCByMatch = new Map(statsC.map((s) => [s.matchId, s]));
@@ -712,10 +641,7 @@ export async function getDominantTrio(): Promise<TrioSummary | null> {
           const sC = statsCByMatch.get(sA.matchId);
           if (sB && sC && sA.team === sB.team && sA.team === sC.team) {
             togetherTotal++;
-            const won =
-              (sA.team === "A" && sA.match.scoreTeamA > sA.match.scoreTeamB) ||
-              (sA.team === "B" && sA.match.scoreTeamB > sA.match.scoreTeamA);
-            if (won) togetherWins++;
+            if (isWin(sA)) togetherWins++;
             ratingSum += (sA.rating + sB.rating + sC.rating) / 3;
           }
         }
@@ -747,33 +673,12 @@ export async function getDominantTrio(): Promise<TrioSummary | null> {
   return bestTrio;
 }
 
-export async function getPlayerMatchups(): Promise<PlayerMatchupSummary[]> {
-  const activePlayers = await prisma.player.findMany({
-    where: { trackedPlayer: { active: true } },
-  });
-
-  const playerStatsMap = new Map<string, any[]>();
-  for (const p of activePlayers) {
-    const stats = await prisma.playerMatchStats.findMany({
-      where: { playerId: p.id },
-      select: {
-        team: true,
-        match: {
-          select: {
-            id: true,
-            scoreTeamA: true,
-            scoreTeamB: true,
-          },
-        },
-      },
-    });
-    playerStatsMap.set(p.id, stats);
-  }
-
+function getPlayerMatchupsFromDataset(dataset: CompetitiveDataset): PlayerMatchupSummary[] {
+  const { activePlayers, statsByPlayer } = dataset;
   const summaries: PlayerMatchupSummary[] = [];
 
   for (const playerA of activePlayers) {
-    const statsA = playerStatsMap.get(playerA.id) || [];
+    const statsA = statsByPlayer.get(playerA.id) ?? [];
     let bestRival: PlayerMatchupSummary["dominates"] = null;
     let worstRival: PlayerMatchupSummary["struggles"] = null;
     let maxWinrate = -1;
@@ -782,7 +687,7 @@ export async function getPlayerMatchups(): Promise<PlayerMatchupSummary[]> {
     for (const playerB of activePlayers) {
       if (playerA.id === playerB.id) continue;
 
-      const statsB = playerStatsMap.get(playerB.id) || [];
+      const statsB = statsByPlayer.get(playerB.id) ?? [];
       const statsBByMatch = new Map(statsB.map((s) => [s.match.id, s]));
 
       let totalAgainst = 0;
@@ -803,20 +708,12 @@ export async function getPlayerMatchups(): Promise<PlayerMatchupSummary[]> {
 
         if (winrateA > 55 && winrateA > maxWinrate) {
           maxWinrate = winrateA;
-          bestRival = {
-            rivalName: playerB.nickname,
-            total: totalAgainst,
-            wins: winsA,
-          };
+          bestRival = { rivalName: playerB.nickname, total: totalAgainst, wins: winsA };
         }
 
         if (winrateA < 45 && winrateA < minWinrate) {
           minWinrate = winrateA;
-          worstRival = {
-            rivalName: playerB.nickname,
-            total: totalAgainst,
-            wins: winsA,
-          };
+          worstRival = { rivalName: playerB.nickname, total: totalAgainst, wins: winsA };
         }
       }
     }
@@ -831,15 +728,10 @@ export async function getPlayerMatchups(): Promise<PlayerMatchupSummary[]> {
   return summaries;
 }
 
-export async function getWeeklyHighlights(): Promise<WeeklyHighlight[]> {
-  const activePlayers = await prisma.player.findMany({
-    where: { trackedPlayer: { active: true } },
-  });
-
-  // Encontra a data da última partida no banco para simular "hoje"
-  const latestMatch = await prisma.match.findFirst({
-    orderBy: { playedAt: "desc" },
-  });
+async function getWeeklyHighlightsFromDataset(dataset: CompetitiveDataset): Promise<WeeklyHighlight[]> {
+  // Data da última partida entre os jogadores ativos, usada para simular "hoje".
+  // (Preserva o mesmo critério prático do código original: sem partidas ativas, sem destaques.)
+  const latestMatch = dataset.allStats[0]?.match ?? null;
   if (!latestMatch) return [];
 
   const today = new Date(latestMatch.playedAt);
@@ -848,12 +740,8 @@ export async function getWeeklyHighlights(): Promise<WeeklyHighlight[]> {
   const highlights: WeeklyHighlight[] = [];
 
   // 1. Evoluções individuais da semana (last 7 days matches rating vs overall rating)
-  for (const player of activePlayers) {
-    const stats = await prisma.playerMatchStats.findMany({
-      where: { playerId: player.id },
-      include: { match: true },
-    });
-
+  for (const player of dataset.activePlayers) {
+    const stats = dataset.statsByPlayer.get(player.id) ?? [];
     if (stats.length === 0) continue;
 
     const overallRating = stats.reduce((sum, s) => sum + s.rating, 0) / stats.length;
@@ -861,7 +749,7 @@ export async function getWeeklyHighlights(): Promise<WeeklyHighlight[]> {
 
     if (weeklyStats.length >= 2) {
       const weeklyRating = weeklyStats.reduce((sum, s) => sum + s.rating, 0) / weeklyStats.length;
-      const diff = ((weeklyRating - overallRating) / overallRating) * 100;
+      const diff = overallRating > 0 ? ((weeklyRating - overallRating) / overallRating) * 100 : 0;
       if (diff >= 8) {
         highlights.push({
           id: `evo-${player.id}`,
@@ -874,20 +762,13 @@ export async function getWeeklyHighlights(): Promise<WeeklyHighlight[]> {
     }
   }
 
-  // 2. Sequências ativas na semana (win streak)
-  for (const player of activePlayers) {
-    const stats = await prisma.playerMatchStats.findMany({
-      where: { playerId: player.id },
-      orderBy: { match: { playedAt: "asc" } },
-      include: { match: true },
-    });
+  // 2. Sequências ativas na semana (win streak) — stats já ordenado desc, percorremos do mais antigo pro mais novo.
+  for (const player of dataset.activePlayers) {
+    const stats = [...(dataset.statsByPlayer.get(player.id) ?? [])].reverse();
 
     let currentStreak = 0;
     for (const stat of stats) {
-      const won =
-        (stat.team === "A" && stat.match.scoreTeamA > stat.match.scoreTeamB) ||
-        (stat.team === "B" && stat.match.scoreTeamB > stat.match.scoreTeamA);
-      if (won) {
+      if (isWin(stat)) {
         currentStreak++;
       } else {
         currentStreak = 0;
@@ -905,36 +786,33 @@ export async function getWeeklyHighlights(): Promise<WeeklyHighlight[]> {
     }
   }
 
-  // 3. Melhor jogo/kills da semana (kills >= 28)
-  const topWeeklyStats = await prisma.playerMatchStats.findFirst({
-    where: {
-      match: { playedAt: { gte: sevenDaysAgo } },
-      player: { trackedPlayer: { active: true } },
-    },
-    orderBy: { kills: "desc" },
-    include: { player: true, match: { include: { map: true } } },
-  });
+  // 3. Melhor jogo/kills da semana (kills >= 26)
+  const weeklyStatsAll = dataset.allStats.filter((s) => new Date(s.match.playedAt) >= sevenDaysAgo);
+  const topWeeklyStats = [...weeklyStatsAll].sort((a, b) => b.kills - a.kills)[0] ?? null;
+  const topWeeklyPlayer = topWeeklyStats
+    ? dataset.activePlayers.find((p) => p.id === topWeeklyStats.playerId)
+    : null;
 
-  if (topWeeklyStats && topWeeklyStats.kills >= 26) {
+  if (topWeeklyStats && topWeeklyPlayer && topWeeklyStats.kills >= 26) {
     highlights.push({
       id: `record-kills`,
       category: "record",
       title: "🎯 Partida monstruosa",
-      description: `${topWeeklyStats.player.nickname} destruiu no servidor com ${topWeeklyStats.kills} kills na ${topWeeklyStats.match.map.name}.`,
+      description: `${topWeeklyPlayer.nickname} destruiu no servidor com ${topWeeklyStats.kills} kills na ${topWeeklyStats.match.map.name}.`,
       meta: `Rating de ${topWeeklyStats.rating.toFixed(2)}`,
     });
   }
 
-  // 4. Mapa mais jogado na semana
-  const weeklyMatches = await prisma.match.findMany({
-    where: { playedAt: { gte: sevenDaysAgo } },
-    include: { map: true },
-  });
+  // 4. Mapa mais jogado na semana (dedup por matchId, já que cada partida gera N linhas de PlayerMatchStats)
+  const weeklyMatchesById = new Map<string, { mapName: string }>();
+  for (const s of weeklyStatsAll) {
+    weeklyMatchesById.set(s.match.id, { mapName: s.match.map.name });
+  }
 
-  if (weeklyMatches.length >= 2) {
+  if (weeklyMatchesById.size >= 2) {
     const mapCounts = new Map<string, number>();
-    for (const m of weeklyMatches) {
-      mapCounts.set(m.map.name, (mapCounts.get(m.map.name) ?? 0) + 1);
+    for (const m of weeklyMatchesById.values()) {
+      mapCounts.set(m.mapName, (mapCounts.get(m.mapName) ?? 0) + 1);
     }
     const sortedMaps = Array.from(mapCounts.entries()).sort((a, b) => b[1] - a[1]);
     const dominantMap = sortedMaps[0];
@@ -950,7 +828,7 @@ export async function getWeeklyHighlights(): Promise<WeeklyHighlight[]> {
   }
 
   // 5. Líder do ranking mantido
-  const leaderboard = await getPowerRanking(1);
+  const leaderboard = getPowerRankingFromDataset(dataset, 1);
   if (leaderboard[0]) {
     highlights.push({
       id: "weekly-leader",
@@ -964,54 +842,30 @@ export async function getWeeklyHighlights(): Promise<WeeklyHighlight[]> {
   return highlights;
 }
 
-export async function getHallOfFameRecords(): Promise<HallOfFameRecord[]> {
-  const [maxRating, maxKills, maxAdr, maxHs, eloLeader] = await Promise.all([
-    prisma.playerMatchStats.findFirst({
-      orderBy: { rating: "desc" },
-      include: { player: true, match: { include: { map: true } } },
-    }),
-    prisma.playerMatchStats.findFirst({
-      orderBy: { kills: "desc" },
-      include: { player: true, match: { include: { map: true } } },
-    }),
-    prisma.playerMatchStats.findFirst({
-      orderBy: { adr: "desc" },
-      include: { player: true, match: { include: { map: true } } },
-    }),
-    // Maior HS% em jogo com pelo menos 15 kills (para relevância)
-    prisma.playerMatchStats.findFirst({
-      where: { kills: { gte: 15 } },
-      orderBy: { headshots: "desc" }, // pegamos por absoluto ou calculamos
-      include: { player: true, match: { include: { map: true } } },
-    }),
-    // O mais alto ELO atual
-    prisma.playerMatchStats.findFirst({
-      where: { player: { trackedPlayer: { active: true } } },
-      orderBy: { eloAfter: "desc" },
-      include: { player: true },
-    }),
-  ]);
+function getHallOfFameRecordsFromDataset(dataset: CompetitiveDataset): HallOfFameRecord[] {
+  const findBestBy = <K extends "rating" | "kills" | "adr" | "eloAfter">(key: K) => {
+    let best: (typeof dataset.allStats)[number] | null = null;
+    for (const s of dataset.allStats) {
+      if (!best || s[key] > best[key]) best = s;
+    }
+    return best;
+  };
 
-  const activePlayers = await prisma.player.findMany({
-    where: { trackedPlayer: { active: true } },
-  });
+  const maxRating = findBestBy("rating");
+  const maxKills = findBestBy("kills");
+  const maxAdr = findBestBy("adr");
+  const eloLeader = findBestBy("eloAfter");
 
   let maxStreak = 0;
   let maxStreakPlayer = "N/A";
 
-  for (const player of activePlayers) {
-    const stats = await prisma.playerMatchStats.findMany({
-      where: { playerId: player.id },
-      orderBy: { match: { playedAt: "asc" } },
-      include: { match: true },
-    });
+  for (const player of dataset.activePlayers) {
+    // stats já ordenado desc; percorremos do mais antigo pro mais novo pra achar a maior sequência.
+    const stats = [...(dataset.statsByPlayer.get(player.id) ?? [])].reverse();
     let currentStreak = 0;
     let playerMaxStreak = 0;
     for (const stat of stats) {
-      const won =
-        (stat.team === "A" && stat.match.scoreTeamA > stat.match.scoreTeamB) ||
-        (stat.team === "B" && stat.match.scoreTeamB > stat.match.scoreTeamA);
-      if (won) {
+      if (isWin(stat)) {
         currentStreak++;
         if (currentStreak > playerMaxStreak) playerMaxStreak = currentStreak;
       } else {
@@ -1024,12 +878,15 @@ export async function getHallOfFameRecords(): Promise<HallOfFameRecord[]> {
     }
   }
 
+  const playerName = (s: (typeof dataset.allStats)[number] | null) =>
+    dataset.activePlayers.find((p) => p.id === s?.playerId)?.nickname ?? "N/A";
+
   const records: HallOfFameRecord[] = [];
 
   if (maxRating) {
     records.push({
       category: "Recorde de Rating",
-      playerName: maxRating.player.nickname,
+      playerName: playerName(maxRating),
       value: maxRating.rating.toFixed(2),
       detail: `Conquistado na ${maxRating.match.map.name}`,
     });
@@ -1037,7 +894,7 @@ export async function getHallOfFameRecords(): Promise<HallOfFameRecord[]> {
   if (maxKills) {
     records.push({
       category: "Maior Número de Kills",
-      playerName: maxKills.player.nickname,
+      playerName: playerName(maxKills),
       value: `${maxKills.kills} kills`,
       detail: `Partida na ${maxKills.match.map.name}`,
     });
@@ -1045,7 +902,7 @@ export async function getHallOfFameRecords(): Promise<HallOfFameRecord[]> {
   if (maxAdr) {
     records.push({
       category: "Maior ADR em Jogo",
-      playerName: maxAdr.player.nickname,
+      playerName: playerName(maxAdr),
       value: maxAdr.adr.toFixed(1),
       detail: `Dano médio por round na ${maxAdr.match.map.name}`,
     });
@@ -1061,11 +918,53 @@ export async function getHallOfFameRecords(): Promise<HallOfFameRecord[]> {
   if (eloLeader) {
     records.push({
       category: "Pico de ELO Alcançado",
-      playerName: eloLeader.player.nickname,
+      playerName: playerName(eloLeader),
       value: `${eloLeader.eloAfter} ELO`,
       detail: "Mais alta classificação competitiva",
     });
   }
 
   return records;
+}
+
+// ---------------------------------------------------------------------------
+// Bundle único consumido pela Dashboard — 2 queries no total (dentro de
+// loadCompetitiveDataset), todo o resto é cálculo em memória sobre o mesmo dataset.
+// ---------------------------------------------------------------------------
+
+export interface DashboardCompetitiveBundle {
+  powerRanking: PowerRankingEntry[];
+  momentum: PlayerMomentumEntry[];
+  decisive: DecisivePlayerEntry[];
+  archetypes: PlayerArchetype[];
+  matchups: PlayerMatchupSummary[];
+  jogadorDaSemana: JogadorDaSemanaInfo | null;
+  duos: DuoSummary[];
+  dominantTrio: TrioSummary | null;
+  mapSpecialists: MapSpecialist[];
+  weeklyHighlights: WeeklyHighlight[];
+  records: HallOfFameRecord[];
+}
+
+export async function getDashboardCompetitiveBundle(): Promise<DashboardCompetitiveBundle> {
+  const dataset = await loadCompetitiveDataset();
+
+  const [decisive, weeklyHighlights] = await Promise.all([
+    getDecisivePlayersFromDataset(dataset, 3),
+    getWeeklyHighlightsFromDataset(dataset),
+  ]);
+
+  return {
+    powerRanking: getPowerRankingFromDataset(dataset, 5),
+    momentum: getPlayerMomentumFromDataset(dataset, 3),
+    decisive,
+    archetypes: getPlayerArchetypesFromDataset(dataset),
+    matchups: getPlayerMatchupsFromDataset(dataset),
+    jogadorDaSemana: getJogadorDaSemanaFromDataset(dataset),
+    duos: getDuoLeaderboardFromDataset(dataset, 2),
+    dominantTrio: getDominantTrioFromDataset(dataset),
+    mapSpecialists: getMapSpecialistsFromDataset(dataset),
+    weeklyHighlights,
+    records: getHallOfFameRecordsFromDataset(dataset),
+  };
 }

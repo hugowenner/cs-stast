@@ -21,24 +21,28 @@ const SEASON_LABEL = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "nu
   new Date(),
 );
 
+const EMPTY_COMPETITIVE_BUNDLE: competitiveService.DashboardCompetitiveBundle = {
+  powerRanking: [],
+  momentum: [],
+  decisive: [],
+  archetypes: [],
+  matchups: [],
+  jogadorDaSemana: null,
+  duos: [],
+  dominantTrio: null,
+  mapSpecialists: [],
+  weeklyHighlights: [],
+  records: [],
+};
+
 export default async function DashboardPage() {
   const [
     summary,
     recentMatches,
-    powerRanking,
-    momentum,
-    decisive,
-    archetypes,
-    matchups,
-    jogadorDaSemana,
-    duos,
-    dominantTrio,
-    mapSpecialists,
+    competitive,
     mapWinrates,
     recentAchievements,
     topRivalries,
-    weeklyHighlights,
-    records,
   ] = await Promise.all([
     safeQuery(
       () => dashboardService.getDashboardSummary(),
@@ -53,21 +57,27 @@ export default async function DashboardPage() {
       }
     ),
     safeQuery(() => matchService.listRecentMatches(6), []),
-    safeQuery(() => competitiveService.getPowerRanking(5), []),
-    safeQuery(() => competitiveService.getPlayerMomentum(3), []),
-    safeQuery(() => competitiveService.getDecisivePlayers(3), []),
-    safeQuery(() => competitiveService.getPlayerArchetypes(), []),
-    safeQuery(() => competitiveService.getPlayerMatchups(), []),
-    safeQuery(() => competitiveService.getJogadorDaSemana(), null),
-    safeQuery(() => competitiveService.getDuoLeaderboard(2), []),
-    safeQuery(() => competitiveService.getDominantTrio(), null),
-    safeQuery(() => competitiveService.getMapSpecialists(), []),
+    // Consolidado: 1 fetch de dataset (jogadores + todas as stats) reaproveitado por
+    // todos os cálculos abaixo, em vez de cada um consultar o banco separadamente.
+    safeQuery(() => competitiveService.getDashboardCompetitiveBundle(), EMPTY_COMPETITIVE_BUNDLE),
     safeQuery(() => statsService.getMapWinrates(), []),
     safeQuery(() => achievementService.listRecent(6), []),
     safeQuery(() => rivalryService.listTopRivalriesWithH2H(4), []),
-    safeQuery(() => competitiveService.getWeeklyHighlights(), []),
-    safeQuery(() => competitiveService.getHallOfFameRecords(), []),
   ]);
+
+  const {
+    powerRanking,
+    momentum,
+    decisive,
+    archetypes,
+    matchups,
+    jogadorDaSemana,
+    duos,
+    dominantTrio,
+    mapSpecialists,
+    weeklyHighlights,
+    records,
+  } = competitive;
 
   // Identifica melhor e pior mapa
   const sortedMaps = [...mapWinrates].sort((a, b) => b.winrate - a.winrate);

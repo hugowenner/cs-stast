@@ -59,7 +59,16 @@ export function findSessionById(id: string) {
             where: {
               player: trackedPlayerWhere(),
             },
-            include: { player: true },
+            include: {
+              player: {
+                select: {
+                  id: true,
+                  nickname: true,
+                  avatarUrl: true,
+                  trackedPlayer: { select: { active: true } },
+                },
+              },
+            },
           },
         },
         orderBy: { playedAt: "asc" },

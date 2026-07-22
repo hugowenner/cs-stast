@@ -144,8 +144,12 @@ export function findMatchDetailsById(id: string) {
       playerStats: {
         include: {
           player: {
-            include: {
-              trackedPlayer: true,
+            select: {
+              id: true,
+              nickname: true,
+              avatarUrl: true,
+              steamId: true,
+              trackedPlayer: { select: { active: true } },
             },
           },
         },
@@ -153,8 +157,8 @@ export function findMatchDetailsById(id: string) {
       },
       events: {
         include: {
-          player: true,
-          victim: true,
+          player: { select: { nickname: true } },
+          victim: { select: { nickname: true } },
         },
         orderBy: { roundNumber: "asc" },
       },

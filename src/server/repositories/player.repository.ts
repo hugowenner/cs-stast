@@ -41,6 +41,12 @@ export function findPlayerById(id: string) {
   });
 }
 
+export function findPlayersByIds(ids: string[]) {
+  return prisma.player.findMany({
+    where: { id: { in: ids }, ...trackedPlayerWhere() },
+  });
+}
+
 export function findPlayerBySteamId(steamId: string) {
   return prisma.player.findFirst({
     where: {

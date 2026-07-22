@@ -5,8 +5,9 @@ import type { RankingMetric } from "@/server/repositories/playerMatchStats.repos
 export async function getRanking(metric: RankingMetric, take?: number) {
   const rows = await statsRepo.getRankingByMetric(metric, take);
 
-  const players = await Promise.all(rows.map((row) => playerRepo.findPlayerById(row.playerId)));
-  const playerById = new Map(players.filter((p) => p !== null).map((p) => [p.id, p]));
+  // 1 findMany com todos os IDs de uma vez, em vez de 1 findPlayerById por linha do ranking.
+  const players = await playerRepo.findPlayersByIds(rows.map((row) => row.playerId));
+  const playerById = new Map(players.map((p) => [p.id, p]));
 
   return rows.map((row) => {
     const avgValue = (row._avg as Record<string, number | null>)[metric] ?? 0;
@@ -20,8 +21,8 @@ export async function getRanking(metric: RankingMetric, take?: number) {
 
 export async function getEloRanking(take?: number) {
   const rows = await statsRepo.getEloLeaderboard(take);
-  const players = await Promise.all(rows.map((row) => playerRepo.findPlayerById(row.playerId)));
-  const playerById = new Map(players.filter((p) => p !== null).map((p) => [p.id, p]));
+  const players = await playerRepo.findPlayersByIds(rows.map((row) => row.playerId));
+  const playerById = new Map(players.map((p) => [p.id, p]));
 
   return rows.map((row) => ({
     player: playerById.get(row.playerId) ?? null,
