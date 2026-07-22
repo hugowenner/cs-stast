@@ -49,7 +49,7 @@ export interface DuoSummary {
 
 export interface MapSpecialist {
   mapName: string;
-  player: { id: string; nickname: string; avatarUrl: string | null };
+  player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null };
   rating: number;
 }
 
@@ -463,7 +463,7 @@ function getDuoLeaderboardFromDataset(dataset: CompetitiveDataset, take = 3): Du
   return duos.sort((a, b) => b.winrate - a.winrate || b.avgRating - a.avgRating).slice(0, take);
 }
 
-function getMapSpecialistsFromDataset(dataset: CompetitiveDataset): MapSpecialist[] {
+export function getMapSpecialistsFromDataset(dataset: CompetitiveDataset): MapSpecialist[] {
   const byMap = new Map<string, Map<string, { player: PlayerRow; ratings: number[] }>>();
 
   for (const s of dataset.allStats) {
@@ -484,8 +484,12 @@ function getMapSpecialistsFromDataset(dataset: CompetitiveDataset): MapSpecialis
     let bestRating = 0;
     let bestPlayer: PlayerRow | null = null;
 
+    // Calcula o limite mínimo dinamicamente: 3 partidas ou 30% do jogador mais assíduo do mapa
+    const maxGamesOnMap = Math.max(...Array.from(playerMapStats.values()).map((e) => e.ratings.length));
+    const minGames = Math.max(Math.min(3, maxGamesOnMap), Math.round(maxGamesOnMap * 0.3));
+
     for (const entry of playerMapStats.values()) {
-      if (entry.ratings.length >= 5) {
+      if (entry.ratings.length >= minGames) {
         const avg = entry.ratings.reduce((sum, r) => sum + r, 0) / entry.ratings.length;
         if (avg > bestRating) {
           bestRating = avg;
@@ -497,7 +501,12 @@ function getMapSpecialistsFromDataset(dataset: CompetitiveDataset): MapSpecialis
     if (bestPlayer) {
       specialists.push({
         mapName,
-        player: { id: bestPlayer.id, nickname: bestPlayer.nickname, avatarUrl: bestPlayer.avatarUrl },
+        player: {
+          id: bestPlayer.id,
+          nickname: bestPlayer.nickname,
+          avatarUrl: bestPlayer.avatarUrl,
+          levelGc: bestPlayer.levelGc,
+        },
         rating: Number(bestRating.toFixed(2)),
       });
     }

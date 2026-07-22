@@ -645,6 +645,11 @@ export default async function DashboardPage() {
                           size="sm"
                         />
                         <span className="font-bold text-white text-[11px]">{ms.player.nickname}</span>
+                        {ms.player.levelGc !== null && ms.player.levelGc !== undefined && (
+                          <span className="text-[8px] font-black px-1.5 py-0.5 bg-primary/10 border border-primary/20 rounded text-primary inline-block">
+                            LVL {ms.player.levelGc}
+                          </span>
+                        )}
                         <span className="text-[10px] font-semibold text-accent-violet">({ms.rating.toFixed(2)})</span>
                       </div>
                     </div>
