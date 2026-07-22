@@ -49,6 +49,8 @@ next-env.d.ts
 /prisma/schema.sqlite.prisma
 /prisma/dev.db
 /prisma/dev.db-journal
+/prisma/*.db
+/prisma/*.db-journal
 
 # cache local (ex.: respostas do Coach AI) — dados gerados, nunca versionado
 /tmp
