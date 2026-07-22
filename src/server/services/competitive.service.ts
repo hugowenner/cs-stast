@@ -308,15 +308,18 @@ export async function getPlayerArchetypes(): Promise<PlayerArchetype[]> {
       const sorted = [...rawStatsList].sort((a, b) => b.hsRate - a.hsRate);
       const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
       rankText = `${pos}º maior HS% da comunidade`;
-    } else if (item.entrySuccess >= 53 && item.totalEntryKills > 8) {
+    } else if (item.totalEntryKills > 8) {
+      // Nota: "entryDeaths" não é populado pelo pipeline de sync atual (sempre 0),
+      // então não há denominador real para calcular uma taxa de sucesso de entry.
+      // Exibimos apenas a contagem bruta de opening kills — nunca uma % fabricada.
       archetype = "entry";
       label = "⚔️ Entry King";
-      metricLabel = "Aproveitamento de Entradas";
-      metricValue = `${item.entrySuccess.toFixed(1)}% (${item.totalEntryKills} kills)`;
+      metricLabel = "Opening Kills";
+      metricValue = `${item.totalEntryKills} kills de abertura`;
 
-      const sorted = [...rawStatsList].sort((a, b) => b.entrySuccess - a.entrySuccess);
+      const sorted = [...rawStatsList].sort((a, b) => b.totalEntryKills - a.totalEntryKills);
       const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
-      rankText = `${pos}º em eficiência de entry`;
+      rankText = `${pos}º em opening kills`;
     } else if (item.totalClutchWins >= 5) {
       archetype = "clutch";
       label = "🧊 Clutch Master";
@@ -478,7 +481,7 @@ export async function getDuoLeaderboard(take = 3): Promise<DuoSummary[]> {
         }
       }
 
-      if (togetherTotal >= 3) {
+      if (togetherTotal >= 6) {
         duos.push({
           playerA: { id: pA.id, nickname: pA.nickname, avatarUrl: pA.avatarUrl },
           playerB: { id: pB.id, nickname: pB.nickname, avatarUrl: pB.avatarUrl },
@@ -515,7 +518,7 @@ export async function getMapSpecialists(): Promise<MapSpecialist[]> {
     let bestPlayer = null;
 
     for (const [_, entry] of playerMapStats.entries()) {
-      if (entry.ratings.length >= 2) {
+      if (entry.ratings.length >= 5) {
         const avg = entry.ratings.reduce((sum, r) => sum + r, 0) / entry.ratings.length;
         if (avg > bestRating) {
           bestRating = avg;
@@ -650,7 +653,10 @@ export async function getDecisivePlayers(take = 3): Promise<DecisivePlayerEntry[
     );
 
     const impactedRounds = entryKills + (hideTradesAndClutches ? 0 : tradeKills + clutchWins);
-    const impactPercent = (impactedRounds / totalRounds) * 100;
+    // Entry/trade/clutch não são mutuamente exclusivos por round (podem ocorrer no
+    // mesmo round), então a soma pode superar totalRounds — sem o cap, o percentual
+    // exibido poderia passar de 100%, o que não faz sentido para o usuário.
+    const impactPercent = Math.min(100, (impactedRounds / totalRounds) * 100);
 
     entries.push({
       player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl },
@@ -714,7 +720,7 @@ export async function getDominantTrio(): Promise<TrioSummary | null> {
           }
         }
 
-        if (togetherTotal >= 3) {
+        if (togetherTotal >= 5) {
           const winrate = (togetherWins / togetherTotal) * 100;
           const avgRating = ratingSum / togetherTotal;
 

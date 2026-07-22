@@ -19,7 +19,6 @@ export async function getDashboardSummary() {
 
   // Aritmética comunitária
   const totalKills = allStats.reduce((sum, s) => sum + s.kills, 0);
-  const totalDeaths = allStats.reduce((sum, s) => sum + s.deaths, 0);
   const totalHeadshots = allStats.reduce((sum, s) => sum + s.headshots, 0);
   const avgKills = allStats.length > 0 ? totalKills / allStats.length : 0;
   const avgHsPercent = totalKills > 0 ? (totalHeadshots / totalKills) * 100 : 0;
@@ -52,90 +51,22 @@ export async function getDashboardSummary() {
     }
   }
 
-  // Melhor jogador
-  const leaderboard = await statsService.getRanking("rating", 1);
-  const bestPlayer = leaderboard[0] && leaderboard[0].player
+  // Melhor jogador — piso mínimo de partidas para não eleger MVP com amostra pequena
+  const MIN_MATCHES_FOR_MVP = 10;
+  const ratingLeaderboard = await statsService.getRanking("rating", 50);
+  const bestPlayerEntry = ratingLeaderboard.find(
+    (entry) => entry.player && entry.matchesPlayed >= MIN_MATCHES_FOR_MVP,
+  );
+  const bestPlayer = bestPlayerEntry?.player
     ? {
-        nickname: leaderboard[0].player.nickname,
-        rating: leaderboard[0].value,
+        nickname: bestPlayerEntry.player.nickname,
+        rating: bestPlayerEntry.value,
       }
     : null;
 
-  // Destaques da Temporada (Recordes)
-  const maxKillsRow = await prisma.playerMatchStats.findFirst({
-    where: { player: { trackedPlayer: { active: true } } },
-    orderBy: { kills: "desc" },
-    include: { player: true, match: { include: { map: true } } },
-  });
-  const recordKills = maxKillsRow
-    ? {
-        player: maxKillsRow.player.nickname,
-        value: maxKillsRow.kills,
-        mapName: maxKillsRow.match.map.name,
-      }
-    : null;
-
-  const maxClutchRow = await prisma.playerMatchStats.findFirst({
-    where: {
-      OR: [
-        { clutch1v5Wins: { gt: 0 } },
-        { clutch1v4Wins: { gt: 0 } },
-        { clutch1v3Wins: { gt: 0 } },
-      ],
-      player: { trackedPlayer: { active: true } },
-    },
-    orderBy: [{ clutch1v5Wins: "desc" }, { clutch1v4Wins: "desc" }, { clutch1v3Wins: "desc" }],
-    include: { player: true, match: { include: { map: true } } },
-  });
-  let recordClutch = null;
-  if (maxClutchRow) {
-    let type = "1v3";
-    if (maxClutchRow.clutch1v5Wins > 0) type = "1v5";
-    else if (maxClutchRow.clutch1v4Wins > 0) type = "1v4";
-    recordClutch = {
-      player: maxClutchRow.player.nickname,
-      type,
-      mapName: maxClutchRow.match.map.name,
-    };
-  }
-
-  // Maior sequência de vitórias consecutivas (Win Streak)
-  const activePlayers = await prisma.player.findMany({
-    where: { trackedPlayer: { active: true } },
-  });
-  let maxStreak = 0;
-  let maxStreakPlayer = "";
-  for (const player of activePlayers) {
-    const stats = await prisma.playerMatchStats.findMany({
-      where: { playerId: player.id },
-      orderBy: { match: { playedAt: "asc" } },
-      include: { match: true },
-    });
-    let currentStreak = 0;
-    let playerMaxStreak = 0;
-    for (const stat of stats) {
-      const won =
-        (stat.team === "A" && stat.match.scoreTeamA > stat.match.scoreTeamB) ||
-        (stat.team === "B" && stat.match.scoreTeamB > stat.match.scoreTeamA);
-      if (won) {
-        currentStreak++;
-        if (currentStreak > playerMaxStreak) playerMaxStreak = currentStreak;
-      } else {
-        currentStreak = 0;
-      }
-    }
-    if (playerMaxStreak > maxStreak) {
-      maxStreak = playerMaxStreak;
-      maxStreakPlayer = player.nickname;
-    }
-  }
-  const recordStreak =
-    maxStreak > 0
-      ? {
-          player: maxStreakPlayer,
-          value: maxStreak,
-        }
-      : null;
+  // Nota: recordes individuais (maior kills/clutch/streak) não são recalculados aqui —
+  // esse resultado nunca era exibido na Dashboard; getHallOfFameRecords() (competitive.service.ts)
+  // já calcula os mesmos recordes de forma independente e é o que realmente é renderizado.
 
   return {
     totalMatches,
@@ -150,10 +81,5 @@ export async function getDashboardSummary() {
     },
     dominantMap,
     bestPlayer,
-    highlights: {
-      streak: recordStreak,
-      kills: recordKills,
-      clutch: recordClutch,
-    },
   };
 }

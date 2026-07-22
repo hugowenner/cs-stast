@@ -50,7 +50,6 @@ export default async function DashboardPage() {
         community: { avgWinrate: 0, avgKills: 0, avgHsPercent: 0, totalRounds: 0 },
         dominantMap: null,
         bestPlayer: null,
-        highlights: { streak: null, kills: null, clutch: null },
       }
     ),
     safeQuery(() => matchService.listRecentMatches(6), []),
