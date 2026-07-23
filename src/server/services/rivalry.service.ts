@@ -14,6 +14,10 @@ export interface RivalryH2HSummary {
   winsA: number;
   winsB: number;
   winrateA: number;
+  /** K/D ratio médio de playerA nos confrontos diretos (kills / max(deaths, 1)) */
+  avgKdA: number | null;
+  /** K/D ratio médio de playerB nos confrontos diretos */
+  avgKdB: number | null;
   lastMatch: {
     id: string;
     mapName: string;
@@ -23,11 +27,10 @@ export interface RivalryH2HSummary {
 }
 
 /**
- * Confronto direto (V/D/winrate) calculado a partir dos resultados reais de partida —
- * mesma fonte usada na comparação de jogadores (já validada). Evita depender dos contadores
- * de killsAOnB/killsBOnA do Rivalry, que hoje não são populados corretamente pelo sync.
+ * Confronto direto (V/D/winrate/KD) calculado a partir dos resultados reais de partida —
+ * mesma fonte usada na comparação de jogadores (já validada).
  */
-export async function listTopRivalriesWithH2H(take = 5): Promise<RivalryH2HSummary[]> {
+export async function listTopRivalriesWithH2H(take = 10): Promise<RivalryH2HSummary[]> {
   const candidates = await rivalryRepo.listTopRivalries(take * 2);
 
   const summaries = await Promise.all(
@@ -41,7 +44,7 @@ export async function listTopRivalriesWithH2H(take = 5): Promise<RivalryH2HSumma
       const winsB = h2h.against.wins[r.playerBId] ?? 0;
       const total = h2h.against.total;
 
-      // Localiza o último confronto direto (quando jogaram em times opostos)
+      // Partidas de confronto direto (times opostos), ordenadas da mais recente
       const matchesBMap = new Map(outcomesB.map((o) => [o.match.id, o]));
       const againstMatches = outcomesA
         .filter((oa) => {
@@ -50,6 +53,7 @@ export async function listTopRivalriesWithH2H(take = 5): Promise<RivalryH2HSumma
         })
         .sort((a, b) => new Date(b.match.playedAt).getTime() - new Date(a.match.playedAt).getTime());
 
+      // Último confronto
       const lastMatch = againstMatches[0]?.match ?? null;
       let lastMatchDetail = null;
 
@@ -67,6 +71,29 @@ export async function listTopRivalriesWithH2H(take = 5): Promise<RivalryH2HSumma
         }
       }
 
+      // K/D médio nos confrontos diretos
+      let avgKdA: number | null = null;
+      let avgKdB: number | null = null;
+
+      if (againstMatches.length > 0) {
+        const matchIdsAgainst = new Set(againstMatches.map((m) => m.match.id));
+
+        const statsAInAgainst = outcomesA.filter((o) => matchIdsAgainst.has(o.match.id));
+        const statsBInAgainst = outcomesB.filter((o) => matchIdsAgainst.has(o.match.id));
+
+        if (statsAInAgainst.length > 0) {
+          const totalKillsA = statsAInAgainst.reduce((s, o) => s + (o.kills ?? 0), 0);
+          const totalDeathsA = statsAInAgainst.reduce((s, o) => s + (o.deaths ?? 0), 0);
+          avgKdA = totalDeathsA > 0 ? Math.round((totalKillsA / totalDeathsA) * 100) / 100 : null;
+        }
+
+        if (statsBInAgainst.length > 0) {
+          const totalKillsB = statsBInAgainst.reduce((s, o) => s + (o.kills ?? 0), 0);
+          const totalDeathsB = statsBInAgainst.reduce((s, o) => s + (o.deaths ?? 0), 0);
+          avgKdB = totalDeathsB > 0 ? Math.round((totalKillsB / totalDeathsB) * 100) / 100 : null;
+        }
+      }
+
       return {
         id: r.id,
         playerA: { id: r.playerA.id, nickname: r.playerA.nickname, avatarUrl: r.playerA.avatarUrl },
@@ -75,10 +102,15 @@ export async function listTopRivalriesWithH2H(take = 5): Promise<RivalryH2HSumma
         winsA,
         winsB,
         winrateA: total > 0 ? Math.round((winsA / total) * 100) : 0,
+        avgKdA,
+        avgKdB,
         lastMatch: lastMatchDetail,
       };
     })
   );
 
-  return summaries.filter((s) => s.matchesAgainst > 0).slice(0, take);
+  return summaries
+    .filter((s) => s.matchesAgainst > 0)
+    .sort((a, b) => b.matchesAgainst - a.matchesAgainst)
+    .slice(0, take);
 }

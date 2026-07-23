@@ -135,6 +135,8 @@ export function getPlayerMatchOutcomes(playerId: string) {
       team: true,
       rating: true,
       eloAfter: true,
+      kills: true,
+      deaths: true,
       match: {
         select: {
           id: true,
