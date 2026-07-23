@@ -49,6 +49,7 @@ export function listRecentMatches(take = 20) {
           player: trackedPlayerWhere(),
         },
         include: { player: true },
+        orderBy: { rating: "desc" },
       },
     },
   });

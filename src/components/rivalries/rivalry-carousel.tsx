@@ -172,8 +172,55 @@ export function RivalryCarousel({ rivalries }: Props) {
                 </div>
               </div>
 
-              {/* Footer */}
-              <div className="px-4 pb-4 pt-2.5 flex items-end justify-between gap-2 border-t border-white/[0.04] mt-2.5">
+              {/* Tabela compacta: stats comparativos */}
+              {(rivalry.avgKdA !== null || rivalry.avgKdB !== null || rivalry.lastMatch) && (
+                <div className="mx-4 mt-3 mb-0 rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
+                  {/* Header da tabela */}
+                  <div className="grid grid-cols-[1fr_auto_1fr] border-b border-white/[0.05]">
+                    <span className="px-2.5 py-1.5 text-[8px] uppercase tracking-widest font-bold text-muted-foreground/55 truncate">{rivalry.playerA.nickname}</span>
+                    <span className="px-2 py-1.5 text-[8px] uppercase tracking-widest font-bold text-muted-foreground/30 text-center">—</span>
+                    <span className="px-2.5 py-1.5 text-[8px] uppercase tracking-widest font-bold text-muted-foreground/55 text-right truncate">{rivalry.playerB.nickname}</span>
+                  </div>
+
+                  {/* Linha: K/D médio */}
+                  {(rivalry.avgKdA !== null || rivalry.avgKdB !== null) && (
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center border-b border-white/[0.04]">
+                      <span className="px-2.5 py-1.5 text-[10px] font-black text-white/80 tabular-nums">{rivalry.avgKdA?.toFixed(2) ?? "—"}</span>
+                      <span className="px-2 py-1.5 text-[8px] text-muted-foreground/45 font-bold uppercase tracking-widest text-center whitespace-nowrap">KD médio</span>
+                      <span className="px-2.5 py-1.5 text-[10px] font-black text-white/80 tabular-nums text-right">{rivalry.avgKdB?.toFixed(2) ?? "—"}</span>
+                    </div>
+                  )}
+
+                  {/* Linha: último confronto K/D */}
+                  {rivalry.lastMatch?.statsA && (
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center border-b border-white/[0.04]">
+                      <span className="px-2.5 py-1.5 text-[10px] font-black text-white/80 tabular-nums">
+                        {rivalry.lastMatch.statsA.kd.toFixed(2)}
+                      </span>
+                      <span className="px-2 py-1.5 text-[8px] text-muted-foreground/45 font-bold uppercase tracking-widest text-center whitespace-nowrap">KD último</span>
+                      <span className="px-2.5 py-1.5 text-[10px] font-black text-white/80 tabular-nums text-right">
+                        {rivalry.lastMatch.statsB?.kd.toFixed(2) ?? "—"}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Linha: kills/deaths do último confronto */}
+                  {rivalry.lastMatch?.statsA && (
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center">
+                      <span className="px-2.5 py-1.5 text-[9px] text-muted-foreground/65 tabular-nums font-semibold">
+                        {rivalry.lastMatch.statsA.kills}/{rivalry.lastMatch.statsA.deaths}
+                      </span>
+                      <span className="px-2 py-1.5 text-[8px] text-muted-foreground/35 font-bold uppercase tracking-widest text-center whitespace-nowrap">K/D</span>
+                      <span className="px-2.5 py-1.5 text-[9px] text-muted-foreground/65 tabular-nums font-semibold text-right">
+                        {rivalry.lastMatch.statsB ? `${rivalry.lastMatch.statsB.kills}/${rivalry.lastMatch.statsB.deaths}` : "—"}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Footer: narrativa + mapa do último confronto */}
+              <div className="px-4 pb-4 pt-3 flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   {leader ? (
                     <p className="text-[10px] text-muted-foreground/70 leading-relaxed">
@@ -186,12 +233,8 @@ export function RivalryCarousel({ rivalries }: Props) {
                 </div>
                 {rivalry.lastMatch && (
                   <div className="text-right shrink-0">
-                    <p className="text-[9px] text-muted-foreground/60">
-                      Último: <span className="capitalize text-white/80">{rivalry.lastMatch.mapName}</span>
-                    </p>
-                    <p className="text-[9px] font-bold text-white/70 tabular-nums">
-                      {rivalry.lastMatch.scoreA}–{rivalry.lastMatch.scoreB}
-                    </p>
+                    <p className="text-[9px] text-muted-foreground/60 capitalize">{rivalry.lastMatch.mapName}</p>
+                    <p className="text-[9px] font-black text-white/75 tabular-nums">{rivalry.lastMatch.scoreA}–{rivalry.lastMatch.scoreB}</p>
                   </div>
                 )}
               </div>

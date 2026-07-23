@@ -14,15 +14,21 @@ export interface RivalryH2HSummary {
   winsA: number;
   winsB: number;
   winrateA: number;
-  /** K/D ratio médio de playerA nos confrontos diretos (kills / max(deaths, 1)) */
+  /** K/D ratio médio de playerA nos confrontos diretos */
   avgKdA: number | null;
   /** K/D ratio médio de playerB nos confrontos diretos */
   avgKdB: number | null;
   lastMatch: {
     id: string;
     mapName: string;
+    /** Placar do time de playerA */
     scoreA: number;
+    /** Placar do time de playerB */
     scoreB: number;
+    /** Stats de playerA nessa partida */
+    statsA: { kills: number; deaths: number; kd: number } | null;
+    /** Stats de playerB nessa partida */
+    statsB: { kills: number; deaths: number; kd: number } | null;
   } | null;
 }
 
@@ -59,14 +65,24 @@ export async function listTopRivalriesWithH2H(take = 10): Promise<RivalryH2HSumm
 
       if (lastMatch) {
         const statA = outcomesA.find((o) => o.match.id === lastMatch.id);
+        const statB = outcomesB.find((o) => o.match.id === lastMatch.id);
         if (statA) {
           const scoreA = statA.team === "A" ? lastMatch.scoreTeamA : lastMatch.scoreTeamB;
           const scoreB = statA.team === "A" ? lastMatch.scoreTeamB : lastMatch.scoreTeamA;
+
+          const buildStats = (o: typeof statA) => {
+            const k = o.kills ?? 0;
+            const d = o.deaths ?? 0;
+            return { kills: k, deaths: d, kd: d > 0 ? Math.round((k / d) * 100) / 100 : k };
+          };
+
           lastMatchDetail = {
             id: lastMatch.id,
             mapName: lastMatch.map.name,
             scoreA,
             scoreB,
+            statsA: buildStats(statA),
+            statsB: statB ? buildStats(statB) : null,
           };
         }
       }

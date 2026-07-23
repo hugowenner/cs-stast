@@ -116,42 +116,69 @@
 }
 
 .dark {
-  --background: oklch(0.13 0.004 260);
+  /* ── Page background: charcoal blue-gray, não preto ─────────────────────────
+     L 0.178 ≈ #1d1f27. Referência: Raycast (L≈0.18), Linear (L≈0.17).
+     Cada camada de superfície sobe ~4-5 pts de lightness, criando hierarquia
+     visual clara sem precisar de sombras fortes.                              */
+  --background: oklch(0.178 0.006 258);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.18 0.005 260 / 0.6);
+
+  /* ── Camadas de superfície ───────────────────────────────────────────────── */
+  /* L1 — glass-panel / cards: +4.7 pts sobre bg */
+  --card: oklch(0.222 0.007 260 / 0.70);
   --card-foreground: oklch(0.985 0 0);
-  /* Camadas de superfície: cada nível sobe ~4-5 pontos de lightness sobre o fundo,
-     dando contraste real entre background/card/destaque em vez de tudo "flutuando no preto". */
-  --surface-1: oklch(0.20 0.006 260 / 0.78);
-  --surface-2: oklch(0.245 0.008 260 / 0.82);
-  --surface-highlight: oklch(0.22 0.025 288 / 0.55);
-  --popover: oklch(0.19 0.016 285);
+  --surface-1: oklch(0.225 0.008 260 / 0.82);
+  /* L2 — cards secundários, painéis aninhados: +4.5 pts sobre surface-1 */
+  --surface-2: oklch(0.270 0.009 260 / 0.85);
+  /* L3 — highlight com toque violeta para CTAs e seleção */
+  --surface-highlight: oklch(0.255 0.030 285 / 0.60);
+
+  /* ── Popovers / menus (sólidos — backdrop-blur não funciona em dropdowns) ── */
+  --popover: oklch(0.220 0.018 285);
   --popover-foreground: oklch(0.985 0 0);
+
+  /* ── Primary / accent ────────────────────────────────────────────────────── */
   --primary: oklch(0.62 0.19 288);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.24 0.02 285);
+  --secondary: oklch(0.268 0.022 285);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.24 0.02 285);
-  --muted-foreground: oklch(0.708 0.02 285);
-  --accent: oklch(0.26 0.03 285);
+
+  /* ── Muted ───────────────────────────────────────────────────────────────── */
+  --muted: oklch(0.268 0.022 285);
+  /* muted-foreground levemente mais claro que antes (mantém ratio 4.5:1 no charcoal) */
+  --muted-foreground: oklch(0.720 0.020 285);
+
+  /* ── Accent ──────────────────────────────────────────────────────────────── */
+  --accent: oklch(0.285 0.028 285);
   --accent-foreground: oklch(0.985 0 0);
+
+  /* ── Feedback ────────────────────────────────────────────────────────────── */
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
+
+  /* ── Bordas / inputs ─────────────────────────────────────────────────────── */
+  /* Bordas 11% em vez de 10%: fundo mais claro pede definição ligeiramente maior */
+  --border: oklch(1 0 0 / 11%);
+  --input: oklch(1 0 0 / 14%);
   --ring: oklch(0.62 0.19 288);
+
+  /* ── Charts ──────────────────────────────────────────────────────────────── */
   --chart-1: #3987e5;
   --chart-2: #199e70;
   --chart-3: #c98500;
   --chart-4: #9085e9;
   --chart-5: #d95926;
-  --sidebar: oklch(0.15 0.014 285);
+
+  /* ── Sidebar: fica ~3 pts abaixo do bg para recuar visualmente ──────────── */
+  --sidebar: oklch(0.148 0.012 285);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.62 0.19 288);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.24 0.02 285);
+  --sidebar-accent: oklch(0.265 0.022 285);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.62 0.19 288);
+
+  /* ── Brand / série / status ──────────────────────────────────────────────── */
   --accent-violet: #9085e9;
   --accent-cyan: #22c3e6;
   --series-1: #3987e5;
@@ -162,9 +189,11 @@
   --series-6: #e66767;
   --series-7: #d55181;
   --series-8: #d95926;
-  --status-good: #0ca30c;
+  /* Status ligeiramente mais saturados: fundo charcoal é mais neutro que preto,
+     cores puras destacam melhor contra cinza do que contra quase-preto */
+  --status-good: #16a716;
   --status-warning: #fab219;
-  --status-critical: #d03b3b;
+  --status-critical: #d44040;
 }
 
 @layer base {
@@ -173,9 +202,11 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Alpha reduzido (0.35→0.22, 0.25→0.16): fundo charcoal amplifica
+       as cores do gradiente mais que o preto anterior. */
     background-image:
-      radial-gradient(ellipse 80% 50% at 20% -10%, oklch(0.35 0.1 288 / 0.35), transparent),
-      radial-gradient(ellipse 60% 40% at 100% 0%, oklch(0.3 0.08 200 / 0.25), transparent);
+      radial-gradient(ellipse 80% 50% at 20% -10%, oklch(0.42 0.10 288 / 0.22), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 0%, oklch(0.37 0.08 200 / 0.16), transparent);
     background-attachment: fixed;
   }
   html {
@@ -192,10 +223,11 @@
     display: none;
   }
   .glass-panel {
-    @apply bg-surface-1 rounded-2xl border border-white/10 shadow-lg shadow-black/20 backdrop-blur-xl;
+    /* shadow-black/30: fundo charcoal é mais neutro, sombra mais forte mantém profundidade */
+    @apply bg-surface-1 rounded-2xl border border-white/[0.11] shadow-lg shadow-black/30 backdrop-blur-xl;
   }
   .surface-2 {
-    @apply bg-surface-2 rounded-2xl border border-white/12 shadow-lg shadow-black/25 backdrop-blur-xl;
+    @apply bg-surface-2 rounded-2xl border border-white/[0.13] shadow-lg shadow-black/30 backdrop-blur-xl;
   }
   .surface-highlight {
     @apply bg-surface-highlight rounded-2xl border shadow-lg shadow-black/25 backdrop-blur-xl;
