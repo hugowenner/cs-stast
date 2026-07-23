@@ -99,3 +99,32 @@ export function linkTrackedPlayer(gamersClubId: string, playerId: string) {
     },
   });
 }
+
+/**
+ * Varre todos os TrackedPlayers sem playerId e tenta vinculá-los a um Player
+ * existente pelo gamersClubId. Útil quando o seed foi executado depois das partidas.
+ * Retorna o número de registros vinculados.
+ */
+export async function repairTrackedPlayerLinks(): Promise<number> {
+  const unlinked = await prisma.trackedPlayer.findMany({
+    where: { playerId: null, active: true },
+    select: { id: true, gamersClubId: true },
+  });
+
+  let fixed = 0;
+  for (const tp of unlinked) {
+    const player = await prisma.player.findFirst({
+      where: { gamersClubId: tp.gamersClubId },
+      select: { id: true },
+    });
+    if (!player) continue;
+
+    await prisma.trackedPlayer.update({
+      where: { id: tp.id },
+      data: { playerId: player.id },
+    });
+    fixed++;
+  }
+
+  return fixed;
+}
