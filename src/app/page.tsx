@@ -17,6 +17,8 @@ import * as rivalryService from "@/server/services/rivalry.service";
 import Link from "next/link";
 import { Trophy, TrendingUp, ShieldAlert, Flame, ArrowRight, TrendingDown, Minus, Calendar, Target, ExternalLink } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 const SEASON_LABEL = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(
   new Date(),
 );
