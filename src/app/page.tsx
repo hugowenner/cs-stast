@@ -123,7 +123,7 @@ export default async function DashboardPage() {
                 <div className="glass-panel rounded-xl border border-status-good/20 bg-status-good/[0.03] px-4 py-3.5 flex items-center gap-3">
                   <Zap className="size-4 text-status-good shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-[9px] uppercase tracking-widest font-bold text-status-good/80">Quem está evoluindo</p>
+                    <p className="text-[9px] uppercase tracking-widest font-bold text-status-good/80">Evolução Recente</p>
                     <p className="text-sm font-black text-white truncate mt-0.5">{hottestPlayer.player.nickname}</p>
                     <p className="text-[10px] text-muted-foreground/70 mt-0.5">{hottestPlayer.ratingChangeText} recente</p>
                   </div>
@@ -133,7 +133,7 @@ export default async function DashboardPage() {
                 <div className="glass-panel rounded-xl border border-status-critical/20 bg-status-critical/[0.03] px-4 py-3.5 flex items-center gap-3">
                   <TrendingDown className="size-4 text-status-critical shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-[9px] uppercase tracking-widest font-bold text-status-critical/80">Quem caiu de nível</p>
+                    <p className="text-[9px] uppercase tracking-widest font-bold text-status-critical/80">Queda de Rendimento</p>
                     <p className="text-sm font-black text-white truncate mt-0.5">{coldestPlayer.player.nickname}</p>
                     <p className="text-[10px] text-muted-foreground/70 mt-0.5">{coldestPlayer.ratingChangeText} recente</p>
                   </div>
@@ -143,7 +143,7 @@ export default async function DashboardPage() {
                 <div className="glass-panel rounded-xl border border-accent-cyan/20 bg-accent-cyan/[0.03] px-4 py-3.5 flex items-center gap-3">
                   <Map className="size-4 text-accent-cyan shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-[9px] uppercase tracking-widest font-bold text-accent-cyan/80">Mapa carregando</p>
+                    <p className="text-[9px] uppercase tracking-widest font-bold text-accent-cyan/80">Mapa Dominante</p>
                     <p className="text-sm font-black text-white mt-0.5">{bestMap.map}</p>
                     <p className="text-[10px] text-muted-foreground/70 mt-0.5">{bestMap.winrate.toFixed(0)}% WR · {bestMap.matchesPlayed} partidas</p>
                   </div>
@@ -153,9 +153,9 @@ export default async function DashboardPage() {
                 <div className="glass-panel rounded-xl border border-status-warning/20 bg-status-warning/[0.03] px-4 py-3.5 flex items-center gap-3">
                   <AlertTriangle className="size-4 text-status-warning shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-[9px] uppercase tracking-widest font-bold text-status-warning/80">Mapa destruindo</p>
+                    <p className="text-[9px] uppercase tracking-widest font-bold text-status-warning/80">Mapa Problema</p>
                     <p className="text-sm font-black text-white mt-0.5">{worstMap.map}</p>
-                    <p className="text-[10px] text-muted-foreground/70 mt-0.5">{worstMap.winrate.toFixed(0)}% WR · evitar no veto</p>
+                    <p className="text-[10px] text-muted-foreground/70 mt-0.5">{worstMap.winrate.toFixed(0)}% WR · atenção no veto</p>
                   </div>
                 </div>
               )}
@@ -337,8 +337,8 @@ export default async function DashboardPage() {
             <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
               <div className="px-5 py-4 border-b border-white/[0.05] flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-bold text-white">Power Ranking</p>
-                  <p className="text-[10px] text-muted-foreground/65 mt-0.5">Quem domina a temporada</p>
+                  <p className="text-sm font-bold text-white">Ranking Competitivo</p>
+                  <p className="text-[10px] text-muted-foreground/65 mt-0.5">Performance da Temporada</p>
                 </div>
                 <Trophy className="size-4 text-status-warning/60" />
               </div>
@@ -355,7 +355,7 @@ export default async function DashboardPage() {
                         <PlayerAvatar nickname={entry.player.nickname} avatarUrl={entry.player.avatarUrl} size="sm" />
                         <div className="min-w-0">
                           <p className="text-sm font-bold text-white group-hover:text-primary transition-colors truncate">{entry.player.nickname}</p>
-                          <p className="text-[10px] text-muted-foreground/65">{entry.forma} · {entry.matchCount} partidas</p>
+                          <p className="text-[10px] text-muted-foreground/65">Forma: {entry.forma} · {entry.matchCount} partidas</p>
                         </div>
                       </Link>
                       <div className="hidden sm:grid grid-cols-5 gap-4 text-center shrink-0">
@@ -387,7 +387,7 @@ export default async function DashboardPage() {
             {jogadorDaSemana ? (
               <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
                 <div className="px-5 pt-5 pb-5">
-                  <p className="text-[9px] uppercase tracking-widest font-bold text-muted-foreground/65 mb-4">Jogador da Semana</p>
+                  <p className="text-[9px] uppercase tracking-widest font-bold text-muted-foreground/65 mb-4">Destaque da Semana</p>
                   <div className="flex flex-col items-center gap-3 text-center">
                     <PlayerAvatar nickname={jogadorDaSemana.player.nickname} avatarUrl={jogadorDaSemana.player.avatarUrl} size="lg" />
                     <div>
@@ -433,7 +433,7 @@ export default async function DashboardPage() {
                 <div className="glass-panel rounded-2xl border border-status-warning/25 bg-status-warning/[0.02] overflow-hidden">
                   <div className="px-5 py-3.5 border-b border-status-warning/10 flex items-center gap-2">
                     <Flame className="size-3.5 text-status-warning shrink-0" />
-                    <p className="text-[10px] uppercase tracking-widest font-bold text-status-warning/80">🔥 Melhor Performance da Temporada</p>
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-status-warning/80">Melhor Atuação da Temporada</p>
                   </div>
                   <div className="px-5 py-4 flex items-start gap-4">
                     <PlayerAvatar nickname={bestPerformance.player.nickname} avatarUrl={bestPerformance.player.avatarUrl} size="md" />
@@ -464,7 +464,7 @@ export default async function DashboardPage() {
                 <div className="glass-panel rounded-2xl border border-status-critical/20 bg-status-critical/[0.02] overflow-hidden">
                   <div className="px-5 py-3.5 border-b border-status-critical/10 flex items-center gap-2">
                     <ShieldAlert className="size-3.5 text-status-critical shrink-0" />
-                    <p className="text-[10px] uppercase tracking-widest font-bold text-status-critical/80">☠️ Pior Performance da Temporada</p>
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-status-critical/80">Menor Impacto Registrado</p>
                   </div>
                   <div className="px-5 py-4 flex items-start gap-4">
                     <PlayerAvatar nickname={worstPerformance.player.nickname} avatarUrl={worstPerformance.player.avatarUrl} size="md" />
@@ -514,7 +514,7 @@ export default async function DashboardPage() {
                   {bestMap && (
                     <div className="flex items-center justify-between p-2 rounded-lg bg-status-good/5 border border-status-good/10">
                       <span className="flex items-center gap-1.5 text-status-good font-semibold text-[10px]">
-                        <Flame className="size-3" /> Forte
+                        <Flame className="size-3" /> Melhor desempenho
                       </span>
                       <span className="text-white/90 font-bold text-[10px]">{bestMap.map} · {bestMap.winrate.toFixed(0)}%</span>
                     </div>
@@ -522,7 +522,7 @@ export default async function DashboardPage() {
                   {worstMap && (
                     <div className="flex items-center justify-between p-2 rounded-lg bg-status-critical/5 border border-status-critical/10">
                       <span className="flex items-center gap-1.5 text-status-critical font-semibold text-[10px]">
-                        <ShieldAlert className="size-3" /> Evitar
+                        <ShieldAlert className="size-3" /> Mapa problema
                       </span>
                       <span className="text-white/90 font-bold text-[10px]">{worstMap.map} · {worstMap.winrate.toFixed(0)}%</span>
                     </div>

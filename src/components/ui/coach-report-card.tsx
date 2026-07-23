@@ -205,7 +205,7 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
         <div>
           <h4 className="text-base font-bold text-white">🧠 Coach IA</h4>
           <p className="text-xs text-muted-foreground mt-1.5 max-w-md">
-            O Coach ainda não assistiu esse jogo. Gera uma análise e deixa ele dar a opinião —
+            O Coach ainda não analisou essa partida. Gere uma análise técnica —
             tempo médio de 10-15 segundos.
           </p>
         </div>
@@ -213,7 +213,7 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
           onClick={handleGenerate}
           className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
         >
-          <Brain className="size-3.5" /> Deixa o Coach Falar
+          <Brain className="size-3.5" /> Gerar análise do Coach
         </button>
       </div>
     );

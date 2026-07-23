@@ -31,7 +31,7 @@ export function CoachSummaryCard({ data }: { data: CoachSummaryData }) {
             <Gamepad2 className="size-5" />
           </div>
           <div>
-            <p className="text-muted-foreground text-xs font-medium">🔥 Forma Atual</p>
+            <p className="text-muted-foreground text-xs font-medium">Forma Recente</p>
             {data.last10Winrate ? (
               <>
                 <p className="text-sm font-bold mt-0.5">
@@ -109,7 +109,7 @@ export function CoachSummaryCard({ data }: { data: CoachSummaryData }) {
             <Users className="size-5" />
           </div>
           <div>
-            <p className="text-muted-foreground text-xs font-medium">🤝 Dupla do Crime</p>
+            <p className="text-muted-foreground text-xs font-medium">Principal Parceria</p>
             {data.favoritePartner ? (
               <>
                 <p className="text-sm font-bold mt-0.5">{data.favoritePartner.nickname}</p>

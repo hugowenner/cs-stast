@@ -188,12 +188,12 @@ function getPowerRankingFromDataset(dataset: CompetitiveDataset, take = 5): Powe
     let recentWins = 0;
     for (const s of recentStats) if (isWin(s)) recentWins++;
 
-    let forma = "❄️";
-    if (recentWins === 5) forma = "🔥🔥🔥🔥🔥";
-    else if (recentWins === 4) forma = "🔥🔥🔥🔥";
-    else if (recentWins === 3) forma = "🔥🔥🔥";
-    else if (recentWins === 2) forma = "🔥🔥";
-    else if (recentWins === 1) forma = "🔥";
+    let forma = "Oscilando";
+    if (recentWins === 5) forma = "Excelente";
+    else if (recentWins === 4) forma = "Em alta";
+    else if (recentWins === 3) forma = "Estável";
+    else if (recentWins === 2) forma = "Oscilando";
+    else if (recentWins === 1) forma = "Oscilando";
 
     entries.push({
       player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl, levelGc: player.levelGc },
@@ -341,13 +341,13 @@ function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): PlayerArch
     const best = scores[0];
     const archetype: PlayerArchetype["archetype"] = best?.score > 0 ? best.type : "tactician";
 
-    let label = "🎯 Estrategista";
+    let label = "Leitura de Jogo";
     let metricLabel = "Presença no lobby";
     let metricValue = `${item.totalMatches} partidas`;
     let rankText = "Jogador versátil";
 
     if (archetype === "headshot") {
-      label = "💀 HS Specialist";
+      label = "Especialista em Precisão";
       metricLabel = "Taxa de Headshot";
       metricValue = `${item.hsRate.toFixed(1)}% (${item.totalKills} kills)`;
       const sorted = [...rawList]
@@ -356,7 +356,7 @@ function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): PlayerArch
       const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
       rankText = `${pos}º maior HS% com volume`;
     } else if (archetype === "entry") {
-      label = "⚔️ Entry Fragger";
+      label = "Primeiro Contato";
       metricLabel = "Aberturas por Partida";
       metricValue = `${item.entryKillsPerMatch.toFixed(1)}/partida · ${item.totalEntryKills} total`;
       const sorted = [...rawList]
@@ -365,7 +365,7 @@ function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): PlayerArch
       const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
       rankText = `${pos}º em opening kills/partida`;
     } else if (archetype === "clutch") {
-      label = "🧠 Clutch Player";
+      label = "Especialista em Clutch";
       metricLabel = "Clutches por Partida";
       metricValue = `${item.clutchWinsPerMatch.toFixed(2)}/partida · ${item.totalClutchWins} salvos`;
       const sorted = [...rawList]
@@ -374,7 +374,7 @@ function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): PlayerArch
       const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
       rankText = `${pos}º em clutches salvos`;
     } else if (archetype === "impact") {
-      label = "🔥 Impact Player";
+      label = "Jogador de Impacto";
       metricLabel = "Rating + ADR";
       metricValue = `${item.avgRating.toFixed(2)} rating · ${Math.round(item.avgAdr)} ADR`;
       const sorted = [...rawList]
@@ -383,7 +383,7 @@ function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): PlayerArch
       const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
       rankText = `${pos}º maior rating da comunidade`;
     } else if (archetype === "consistent") {
-      label = "🛡️ Consistency";
+      label = "Consistência";
       metricLabel = "Partidas Estáveis";
       metricValue = `${item.consistencyRate.toFixed(0)}% acima de 1.0 (${item.consistentGames}/${item.totalMatches})`;
       const sorted = [...rawList]
@@ -429,7 +429,7 @@ function getJogadorDaSemanaFromDataset(dataset: CompetitiveDataset): JogadorDaSe
       } else if (evolutionRounded < -3) {
         evolutionText = `${evolutionRounded}% queda`;
       } else {
-        evolutionText = "Mantendo excelente desempenho ⚡";
+        evolutionText = "Desempenho excelente";
       }
 
       let recentWins = 0;
@@ -573,14 +573,14 @@ function getPlayerMomentumFromDataset(dataset: CompetitiveDataset, take = 3): Pl
     const winrateChange = recentWinrate - priorWinrate;
 
     let status: "up" | "stable" | "down" = "stable";
-    let label = "Estável 🟡";
+    let label = "Performance estável";
 
     if (diff > 0.05) {
       status = "up";
-      label = "Em ascensão 🔥";
+      label = "Em evolução";
     } else if (diff < -0.05) {
       status = "down";
-      label = "Caindo 🔴";
+      label = "Performance em queda";
     }
 
     const ratingChangeText = `${ratingChange >= 0 ? "+" : ""}${ratingChange.toFixed(0)}% Rating`;
@@ -794,7 +794,7 @@ async function getWeeklyHighlightsFromDataset(dataset: CompetitiveDataset): Prom
         highlights.push({
           id: `evo-${player.id}`,
           category: "evolution",
-          title: `🔥 ${player.nickname} em ascensão`,
+          title: `${player.nickname} em evolução`,
           description: `Desempenho disparou +${diff.toFixed(0)}% nas partidas desta semana.`,
           meta: `Rating de ${weeklyRating.toFixed(2)} recente`,
         });
@@ -819,7 +819,7 @@ async function getWeeklyHighlightsFromDataset(dataset: CompetitiveDataset): Prom
       highlights.push({
         id: `streak-${player.id}`,
         category: "streak",
-        title: "⚡ Sequência ativa",
+        title: "Sequência ativa",
         description: `${player.nickname} vem embalado com ${currentStreak} vitórias seguidas no lobby.`,
         meta: "Sequência imbatível",
       });
@@ -837,8 +837,8 @@ async function getWeeklyHighlightsFromDataset(dataset: CompetitiveDataset): Prom
     highlights.push({
       id: `record-kills`,
       category: "record",
-      title: "🎯 Partida monstruosa",
-      description: `${topWeeklyPlayer.nickname} destruiu no servidor com ${topWeeklyStats.kills} kills na ${topWeeklyStats.match.map.name}.`,
+      title: "Atuação de destaque",
+      description: `${topWeeklyPlayer.nickname} destacou-se com ${topWeeklyStats.kills} kills na ${topWeeklyStats.match.map.name}.`,
       meta: `Rating de ${topWeeklyStats.rating.toFixed(2)}`,
     });
   }
@@ -928,15 +928,15 @@ function getHallOfFameRecordsFromDataset(dataset: CompetitiveDataset): HallOfFam
       category: "Recorde de Rating",
       playerName: playerName(maxRating),
       value: maxRating.rating.toFixed(2),
-      detail: `Conquistado na ${maxRating.match.map.name}`,
+      detail: `Registrado no mapa ${maxRating.match.map.name}`,
     });
   }
   if (maxKills) {
     records.push({
-      category: "Maior Número de Kills",
+      category: "Recorde de Kills",
       playerName: playerName(maxKills),
       value: `${maxKills.kills} kills`,
-      detail: `Partida na ${maxKills.match.map.name}`,
+      detail: `Partida no mapa ${maxKills.match.map.name}`,
     });
   }
   if (maxAdr) {
