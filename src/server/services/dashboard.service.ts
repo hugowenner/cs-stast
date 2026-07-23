@@ -19,8 +19,12 @@ export async function getDashboardSummary() {
 
   // Aritmética comunitária
   const totalKills = allStats.reduce((sum, s) => sum + s.kills, 0);
+  const totalDeaths = allStats.reduce((sum, s) => sum + s.deaths, 0);
+  const totalAdr = allStats.reduce((sum, s) => sum + s.adr, 0);
   const totalHeadshots = allStats.reduce((sum, s) => sum + s.headshots, 0);
   const avgKills = allStats.length > 0 ? totalKills / allStats.length : 0;
+  const avgAdr = allStats.length > 0 ? totalAdr / allStats.length : 0;
+  const avgKd = totalDeaths > 0 ? totalKills / totalDeaths : 0;
   const avgHsPercent = totalKills > 0 ? (totalHeadshots / totalKills) * 100 : 0;
 
   let wins = 0;
@@ -76,7 +80,10 @@ export async function getDashboardSummary() {
     community: {
       avgWinrate: Math.round(avgWinrate),
       avgKills: Number(avgKills.toFixed(1)),
+      avgAdr: Math.round(avgAdr),
+      avgKd: Number(avgKd.toFixed(2)),
       avgHsPercent: Math.round(avgHsPercent),
+      totalKills,
       totalRounds,
     },
     dominantMap,

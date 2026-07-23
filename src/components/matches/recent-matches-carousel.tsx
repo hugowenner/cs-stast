@@ -16,6 +16,7 @@ export interface RecentMatchCardData {
     team: string;
     kills: number;
     deaths: number;
+    adr: number;
     rating: number;
     player: { id: string; nickname: string; avatarUrl: string | null };
   }[];

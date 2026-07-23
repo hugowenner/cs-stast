@@ -10,10 +10,13 @@ import { cn } from "@/lib/utils";
 
 const METRICS = [
   { value: "rating", label: "Rating" },
-  { value: "elo", label: "Rating do Hub" },
   { value: "adr", label: "ADR" },
+  { value: "kd", label: "K/D" },
+  { value: "impact", label: "Impacto" },
   { value: "kast", label: "KAST" },
-  { value: "impact", label: "Impact" },
+  { value: "consistency", label: "Consistência" },
+  { value: "evolution", label: "Evolução" },
+  { value: "elo", label: "Hub ELO" },
 ] as const;
 
 type Metric = (typeof METRICS)[number]["value"];
@@ -27,14 +30,34 @@ export default async function RankingsPage({
   const metric = (METRICS.some((m) => m.value === rawMetric) ? rawMetric : "rating") as Metric;
 
   const ranking = await safeQuery(
-    () => (metric === "elo" ? statsService.getEloRanking(50) : statsService.getRanking(metric, 50)),
+    () =>
+      metric === "elo"
+        ? statsService.getEloRanking(50)
+        : metric === "kd"
+          ? statsService.getKdRanking(50)
+          : metric === "consistency"
+            ? statsService.getConsistencyRanking(50)
+            : metric === "evolution"
+              ? statsService.getEvolutionRanking(50)
+              : statsService.getRanking(metric, 50),
     [],
   );
 
   return (
     <div className="flex flex-col gap-4">
       <FadeIn>
-        <PageHeader title="🏆 Rankings" subtitle="Liga interna baseada nas últimas partidas sincronizadas" />
+        <PageHeader
+          title="🏆 Rankings"
+          subtitle={
+            metric === "consistency"
+              ? "% de partidas com Rating ≥ 1.0 — mín. 3 partidas"
+              : metric === "evolution"
+                ? "Comparação das últimas 5 partidas vs média da temporada"
+                : metric === "kd"
+                  ? "Kills/Deaths total acumulado — mín. 3 partidas"
+                  : "Liga interna baseada nas partidas sincronizadas"
+          }
+        />
       </FadeIn>
 
       <FadeIn delay={0.05} className="flex gap-2 overflow-x-auto pb-1 scrollbar-none whitespace-nowrap flex-nowrap shrink-0">
@@ -87,8 +110,20 @@ export default async function RankingsPage({
                       </span>
                     }
                     trailing={
-                      <span className="text-sm font-semibold tabular-nums text-white">
-                        {entry.value}
+                      <span className={`text-sm font-semibold tabular-nums ${
+                        metric === "evolution"
+                          ? entry.value > 0
+                            ? "text-status-good"
+                            : entry.value < 0
+                              ? "text-status-critical"
+                              : "text-muted-foreground/60"
+                          : "text-white"
+                      }`}>
+                        {metric === "consistency"
+                          ? `${entry.value}%`
+                          : metric === "evolution"
+                            ? `${entry.value > 0 ? "+" : ""}${entry.value}%`
+                            : entry.value}
                       </span>
                     }
                   />

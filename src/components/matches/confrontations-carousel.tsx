@@ -26,7 +26,7 @@ function PlayerRow({ ps, reverse = false }: { ps: PS; reverse?: boolean }) {
       <div className={`min-w-0 flex-1 ${reverse ? "text-right" : ""}`}>
         <p className="text-[10px] font-bold text-white/90 truncate leading-tight">{ps.player.nickname}</p>
         <p className="text-[9px] text-muted-foreground/65 tabular-nums leading-tight">
-          {ps.kills}/{ps.deaths} · {kdRatio(ps.kills, ps.deaths)}
+          {ps.kills}/{ps.deaths} · KD {kdRatio(ps.kills, ps.deaths)} · {Math.round(ps.adr)} ADR
         </p>
       </div>
       <span className="text-[9px] font-bold text-accent-cyan/80 tabular-nums shrink-0 w-7 text-center">
@@ -97,6 +97,7 @@ function ConfrontationCard({ match }: { match: RecentMatchCardData }) {
                 <div className="mt-1.5 space-y-1 text-center">
                   <p className="text-sm font-black text-white tabular-nums">{a.kills} / {a.deaths}</p>
                   <p className="text-[9px] text-muted-foreground/65">KD {kdRatio(a.kills, a.deaths)}</p>
+                  <p className="text-[9px] text-muted-foreground/55">{Math.round(a.adr)} ADR</p>
                   <p className="text-[9px] font-bold text-accent-cyan/80">★ {a.rating.toFixed(2)}</p>
                 </div>
               </div>
@@ -124,6 +125,7 @@ function ConfrontationCard({ match }: { match: RecentMatchCardData }) {
                 <div className="mt-1.5 space-y-1 text-center">
                   <p className="text-sm font-black text-white tabular-nums">{b.kills} / {b.deaths}</p>
                   <p className="text-[9px] text-muted-foreground/65">KD {kdRatio(b.kills, b.deaths)}</p>
+                  <p className="text-[9px] text-muted-foreground/55">{Math.round(b.adr)} ADR</p>
                   <p className="text-[9px] font-bold text-accent-cyan/80">★ {b.rating.toFixed(2)}</p>
                 </div>
               </div>
@@ -166,7 +168,7 @@ function ConfrontationCard({ match }: { match: RecentMatchCardData }) {
                 <PlayerAvatar nickname={ps.player.nickname} avatarUrl={ps.player.avatarUrl} size="sm" />
                 <div className="min-w-0 flex-1">
                   <p className="text-[10px] font-bold text-white/90 truncate">{ps.player.nickname}</p>
-                  <p className="text-[9px] text-muted-foreground/65 tabular-nums">{ps.kills}/{ps.deaths} · KD {kdRatio(ps.kills, ps.deaths)}</p>
+                  <p className="text-[9px] text-muted-foreground/65 tabular-nums">{ps.kills}/{ps.deaths} · KD {kdRatio(ps.kills, ps.deaths)} · {Math.round(ps.adr)} ADR</p>
                 </div>
                 <span className="text-[9px] font-bold text-accent-cyan/80 tabular-nums shrink-0">{ps.rating.toFixed(2)}</span>
               </div>

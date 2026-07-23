@@ -2,14 +2,14 @@ import { prisma } from "@/server/db";
 
 export interface PowerRankingEntry {
   player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null };
-  powerScore: number;
   rating: number;
   impact: number;
   kast: number;
   winrate: number;
   adr: number;
+  kd: number;
+  matchCount: number;
   forma: string;
-  levelLabel: string; // Ex: "Elite", "Muito Forte", etc.
 }
 
 export interface PlayerEvolutionEntry {
@@ -22,11 +22,11 @@ export interface PlayerEvolutionEntry {
 
 export interface PlayerArchetype {
   player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null };
-  archetype: "entry" | "clutch" | "headshot" | "consistent" | "tactician";
+  archetype: "entry" | "clutch" | "headshot" | "consistent" | "tactician" | "impact";
   label: string;
   metricLabel: string;
   metricValue: string;
-  rankText: string; // Ex: "1º maior HS% do grupo"
+  rankText: string;
 }
 
 export interface JogadorDaSemanaInfo {
@@ -34,8 +34,18 @@ export interface JogadorDaSemanaInfo {
   rating: number;
   winrate: number;
   evolution: number;
-  powerScore: number;
-  evolutionText: string; // Ex: "Mantendo excelente desempenho"
+  evolutionText: string;
+}
+
+export interface PerformanceExtreme {
+  player: { id: string; nickname: string; avatarUrl: string | null };
+  rating: number;
+  kills: number;
+  deaths: number;
+  adr: number;
+  mapName: string;
+  playedAt: string;
+  kd: string;
 }
 
 export interface DuoSummary {
@@ -151,15 +161,14 @@ function isWin(s: { team: string; match: { scoreTeamA: number; scoreTeamB: numbe
   );
 }
 
-function getPowerRankingFromDataset(
-  dataset: CompetitiveDataset,
-  take = 5
-): PowerRankingEntry[] {
+const MIN_MATCHES_FOR_RANKING = 3;
+
+function getPowerRankingFromDataset(dataset: CompetitiveDataset, take = 5): PowerRankingEntry[] {
   const entries: PowerRankingEntry[] = [];
 
   for (const player of dataset.activePlayers) {
     const stats = dataset.statsByPlayer.get(player.id) ?? [];
-    if (stats.length === 0) continue;
+    if (stats.length < MIN_MATCHES_FOR_RANKING) continue;
 
     const totalMatches = stats.length;
     const avgRating = stats.reduce((sum, s) => sum + s.rating, 0) / totalMatches;
@@ -167,32 +176,14 @@ function getPowerRankingFromDataset(
     const avgAdr = stats.reduce((sum, s) => sum + s.adr, 0) / totalMatches;
     const avgKast = stats.reduce((sum, s) => sum + s.kast, 0) / totalMatches;
 
+    const totalKills = stats.reduce((sum, s) => sum + s.kills, 0);
+    const totalDeaths = stats.reduce((sum, s) => sum + s.deaths, 0);
+    const kd = totalDeaths > 0 ? totalKills / totalDeaths : totalKills;
+
     let wins = 0;
     for (const s of stats) if (isWin(s)) wins++;
     const winrate = (wins / totalMatches) * 100;
 
-    const ratingScore = Math.min(100, (avgRating / 1.6) * 100);
-    const impactScore = Math.min(100, (avgImpact / 1.6) * 100);
-    const winrateScore = winrate;
-    const adrScore = Math.min(100, (avgAdr / 100) * 100);
-    const kastScore = avgKast;
-
-    const powerScore = Math.round(
-      ratingScore * 0.4 +
-        impactScore * 0.2 +
-        winrateScore * 0.2 +
-        adrScore * 0.1 +
-        kastScore * 0.1
-    );
-
-    let levelLabel = "Regular";
-    if (powerScore >= 80) levelLabel = "Elite 🏆";
-    else if (powerScore >= 70) levelLabel = "Forte 💪";
-    else if (powerScore >= 60) levelLabel = "Competitivo ⚔️";
-    else if (powerScore >= 50) levelLabel = "Regular 📊";
-    else levelLabel = "Em formação 📈";
-
-    // stats já vem ordenado desc por playedAt (dataset), então os 5 primeiros já são os mais recentes.
     const recentStats = stats.slice(0, 5);
     let recentWins = 0;
     for (const s of recentStats) if (isWin(s)) recentWins++;
@@ -206,18 +197,18 @@ function getPowerRankingFromDataset(
 
     entries.push({
       player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl, levelGc: player.levelGc },
-      powerScore,
       rating: Number(avgRating.toFixed(2)),
       impact: Number(avgImpact.toFixed(2)),
       kast: Math.round(avgKast),
       winrate: Math.round(winrate),
       adr: Math.round(avgAdr),
+      kd: Number(kd.toFixed(2)),
+      matchCount: totalMatches,
       forma,
-      levelLabel,
     });
   }
 
-  return entries.sort((a, b) => b.powerScore - a.powerScore).slice(0, take);
+  return entries.sort((a, b) => b.rating - a.rating).slice(0, take);
 }
 
 function getPlayerEvolutionsFromDataset(
@@ -251,16 +242,27 @@ function getPlayerEvolutionsFromDataset(
 }
 
 function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): PlayerArchetype[] {
-  const rawStatsList: {
+  const MIN_MATCHES_BASIC = 3;
+  const MIN_MATCHES_FULL = 5;
+  const MIN_KILLS_FOR_HS = 25;
+
+  type RawStats = {
     player: PlayerRow;
     totalMatches: number;
     totalKills: number;
     totalEntryKills: number;
+    entryKillsPerMatch: number;
     totalClutchWins: number;
+    clutchWinsPerMatch: number;
     hsRate: number;
+    avgRating: number;
+    avgAdr: number;
+    avgKast: number;
     consistencyRate: number;
     consistentGames: number;
-  }[] = [];
+  };
+
+  const rawList: RawStats[] = [];
 
   for (const player of dataset.activePlayers) {
     const stats = dataset.statsByPlayer.get(player.id) ?? [];
@@ -273,86 +275,133 @@ function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): PlayerArch
     const totalClutchWins = stats.reduce(
       (sum, s) =>
         sum + s.clutch1v1Wins + s.clutch1v2Wins + s.clutch1v3Wins + s.clutch1v4Wins + s.clutch1v5Wins,
-      0
+      0,
     );
 
+    const avgRating = stats.reduce((sum, s) => sum + s.rating, 0) / totalMatches;
+    const avgAdr = stats.reduce((sum, s) => sum + s.adr, 0) / totalMatches;
+    const avgKast = stats.reduce((sum, s) => sum + s.kast, 0) / totalMatches;
+
     const hsRate = totalKills > 0 ? (totalHeadshots / totalKills) * 100 : 0;
+    const entryKillsPerMatch = totalEntryKills / totalMatches;
+    const clutchWinsPerMatch = totalClutchWins / totalMatches;
     const consistentGames = stats.filter((s) => s.rating >= 1.0).length;
     const consistencyRate = (consistentGames / totalMatches) * 100;
 
-    rawStatsList.push({
+    rawList.push({
       player,
       totalMatches,
       totalKills,
       totalEntryKills,
+      entryKillsPerMatch,
       totalClutchWins,
+      clutchWinsPerMatch,
       hsRate,
+      avgRating,
+      avgAdr,
+      avgKast,
       consistencyRate,
       consistentGames,
     });
   }
 
-  const archetypes: PlayerArchetype[] = [];
+  return rawList.map((item) => {
+    // Computa score para cada archetype — maior score vence.
+    // Score 0 significa não elegível; valores positivos significam elegível.
+    const scores: { type: PlayerArchetype["archetype"]; score: number }[] = [];
 
-  for (const item of rawStatsList) {
-    let archetype: PlayerArchetype["archetype"] = "tactician";
-    let label = "🧠 Estrategista";
-    let metricLabel = "Consistência de Jogo";
-    let metricValue = `${item.consistencyRate.toFixed(0)}% rounds`;
-    let rankText = "Consistente no lobby";
-
-    if (item.hsRate >= 52) {
-      archetype = "headshot";
-      label = "💀 Headshot Machine";
-      metricLabel = "Taxa de HS";
-      metricValue = `${item.hsRate.toFixed(1)}% das kills`;
-
-      const sorted = [...rawStatsList].sort((a, b) => b.hsRate - a.hsRate);
-      const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
-      rankText = `${pos}º maior HS% da comunidade`;
-    } else if (item.totalEntryKills > 8) {
-      // Nota: "entryDeaths" não é populado pelo pipeline de sync atual (sempre 0),
-      // então não há denominador real para calcular uma taxa de sucesso de entry.
-      // Exibimos apenas a contagem bruta de opening kills — nunca uma % fabricada.
-      archetype = "entry";
-      label = "⚔️ Entry King";
-      metricLabel = "Opening Kills";
-      metricValue = `${item.totalEntryKills} kills de abertura`;
-
-      const sorted = [...rawStatsList].sort((a, b) => b.totalEntryKills - a.totalEntryKills);
-      const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
-      rankText = `${pos}º em opening kills`;
-    } else if (item.totalClutchWins >= 5) {
-      archetype = "clutch";
-      label = "🧊 Clutch Master";
-      metricLabel = "Vitórias em Clutch";
-      metricValue = `${item.totalClutchWins} rounds salvos`;
-
-      const sorted = [...rawStatsList].sort((a, b) => b.totalClutchWins - a.totalClutchWins);
-      const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
-      rankText = `${pos}º em clutches salvos`;
-    } else if (item.consistencyRate >= 70) {
-      archetype = "consistent";
-      label = "📊 Máquina de Consistência";
-      metricLabel = "Partidas Estáveis (Rating >= 1.0)";
-      metricValue = `${item.consistencyRate.toFixed(0)}% (${item.consistentGames}/${item.totalMatches})`;
-
-      const sorted = [...rawStatsList].sort((a, b) => b.consistencyRate - a.consistencyRate);
-      const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
-      rankText = `${pos}º em estabilidade`;
+    // 💀 HS Specialist: alto HS% com volume mínimo de kills (evita amostra irrelevante)
+    if (item.totalKills >= MIN_KILLS_FOR_HS && item.totalMatches >= MIN_MATCHES_BASIC && item.hsRate >= 48) {
+      scores.push({ type: "headshot", score: (item.hsRate - 44) * 2 });
     }
 
-    archetypes.push({
+    // ⚔️ Entry Fragger: abre rounds consistentemente (por partida, não valor absoluto)
+    if (item.totalMatches >= MIN_MATCHES_BASIC && item.totalEntryKills > 0) {
+      scores.push({ type: "entry", score: item.entryKillsPerMatch * 60 });
+    }
+
+    // 🧠 Clutch Player: salva rounds difíceis — taxa por partida, mínimo de jogos
+    if (item.totalMatches >= MIN_MATCHES_FULL && item.clutchWinsPerMatch >= 0.1) {
+      scores.push({ type: "clutch", score: item.clutchWinsPerMatch * 150 });
+    }
+
+    // 🔥 Impact Player: alto impacto combinado (rating + ADR) — mínimo de jogos
+    if (item.totalMatches >= MIN_MATCHES_FULL && item.avgRating >= 1.05) {
+      const ratingNorm = (item.avgRating - 1.0) * 120;
+      const adrBonus = Math.max(0, item.avgAdr - 70) * 0.4;
+      scores.push({ type: "impact", score: ratingNorm + adrBonus });
+    }
+
+    // 🛡️ Consistency Player: desempenho estável acima do limiar — mínimo de jogos
+    if (item.totalMatches >= MIN_MATCHES_FULL && item.consistencyRate >= 55) {
+      scores.push({ type: "consistent", score: Math.max(0, item.consistencyRate - 50) * 0.8 });
+    }
+
+    scores.sort((a, b) => b.score - a.score);
+    const best = scores[0];
+    const archetype: PlayerArchetype["archetype"] = best?.score > 0 ? best.type : "tactician";
+
+    let label = "🎯 Estrategista";
+    let metricLabel = "Presença no lobby";
+    let metricValue = `${item.totalMatches} partidas`;
+    let rankText = "Jogador versátil";
+
+    if (archetype === "headshot") {
+      label = "💀 HS Specialist";
+      metricLabel = "Taxa de Headshot";
+      metricValue = `${item.hsRate.toFixed(1)}% (${item.totalKills} kills)`;
+      const sorted = [...rawList]
+        .filter((r) => r.totalKills >= MIN_KILLS_FOR_HS && r.totalMatches >= MIN_MATCHES_BASIC)
+        .sort((a, b) => b.hsRate - a.hsRate);
+      const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
+      rankText = `${pos}º maior HS% com volume`;
+    } else if (archetype === "entry") {
+      label = "⚔️ Entry Fragger";
+      metricLabel = "Aberturas por Partida";
+      metricValue = `${item.entryKillsPerMatch.toFixed(1)}/partida · ${item.totalEntryKills} total`;
+      const sorted = [...rawList]
+        .filter((r) => r.totalEntryKills > 0 && r.totalMatches >= MIN_MATCHES_BASIC)
+        .sort((a, b) => b.entryKillsPerMatch - a.entryKillsPerMatch);
+      const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
+      rankText = `${pos}º em opening kills/partida`;
+    } else if (archetype === "clutch") {
+      label = "🧠 Clutch Player";
+      metricLabel = "Clutches por Partida";
+      metricValue = `${item.clutchWinsPerMatch.toFixed(2)}/partida · ${item.totalClutchWins} salvos`;
+      const sorted = [...rawList]
+        .filter((r) => r.totalMatches >= MIN_MATCHES_FULL)
+        .sort((a, b) => b.clutchWinsPerMatch - a.clutchWinsPerMatch);
+      const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
+      rankText = `${pos}º em clutches salvos`;
+    } else if (archetype === "impact") {
+      label = "🔥 Impact Player";
+      metricLabel = "Rating + ADR";
+      metricValue = `${item.avgRating.toFixed(2)} rating · ${Math.round(item.avgAdr)} ADR`;
+      const sorted = [...rawList]
+        .filter((r) => r.totalMatches >= MIN_MATCHES_FULL)
+        .sort((a, b) => b.avgRating - a.avgRating);
+      const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
+      rankText = `${pos}º maior rating da comunidade`;
+    } else if (archetype === "consistent") {
+      label = "🛡️ Consistency";
+      metricLabel = "Partidas Estáveis";
+      metricValue = `${item.consistencyRate.toFixed(0)}% acima de 1.0 (${item.consistentGames}/${item.totalMatches})`;
+      const sorted = [...rawList]
+        .filter((r) => r.totalMatches >= MIN_MATCHES_FULL)
+        .sort((a, b) => b.consistencyRate - a.consistencyRate);
+      const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
+      rankText = `${pos}º em consistência`;
+    }
+
+    return {
       player: { id: item.player.id, nickname: item.player.nickname, avatarUrl: item.player.avatarUrl, levelGc: item.player.levelGc },
       archetype,
       label,
       metricLabel,
       metricValue,
       rankText,
-    });
-  }
-
-  return archetypes;
+    };
+  });
 }
 
 function getJogadorDaSemanaFromDataset(dataset: CompetitiveDataset): JogadorDaSemanaInfo | null {
@@ -387,33 +436,15 @@ function getJogadorDaSemanaFromDataset(dataset: CompetitiveDataset): JogadorDaSe
       for (const s of recentStats) if (isWin(s)) recentWins++;
       const winrateRecent = (recentWins / recentMatchesCount) * 100;
 
-      const avgImpact = stats.reduce((sum, s) => sum + s.impact, 0) / stats.length;
-      const avgAdr = stats.reduce((sum, s) => sum + s.adr, 0) / stats.length;
-      const avgKast = stats.reduce((sum, s) => sum + s.kast, 0) / stats.length;
       let totalWins = 0;
       for (const s of stats) if (isWin(s)) totalWins++;
       const winrateSeason = (totalWins / stats.length) * 100;
 
-      const ratingScore = Math.min(100, (seasonRating / 1.6) * 100);
-      const impactScore = Math.min(100, (avgImpact / 1.6) * 100);
-      const winrateScore = winrateSeason;
-      const adrScore = Math.min(100, (avgAdr / 100) * 100);
-      const kastScore = avgKast;
-
-      const powerScore = Math.round(
-        ratingScore * 0.4 +
-          impactScore * 0.2 +
-          winrateScore * 0.2 +
-          adrScore * 0.1 +
-          kastScore * 0.1
-      );
-
       bestPlayer = {
         player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl, levelGc: player.levelGc },
         rating: Number(avgRatingRecent.toFixed(2)),
-        winrate: Math.round(winrateRecent),
+        winrate: Math.round(winrateSeason),
         evolution: evolutionRounded,
-        powerScore,
         evolutionText,
       };
     }
@@ -842,8 +873,8 @@ async function getWeeklyHighlightsFromDataset(dataset: CompetitiveDataset): Prom
     highlights.push({
       id: "weekly-leader",
       category: "leader",
-      title: "👑 Rei do Power Ranking",
-      description: `${leaderboard[0].player.nickname} mantém a liderança isolada da liga de mixes com ${leaderboard[0].powerScore} pontos.`,
+      title: "👑 Líder do Ranking",
+      description: `${leaderboard[0].player.nickname} lidera o ranking com rating médio de ${leaderboard[0].rating.toFixed(2)}.`,
       meta: "Líder geral",
     });
   }
@@ -936,6 +967,43 @@ function getHallOfFameRecordsFromDataset(dataset: CompetitiveDataset): HallOfFam
   return records;
 }
 
+function getPerformanceExtremesFromDataset(dataset: CompetitiveDataset): {
+  best: PerformanceExtreme | null;
+  worst: PerformanceExtreme | null;
+} {
+  const MIN_TOTAL_ROUNDS = 20;
+
+  let bestStat: (typeof dataset.allStats)[number] | null = null;
+  let worstStat: (typeof dataset.allStats)[number] | null = null;
+
+  for (const s of dataset.allStats) {
+    const totalRounds = s.match.scoreTeamA + s.match.scoreTeamB;
+    if (totalRounds < MIN_TOTAL_ROUNDS) continue;
+
+    if (!bestStat || s.rating > bestStat.rating) bestStat = s;
+    if (!worstStat || s.rating < worstStat.rating) worstStat = s;
+  }
+
+  const toExtreme = (s: (typeof dataset.allStats)[number] | null): PerformanceExtreme | null => {
+    if (!s) return null;
+    const player = dataset.activePlayers.find((p) => p.id === s.playerId);
+    if (!player) return null;
+    const kd = s.deaths > 0 ? (s.kills / s.deaths).toFixed(2) : `${s.kills}.00`;
+    return {
+      player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl },
+      rating: s.rating,
+      kills: s.kills,
+      deaths: s.deaths,
+      adr: Math.round(s.adr),
+      mapName: s.match.map.name,
+      playedAt: new Date(s.match.playedAt).toLocaleDateString("pt-BR"),
+      kd,
+    };
+  };
+
+  return { best: toExtreme(bestStat), worst: toExtreme(worstStat) };
+}
+
 // ---------------------------------------------------------------------------
 // Bundle único consumido pela Dashboard — 2 queries no total (dentro de
 // loadCompetitiveDataset), todo o resto é cálculo em memória sobre o mesmo dataset.
@@ -953,6 +1021,8 @@ export interface DashboardCompetitiveBundle {
   mapSpecialists: MapSpecialist[];
   weeklyHighlights: WeeklyHighlight[];
   records: HallOfFameRecord[];
+  bestPerformance: PerformanceExtreme | null;
+  worstPerformance: PerformanceExtreme | null;
 }
 
 export async function getDashboardCompetitiveBundle(): Promise<DashboardCompetitiveBundle> {
@@ -962,6 +1032,8 @@ export async function getDashboardCompetitiveBundle(): Promise<DashboardCompetit
     getDecisivePlayersFromDataset(dataset, 3),
     getWeeklyHighlightsFromDataset(dataset),
   ]);
+
+  const extremes = getPerformanceExtremesFromDataset(dataset);
 
   return {
     powerRanking: getPowerRankingFromDataset(dataset, 5),
@@ -975,5 +1047,7 @@ export async function getDashboardCompetitiveBundle(): Promise<DashboardCompetit
     mapSpecialists: getMapSpecialistsFromDataset(dataset),
     weeklyHighlights,
     records: getHallOfFameRecordsFromDataset(dataset),
+    bestPerformance: extremes.best,
+    worstPerformance: extremes.worst,
   };
 }

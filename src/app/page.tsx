@@ -50,6 +50,8 @@ const EMPTY_COMPETITIVE_BUNDLE: competitiveService.DashboardCompetitiveBundle = 
   mapSpecialists: [],
   weeklyHighlights: [],
   records: [],
+  bestPerformance: null,
+  worstPerformance: null,
 };
 
 export default async function DashboardPage() {
@@ -60,7 +62,7 @@ export default async function DashboardPage() {
         totalPlayers: 0,
         totalSessions: 0,
         latestSession: null,
-        community: { avgWinrate: 0, avgKills: 0, avgHsPercent: 0, totalRounds: 0 },
+        community: { avgWinrate: 0, avgKills: 0, avgAdr: 0, avgKd: 0, avgHsPercent: 0, totalKills: 0, totalRounds: 0 },
         dominantMap: null,
         bestPlayer: null,
       }),
@@ -71,13 +73,14 @@ export default async function DashboardPage() {
       safeQuery(() => rivalryService.listTopRivalriesWithH2H(10), []),
     ]);
 
-  const { powerRanking, momentum, decisive, archetypes, jogadorDaSemana, duos, dominantTrio, records } = competitive;
+  const { powerRanking, momentum, decisive, archetypes, jogadorDaSemana, duos, dominantTrio, records, bestPerformance, worstPerformance } = competitive;
 
   const sortedMaps = [...mapWinrates].sort((a, b) => b.winrate - a.winrate);
   const bestMap = sortedMaps.find((m) => m.matchesPlayed >= 2) ?? null;
   const worstMap = [...mapWinrates].filter((m) => m.matchesPlayed >= 2).sort((a, b) => a.winrate - b.winrate)[0] ?? null;
 
   const hottestPlayer = momentum.find((m) => m.status === "up") ?? null;
+  const coldestPlayer = momentum.find((m) => m.status === "down") ?? null;
 
   return (
     <div className="flex flex-col gap-10 lg:gap-14">
@@ -94,13 +97,15 @@ export default async function DashboardPage() {
           />
         </FadeIn>
 
-        {/* 3 stat tiles compactos */}
+        {/* 5 stat tiles compactos */}
         <FadeIn delay={0.03}>
-          <div className="grid grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
             {[
-              { label: "Média de Kills", value: `${summary.community.avgKills}` },
-              { label: "HS Médio", value: `${summary.community.avgHsPercent}%` },
-              { label: "Rounds Jogados", value: summary.community.totalRounds.toLocaleString("pt-BR") },
+              { label: "Rounds", value: summary.community.totalRounds.toLocaleString("pt-BR") },
+              { label: "Kills", value: summary.community.totalKills.toLocaleString("pt-BR") },
+              { label: "ADR Médio", value: `${summary.community.avgAdr}` },
+              { label: "K/D Médio", value: `${summary.community.avgKd}` },
+              { label: "HS%", value: `${summary.community.avgHsPercent}%` },
             ].map((stat) => (
               <div key={stat.label} className="glass-panel rounded-xl border border-white/[0.06] px-4 py-3 text-center">
                 <p className="text-[9px] uppercase tracking-widest text-muted-foreground/65 font-bold">{stat.label}</p>
@@ -110,17 +115,27 @@ export default async function DashboardPage() {
           </div>
         </FadeIn>
 
-        {/* 3 insights narrativos */}
-        {(hottestPlayer || bestMap || worstMap) && (
+        {/* 4 insights narrativos */}
+        {(hottestPlayer || coldestPlayer || bestMap || worstMap) && (
           <FadeIn delay={0.05}>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
               {hottestPlayer && (
                 <div className="glass-panel rounded-xl border border-status-good/20 bg-status-good/[0.03] px-4 py-3.5 flex items-center gap-3">
                   <Zap className="size-4 text-status-good shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-[9px] uppercase tracking-widest font-bold text-status-good/80">Em ascensão</p>
+                    <p className="text-[9px] uppercase tracking-widest font-bold text-status-good/80">Quem está evoluindo</p>
                     <p className="text-sm font-black text-white truncate mt-0.5">{hottestPlayer.player.nickname}</p>
-                    <p className="text-[10px] text-muted-foreground/70 mt-0.5">{hottestPlayer.ratingChangeText} nas últimas partidas</p>
+                    <p className="text-[10px] text-muted-foreground/70 mt-0.5">{hottestPlayer.ratingChangeText} recente</p>
+                  </div>
+                </div>
+              )}
+              {coldestPlayer && (
+                <div className="glass-panel rounded-xl border border-status-critical/20 bg-status-critical/[0.03] px-4 py-3.5 flex items-center gap-3">
+                  <TrendingDown className="size-4 text-status-critical shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-[9px] uppercase tracking-widest font-bold text-status-critical/80">Quem caiu de nível</p>
+                    <p className="text-sm font-black text-white truncate mt-0.5">{coldestPlayer.player.nickname}</p>
+                    <p className="text-[10px] text-muted-foreground/70 mt-0.5">{coldestPlayer.ratingChangeText} recente</p>
                   </div>
                 </div>
               )}
@@ -128,19 +143,19 @@ export default async function DashboardPage() {
                 <div className="glass-panel rounded-xl border border-accent-cyan/20 bg-accent-cyan/[0.03] px-4 py-3.5 flex items-center gap-3">
                   <Map className="size-4 text-accent-cyan shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-[9px] uppercase tracking-widest font-bold text-accent-cyan/80">Mapa forte</p>
+                    <p className="text-[9px] uppercase tracking-widest font-bold text-accent-cyan/80">Mapa carregando</p>
                     <p className="text-sm font-black text-white mt-0.5">{bestMap.map}</p>
-                    <p className="text-[10px] text-muted-foreground/70 mt-0.5">{bestMap.winrate.toFixed(0)}% winrate · {bestMap.matchesPlayed} partidas</p>
+                    <p className="text-[10px] text-muted-foreground/70 mt-0.5">{bestMap.winrate.toFixed(0)}% WR · {bestMap.matchesPlayed} partidas</p>
                   </div>
                 </div>
               )}
               {worstMap && (
-                <div className="glass-panel rounded-xl border border-status-critical/20 bg-status-critical/[0.03] px-4 py-3.5 flex items-center gap-3">
-                  <AlertTriangle className="size-4 text-status-critical shrink-0" />
+                <div className="glass-panel rounded-xl border border-status-warning/20 bg-status-warning/[0.03] px-4 py-3.5 flex items-center gap-3">
+                  <AlertTriangle className="size-4 text-status-warning shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-[9px] uppercase tracking-widest font-bold text-status-critical/80">Evitar no veto</p>
+                    <p className="text-[9px] uppercase tracking-widest font-bold text-status-warning/80">Mapa destruindo</p>
                     <p className="text-sm font-black text-white mt-0.5">{worstMap.map}</p>
-                    <p className="text-[10px] text-muted-foreground/70 mt-0.5">{worstMap.winrate.toFixed(0)}% winrate · ponto crítico</p>
+                    <p className="text-[10px] text-muted-foreground/70 mt-0.5">{worstMap.winrate.toFixed(0)}% WR · evitar no veto</p>
                   </div>
                 </div>
               )}
@@ -340,24 +355,26 @@ export default async function DashboardPage() {
                         <PlayerAvatar nickname={entry.player.nickname} avatarUrl={entry.player.avatarUrl} size="sm" />
                         <div className="min-w-0">
                           <p className="text-sm font-bold text-white group-hover:text-primary transition-colors truncate">{entry.player.nickname}</p>
-                          <p className="text-[10px] text-muted-foreground/65">{entry.levelLabel}</p>
+                          <p className="text-[10px] text-muted-foreground/65">{entry.forma} · {entry.matchCount} partidas</p>
                         </div>
                       </Link>
-                      <div className="hidden sm:grid grid-cols-4 gap-5 text-center shrink-0">
+                      <div className="hidden sm:grid grid-cols-5 gap-4 text-center shrink-0">
                         {[
                           { label: "Rating", value: entry.rating.toFixed(2) },
+                          { label: "ADR", value: entry.adr },
+                          { label: "K/D", value: entry.kd.toFixed(2) },
                           { label: "KAST", value: `${entry.kast}%` },
                           { label: "WR", value: `${entry.winrate}%` },
-                          { label: "Score", value: entry.powerScore, highlight: true },
                         ].map((col) => (
                           <div key={col.label}>
                             <p className="text-[8px] uppercase tracking-widest text-muted-foreground/60 font-bold">{col.label}</p>
-                            <p className={`text-xs font-black mt-0.5 ${col.highlight ? "text-accent-violet" : "text-white/90"}`}>{col.value}</p>
+                            <p className="text-xs font-black mt-0.5 text-white/90">{col.value}</p>
                           </div>
                         ))}
                       </div>
                       <div className="sm:hidden text-right shrink-0">
-                        <p className="text-sm font-black text-accent-violet">{entry.powerScore}</p>
+                        <p className="text-sm font-black text-white/90">{entry.rating.toFixed(2)}</p>
+                        <p className="text-[9px] text-muted-foreground/60 font-bold">Rating</p>
                       </div>
                     </div>
                   );
@@ -402,6 +419,82 @@ export default async function DashboardPage() {
           </FadeIn>
         </div>
       </section>
+
+      {/* ═══ DESTAQUES DA TEMPORADA ═══ */}
+      {(bestPerformance || worstPerformance) && (
+        <section>
+          <FadeIn delay={0.15}>
+            <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-muted-foreground/60 mb-4">Destaques da Temporada</p>
+          </FadeIn>
+          <FadeIn delay={0.155}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+              {bestPerformance && (
+                <div className="glass-panel rounded-2xl border border-status-warning/25 bg-status-warning/[0.02] overflow-hidden">
+                  <div className="px-5 py-3.5 border-b border-status-warning/10 flex items-center gap-2">
+                    <Flame className="size-3.5 text-status-warning shrink-0" />
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-status-warning/80">🔥 Melhor Performance da Temporada</p>
+                  </div>
+                  <div className="px-5 py-4 flex items-start gap-4">
+                    <PlayerAvatar nickname={bestPerformance.player.nickname} avatarUrl={bestPerformance.player.avatarUrl} size="md" />
+                    <div className="min-w-0 flex-1">
+                      <Link href={`/players/${bestPerformance.player.id}`} className="text-sm font-black text-white hover:text-primary transition-colors block truncate">
+                        {bestPerformance.player.nickname}
+                      </Link>
+                      <p className="text-[10px] text-muted-foreground/65 mt-0.5">{bestPerformance.mapName} · {bestPerformance.playedAt}</p>
+                      <div className="grid grid-cols-4 gap-1.5 mt-3">
+                        {[
+                          { label: "Rating", value: bestPerformance.rating.toFixed(2) },
+                          { label: "K/D", value: bestPerformance.kd },
+                          { label: "ADR", value: bestPerformance.adr },
+                          { label: "Kills", value: bestPerformance.kills },
+                        ].map((stat) => (
+                          <div key={stat.label} className="text-center bg-status-warning/5 border border-status-warning/10 rounded-lg p-1.5">
+                            <p className="text-[7px] uppercase tracking-widest font-bold text-muted-foreground/60">{stat.label}</p>
+                            <p className="text-xs font-black text-status-warning mt-0.5">{stat.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {worstPerformance && (
+                <div className="glass-panel rounded-2xl border border-status-critical/20 bg-status-critical/[0.02] overflow-hidden">
+                  <div className="px-5 py-3.5 border-b border-status-critical/10 flex items-center gap-2">
+                    <ShieldAlert className="size-3.5 text-status-critical shrink-0" />
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-status-critical/80">☠️ Pior Performance da Temporada</p>
+                  </div>
+                  <div className="px-5 py-4 flex items-start gap-4">
+                    <PlayerAvatar nickname={worstPerformance.player.nickname} avatarUrl={worstPerformance.player.avatarUrl} size="md" />
+                    <div className="min-w-0 flex-1">
+                      <Link href={`/players/${worstPerformance.player.id}`} className="text-sm font-black text-white hover:text-primary transition-colors block truncate">
+                        {worstPerformance.player.nickname}
+                      </Link>
+                      <p className="text-[10px] text-muted-foreground/65 mt-0.5">{worstPerformance.mapName} · {worstPerformance.playedAt}</p>
+                      <div className="grid grid-cols-4 gap-1.5 mt-3">
+                        {[
+                          { label: "Rating", value: worstPerformance.rating.toFixed(2) },
+                          { label: "K/D", value: worstPerformance.kd },
+                          { label: "ADR", value: worstPerformance.adr },
+                          { label: "Kills", value: worstPerformance.kills },
+                        ].map((stat) => (
+                          <div key={stat.label} className="text-center bg-status-critical/5 border border-status-critical/10 rounded-lg p-1.5">
+                            <p className="text-[7px] uppercase tracking-widest font-bold text-muted-foreground/60">{stat.label}</p>
+                            <p className="text-xs font-black text-status-critical mt-0.5">{stat.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </FadeIn>
+        </section>
+      )}
 
       {/* ═══ ZONA 4 — Estratégia ═══ */}
       <section>
