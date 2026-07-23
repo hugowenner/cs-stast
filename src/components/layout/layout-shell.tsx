@@ -1,78 +1,132 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { Sidebar } from "./sidebar";
 import { Footer } from "./footer";
-import { Menu } from "lucide-react";
+import { Menu, X, BarChart3, CalendarDays, LayoutDashboard, Trophy, Users, HeartHandshake, Target, ExternalLink } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
+
+const NAV_ITEMS = [
+  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/players", label: "Jogadores", icon: Users },
+  { href: "/compare", label: "Scout H2H", icon: HeartHandshake },
+  { href: "/sessions", label: "Sessões", icon: CalendarDays },
+  { href: "/rankings", label: "Rankings", icon: BarChart3 },
+  { href: "/achievements", label: "Conquistas", icon: Trophy },
+] as const;
 
 export function LayoutShell({ children }: { children: React.ReactNode }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
-
-  // Fecha o drawer automaticamente ao navegar
-  useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
 
   return (
     <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4 min-h-screen">
-      {/* Header Global — visível em todas as telas */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between p-4 gap-3 rounded-2xl glass-panel border border-white/10 bg-white/[0.02]">
-        <div className="flex flex-col min-w-0">
-          <Link href="/" className="flex items-center gap-2 px-1 w-fit group">
-            <span className="text-gradient text-xl font-black tracking-tight group-hover:text-primary transition-colors">CS2 Stats Hub</span>
+
+      {/* Header + Nav */}
+      <header className="glass-panel border border-white/10 bg-white/[0.02] rounded-2xl overflow-hidden">
+        {/* Linha superior: logo + status + hamburger */}
+        <div className="flex items-center justify-between px-4 py-3">
+          <Link href="/" className="flex items-center gap-2 group shrink-0">
+            <span className="text-gradient text-xl font-black tracking-tight group-hover:text-primary transition-colors">
+              CS2 Stats Hub
+            </span>
             <span className="text-muted-foreground rounded-md bg-white/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
               Platform
             </span>
           </Link>
-          <span className="text-[11px] sm:text-xs text-muted-foreground mt-1 px-1 font-medium leading-relaxed">
-            Análise competitiva, estatísticas e evolução do seu lobby de CS2
-          </span>
-        </div>
-        <div className="flex items-center justify-between md:justify-end gap-3 self-stretch md:self-auto border-t border-white/5 pt-3 md:border-t-0 md:pt-0">
-          {/* GC Companion Status */}
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground rounded-lg border border-white/10 bg-white/5 px-2.5 py-1">
-            <span className="bg-status-critical size-1.5 rounded-full" />
-            GC Companion
+
+          {/* Nav desktop */}
+          <nav className="hidden md:flex items-center gap-1">
+            {NAV_ITEMS.map((item) => {
+              const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
+                    active
+                      ? "bg-primary/15 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-white/5",
+                  )}
+                >
+                  <Icon className="size-3.5" />
+                  {item.label}
+                </Link>
+              );
+            })}
+            <a
+              href="https://cs2-team-balance.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
+            >
+              <Target className="size-3.5" />
+              Times
+              <ExternalLink className="size-2.5" />
+            </a>
+          </nav>
+
+          {/* Direita: GC status + hamburger mobile */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground rounded-lg border border-white/10 bg-white/5 px-2.5 py-1">
+              <span className="bg-status-critical size-1.5 rounded-full" />
+              GC Companion
+            </div>
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="md:hidden p-1.5 rounded-xl border border-white/10 hover:bg-white/5 text-white transition-colors"
+              aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"}
+            >
+              {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+            </button>
           </div>
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="lg:hidden p-1.5 rounded-xl border border-white/10 hover:bg-white/5 text-white transition-colors"
-            aria-label="Abrir menu"
-          >
-            <Menu className="size-5" />
-          </button>
         </div>
+
+        {/* Nav mobile */}
+        {mobileOpen && (
+          <nav className="md:hidden border-t border-white/5 px-3 pb-3 pt-2 grid grid-cols-3 gap-1">
+            {NAV_ITEMS.map((item) => {
+              const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold transition-colors",
+                    active
+                      ? "bg-primary/15 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-white/5",
+                  )}
+                >
+                  <Icon className="size-3.5 shrink-0" />
+                  {item.label}
+                </Link>
+              );
+            })}
+            <a
+              href="https://cs2-team-balance.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
+            >
+              <Target className="size-3.5 shrink-0" />
+              Times
+              <ExternalLink className="size-2.5" />
+            </a>
+          </nav>
+        )}
       </header>
 
-      <div className="flex flex-col lg:flex-row gap-4 flex-1">
-        {/* Overlay de fundo em Mobile */}
-        {isOpen && (
-          <div
-            onClick={() => setIsOpen(false)}
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden transition-opacity duration-300"
-          />
-        )}
-
-        {/* Container Sidebar - Drawer em Mobile / Fixo em Desktop */}
-        <div
-          className={`
-            fixed inset-y-0 left-0 z-50 transform lg:transform-none transition-transform duration-300 ease-in-out
-            lg:static lg:block lg:translate-x-0
-            ${isOpen ? "translate-x-0" : "-translate-x-full"}
-            w-64 shrink-0
-          `}
-        >
-          <Sidebar onClose={() => setIsOpen(false)} />
-        </div>
-
-        {/* Conteúdo Principal */}
-        <main className="min-w-0 flex-1 pb-4 w-full">
-          {children}
-        </main>
-      </div>
+      {/* Conteúdo principal — full width */}
+      <main className="min-w-0 flex-1 pb-4 w-full">
+        {children}
+      </main>
 
       <Footer />
     </div>

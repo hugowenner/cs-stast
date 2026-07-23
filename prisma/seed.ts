@@ -40,6 +40,7 @@ async function main() {
     "435954",
     "133224",
     "2392045",
+    "2341177",
   ];
 
   for (const gamersClubId of TRACKED_PLAYERS) {

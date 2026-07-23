@@ -1,4 +1,3 @@
-import { SectionCard } from "@/components/ui/section-card";
 import { FadeIn } from "@/components/motion/fade-in";
 import { MatchRow } from "@/components/matches/match-row";
 import { PlayerAvatar } from "@/components/players/player-avatar";
@@ -15,7 +14,7 @@ import * as competitiveService from "@/server/services/competitive.service";
 import * as achievementService from "@/server/services/achievement.service";
 import * as rivalryService from "@/server/services/rivalry.service";
 import Link from "next/link";
-import { Trophy, TrendingUp, ShieldAlert, Flame, ArrowRight, TrendingDown, Minus, Calendar, Target, ExternalLink } from "lucide-react";
+import { Trophy, TrendingUp, TrendingDown, Minus, Flame, ShieldAlert, ArrowRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -38,17 +37,9 @@ const EMPTY_COMPETITIVE_BUNDLE: competitiveService.DashboardCompetitiveBundle = 
 };
 
 export default async function DashboardPage() {
-  const [
-    summary,
-    recentMatches,
-    competitive,
-    mapWinrates,
-    recentAchievements,
-    topRivalries,
-  ] = await Promise.all([
-    safeQuery(
-      () => dashboardService.getDashboardSummary(),
-      {
+  const [summary, recentMatches, competitive, mapWinrates, recentAchievements, topRivalries] =
+    await Promise.all([
+      safeQuery(() => dashboardService.getDashboardSummary(), {
         totalMatches: 0,
         totalPlayers: 0,
         totalSessions: 0,
@@ -56,60 +47,24 @@ export default async function DashboardPage() {
         community: { avgWinrate: 0, avgKills: 0, avgHsPercent: 0, totalRounds: 0 },
         dominantMap: null,
         bestPlayer: null,
-      }
-    ),
-    safeQuery(() => matchService.listRecentMatches(6), []),
-    // Consolidado: 1 fetch de dataset (jogadores + todas as stats) reaproveitado por
-    // todos os cálculos abaixo, em vez de cada um consultar o banco separadamente.
-    safeQuery(() => competitiveService.getDashboardCompetitiveBundle(), EMPTY_COMPETITIVE_BUNDLE),
-    safeQuery(() => statsService.getMapWinrates(), []),
-    safeQuery(() => achievementService.listRecent(6), []),
-    safeQuery(() => rivalryService.listTopRivalriesWithH2H(4), []),
-  ]);
+      }),
+      safeQuery(() => matchService.listRecentMatches(6), []),
+      safeQuery(() => competitiveService.getDashboardCompetitiveBundle(), EMPTY_COMPETITIVE_BUNDLE),
+      safeQuery(() => statsService.getMapWinrates(), []),
+      safeQuery(() => achievementService.listRecent(5), []),
+      safeQuery(() => rivalryService.listTopRivalriesWithH2H(6), []),
+    ]);
 
-  const {
-    powerRanking,
-    momentum,
-    decisive,
-    archetypes,
-    matchups,
-    jogadorDaSemana,
-    duos,
-    dominantTrio,
-    mapSpecialists,
-    weeklyHighlights,
-    records,
-  } = competitive;
+  const { powerRanking, momentum, decisive, archetypes, matchups, jogadorDaSemana, duos, dominantTrio, mapSpecialists, records } = competitive;
 
-  // Identifica melhor e pior mapa
   const sortedMaps = [...mapWinrates].sort((a, b) => b.winrate - a.winrate);
   const bestMap = sortedMaps.find((m) => m.matchesPlayed >= 1) ?? null;
-  const worstMap =
-    [...mapWinrates]
-      .filter((m) => m.matchesPlayed >= 1)
-      .sort((a, b) => a.winrate - b.winrate)[0] ?? null;
+  const worstMap = [...mapWinrates].filter((m) => m.matchesPlayed >= 1).sort((a, b) => a.winrate - b.winrate)[0] ?? null;
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* 👑 Centro de Inteligência Competitiva Hero */}
-      <FadeIn>
-        <div className="glass-panel p-6 sm:p-8 rounded-2xl border border-white/10 bg-gradient-to-r from-primary/10 via-accent-violet/5 to-transparent flex flex-col gap-2 relative overflow-hidden">
-          <div className="absolute right-0 top-0 w-64 h-64 bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
-          <div className="absolute left-1/3 bottom-0 w-48 h-48 bg-accent-violet/10 rounded-full blur-[90px] pointer-events-none" />
-          
-          <div className="text-[10px] uppercase font-bold tracking-widest text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full w-fit">
-            Inteligência Analítica
-          </div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight mt-1 max-w-2xl leading-tight">
-            Seu centro de inteligência competitiva no CS2
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground max-w-3xl leading-relaxed mt-1">
-            Monitore desempenho, evolução dos jogadores, rankings, rivalidades e histórico das suas partidas de forma integrada e profissional.
-          </p>
-        </div>
-      </FadeIn>
+    <div className="flex flex-col gap-5">
 
-      {/* Hero de Temporada (Destaques e MVP) */}
+      {/* 1 — Season Banner */}
       <FadeIn>
         <SeasonHero
           seasonLabel={SEASON_LABEL}
@@ -120,627 +75,427 @@ export default async function DashboardPage() {
         />
       </FadeIn>
 
-      {/* 🔥 Jornal da Temporada / Destaques da Semana */}
-      {weeklyHighlights.length > 0 && (
-        <FadeIn delay={0.02}>
-          <div className="glass-panel p-4 rounded-xl border border-white/5 bg-gradient-to-br from-white/[0.01] to-transparent flex flex-col gap-3">
-            <div className="flex items-center gap-1.5 text-xs text-primary font-bold">
-              <Calendar className="size-3.5" /> Destaques Recentes (Jornal da Semana)
+      {/* 2 — Métricas da comunidade */}
+      <FadeIn delay={0.03}>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: "Winrate Geral", value: `${summary.community.avgWinrate}%`, color: "text-accent-cyan" },
+            { label: "Média de Kills", value: `${summary.community.avgKills}`, color: "text-white" },
+            { label: "HS Médio", value: `${summary.community.avgHsPercent}%`, color: "text-white" },
+            { label: "Rounds Jogados", value: summary.community.totalRounds.toLocaleString("pt-BR"), color: "text-white" },
+          ].map((stat) => (
+            <div key={stat.label} className="glass-panel rounded-xl border border-white/5 bg-white/[0.01] px-4 py-3.5">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{stat.label}</p>
+              <p className={`text-2xl font-black mt-1 ${stat.color}`}>{stat.value}</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {weeklyHighlights.slice(0, 3).map((hl) => (
-                <div
-                  key={hl.id}
-                  className="p-3 border border-white/5 bg-white/[0.01] rounded-xl flex flex-col justify-between"
-                >
-                  <div>
-                    <span className="text-[9px] text-muted-foreground uppercase font-black tracking-wider block mb-1">
-                      {hl.meta}
-                    </span>
-                    <h4 className="text-xs font-bold text-white mb-1">{hl.title}</h4>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      {hl.description}
-                    </p>
-                  </div>
-                </div>
+          ))}
+        </div>
+      </FadeIn>
+
+      {/* 3 — RIVALIDADES (destaque principal) */}
+      <FadeIn delay={0.06}>
+        <section className="glass-panel rounded-2xl border border-white/10 overflow-hidden">
+          <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-accent-violet/5 to-transparent">
+            <div>
+              <h2 className="text-sm font-bold text-white">Confrontos Diretos</h2>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Rivalidades, histórico e vantagem head-to-head</p>
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-accent-violet bg-accent-violet/10 border border-accent-violet/20 px-2.5 py-1 rounded-full">
+              H2H
+            </span>
+          </div>
+          {topRivalries.length === 0 ? (
+            <p className="text-muted-foreground py-10 text-center text-sm">Ainda não há confrontos suficientes para formar rivalidades.</p>
+          ) : (
+            <div className="divide-y divide-white/5">
+              {topRivalries.map((rivalry) => (
+                <RivalryRow key={rivalry.id} rivalry={rivalry} />
               ))}
             </div>
-          </div>
-        </FadeIn>
-      )}
+          )}
+        </section>
+      </FadeIn>
 
-      {/* Grid Principal - 12 Colunas */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-        
-        {/* LADO ESQUERDO: Estatísticas, Rankings, Evolução, Arquétipos, Insights e Rivalidades (8 colunas) */}
-        <div className="lg:col-span-8 flex flex-col gap-4">
-          
-          {/* 1. Estado da Competição */}
-          <FadeIn delay={0.05}>
-            <SectionCard title="📊 Estado da Competição" variant="highlight">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-1">
-                <div className="glass-panel p-3.5 rounded-xl border border-white/5 bg-white/[0.01]">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Winrate Geral</p>
-                  <p className="text-xl font-bold mt-1 text-accent-cyan">{summary.community.avgWinrate}%</p>
-                </div>
-                <div className="glass-panel p-3.5 rounded-xl border border-white/5 bg-white/[0.01]">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Média Kills</p>
-                  <p className="text-xl font-bold mt-1 text-white">{summary.community.avgKills}</p>
-                </div>
-                <div className="glass-panel p-3.5 rounded-xl border border-white/5 bg-white/[0.01]">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">HS Médio</p>
-                  <p className="text-xl font-bold mt-1 text-white">{summary.community.avgHsPercent}%</p>
-                </div>
-                <div className="glass-panel p-3.5 rounded-xl border border-white/5 bg-white/[0.01]">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Rounds Jogados</p>
-                  <p className="text-xl font-bold mt-1 text-white">{summary.community.totalRounds.toLocaleString("pt-BR")}</p>
-                </div>
+      {/* 4 — Power Ranking + Jogador da Semana */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+
+        {/* Power Ranking — 2 colunas */}
+        <FadeIn delay={0.09} className="lg:col-span-2">
+          <section className="glass-panel rounded-2xl border border-white/10 overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-bold text-white">Power Ranking</h2>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Rating · Impacto · Winrate · ADR · KAST</p>
               </div>
-            </SectionCard>
-          </FadeIn>
-
-          {/* 2. Power Ranking da Temporada & Corrida pelo MVP */}
-          <FadeIn delay={0.08}>
-            <SectionCard title="🏆 Power Ranking & Corrida pelo MVP">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3 px-1 font-semibold">
-                Score de 0-100 ponderado por Rating (40%), Impacto (20%), Winrate (20%), ADR (10%) e KAST (10%)
-              </p>
-              <div className="flex flex-col gap-3">
-                {powerRanking.map((entry, index) => {
-                  const medals = ["🥇", "🥈", "🥉"];
-                  const isTop3 = index < 3;
-                  return (
-                    <div
-                      key={entry.player.id}
-                      className="glass-panel p-4 rounded-xl border border-white/5 bg-gradient-to-r from-white/[0.01] to-transparent flex flex-col gap-3"
-                    >
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-black text-muted-foreground w-5 text-center">
-                            {isTop3 ? medals[index] : index + 1}
-                          </span>
-                          <Link href={`/players/${entry.player.id}`} className="flex items-center gap-2 group">
-                            <PlayerAvatar
-                              nickname={entry.player.nickname}
-                              avatarUrl={entry.player.avatarUrl}
-                              size="sm"
-                            />
-                            <span className="font-bold text-sm text-white group-hover:text-primary transition-colors">
-                              {entry.player.nickname}
-                            </span>
-                            {entry.player.levelGc !== null && entry.player.levelGc !== undefined && (
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 bg-primary/10 border border-primary/20 rounded-md text-primary ml-1 inline-block">
-                                GC LVL {entry.player.levelGc}
-                              </span>
-                            )}
-                          </Link>
-                          {index > 0 && powerRanking[0] && (
-                            <span className="text-[10px] font-bold text-status-critical bg-status-critical/10 border border-status-critical/15 px-1.5 py-0.5 rounded-md">
-                              {entry.powerScore - powerRanking[0].powerScore} pts
-                            </span>
-                          )}
-                          <span className="text-xs ml-1 font-medium bg-white/5 px-2 py-0.5 rounded-md text-muted-foreground hidden sm:inline-block">
-                            Forma: {entry.forma}
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider block">Power Score</span>
-                          <p className="text-lg font-black text-accent-violet">{entry.powerScore} / 100</p>
-                          <span className="text-[9px] font-bold text-muted-foreground uppercase">{entry.levelLabel}</span>
-                        </div>
+              <Trophy className="size-4 text-status-warning" />
+            </div>
+            <div className="divide-y divide-white/5">
+              {powerRanking.map((entry, index) => {
+                const medals = ["1°", "2°", "3°"];
+                const isTop3 = index < 3;
+                return (
+                  <div key={entry.player.id} className="px-5 py-3.5 flex items-center gap-4 hover:bg-white/[0.015] transition-colors">
+                    <span className={`text-xs font-black w-5 shrink-0 text-center ${isTop3 ? "text-status-warning" : "text-muted-foreground"}`}>
+                      {isTop3 ? medals[index] : `${index + 1}°`}
+                    </span>
+                    <Link href={`/players/${entry.player.id}`} className="flex items-center gap-2.5 min-w-0 flex-1 group">
+                      <PlayerAvatar nickname={entry.player.nickname} avatarUrl={entry.player.avatarUrl} size="sm" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-white group-hover:text-primary transition-colors truncate">{entry.player.nickname}</p>
+                        <p className="text-[10px] text-muted-foreground">{entry.forma} · {entry.levelLabel}</p>
                       </div>
-
-                      <div className="grid grid-cols-5 gap-2 border-t border-white/5 pt-2.5 text-center text-xs">
-                        <div>
-                          <p className="text-[9px] uppercase font-semibold text-muted-foreground">Rating</p>
-                          <p className="font-bold text-white mt-0.5">{entry.rating.toFixed(2)}</p>
-                        </div>
-                        <div>
-                          <p className="text-[9px] uppercase font-semibold text-muted-foreground">Impact</p>
-                          <p className="font-bold text-white mt-0.5">{entry.impact.toFixed(2)}</p>
-                        </div>
-                        <div>
-                          <p className="text-[9px] uppercase font-semibold text-muted-foreground">KAST</p>
-                          <p className="font-bold text-white mt-0.5">{entry.kast}%</p>
-                        </div>
-                        <div>
-                          <p className="text-[9px] uppercase font-semibold text-muted-foreground">Winrate</p>
-                          <p className="font-bold text-white mt-0.5">{entry.winrate}%</p>
-                        </div>
-                        <div>
-                          <p className="text-[9px] uppercase font-semibold text-muted-foreground">ADR</p>
-                          <p className="font-bold text-white mt-0.5">{entry.adr}</p>
-                        </div>
+                    </Link>
+                    <div className="hidden sm:grid grid-cols-4 gap-4 text-center text-xs shrink-0">
+                      <div>
+                        <p className="text-[9px] text-muted-foreground uppercase font-semibold">Rating</p>
+                        <p className="font-bold text-white mt-0.5">{entry.rating.toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] text-muted-foreground uppercase font-semibold">KAST</p>
+                        <p className="font-bold text-white mt-0.5">{entry.kast}%</p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] text-muted-foreground uppercase font-semibold">WR</p>
+                        <p className="font-bold text-white mt-0.5">{entry.winrate}%</p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] text-muted-foreground uppercase font-semibold">Score</p>
+                        <p className="font-bold text-accent-violet mt-0.5">{entry.powerScore}</p>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </SectionCard>
-          </FadeIn>
-
-          {/* 3. Grid de Momentum e Decisivos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            
-            {/* 3a. Momento dos Jogadores */}
-            <FadeIn delay={0.1}>
-              <SectionCard title="📈 Momento dos Jogadores">
-                <div className="flex flex-col gap-3">
-                  {momentum.map((entry) => {
-                    const isUp = entry.status === "up";
-                    const isDown = entry.status === "down";
-                    const colorClass = isUp ? "text-status-good" : isDown ? "text-status-critical" : "text-muted-foreground";
-                    return (
-                      <div
-                        key={entry.player.id}
-                        className="p-3 border border-white/5 bg-white/[0.01] rounded-xl flex flex-col gap-2"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <PlayerAvatar
-                              nickname={entry.player.nickname}
-                              avatarUrl={entry.player.avatarUrl}
-                              size="sm"
-                            />
-                            <span className="text-sm font-bold text-white truncate">{entry.player.nickname}</span>
-                          </div>
-                          <span className={`text-[11px] font-black uppercase ${colorClass}`}>{entry.label}</span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 border-t border-white/5 pt-1.5 mt-0.5 text-[10px] text-muted-foreground">
-                          <div>
-                            Rating: <span className={`font-semibold ${isUp ? "text-status-good" : isDown ? "text-status-critical" : "text-white"}`}>{entry.ratingChangeText}</span>
-                          </div>
-                          <div className="text-right">
-                            Winrate: <span className={`font-semibold ${entry.recentWinrate > entry.priorWinrate ? "text-status-good" : entry.recentWinrate < entry.priorWinrate ? "text-status-critical" : "text-white"}`}>{entry.winrateChangeText}</span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </SectionCard>
-            </FadeIn>
-
-            {/* 3b. Jogadores Decisivos (Impacto por Round) */}
-            <FadeIn delay={0.12}>
-              <SectionCard title="💥 Jogadores Decisivos">
-                <div className="flex flex-col gap-3">
-                  {decisive.map((entry) => {
-                    return (
-                      <div
-                        key={entry.player.id}
-                        className="p-3 border border-white/5 bg-white/[0.01] rounded-xl flex flex-col gap-2"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <PlayerAvatar
-                              nickname={entry.player.nickname}
-                              avatarUrl={entry.player.avatarUrl}
-                              size="sm"
-                            />
-                            <span className="text-sm font-bold text-white truncate">{entry.player.nickname}</span>
-                          </div>
-                          <div className="text-right shrink-0">
-                            <span className="text-[10px] text-accent-cyan font-bold">{entry.impactPercent}% Rounds Impactados</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between text-[10px] text-muted-foreground border-t border-white/5 pt-1.5 mt-0.5">
-                          <span>Aberturas: {entry.entryKills}</span>
-                          {!entry.hideTradesAndClutches && (
-                            <>
-                              <span>Trades: {entry.tradeKills}</span>
-                              <span>Clutches: {entry.clutchWins}</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </SectionCard>
-            </FadeIn>
-
-          </div>
-
-          {/* 4. Grid de Arquétipos e Matchups */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            
-            {/* 4a. Arquétipos Competitivos */}
-            <FadeIn delay={0.13}>
-              <SectionCard title="🛡️ Identidades Táticas">
-                <div className="flex flex-col gap-3">
-                  {archetypes.slice(0, 3).map((entry) => {
-                    return (
-                      <div
-                        key={entry.player.id}
-                        className="p-3 border border-white/5 bg-white/[0.01] rounded-xl flex items-center justify-between"
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <PlayerAvatar
-                            nickname={entry.player.nickname}
-                            avatarUrl={entry.player.avatarUrl}
-                            size="sm"
-                          />
-                          <div className="min-w-0">
-                            <p className="text-sm font-bold text-white truncate">
-                              {entry.player.nickname}
-                              {entry.player.levelGc !== null && entry.player.levelGc !== undefined && (
-                                <span className="text-[8px] font-bold px-1.5 py-0.5 bg-primary/10 border border-primary/20 rounded-md text-primary ml-1.5 inline-block align-middle">
-                                  LVL {entry.player.levelGc}
-                                </span>
-                              )}
-                            </p>
-                            <p className="text-[11px] text-accent-violet font-semibold mt-0.5">{entry.label}</p>
-                            <p className="text-[9px] text-muted-foreground mt-0.5 font-medium">{entry.rankText}</p>
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <span className="text-[9px] text-muted-foreground block uppercase font-semibold">{entry.metricLabel}</span>
-                          <span className="text-xs font-bold text-white mt-0.5">{entry.metricValue}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </SectionCard>
-            </FadeIn>
-
-            {/* 4b. Freguesias e Tabus (Matchups) */}
-            <FadeIn delay={0.15}>
-              <SectionCard title="⚔️ Freguesias e Tabus">
-                <div className="flex flex-col gap-3">
-                  {matchups.slice(0, 3).map((m) => {
-                    if (!m.dominates && !m.struggles) return null;
-                    return (
-                      <div
-                        key={m.player.id}
-                        className="p-3 border border-white/5 bg-white/[0.01] rounded-xl flex flex-col gap-2"
-                      >
-                        <div className="flex items-center gap-2">
-                          <PlayerAvatar
-                            nickname={m.player.nickname}
-                            avatarUrl={m.player.avatarUrl}
-                            size="sm"
-                          />
-                          <span className="font-bold text-sm text-white">{m.player.nickname}</span>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] border-t border-white/5 pt-2 mt-0.5 text-muted-foreground">
-                          {m.dominates ? (
-                            <div>
-                              <span className="text-status-good font-semibold">🔥 Freguês:</span> {m.dominates.rivalName} ({m.dominates.wins}V - {m.dominates.total - m.dominates.wins}D)
-                            </div>
-                          ) : (
-                            <div className="text-muted-foreground/40">Sem dominância clara</div>
-                          )}
-                          {m.struggles ? (
-                            <div>
-                              <span className="text-status-critical font-semibold">💀 Carrasco:</span> {m.struggles.rivalName} ({m.struggles.wins}V - {m.struggles.total - m.struggles.wins}D)
-                            </div>
-                          ) : (
-                            <div className="text-muted-foreground/40">Sem carrasco claro</div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </SectionCard>
-            </FadeIn>
-
-          </div>
-
-          {/* 5. Confrontos Quentes (Rivalidades) */}
-          <FadeIn delay={0.19}>
-            <SectionCard title="⚔️ Confrontos Quentes">
-              {topRivalries.length === 0 ? (
-                <EmptyState message="Ainda não há confrontos suficientes para formar rivalidades." />
-              ) : (
-                <div className="flex flex-col divide-y divide-white/5">
-                  {topRivalries.map((rivalry) => (
-                    <RivalryRow key={rivalry.id} rivalry={rivalry} />
-                  ))}
-                </div>
-              )}
-            </SectionCard>
-          </FadeIn>
-
-        </div>
-
-        {/* LADO DIREITO: Jogador da Semana, Map Pool, Destaques, Duplas, Trios, Especialistas, Conquistas e Histórico (4 colunas) */}
-        <div className="lg:col-span-4 flex flex-col gap-4">
-
-          {/* 0. Ferramentas */}
-          <FadeIn delay={0.2}>
-            <SectionCard title="🛠️ Ferramentas">
-              <div className="p-3 border border-white/5 bg-white/[0.01] rounded-xl flex flex-col gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent-cyan/15 text-accent-cyan">
-                    <Target className="size-4.5" />
+                    <div className="sm:hidden text-right shrink-0">
+                      <p className="text-xs font-black text-accent-violet">{entry.powerScore}</p>
+                      <p className="text-[9px] text-muted-foreground">Score</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-white">🎯 Gerador de Times</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                      Crie times equilibrados para o lobby
-                    </p>
-                  </div>
-                </div>
-                <a
-                  href="https://cs2-team-balance.vercel.app/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary/15 border border-primary/30 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/25 transition-colors"
-                >
-                  Abrir Gerador <ExternalLink className="size-3.5" />
-                </a>
-              </div>
-            </SectionCard>
-          </FadeIn>
+                );
+              })}
+            </div>
+          </section>
+        </FadeIn>
 
-          {/* 1. Jogador da Semana */}
-          {jogadorDaSemana && (
-            <FadeIn delay={0.21}>
-              <SectionCard title="🔥 Jogador da Semana" variant="highlight">
-                <div className="flex items-center gap-3 p-1">
-                  <PlayerAvatar
-                    nickname={jogadorDaSemana.player.nickname}
-                    avatarUrl={jogadorDaSemana.player.avatarUrl}
-                    size="lg"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <Link
-                      href={`/players/${jogadorDaSemana.player.id}`}
-                      className="text-base font-black hover:text-primary transition-colors block text-white"
-                    >
-                      {jogadorDaSemana.player.nickname}
-                      {jogadorDaSemana.player.levelGc !== null && jogadorDaSemana.player.levelGc !== undefined && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 bg-primary/10 border border-primary/20 rounded-md text-primary ml-1.5 inline-block align-middle">
-                          GC LVL {jogadorDaSemana.player.levelGc}
-                        </span>
-                      )}
-                    </Link>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 rounded-md px-1.5 py-0.5 font-bold uppercase">
-                        Power Score: {jogadorDaSemana.powerScore}
-                      </span>
-                      <span className="text-[10px] text-status-good font-bold bg-status-good/10 px-2 py-0.5 rounded-md border border-status-good/15">
+        {/* Jogador da Semana — 1 coluna */}
+        <FadeIn delay={0.1}>
+          <div className="flex flex-col gap-4">
+            {jogadorDaSemana && (
+              <section className="glass-panel rounded-2xl border border-white/10 overflow-hidden">
+                <div className="px-5 py-4 border-b border-white/5 bg-gradient-to-r from-primary/5 to-transparent">
+                  <h2 className="text-sm font-bold text-white">Jogador da Semana</h2>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Melhor desempenho recente</p>
+                </div>
+                <div className="p-5">
+                  <div className="flex items-center gap-3">
+                    <PlayerAvatar nickname={jogadorDaSemana.player.nickname} avatarUrl={jogadorDaSemana.player.avatarUrl} size="lg" />
+                    <div className="min-w-0 flex-1">
+                      <Link href={`/players/${jogadorDaSemana.player.id}`} className="text-base font-black text-white hover:text-primary transition-colors block truncate">
+                        {jogadorDaSemana.player.nickname}
+                      </Link>
+                      <span className="text-[10px] text-status-good font-bold bg-status-good/10 px-2 py-0.5 rounded-md border border-status-good/15 mt-1 inline-block">
                         {jogadorDaSemana.evolutionText}
                       </span>
                     </div>
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-2 border-t border-white/5 pt-3 mt-3 text-xs text-muted-foreground">
-                  <div className="p-2 bg-white/[0.01] border border-white/5 rounded-lg">
-                    <p className="text-[9px] uppercase tracking-wider font-semibold">Rating Recente</p>
-                    <p className="text-sm font-bold text-white mt-0.5">{jogadorDaSemana.rating.toFixed(2)}</p>
+                  <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-white/5">
+                    <div className="bg-white/[0.02] border border-white/5 rounded-lg p-2.5 text-center">
+                      <p className="text-[9px] uppercase font-semibold text-muted-foreground">Rating</p>
+                      <p className="text-base font-black text-white mt-0.5">{jogadorDaSemana.rating.toFixed(2)}</p>
+                    </div>
+                    <div className="bg-white/[0.02] border border-white/5 rounded-lg p-2.5 text-center">
+                      <p className="text-[9px] uppercase font-semibold text-muted-foreground">Winrate</p>
+                      <p className="text-base font-black text-white mt-0.5">{jogadorDaSemana.winrate}%</p>
+                    </div>
                   </div>
-                  <div className="p-2 bg-white/[0.01] border border-white/5 rounded-lg">
-                    <p className="text-[9px] uppercase tracking-wider font-semibold">Winrate Recente</p>
-                    <p className="text-sm font-bold text-white mt-0.5">{jogadorDaSemana.winrate}%</p>
-                  </div>
                 </div>
-              </SectionCard>
-            </FadeIn>
-          )}
+              </section>
+            )}
 
-          {/* 2. Map Pool */}
-          <FadeIn delay={0.23}>
-            <SectionCard title="🗺️ Map Pool">
+            {/* Duo destaque */}
+            {duos.length > 0 && (
+              <section className="glass-panel rounded-2xl border border-white/10 overflow-hidden">
+                <div className="px-5 py-4 border-b border-white/5">
+                  <h2 className="text-sm font-bold text-white">Melhor Parceria</h2>
+                </div>
+                <div className="p-4 flex flex-col gap-3">
+                  {duos.slice(0, 2).map((d) => (
+                    <div key={`${d.playerA.id}-${d.playerB.id}`} className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex -space-x-1.5 shrink-0">
+                          <PlayerAvatar nickname={d.playerA.nickname} avatarUrl={d.playerA.avatarUrl} size="sm" />
+                          <PlayerAvatar nickname={d.playerB.nickname} avatarUrl={d.playerB.avatarUrl} size="sm" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-white truncate">{d.playerA.nickname} + {d.playerB.nickname}</p>
+                          <p className="text-[10px] text-muted-foreground">{d.total} partidas juntos</p>
+                        </div>
+                      </div>
+                      <span className="text-sm font-black text-status-good shrink-0">{d.winrate}%</span>
+                    </div>
+                  ))}
+                  {dominantTrio && (
+                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex -space-x-2 shrink-0">
+                          {dominantTrio.players.map((p) => (
+                            <PlayerAvatar key={p.id} nickname={p.nickname} avatarUrl={p.avatarUrl} size="sm" />
+                          ))}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-white truncate">{dominantTrio.players.map((p) => p.nickname).join(" · ")}</p>
+                          <p className="text-[10px] text-muted-foreground">{dominantTrio.total} partidas · trio</p>
+                        </div>
+                      </div>
+                      <span className="text-sm font-black text-status-good shrink-0">{dominantTrio.winrate}%</span>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+          </div>
+        </FadeIn>
+      </div>
+
+      {/* 5 — Momento + Decisivos + Map Pool */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+
+        {/* Momento dos Jogadores */}
+        <FadeIn delay={0.12}>
+          <section className="glass-panel rounded-2xl border border-white/10 overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+              <h2 className="text-sm font-bold text-white">Evolução Recente</h2>
+              <TrendingUp className="size-4 text-accent-cyan" />
+            </div>
+            <div className="divide-y divide-white/5">
+              {momentum.map((entry) => {
+                const isUp = entry.status === "up";
+                const isDown = entry.status === "down";
+                const Icon = isUp ? TrendingUp : isDown ? TrendingDown : Minus;
+                const colorClass = isUp ? "text-status-good" : isDown ? "text-status-critical" : "text-muted-foreground";
+                return (
+                  <div key={entry.player.id} className="px-5 py-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <PlayerAvatar nickname={entry.player.nickname} avatarUrl={entry.player.avatarUrl} size="sm" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-white truncate">{entry.player.nickname}</p>
+                        <p className="text-[10px] text-muted-foreground">{entry.ratingChangeText} rating</p>
+                      </div>
+                    </div>
+                    <div className={`flex items-center gap-1 shrink-0 text-[11px] font-black ${colorClass}`}>
+                      <Icon className="size-3.5" />
+                      {entry.label}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        </FadeIn>
+
+        {/* Jogadores Decisivos */}
+        <FadeIn delay={0.13}>
+          <section className="glass-panel rounded-2xl border border-white/10 overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+              <h2 className="text-sm font-bold text-white">Impacto por Round</h2>
+              <Flame className="size-4 text-status-warning" />
+            </div>
+            <div className="divide-y divide-white/5">
+              {decisive.map((entry) => (
+                <div key={entry.player.id} className="px-5 py-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <PlayerAvatar nickname={entry.player.nickname} avatarUrl={entry.player.avatarUrl} size="sm" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-white truncate">{entry.player.nickname}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {entry.entryKills} aberturas
+                        {!entry.hideTradesAndClutches && ` · ${entry.clutchWins} clutches`}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-black text-accent-cyan shrink-0">{entry.impactPercent}%</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        </FadeIn>
+
+        {/* Map Pool */}
+        <FadeIn delay={0.14}>
+          <section className="glass-panel rounded-2xl border border-white/10 overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/5">
+              <h2 className="text-sm font-bold text-white">Map Pool</h2>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Winrate por mapa</p>
+            </div>
+            <div className="p-4">
               <MapWinrateChart data={mapWinrates} />
-              
-              <div className="flex flex-col gap-2 mt-4 pt-3 border-t border-white/5">
+              <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-white/5">
                 {bestMap && (
-                  <div className="flex items-center justify-between text-xs p-2.5 rounded-lg bg-status-good/5 border border-status-good/10">
+                  <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-status-good/5 border border-status-good/10">
                     <span className="flex items-center gap-1.5 text-status-good font-semibold">
-                      <Flame className="size-3.5" /> Melhor Mapa
+                      <Flame className="size-3" /> Melhor
                     </span>
-                    <span className="text-white font-medium">
-                      {bestMap.map} ({bestMap.winrate.toFixed(1)}% WR)
-                    </span>
+                    <span className="text-white font-medium">{bestMap.map} · {bestMap.winrate.toFixed(0)}%</span>
                   </div>
                 )}
                 {worstMap && (
-                  <div className="flex items-center justify-between text-xs p-2.5 rounded-lg bg-status-critical/5 border border-status-critical/10">
+                  <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-status-critical/5 border border-status-critical/10">
                     <span className="flex items-center gap-1.5 text-status-critical font-semibold">
-                      <ShieldAlert className="size-3.5" /> Mapa Crítico
+                      <ShieldAlert className="size-3" /> Crítico
                     </span>
-                    <span className="text-white font-medium">
-                      {worstMap.map} ({worstMap.winrate.toFixed(1)}% WR)
-                    </span>
+                    <span className="text-white font-medium">{worstMap.map} · {worstMap.winrate.toFixed(0)}%</span>
                   </div>
                 )}
               </div>
-            </SectionCard>
-          </FadeIn>
-
-          {/* 3. Melhores Parcerias */}
-          <FadeIn delay={0.25}>
-            <SectionCard title="🤝 Melhores Parcerias">
-              {duos.length === 0 ? (
-                <EmptyState message="Sem duplas com dados suficientes." />
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {duos.map((d) => (
-                    <div
-                      key={`${d.playerA.id}-${d.playerB.id}`}
-                      className="p-3 border border-white/5 bg-white/[0.01] rounded-xl flex flex-col gap-2"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="flex -space-x-1.5 shrink-0">
-                            <PlayerAvatar
-                              nickname={d.playerA.nickname}
-                              avatarUrl={d.playerA.avatarUrl}
-                              size="sm"
-                            />
-                            <PlayerAvatar
-                              nickname={d.playerB.nickname}
-                              avatarUrl={d.playerB.avatarUrl}
-                              size="sm"
-                            />
-                          </div>
-                          <span className="text-xs font-bold text-white truncate max-w-[130px] sm:max-w-none">
-                            {d.playerA.nickname} + {d.playerB.nickname}
-                          </span>
-                        </div>
-                        <span className="text-xs font-black text-status-good shrink-0">{d.winrate}% WR</span>
-                      </div>
-                      <div className="flex items-center justify-between text-[9px] text-muted-foreground border-t border-white/5 pt-1.5 mt-0.5">
-                        <span>{d.total} partidas juntos</span>
-                        <span>Rating combinado: {d.avgRating.toFixed(2)}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </SectionCard>
-          </FadeIn>
-
-          {/* 4. Trio Dominante */}
-          {dominantTrio && (
-            <FadeIn delay={0.27}>
-              <SectionCard title="🤝 Trio Dominante" variant="highlight">
-                <div className="p-3 border border-white/5 bg-white/[0.01] rounded-xl flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="flex -space-x-2.5 shrink-0">
-                        {dominantTrio.players.map((p) => (
-                          <PlayerAvatar
-                            key={p.id}
-                            nickname={p.nickname}
-                            avatarUrl={p.avatarUrl}
-                            size="sm"
-                          />
-                        ))}
-                      </div>
-                      <span className="text-xs font-black text-white truncate max-w-[120px] sm:max-w-none">
-                        {dominantTrio.players.map((p) => p.nickname).join(" + ")}
-                      </span>
-                    </div>
-                    <span className="text-xs font-black text-status-good shrink-0">{dominantTrio.winrate}% WR</span>
-                  </div>
-                  <div className="flex items-center justify-between text-[9px] text-muted-foreground border-t border-white/5 pt-1.5 mt-0.5">
-                    <span>{dominantTrio.total} partidas juntos</span>
-                    <span>Rating combinado: {dominantTrio.avgRating.toFixed(2)}</span>
-                  </div>
-                </div>
-              </SectionCard>
-            </FadeIn>
-          )}
-
-          {/* 5. Especialistas de Mapas */}
-          <FadeIn delay={0.28}>
-            <SectionCard title="🗺️ Especialistas de Mapas">
-              {mapSpecialists.length === 0 ? (
-                <EmptyState message="Sem especialistas de mapas definidos." />
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {mapSpecialists.map((ms) => (
-                    <div
-                      key={ms.mapName}
-                      className="flex items-center justify-between text-xs p-2 rounded-lg bg-white/[0.01] border border-white/5"
-                    >
-                      <span className="font-semibold text-white capitalize">{ms.mapName}</span>
-                      <div className="flex items-center gap-2">
-                        <PlayerAvatar
-                          nickname={ms.player.nickname}
-                          avatarUrl={ms.player.avatarUrl}
-                          size="sm"
-                        />
-                        <span className="font-bold text-white text-[11px]">{ms.player.nickname}</span>
-                        {ms.player.levelGc !== null && ms.player.levelGc !== undefined && (
-                          <span className="text-[8px] font-black px-1.5 py-0.5 bg-primary/10 border border-primary/20 rounded text-primary inline-block">
-                            LVL {ms.player.levelGc}
-                          </span>
-                        )}
-                        <span className="text-[10px] font-semibold text-accent-violet">({ms.rating.toFixed(2)})</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </SectionCard>
-          </FadeIn>
-
-          {/* 6. Recordes Históricos (Hall da Fama) */}
-          <FadeIn delay={0.29}>
-            <SectionCard title="⭐ Recordes Históricos">
-              <div className="flex flex-col gap-2.5 text-xs">
-                {records.map((r, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between p-2.5 rounded-lg bg-white/[0.01] border border-white/5"
-                  >
-                    <div>
-                      <p className="text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">
-                        {r.category}
-                      </p>
-                      <p className="font-bold text-white mt-0.5">
-                        {r.playerName} <span className="text-muted-foreground font-normal">({r.detail})</span>
-                      </p>
-                    </div>
-                    <span className="text-xs font-black text-accent-cyan shrink-0">
-                      {r.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </SectionCard>
-          </FadeIn>
-
-          {/* 7. Mural da Fama (Conquistas) */}
-          <FadeIn delay={0.31}>
-            <SectionCard title="🏆 Mural da Fama">
-              {recentAchievements.length === 0 ? (
-                <EmptyState message="Nenhuma conquista desbloqueada ainda." />
-              ) : (
-                <div className="flex flex-col divide-y divide-white/5">
-                  {recentAchievements.map((entry) => (
-                    <AchievementFeedItem key={entry.id} entry={entry} />
-                  ))}
-                </div>
-              )}
-            </SectionCard>
-          </FadeIn>
-
-          {/* 8. Últimas Batalhas (Compacto no Rodapé) */}
-          <FadeIn delay={0.33}>
-            <SectionCard title="📜 Últimas Batalhas">
-              {recentMatches.length === 0 ? (
-                <EmptyState message="Nenhuma partida sincronizada ainda." />
-              ) : (
-                <div className="flex flex-col gap-1.5">
-                  {recentMatches.slice(0, 3).map((match) => (
-                    <MatchRow key={match.id} match={match} />
-                  ))}
-                  <div className="mt-2 text-center">
-                    <Link
-                      href="/sessions"
-                      className="text-xs text-primary hover:underline font-bold inline-flex items-center gap-1 group"
-                    >
-                      Ver todas as sessões e partidas
-                      <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </SectionCard>
-          </FadeIn>
-
-        </div>
-
+            </div>
+          </section>
+        </FadeIn>
       </div>
 
-      {/* 🤖 Fechamento: Insight da Semana - Coach IA */}
-      <FadeIn delay={0.36}>
-        <div className="mt-4">
+      {/* 6 — Identidades Táticas + Matchups + Especialistas */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+
+        <FadeIn delay={0.16}>
+          <section className="glass-panel rounded-2xl border border-white/10 overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/5">
+              <h2 className="text-sm font-bold text-white">Identidades Táticas</h2>
+            </div>
+            <div className="divide-y divide-white/5">
+              {archetypes.slice(0, 4).map((entry) => (
+                <div key={entry.player.id} className="px-5 py-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <PlayerAvatar nickname={entry.player.nickname} avatarUrl={entry.player.avatarUrl} size="sm" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-white truncate">{entry.player.nickname}</p>
+                      <p className="text-[10px] text-accent-violet font-semibold">{entry.label}</p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground text-right shrink-0">{entry.metricValue}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        </FadeIn>
+
+        <FadeIn delay={0.17}>
+          <section className="glass-panel rounded-2xl border border-white/10 overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/5">
+              <h2 className="text-sm font-bold text-white">Domínio e Karma</h2>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Quem domina e quem sofre</p>
+            </div>
+            <div className="divide-y divide-white/5">
+              {matchups.slice(0, 4).map((m) => {
+                if (!m.dominates && !m.struggles) return null;
+                return (
+                  <div key={m.player.id} className="px-5 py-3 flex flex-col gap-1.5">
+                    <div className="flex items-center gap-2">
+                      <PlayerAvatar nickname={m.player.nickname} avatarUrl={m.player.avatarUrl} size="sm" />
+                      <span className="text-xs font-bold text-white">{m.player.nickname}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5 text-[10px] pl-7">
+                      {m.dominates && (
+                        <span className="text-status-good">Domina: <span className="font-semibold">{m.dominates.rivalName}</span></span>
+                      )}
+                      {m.struggles && (
+                        <span className="text-status-critical">Sofre de: <span className="font-semibold">{m.struggles.rivalName}</span></span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        </FadeIn>
+
+        <FadeIn delay={0.18}>
+          <section className="glass-panel rounded-2xl border border-white/10 overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/5">
+              <h2 className="text-sm font-bold text-white">Especialistas de Mapas</h2>
+            </div>
+            <div className="divide-y divide-white/5">
+              {mapSpecialists.map((ms) => (
+                <div key={ms.mapName} className="px-5 py-3 flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold text-white capitalize">{ms.mapName}</span>
+                  <div className="flex items-center gap-2">
+                    <PlayerAvatar nickname={ms.player.nickname} avatarUrl={ms.player.avatarUrl} size="sm" />
+                    <span className="text-[11px] font-bold text-white">{ms.player.nickname}</span>
+                    <span className="text-[10px] text-accent-violet font-semibold">{ms.rating.toFixed(2)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </FadeIn>
+      </div>
+
+      {/* 7 — Coach IA (destaque premium, full width) */}
+      <FadeIn delay={0.2}>
+        <div className="relative">
+          <div className="absolute -inset-px rounded-2xl bg-gradient-to-r from-primary/20 via-accent-violet/10 to-transparent pointer-events-none" />
           <CoachReportCard apiUrl="/api/coach/dashboard" />
         </div>
       </FadeIn>
 
+      {/* 8 — Recordes + Conquistas + Últimas Partidas */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+
+        <FadeIn delay={0.22}>
+          <section className="glass-panel rounded-2xl border border-white/10 overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/5">
+              <h2 className="text-sm font-bold text-white">Recordes</h2>
+            </div>
+            <div className="divide-y divide-white/5">
+              {records.map((r, idx) => (
+                <div key={idx} className="px-5 py-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">{r.category}</p>
+                    <p className="text-xs font-bold text-white mt-0.5 truncate">{r.playerName} <span className="text-muted-foreground font-normal">({r.detail})</span></p>
+                  </div>
+                  <span className="text-sm font-black text-accent-cyan shrink-0">{r.value}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        </FadeIn>
+
+        <FadeIn delay={0.23}>
+          <section className="glass-panel rounded-2xl border border-white/10 overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/5">
+              <h2 className="text-sm font-bold text-white">Conquistas Recentes</h2>
+            </div>
+            {recentAchievements.length === 0 ? (
+              <p className="text-muted-foreground py-8 text-center text-sm">Nenhuma conquista ainda.</p>
+            ) : (
+              <div className="divide-y divide-white/5">
+                {recentAchievements.map((entry) => (
+                  <AchievementFeedItem key={entry.id} entry={entry} />
+                ))}
+              </div>
+            )}
+          </section>
+        </FadeIn>
+
+        <FadeIn delay={0.24}>
+          <section className="glass-panel rounded-2xl border border-white/10 overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/5">
+              <h2 className="text-sm font-bold text-white">Últimas Partidas</h2>
+            </div>
+            {recentMatches.length === 0 ? (
+              <p className="text-muted-foreground py-8 text-center text-sm">Nenhuma partida sincronizada.</p>
+            ) : (
+              <div className="divide-y divide-white/5">
+                {recentMatches.slice(0, 4).map((match) => (
+                  <MatchRow key={match.id} match={match} />
+                ))}
+              </div>
+            )}
+            <div className="px-5 py-3 border-t border-white/5">
+              <Link href="/sessions" className="text-xs text-primary hover:underline font-semibold inline-flex items-center gap-1 group">
+                Ver todas as sessões
+                <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+            </div>
+          </section>
+        </FadeIn>
+      </div>
+
     </div>
   );
-}
-
-function EmptyState({ message }: { message: string }) {
-  return <p className="text-muted-foreground py-8 text-center text-sm">{message}</p>;
 }
