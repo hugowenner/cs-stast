@@ -18,6 +18,14 @@ model Player {
   levelGc      Int?
   createdAt    DateTime @default(now())
 
+  // Steam profile data — populated by SteamProfileService, not by match sync
+  steamNickname     String?
+  steamAvatarSmall  String?   // 32×32
+  steamAvatarMedium String?   // 64×64
+  steamAvatarFull   String?   // 184×184
+  steamProfileUrl   String?
+  steamLastSync     DateTime?
+
   user           User?
   matchStats     PlayerMatchStats[]
   events         Event[]             @relation("EventActor")
