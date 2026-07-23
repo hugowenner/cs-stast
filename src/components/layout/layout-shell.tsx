@@ -21,7 +21,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4 min-h-screen">
+    <div className="mx-auto flex max-w-[1440px] flex-col gap-6 p-4 sm:p-6 lg:px-10 lg:py-6 min-h-screen">
 
       {/* Header + Nav */}
       <header className="glass-panel border border-white/10 bg-white/[0.02] rounded-2xl overflow-hidden">
