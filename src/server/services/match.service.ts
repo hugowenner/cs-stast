@@ -284,27 +284,21 @@ export async function ingestMatchSync(
     const grants = evaluateMatchAchievements(match.id, achievementInputs);
     await grantAchievements(grants);
 
-    // Condicionalmente atualiza o Player.levelGc se este jogo for o mais recente na timeline
-    for (const p of input.players) {
-      const player = playerBySteamId.get(p.steamId)!;
-      if (p.levelGc !== undefined && p.levelGc !== null) {
+    // Atualiza Player.levelGc se este for o jogo mais recente do jogador na timeline.
+    // Isolado em try/catch próprio: uma falha aqui não deve reverter a ingestão da partida.
+    try {
+      for (const p of input.players) {
+        if (p.levelGc === undefined || p.levelGc === null) continue;
+        const player = playerBySteamId.get(p.steamId)!;
         const newerMatchCount = await prisma.playerMatchStats.count({
-          where: {
-            playerId: player.id,
-            match: {
-              playedAt: {
-                gt: input.playedAt,
-              },
-            },
-          },
+          where: { playerId: player.id, match: { playedAt: { gt: input.playedAt } } },
         });
         if (newerMatchCount === 0) {
-          await prisma.player.update({
-            where: { id: player.id },
-            data: { levelGc: p.levelGc },
-          });
+          await prisma.player.update({ where: { id: player.id }, data: { levelGc: p.levelGc } });
         }
       }
+    } catch {
+      // Não-crítico: a partida já foi importada com sucesso.
     }
 
     await importRepo.completeImportLog(importLog.id, { status: "SUCCESS", matchesImported: 1 });

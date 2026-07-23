@@ -56,7 +56,7 @@ function normalizeTeam(
       gamersClubId,
       nickname: player.nick ?? player.nickname ?? "Desconhecido",
       avatarUrl: toAbsoluteUrl(player.avatar),
-      levelGc: player.level !== undefined ? toNumber(player.level) : undefined,
+      levelGc: (() => { const n = toNumber(player.level); return n >= 1 && n <= 21 ? n : undefined; })(),
       team,
       kills: toNumber(entry.nb_kill ?? entry.kills),
       deaths: toNumber(entry.death ?? entry.deaths),
