@@ -16,4 +16,5 @@ export interface CoachReportDTO {
   model: string;
   processingTimeMs: number;
   usage?: CoachUsageDTO;
+  nextGoal?: string;
 }

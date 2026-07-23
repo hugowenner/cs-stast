@@ -6,7 +6,8 @@ import { MapWinrateChart } from "@/components/charts/map-winrate-chart";
 import { SeasonHero } from "@/components/dashboard/season-hero";
 import { CoachReportCard } from "@/components/ui/coach-report-card";
 import { RivalryCarousel } from "@/components/rivalries/rivalry-carousel";
-import { RecentMatchesCarousel, type RecentMatchCardData } from "@/components/matches/recent-matches-carousel";
+import { ConfrontationsCarousel } from "@/components/matches/confrontations-carousel";
+import type { RecentMatchCardData } from "@/components/matches/recent-matches-carousel";
 import { safeQuery } from "@/server/safeQuery";
 import * as dashboardService from "@/server/services/dashboard.service";
 import * as matchService from "@/server/services/match.service";
@@ -148,14 +149,14 @@ export default async function DashboardPage() {
         )}
       </section>
 
-      {/* ═══ ZONA 2 — Partidas Recentes ═══ */}
+      {/* ═══ ZONA 2 — Últimos Confrontos ═══ */}
       {recentMatches.length > 0 && (
         <section>
           <FadeIn delay={0.07}>
             <div className="flex items-center justify-between mb-5">
               <div>
-                <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-muted-foreground/60">Partidas Recentes</p>
-                <p className="text-xs text-muted-foreground/55 mt-0.5">Últimos jogos dos jogadores monitorados</p>
+                <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-muted-foreground/60">Últimos Confrontos</p>
+                <p className="text-xs text-muted-foreground/55 mt-0.5">Quem jogou contra quem nas partidas mais recentes</p>
               </div>
               <Link href="/sessions" className="text-[10px] text-primary/70 hover:text-primary transition-colors font-semibold inline-flex items-center gap-1 group shrink-0">
                 Ver todas <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
@@ -163,7 +164,7 @@ export default async function DashboardPage() {
             </div>
           </FadeIn>
           <FadeIn delay={0.08}>
-            <RecentMatchesCarousel matches={recentMatches as RecentMatchCardData[]} />
+            <ConfrontationsCarousel matches={recentMatches as RecentMatchCardData[]} />
           </FadeIn>
         </section>
       )}

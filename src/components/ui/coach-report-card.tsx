@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CheckCircle, AlertTriangle, Lightbulb, RefreshCw, Cpu, Brain, Clock } from "lucide-react";
+import { CheckCircle, AlertTriangle, Lightbulb, RefreshCw, Cpu, Brain, Clock, Target } from "lucide-react";
 import { Skeleton } from "@/components/ui/loading-skeleton";
 import type { CoachReportDTO } from "@/server/dtos/coachReport.dto";
 
@@ -274,7 +274,7 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
         {/* Forças */}
         <div className="p-4 rounded-xl border border-white/5 bg-white/[0.01] flex flex-col gap-2">
           <span className="text-[10px] font-semibold text-status-good uppercase tracking-wider flex items-center gap-1">
-            <CheckCircle className="size-3.5" /> 🔥 Onde você tá brilhando
+            <CheckCircle className="size-3.5" /> Pontos Fortes
           </span>
           <ul className="flex flex-col gap-2 text-xs text-muted-foreground">
             {report.strengths.map((str, idx) => (
@@ -289,7 +289,7 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
         {/* Fraquezas */}
         <div className="p-4 rounded-xl border border-white/5 bg-white/[0.01] flex flex-col gap-2">
           <span className="text-[10px] font-semibold text-status-critical uppercase tracking-wider flex items-center gap-1">
-            <AlertTriangle className="size-3.5" /> 💀 Onde tá entregando round
+            <AlertTriangle className="size-3.5" /> Prioridades de Melhoria
           </span>
           <ul className="flex flex-col gap-2 text-xs text-muted-foreground">
             {report.weaknesses.map((weak, idx) => (
@@ -305,7 +305,7 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
       {/* Recomendações */}
       <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 flex flex-col gap-2">
         <span className="text-[10px] font-semibold text-primary uppercase tracking-wider flex items-center gap-1">
-          <Lightbulb className="size-3.5" /> 🎯 Treino da Semana
+          <Lightbulb className="size-3.5" /> Recomendações do Coach
         </span>
         <ul className="flex flex-col gap-2.5 text-xs text-muted-foreground">
           {report.recommendations.map((rec, idx) => (
@@ -316,6 +316,16 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
           {report.recommendations.length === 0 && <li>Nenhuma recomendação tática listada.</li>}
         </ul>
       </div>
+
+      {/* Próximo Objetivo */}
+      {report.nextGoal && (
+        <div className="p-4 rounded-xl border border-accent-cyan/20 bg-accent-cyan/[0.04] flex flex-col gap-2">
+          <span className="text-[10px] font-semibold text-accent-cyan uppercase tracking-wider flex items-center gap-1">
+            <Target className="size-3.5" /> Próximo Objetivo
+          </span>
+          <p className="text-xs text-muted-foreground leading-relaxed">{report.nextGoal}</p>
+        </div>
+      )}
 
       {/* Footer Metadata */}
       <div className="flex flex-wrap items-center justify-between text-[10px] text-muted-foreground border-t border-white/5 pt-3 mt-1">
