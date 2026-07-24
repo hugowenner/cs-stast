@@ -58,9 +58,11 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
   const [generating, setGenerating] = useState(false);
   const [progressMessage, setProgressMessage] = useState(() => pickRandomProgressMessage());
   const [error, setError] = useState<string | null>(null);
+  const [flash, setFlash] = useState(false);
 
   const requestKeyRef = useRef<string | null>(null);
   const ignoreRef = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Verifica se já existe uma análise para essa entidade (sem chamar a IA).
   useEffect(() => {
@@ -129,6 +131,12 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
       setReport(data);
       setGeneratedAt(data.generatedAt);
       setStatus("fresh");
+      // Scroll e flash de borda ao completar
+      setTimeout(() => {
+        containerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        setFlash(true);
+        setTimeout(() => setFlash(false), 2200);
+      }, 80);
     } catch (err) {
       clearTimeout(timeoutId);
       const e = err as Error & { name?: string };
@@ -147,7 +155,7 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
       <div className="glass-panel glow-ring-primary p-5 border border-primary/20 bg-primary/[0.03] rounded-2xl flex flex-col gap-3">
         <div className="flex items-center gap-2 border-b border-primary/10 pb-3">
           <Brain className="size-5 text-primary animate-pulse" />
-          <h3 className="text-sm font-bold text-white tracking-wider uppercase">🧠 Coach IA</h3>
+          <h3 className="text-sm font-bold text-white tracking-wider uppercase">Coach IA</h3>
         </div>
         <Skeleton className="h-4 w-1/2" />
       </div>
@@ -160,7 +168,7 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
         <div className="flex items-center gap-2 border-b border-primary/10 pb-3">
           <Brain className="size-5 text-primary animate-pulse" />
           <h3 className="text-sm font-bold text-white tracking-wider uppercase">
-            🧠 Coach IA · Analisando...
+            Coach IA · Analisando...
           </h3>
         </div>
         <div className="flex flex-col gap-3">
@@ -200,42 +208,49 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
 
   if (!report) {
     return (
-      <div className="glass-panel glow-ring-primary p-6 border border-primary/25 bg-primary/[0.04] rounded-2xl flex flex-col gap-3 items-center text-center">
-        <Brain className="size-9 text-primary" />
-        <div>
-          <h4 className="text-base font-bold text-white">🧠 Coach IA</h4>
-          <p className="text-xs text-muted-foreground mt-1.5 max-w-md">
-            O Coach ainda não analisou essa partida. Gere uma análise técnica —
-            tempo médio de 10-15 segundos.
-          </p>
+      <div className="glass-panel glow-ring-primary border border-primary/25 bg-primary/[0.03] rounded-2xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-primary/10 flex items-center gap-2">
+          <Brain className="size-4 text-primary" />
+          <h4 className="text-sm font-bold text-white tracking-wider uppercase">Coach IA</h4>
+          <span className="ml-auto text-[9px] font-bold text-primary/60 border border-primary/20 bg-primary/10 px-2 py-0.5 rounded-md uppercase tracking-widest">Disponível</span>
         </div>
-        <button
-          onClick={handleGenerate}
-          className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
-        >
-          <Brain className="size-3.5" /> Gerar análise do Coach
-        </button>
+        <div className="px-5 py-6 flex flex-col sm:flex-row items-start sm:items-center gap-5">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-white">Nenhuma análise gerada ainda.</p>
+            <p className="text-xs text-muted-foreground/70 mt-1.5 leading-relaxed max-w-md">
+              Gere um relatório técnico da temporada — o Coach analisa Rating, ADR, K/D, mapas,
+              tendências e duplas. Tempo médio: 10–15 segundos.
+            </p>
+          </div>
+          <button
+            onClick={handleGenerate}
+            className="btn-press shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
+          >
+            <Brain className="size-3.5" /> Gerar análise
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="glass-panel glow-ring-primary p-5 border border-primary/20 bg-primary/[0.02] rounded-2xl flex flex-col gap-4">
+    <div
+      ref={containerRef}
+      className={`glass-panel glow-ring-primary p-5 border border-primary/20 bg-primary/[0.02] rounded-2xl flex flex-col gap-4 ${flash ? "report-flash" : ""}`}
+    >
       {/* Top Banner */}
       <div className="flex items-center justify-between border-b border-primary/10 pb-3 flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <Brain className="size-5 text-primary" />
-          <h3 className="text-sm font-bold text-white tracking-wider uppercase">
-            🧠 Coach IA
-          </h3>
+          <Brain className="size-4 text-primary" />
+          <h3 className="text-sm font-bold text-white tracking-wider uppercase">Coach IA</h3>
         </div>
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center rounded-full bg-status-good/15 px-2.5 py-0.5 text-xs font-semibold text-status-good border border-status-good/20">
-            🧠 Coach confia {report.confidence}% nessa análise
+          <span className="inline-flex items-center rounded-full bg-status-good/15 px-2.5 py-0.5 text-[10px] font-bold text-status-good border border-status-good/20">
+            Confiança {report.confidence}%
           </span>
           <button
             onClick={handleGenerate}
-            className="inline-flex items-center gap-1 rounded-lg bg-white/5 border border-white/10 px-2 py-1 text-[10px] font-semibold text-white hover:bg-white/10 transition-colors"
+            className="btn-press inline-flex items-center gap-1 rounded-lg bg-white/5 border border-white/10 px-2 py-1 text-[10px] font-semibold text-white hover:bg-white/10 transition-colors"
           >
             <RefreshCw className="size-3" /> Atualizar
           </button>
@@ -243,18 +258,18 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
       </div>
 
       {/* Status da análise */}
-      <div className="flex items-center gap-1.5 text-[10px] -mt-2">
+      <div className="flex items-center gap-3 text-[10px] -mt-2 flex-wrap">
         {status === "fresh" ? (
-          <span className="inline-flex items-center gap-1 text-status-good">
-            <span className="size-1.5 rounded-full bg-status-good" /> Coach em dia
+          <span className="inline-flex items-center gap-1 text-status-good font-semibold">
+            <span className="size-1.5 rounded-full bg-status-good" /> Análise atualizada
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1 text-status-warning">
-            <span className="size-1.5 rounded-full bg-status-warning" /> Rolou partida nova — dá pra atualizar
+          <span className="inline-flex items-center gap-1 text-status-warning font-semibold">
+            <span className="size-1.5 rounded-full bg-status-warning" /> Nova partida disponível — atualize
           </span>
         )}
         {generatedAt && (
-          <span className="flex items-center gap-1 text-muted-foreground">
+          <span className="flex items-center gap-1 text-muted-foreground/60">
             <Clock className="size-3" /> {formatRelativeTime(generatedAt)}
           </span>
         )}

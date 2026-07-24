@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Footer } from "./footer";
 import { Menu, X, BarChart3, CalendarDays, LayoutDashboard, Trophy, Users, HeartHandshake, Target, ExternalLink } from "lucide-react";
 import Link from "next/link";
@@ -19,6 +20,7 @@ const NAV_ITEMS = [
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const prefersReduced = useReducedMotion();
 
   return (
     <div className="mx-auto flex max-w-[1440px] flex-col gap-6 p-4 sm:p-6 lg:px-10 lg:py-6 min-h-screen">
@@ -125,7 +127,17 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
       {/* Conteúdo principal — full width */}
       <main className="min-w-0 flex-1 pb-4 w-full">
-        {children}
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={pathname}
+            initial={{ opacity: 0, y: prefersReduced ? 0 : 7 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: prefersReduced ? 0 : -5 }}
+            transition={{ duration: prefersReduced ? 0.01 : 0.18, ease: "easeOut" }}
+          >
+            {children}
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       <Footer />

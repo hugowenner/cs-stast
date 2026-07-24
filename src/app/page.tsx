@@ -1,4 +1,5 @@
 import { FadeIn } from "@/components/motion/fade-in";
+import { AnimatedNumber } from "@/components/motion/animated-number";
 import { MatchRow } from "@/components/matches/match-row";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import { AchievementFeedItem } from "@/components/achievements/achievement-feed-item";
@@ -18,9 +19,6 @@ import * as rivalryService from "@/server/services/rivalry.service";
 import Link from "next/link";
 import {
   Trophy,
-  TrendingUp,
-  TrendingDown,
-  Minus,
   Flame,
   ShieldAlert,
   ArrowRight,
@@ -28,6 +26,7 @@ import {
   Zap,
   Map,
   AlertTriangle,
+  TrendingDown,
   Handshake,
   Target,
 } from "lucide-react";
@@ -73,7 +72,7 @@ export default async function DashboardPage() {
       safeQuery(() => rivalryService.listTopRivalriesWithH2H(10), []),
     ]);
 
-  const { powerRanking, momentum, decisive, archetypes, jogadorDaSemana, duos, dominantTrio, records, bestPerformance, worstPerformance } = competitive;
+  const { powerRanking, momentum, jogadorDaSemana, duos, dominantTrio, bestPerformance, worstPerformance } = competitive;
 
   const sortedMaps = [...mapWinrates].sort((a, b) => b.winrate - a.winrate);
   const bestMap = sortedMaps.find((m) => m.matchesPlayed >= 2) ?? null;
@@ -81,6 +80,13 @@ export default async function DashboardPage() {
 
   const hottestPlayer = momentum.find((m) => m.status === "up") ?? null;
   const coldestPlayer = momentum.find((m) => m.status === "down") ?? null;
+
+  const FORMA_STYLE: Record<string, { text: string; color: string; bg: string; border: string; prefix: string }> = {
+    "Excelente": { text: "Excelente",  color: "text-status-good",    bg: "bg-status-good/10",    border: "border-status-good/20",    prefix: "▲" },
+    "Em alta":   { text: "Em alta",    color: "text-status-good",    bg: "bg-status-good/10",    border: "border-status-good/20",    prefix: "▲" },
+    "Estável":   { text: "Estável",    color: "text-muted-foreground/70", bg: "bg-white/[0.04]", border: "border-white/[0.08]",       prefix: "▬" },
+    "Oscilando": { text: "Oscilando",  color: "text-status-warning", bg: "bg-status-warning/10", border: "border-status-warning/20", prefix: "▼" },
+  };
 
   return (
     <div className="flex flex-col gap-10 lg:gap-14">
@@ -101,15 +107,21 @@ export default async function DashboardPage() {
         <FadeIn delay={0.03}>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
             {[
-              { label: "Rounds", value: summary.community.totalRounds.toLocaleString("pt-BR") },
-              { label: "Kills", value: summary.community.totalKills.toLocaleString("pt-BR") },
-              { label: "ADR Médio", value: `${summary.community.avgAdr}` },
-              { label: "K/D Médio", value: `${summary.community.avgKd}` },
-              { label: "HS%", value: `${summary.community.avgHsPercent}%` },
+              { label: "Rounds",    num: summary.community.totalRounds,   suffix: "",  decimals: 0 },
+              { label: "Kills",     num: summary.community.totalKills,     suffix: "",  decimals: 0 },
+              { label: "ADR Médio", num: summary.community.avgAdr,         suffix: "",  decimals: 0 },
+              { label: "K/D Médio", num: summary.community.avgKd,          suffix: "",  decimals: 2 },
+              { label: "HS%",       num: summary.community.avgHsPercent,   suffix: "%", decimals: 0 },
             ].map((stat) => (
               <div key={stat.label} className="glass-panel rounded-xl border border-white/[0.06] px-4 py-3 text-center">
                 <p className="text-[9px] uppercase tracking-widest text-muted-foreground/65 font-bold">{stat.label}</p>
-                <p className="text-lg font-black text-white mt-1">{stat.value}</p>
+                <p className="text-lg font-black text-white mt-1 tabular-nums">
+                  <AnimatedNumber
+                    value={stat.num}
+                    decimals={stat.decimals}
+                    suffix={stat.suffix}
+                  />
+                </p>
               </div>
             ))}
           </div>
@@ -125,7 +137,10 @@ export default async function DashboardPage() {
                   <div className="min-w-0">
                     <p className="text-[9px] uppercase tracking-widest font-bold text-status-good/80">Evolução Recente</p>
                     <p className="text-sm font-black text-white truncate mt-0.5">{hottestPlayer.player.nickname}</p>
-                    <p className="text-[10px] text-muted-foreground/70 mt-0.5">{hottestPlayer.ratingChangeText} recente</p>
+                    <p className="text-[10px] text-status-good/90 font-semibold mt-0.5">{hottestPlayer.ratingChangeText}</p>
+                    {hottestPlayer.winrateChangeText && (
+                      <p className="text-[10px] text-muted-foreground/60 mt-0.5">{hottestPlayer.winrateChangeText}</p>
+                    )}
                   </div>
                 </div>
               )}
@@ -135,7 +150,10 @@ export default async function DashboardPage() {
                   <div className="min-w-0">
                     <p className="text-[9px] uppercase tracking-widest font-bold text-status-critical/80">Queda de Rendimento</p>
                     <p className="text-sm font-black text-white truncate mt-0.5">{coldestPlayer.player.nickname}</p>
-                    <p className="text-[10px] text-muted-foreground/70 mt-0.5">{coldestPlayer.ratingChangeText} recente</p>
+                    <p className="text-[10px] text-status-critical/90 font-semibold mt-0.5">{coldestPlayer.ratingChangeText}</p>
+                    {coldestPlayer.winrateChangeText && (
+                      <p className="text-[10px] text-muted-foreground/60 mt-0.5">{coldestPlayer.winrateChangeText}</p>
+                    )}
                   </div>
                 </div>
               )}
@@ -143,9 +161,9 @@ export default async function DashboardPage() {
                 <div className="glass-panel rounded-xl border border-accent-cyan/20 bg-accent-cyan/[0.03] px-4 py-3.5 flex items-center gap-3">
                   <Map className="size-4 text-accent-cyan shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-[9px] uppercase tracking-widest font-bold text-accent-cyan/80">Mapa Dominante</p>
+                    <p className="text-[9px] uppercase tracking-widest font-bold text-accent-cyan/80">Melhor Mapa</p>
                     <p className="text-sm font-black text-white mt-0.5">{bestMap.map}</p>
-                    <p className="text-[10px] text-muted-foreground/70 mt-0.5">{bestMap.winrate.toFixed(0)}% WR · {bestMap.matchesPlayed} partidas</p>
+                    <p className="text-[10px] text-accent-cyan/80 font-semibold mt-0.5">{bestMap.winrate.toFixed(0)}% WR · {bestMap.matchesPlayed} partidas</p>
                   </div>
                 </div>
               )}
@@ -153,9 +171,9 @@ export default async function DashboardPage() {
                 <div className="glass-panel rounded-xl border border-status-warning/20 bg-status-warning/[0.03] px-4 py-3.5 flex items-center gap-3">
                   <AlertTriangle className="size-4 text-status-warning shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-[9px] uppercase tracking-widest font-bold text-status-warning/80">Mapa Problema</p>
+                    <p className="text-[9px] uppercase tracking-widest font-bold text-status-warning/80">Mapa para Revisar</p>
                     <p className="text-sm font-black text-white mt-0.5">{worstMap.map}</p>
-                    <p className="text-[10px] text-muted-foreground/70 mt-0.5">{worstMap.winrate.toFixed(0)}% WR · atenção no veto</p>
+                    <p className="text-[10px] text-status-warning/80 font-semibold mt-0.5">{worstMap.winrate.toFixed(0)}% WR · {worstMap.matchesPlayed} partidas · veto</p>
                   </div>
                 </div>
               )}
@@ -171,7 +189,7 @@ export default async function DashboardPage() {
             <div className="flex items-center justify-between mb-5">
               <div>
                 <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-muted-foreground/60">Últimos Confrontos</p>
-                <p className="text-xs text-muted-foreground/55 mt-0.5">Quem jogou contra quem nas partidas mais recentes</p>
+                <p className="text-xs text-muted-foreground/55 mt-0.5">Últimos confrontos entre jogadores monitorados</p>
               </div>
               <Link href="/sessions" className="text-[10px] text-primary/70 hover:text-primary transition-colors font-semibold inline-flex items-center gap-1 group shrink-0">
                 Ver todas <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
@@ -253,7 +271,7 @@ export default async function DashboardPage() {
                         <p className="text-base font-black text-white mt-0.5">{duo.winrate}%</p>
                       </div>
                       <div className="bg-white/[0.03] border border-white/[0.06] rounded-lg p-2 text-center">
-                        <p className="text-[8px] uppercase tracking-widest font-bold text-muted-foreground/60">Rating</p>
+                        <p className="text-[8px] uppercase tracking-widest font-bold text-muted-foreground/60">Rating da dupla</p>
                         <p className="text-base font-black text-white mt-0.5">{duo.avgRating?.toFixed(2) ?? "—"}</p>
                       </div>
                     </div>
@@ -310,7 +328,7 @@ export default async function DashboardPage() {
                               <p className="text-sm font-black text-status-good">{duo.winrate}%</p>
                             </div>
                             <div className="text-right">
-                              <p className="text-[8px] text-muted-foreground/60 uppercase tracking-widest font-bold">Rating</p>
+                              <p className="text-[8px] text-muted-foreground/60 uppercase tracking-widest font-bold">Rating da dupla</p>
                               <p className="text-sm font-black text-white/90">{duo.avgRating?.toFixed(2) ?? "—"}</p>
                             </div>
                           </div>
@@ -347,7 +365,7 @@ export default async function DashboardPage() {
                   const isTop3 = index < 3;
                   const podiumColors = ["text-yellow-400", "text-slate-300", "text-amber-600"];
                   return (
-                    <div key={entry.player.id} className="px-5 py-3.5 flex items-center gap-4 hover:bg-white/[0.012] transition-colors">
+                    <div key={entry.player.id} className="px-5 py-3.5 flex items-center gap-4 hover:bg-white/[0.012] transition-colors group/row">
                       <span className={`text-xs font-black w-5 shrink-0 text-center tabular-nums ${isTop3 ? podiumColors[index] : "text-muted-foreground/40"}`}>
                         {index + 1}
                       </span>
@@ -355,25 +373,44 @@ export default async function DashboardPage() {
                         <PlayerAvatar nickname={entry.player.nickname} avatarUrl={entry.player.avatarUrl} size="sm" />
                         <div className="min-w-0">
                           <p className="text-sm font-bold text-white group-hover:text-primary transition-colors truncate">{entry.player.nickname}</p>
-                          <p className="text-[10px] text-muted-foreground/65">Forma: {entry.forma} · {entry.matchCount} partidas</p>
+                          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                            {(() => {
+                              const f = FORMA_STYLE[entry.forma] ?? FORMA_STYLE["Oscilando"];
+                              return (
+                                <span className={`badge-hover inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${f.color} ${f.bg} ${f.border}`}>
+                                  {f.prefix} {f.text}
+                                </span>
+                              );
+                            })()}
+                            <span className="text-[10px] text-muted-foreground/50">{entry.matchCount} partidas</span>
+                          </div>
                         </div>
                       </Link>
                       <div className="hidden sm:grid grid-cols-5 gap-4 text-center shrink-0">
                         {[
-                          { label: "Rating", value: entry.rating.toFixed(2) },
-                          { label: "ADR", value: entry.adr },
-                          { label: "K/D", value: entry.kd.toFixed(2) },
-                          { label: "KAST", value: `${entry.kast}%` },
-                          { label: "WR", value: `${entry.winrate}%` },
-                        ].map((col) => (
+                          { label: "Rating", num: entry.rating,    dec: 2, suf: "",  dur: 0.7 },
+                          { label: "ADR",    num: entry.adr,       dec: 0, suf: "",  dur: 0.6 },
+                          { label: "K/D",    num: entry.kd,        dec: 2, suf: "",  dur: 0.65 },
+                          { label: "KAST",   num: entry.kast,      dec: 0, suf: "%", dur: 0.55 },
+                          { label: "WR",     num: entry.winrate,   dec: 0, suf: "%", dur: 0.55 },
+                        ].map((col, ci) => (
                           <div key={col.label}>
                             <p className="text-[8px] uppercase tracking-widest text-muted-foreground/60 font-bold">{col.label}</p>
-                            <p className="text-xs font-black mt-0.5 text-white/90">{col.value}</p>
+                            <p className="text-xs font-black mt-0.5 text-white/90 tabular-nums">
+                              <AnimatedNumber
+                                value={col.num}
+                                decimals={col.dec}
+                                suffix={col.suf}
+                                duration={col.dur + index * 0.04 + ci * 0.02}
+                              />
+                            </p>
                           </div>
                         ))}
                       </div>
                       <div className="sm:hidden text-right shrink-0">
-                        <p className="text-sm font-black text-white/90">{entry.rating.toFixed(2)}</p>
+                        <p className="text-sm font-black text-white/90 tabular-nums">
+                          <AnimatedNumber value={entry.rating} decimals={2} duration={0.7 + index * 0.04} />
+                        </p>
                         <p className="text-[9px] text-muted-foreground/60 font-bold">Rating</p>
                       </div>
                     </div>
@@ -402,11 +439,15 @@ export default async function DashboardPage() {
                   <div className="grid grid-cols-2 gap-2 mt-5 pt-4 border-t border-white/[0.05]">
                     <div className="bg-white/[0.025] border border-white/[0.06] rounded-xl p-3 text-center">
                       <p className="text-[8px] uppercase tracking-widest font-bold text-muted-foreground/65">Rating</p>
-                      <p className="text-xl font-black text-white mt-1">{jogadorDaSemana.rating.toFixed(2)}</p>
+                      <p className="text-xl font-black text-white mt-1 tabular-nums">
+                        <AnimatedNumber value={jogadorDaSemana.rating} decimals={2} duration={0.8} />
+                      </p>
                     </div>
                     <div className="bg-white/[0.025] border border-white/[0.06] rounded-xl p-3 text-center">
                       <p className="text-[8px] uppercase tracking-widest font-bold text-muted-foreground/65">Winrate</p>
-                      <p className="text-xl font-black text-white mt-1">{jogadorDaSemana.winrate}%</p>
+                      <p className="text-xl font-black text-white mt-1 tabular-nums">
+                        <AnimatedNumber value={jogadorDaSemana.winrate} decimals={0} suffix="%" duration={0.65} />
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -443,15 +484,17 @@ export default async function DashboardPage() {
                       </Link>
                       <p className="text-[10px] text-muted-foreground/65 mt-0.5">{bestPerformance.mapName} · {bestPerformance.playedAt}</p>
                       <div className="grid grid-cols-4 gap-1.5 mt-3">
-                        {[
-                          { label: "Rating", value: bestPerformance.rating.toFixed(2) },
-                          { label: "K/D", value: bestPerformance.kd },
-                          { label: "ADR", value: bestPerformance.adr },
-                          { label: "Kills", value: bestPerformance.kills },
-                        ].map((stat) => (
+                        {([
+                          { label: "Rating", num: bestPerformance.rating,           dec: 2, dur: 0.8 },
+                          { label: "K/D",    num: parseFloat(bestPerformance.kd),   dec: 2, dur: 0.7 },
+                          { label: "ADR",    num: bestPerformance.adr,              dec: 0, dur: 0.65 },
+                          { label: "Kills",  num: bestPerformance.kills,            dec: 0, dur: 0.6 },
+                        ] as const).map((stat) => (
                           <div key={stat.label} className="text-center bg-status-warning/5 border border-status-warning/10 rounded-lg p-1.5">
                             <p className="text-[7px] uppercase tracking-widest font-bold text-muted-foreground/60">{stat.label}</p>
-                            <p className="text-xs font-black text-status-warning mt-0.5">{stat.value}</p>
+                            <p className="text-xs font-black text-status-warning mt-0.5 tabular-nums">
+                              <AnimatedNumber value={stat.num} decimals={stat.dec} duration={stat.dur} />
+                            </p>
                           </div>
                         ))}
                       </div>
@@ -474,15 +517,17 @@ export default async function DashboardPage() {
                       </Link>
                       <p className="text-[10px] text-muted-foreground/65 mt-0.5">{worstPerformance.mapName} · {worstPerformance.playedAt}</p>
                       <div className="grid grid-cols-4 gap-1.5 mt-3">
-                        {[
-                          { label: "Rating", value: worstPerformance.rating.toFixed(2) },
-                          { label: "K/D", value: worstPerformance.kd },
-                          { label: "ADR", value: worstPerformance.adr },
-                          { label: "Kills", value: worstPerformance.kills },
-                        ].map((stat) => (
+                        {([
+                          { label: "Rating", num: worstPerformance.rating,          dec: 2, dur: 0.8 },
+                          { label: "K/D",    num: parseFloat(worstPerformance.kd),  dec: 2, dur: 0.7 },
+                          { label: "ADR",    num: worstPerformance.adr,             dec: 0, dur: 0.65 },
+                          { label: "Kills",  num: worstPerformance.kills,           dec: 0, dur: 0.6 },
+                        ] as const).map((stat) => (
                           <div key={stat.label} className="text-center bg-status-critical/5 border border-status-critical/10 rounded-lg p-1.5">
                             <p className="text-[7px] uppercase tracking-widest font-bold text-muted-foreground/60">{stat.label}</p>
-                            <p className="text-xs font-black text-status-critical mt-0.5">{stat.value}</p>
+                            <p className="text-xs font-black text-status-critical mt-0.5 tabular-nums">
+                              <AnimatedNumber value={stat.num} decimals={stat.dec} duration={stat.dur} />
+                            </p>
                           </div>
                         ))}
                       </div>
@@ -501,106 +546,34 @@ export default async function DashboardPage() {
         <FadeIn delay={0.16}>
           <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-muted-foreground/60 mb-4">Estratégia</p>
         </FadeIn>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-
-          <FadeIn delay={0.17}>
-            <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
-              <div className="px-5 py-4 border-b border-white/[0.05]">
-                <p className="text-sm font-bold text-white">Map Pool</p>
-              </div>
-              <div className="p-4">
-                <MapWinrateChart data={mapWinrates} />
-                <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-white/[0.04]">
-                  {bestMap && (
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-status-good/5 border border-status-good/10">
-                      <span className="flex items-center gap-1.5 text-status-good font-semibold text-[10px]">
-                        <Flame className="size-3" /> Melhor desempenho
-                      </span>
-                      <span className="text-white/90 font-bold text-[10px]">{bestMap.map} · {bestMap.winrate.toFixed(0)}%</span>
-                    </div>
-                  )}
-                  {worstMap && (
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-status-critical/5 border border-status-critical/10">
-                      <span className="flex items-center gap-1.5 text-status-critical font-semibold text-[10px]">
-                        <ShieldAlert className="size-3" /> Mapa problema
-                      </span>
-                      <span className="text-white/90 font-bold text-[10px]">{worstMap.map} · {worstMap.winrate.toFixed(0)}%</span>
-                    </div>
-                  )}
-                </div>
-              </div>
+        <FadeIn delay={0.17}>
+          <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/[0.05]">
+              <p className="text-sm font-bold text-white">Map Pool</p>
             </div>
-          </FadeIn>
-
-          <FadeIn delay={0.18}>
-            <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
-              <div className="px-5 py-4 border-b border-white/[0.05] flex items-center justify-between">
-                <p className="text-sm font-bold text-white">Evolução e Impacto</p>
-                <TrendingUp className="size-3.5 text-accent-cyan/60" />
-              </div>
-              <div className="divide-y divide-white/[0.04]">
-                {momentum.map((entry) => {
-                  const isUp = entry.status === "up";
-                  const isDown = entry.status === "down";
-                  const Icon = isUp ? TrendingUp : isDown ? TrendingDown : Minus;
-                  const colorClass = isUp ? "text-status-good" : isDown ? "text-status-critical" : "text-muted-foreground/40";
-                  const impactEntry = decisive.find((d) => d.player.id === entry.player.id);
-                  return (
-                    <div key={entry.player.id} className="px-5 py-3 flex items-center gap-3">
-                      <PlayerAvatar nickname={entry.player.nickname} avatarUrl={entry.player.avatarUrl} size="sm" />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-white/90 truncate">{entry.player.nickname}</p>
-                        <p className="text-[10px] text-muted-foreground/65">{entry.ratingChangeText} rating</p>
-                      </div>
-                      <div className="flex flex-col items-end gap-0.5 shrink-0">
-                        <div className={`flex items-center gap-1 text-[10px] font-black ${colorClass}`}>
-                          <Icon className="size-3" />
-                          {entry.label}
-                        </div>
-                        {impactEntry && (
-                          <span className="text-[9px] text-accent-cyan/85 font-semibold">{impactEntry.impactPercent}% impacto</span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-                {decisive
-                  .filter((d) => !momentum.find((m) => m.player.id === d.player.id))
-                  .slice(0, 2)
-                  .map((entry) => (
-                    <div key={entry.player.id} className="px-5 py-3 flex items-center gap-3">
-                      <PlayerAvatar nickname={entry.player.nickname} avatarUrl={entry.player.avatarUrl} size="sm" />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-white/90 truncate">{entry.player.nickname}</p>
-                        <p className="text-[10px] text-muted-foreground/65">{entry.entryKills} aberturas{!entry.hideTradesAndClutches && ` · ${entry.clutchWins} clutches`}</p>
-                      </div>
-                      <span className="text-xs font-black text-accent-cyan shrink-0">{entry.impactPercent}%</span>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          </FadeIn>
-
-          <FadeIn delay={0.19}>
-            <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
-              <div className="px-5 py-4 border-b border-white/[0.05]">
-                <p className="text-sm font-bold text-white">Perfis Táticos</p>
-              </div>
-              <div className="divide-y divide-white/[0.04]">
-                {archetypes.slice(0, 6).map((entry) => (
-                  <div key={entry.player.id} className="px-5 py-3 flex items-center gap-3">
-                    <PlayerAvatar nickname={entry.player.nickname} avatarUrl={entry.player.avatarUrl} size="sm" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-white/90 truncate">{entry.player.nickname}</p>
-                      <p className="text-[10px] text-muted-foreground/65">{entry.metricValue}</p>
-                    </div>
-                    <span className="text-[10px] font-bold text-accent-violet shrink-0">{entry.label}</span>
+            <div className="p-4">
+              <MapWinrateChart data={mapWinrates} />
+              <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-white/[0.04]">
+                {bestMap && (
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-status-good/5 border border-status-good/10">
+                    <span className="flex items-center gap-1.5 text-status-good font-semibold text-[10px]">
+                      <Flame className="size-3" /> Melhor desempenho
+                    </span>
+                    <span className="text-white/90 font-bold text-[10px]">{bestMap.map} · {bestMap.winrate.toFixed(0)}%</span>
                   </div>
-                ))}
+                )}
+                {worstMap && (
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-status-critical/5 border border-status-critical/10">
+                    <span className="flex items-center gap-1.5 text-status-critical font-semibold text-[10px]">
+                      <ShieldAlert className="size-3" /> Mapa problema
+                    </span>
+                    <span className="text-white/90 font-bold text-[10px]">{worstMap.map} · {worstMap.winrate.toFixed(0)}%</span>
+                  </div>
+                )}
               </div>
             </div>
-          </FadeIn>
-        </div>
+          </div>
+        </FadeIn>
       </section>
 
       {/* ═══ Coach IA ═══ */}
@@ -611,75 +584,49 @@ export default async function DashboardPage() {
         </div>
       </FadeIn>
 
-      {/* ═══ ZONA 5 — Histórico ═══ */}
+      {/* ═══ ZONA 5 — Conquistas Recentes ═══ */}
       <section>
         <FadeIn delay={0.22}>
-          <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-muted-foreground/60 mb-4">Histórico</p>
+          <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-muted-foreground/60 mb-4">Conquistas Recentes</p>
         </FadeIn>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-
-          <FadeIn delay={0.23}>
-            <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
-              <div className="px-5 py-4 border-b border-white/[0.05]">
-                <p className="text-sm font-bold text-white">Recordes</p>
-              </div>
+        <FadeIn delay={0.23}>
+          <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
+            {recentAchievements.length === 0 ? (
+              <p className="text-muted-foreground/55 py-10 text-center text-sm">Nenhuma conquista ainda.</p>
+            ) : (
               <div className="divide-y divide-white/[0.04]">
-                {records.map((r, idx) => (
-                  <div key={idx} className="px-5 py-3 flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-[8px] uppercase tracking-widest text-muted-foreground/60 font-bold">{r.category}</p>
-                      <p className="text-xs font-bold text-white/90 mt-0.5 truncate">
-                        {r.playerName}{" "}
-                        <span className="text-muted-foreground/65 font-normal text-[10px]">{r.detail}</span>
-                      </p>
-                    </div>
-                    <span className="text-sm font-black text-accent-cyan shrink-0 tabular-nums">{r.value}</span>
-                  </div>
+                {recentAchievements.map((entry, i) => (
+                  <AchievementFeedItem key={entry.id} entry={entry} index={i} />
                 ))}
               </div>
-            </div>
-          </FadeIn>
+            )}
+          </div>
+        </FadeIn>
+      </section>
 
-          <FadeIn delay={0.24}>
-            <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
-              <div className="px-5 py-4 border-b border-white/[0.05]">
-                <p className="text-sm font-bold text-white">Conquistas Recentes</p>
+      {/* ═══ ZONA 6 — Últimas Partidas ═══ */}
+      <section>
+        <FadeIn delay={0.24}>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-muted-foreground/60">Últimas Partidas</p>
+            <Link href="/sessions" className="text-[10px] text-primary/70 hover:text-primary transition-colors font-semibold inline-flex items-center gap-1 group shrink-0">
+              Ver sessões completas <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </div>
+        </FadeIn>
+        <FadeIn delay={0.25}>
+          <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
+            {recentMatches.length === 0 ? (
+              <p className="text-muted-foreground/55 py-10 text-center text-sm">Nenhuma partida.</p>
+            ) : (
+              <div className="divide-y divide-white/[0.04]">
+                {recentMatches.slice(0, 4).map((match) => (
+                  <MatchRow key={match.id} match={match} />
+                ))}
               </div>
-              {recentAchievements.length === 0 ? (
-                <p className="text-muted-foreground/55 py-10 text-center text-sm">Nenhuma ainda.</p>
-              ) : (
-                <div className="divide-y divide-white/[0.04]">
-                  {recentAchievements.map((entry) => (
-                    <AchievementFeedItem key={entry.id} entry={entry} />
-                  ))}
-                </div>
-              )}
-            </div>
-          </FadeIn>
-
-          <FadeIn delay={0.25}>
-            <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
-              <div className="px-5 py-4 border-b border-white/[0.05]">
-                <p className="text-sm font-bold text-white">Últimas Partidas</p>
-              </div>
-              {recentMatches.length === 0 ? (
-                <p className="text-muted-foreground/55 py-10 text-center text-sm">Nenhuma partida.</p>
-              ) : (
-                <div className="divide-y divide-white/[0.04]">
-                  {recentMatches.map((match) => (
-                    <MatchRow key={match.id} match={match} />
-                  ))}
-                </div>
-              )}
-              <div className="px-5 py-3.5 border-t border-white/[0.04]">
-                <Link href="/sessions" className="text-xs text-primary/70 hover:text-primary transition-colors font-semibold inline-flex items-center gap-1.5 group">
-                  Ver sessões completas
-                  <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-              </div>
-            </div>
-          </FadeIn>
-        </div>
+            )}
+          </div>
+        </FadeIn>
       </section>
 
     </div>

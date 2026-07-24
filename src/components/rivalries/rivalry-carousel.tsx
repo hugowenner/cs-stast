@@ -2,6 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Swords } from "lucide-react";
+import { motion } from "framer-motion";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import type { RivalryH2HSummary } from "@/server/services/rivalry.service";
 
@@ -112,7 +113,7 @@ export function RivalryCarousel({ rivalries }: Props) {
             <div
               key={rivalry.id}
               data-card
-              className="glass-panel rounded-2xl border border-white/[0.08] overflow-hidden flex-shrink-0 w-full sm:w-[calc(50%-7px)] lg:w-[calc(33.333%-10px)]"
+              className="glass-panel card-hover rounded-2xl border border-white/[0.08] overflow-hidden flex-shrink-0 w-full sm:w-[calc(50%-7px)] lg:w-[calc(33.333%-10px)] group/card"
               style={{ scrollSnapAlign: "start" }}
             >
               {/* Header */}
@@ -131,7 +132,7 @@ export function RivalryCarousel({ rivalries }: Props) {
 
               {/* Jogadores */}
               <div className="px-4 py-4 flex items-center gap-3">
-                <div className={`flex flex-col items-center gap-1.5 flex-1 min-w-0 transition-opacity ${!aLeads && !isTied ? "opacity-50" : ""}`}>
+                <div className={`flex flex-col items-center gap-1.5 flex-1 min-w-0 transition-all duration-200 ${!aLeads && !isTied ? "opacity-40 group-hover/card:opacity-50" : "group-hover/card:scale-[1.02]"}`}>
                   <PlayerAvatar nickname={rivalry.playerA.nickname} avatarUrl={rivalry.playerA.avatarUrl} size="md" />
                   <p className="text-xs font-bold text-white truncate max-w-full text-center">{rivalry.playerA.nickname}</p>
                   <span className={`text-xl font-black tabular-nums ${aLeads ? "text-white" : "text-muted-foreground/45"}`}>
@@ -146,7 +147,7 @@ export function RivalryCarousel({ rivalries }: Props) {
                   <span className="text-[10px] text-muted-foreground/40 font-bold uppercase tracking-widest">vs</span>
                 </div>
 
-                <div className={`flex flex-col items-center gap-1.5 flex-1 min-w-0 transition-opacity ${!bLeads && !isTied ? "opacity-50" : ""}`}>
+                <div className={`flex flex-col items-center gap-1.5 flex-1 min-w-0 transition-all duration-200 ${!bLeads && !isTied ? "opacity-40 group-hover/card:opacity-50" : "group-hover/card:scale-[1.02]"}`}>
                   <PlayerAvatar nickname={rivalry.playerB.nickname} avatarUrl={rivalry.playerB.avatarUrl} size="md" />
                   <p className="text-xs font-bold text-white truncate max-w-full text-center">{rivalry.playerB.nickname}</p>
                   <span className={`text-xl font-black tabular-nums ${bLeads ? "text-white" : "text-muted-foreground/45"}`}>
@@ -161,9 +162,11 @@ export function RivalryCarousel({ rivalries }: Props) {
               {/* Barra de domínio */}
               <div className="px-4">
                 <div className="relative h-1 rounded-full bg-white/[0.07] overflow-hidden">
-                  <div
+                  <motion.div
                     className="absolute inset-y-0 left-0 rounded-full bg-primary/70"
-                    style={{ width: `${barWidthA}%` }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${barWidthA}%` }}
+                    transition={{ duration: 0.6, ease: "easeOut", delay: 0.15 }}
                   />
                 </div>
                 <div className="flex justify-between mt-1">
@@ -219,22 +222,27 @@ export function RivalryCarousel({ rivalries }: Props) {
                 </div>
               )}
 
-              {/* Footer: narrativa + mapa do último confronto */}
+              {/* Footer: vantagem + último mapa */}
               <div className="px-4 pb-4 pt-3 flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   {leader ? (
-                    <p className="text-[10px] text-muted-foreground/70 leading-relaxed">
-                      <span className="text-white/90 font-bold">{leader}</span> venceu{" "}
-                      <span className="text-white/90 font-bold">{leaderWins} de {total}</span>
-                    </p>
+                    <div>
+                      <p className="text-[8px] uppercase tracking-widest font-bold text-muted-foreground/45">Vantagem</p>
+                      <p className="text-sm font-black text-white mt-0.5 truncate">{leader}</p>
+                      <p className="text-[10px] text-primary/80 font-black tabular-nums mt-0.5">{leaderWins}–{total - leaderWins}</p>
+                    </div>
                   ) : (
-                    <p className="text-[10px] text-muted-foreground/65">Confronto empatado</p>
+                    <div>
+                      <p className="text-[8px] uppercase tracking-widest font-bold text-muted-foreground/45">Placar</p>
+                      <p className="text-[10px] text-muted-foreground/65 font-semibold mt-0.5">Empatado</p>
+                    </div>
                   )}
                 </div>
                 {rivalry.lastMatch && (
                   <div className="text-right shrink-0">
-                    <p className="text-[9px] text-muted-foreground/60 capitalize">{rivalry.lastMatch.mapName}</p>
-                    <p className="text-[9px] font-black text-white/75 tabular-nums">{rivalry.lastMatch.scoreA}–{rivalry.lastMatch.scoreB}</p>
+                    <p className="text-[8px] uppercase tracking-widest font-bold text-muted-foreground/45">Último mapa</p>
+                    <p className="text-[10px] text-white/75 capitalize mt-0.5">{rivalry.lastMatch.mapName}</p>
+                    <p className="text-[10px] font-black text-white/60 tabular-nums">{rivalry.lastMatch.scoreA}–{rivalry.lastMatch.scoreB}</p>
                   </div>
                 )}
               </div>
