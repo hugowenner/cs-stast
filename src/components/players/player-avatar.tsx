@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export function PlayerAvatar({
   nickname,
@@ -13,6 +13,21 @@ export function PlayerAvatar({
   size?: "sm" | "md" | "lg";
 }) {
   const [loaded, setLoaded] = useState(false);
+  const [errored, setErrored] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  // Imagens já no cache do navegador ficam complete=true antes do React hidratar,
+  // então onLoad nunca dispara. O useEffect cobre esse caso após a montagem.
+  // Depende de avatarUrl para resetar quando a URL mudar (ex: após sync forçado).
+  useEffect(() => {
+    setLoaded(false);
+    setErrored(false);
+    const img = imgRef.current;
+    if (img?.complete) {
+      if (img.naturalWidth > 0) setLoaded(true);
+      else setErrored(true);
+    }
+  }, [avatarUrl]);
 
   const dimension =
     size === "sm" ? "size-7 text-xs" : size === "lg" ? "size-14 text-lg" : "size-9 text-sm";
@@ -24,10 +39,11 @@ export function PlayerAvatar({
     .join("")
     .toUpperCase();
 
-  if (avatarUrl) {
+  if (avatarUrl && !errored) {
     return (
       // eslint-disable-next-line @next/next/no-img-element -- avatares vêm de origem externa (Steam/GC), fora do domínio configurado para next/image
       <img
+        ref={imgRef}
         src={avatarUrl}
         alt={nickname}
         className={cn(
@@ -36,6 +52,7 @@ export function PlayerAvatar({
           dimension,
         )}
         onLoad={() => setLoaded(true)}
+        onError={() => setErrored(true)}
       />
     );
   }
