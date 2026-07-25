@@ -82,7 +82,10 @@ export function upsertPlayerBySteamId(data: {
     create: data,
     update: {
       nickname: data.nickname,
-      avatarUrl: data.avatarUrl,
+      // Só sobrescreve avatarUrl quando um valor concreto é fornecido.
+      // A sincronização da GC nunca envia URL absoluta (paths relativos → undefined → null),
+      // então sem esta guarda cada partida apagaria o avatar obtido da Steam.
+      ...(data.avatarUrl != null ? { avatarUrl: data.avatarUrl } : {}),
       gamersClubId: data.gamersClubId,
     },
   });

@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import * as matchService from "@/server/services/match.service";
 import { syncMatchSchema, syncProviderMatchSchema } from "@/server/dtos/sync.dto";
 import { normalizeGamersClubMatch } from "@/server/adapters/gamersclub/normalize";
 import type { GamersClubMatchPayload } from "@/server/adapters/gamersclub/types";
 import { HttpError, handleRouteError, parseJsonBody } from "@/server/http";
+import { syncMissingAvatars } from "@/server/services/steam-profile.service";
 
 /**
  * Recebe o payload BRUTO de `{url-da-partida}/1` da Gamers Club (a extensão não
@@ -28,6 +29,18 @@ export async function POST(request: Request) {
       rawPayload: payload,
       source: "gamersclub",
     });
+
+    // Agenda o sync de avatares após a resposta ser enviada.
+    // `after()` garante execução pós-resposta sem bloquear o cliente.
+    // Só roda em partidas novas; partidas duplicadas já têm jogadores com avatar.
+    if (result.status === "created") {
+      after(() =>
+        syncMissingAvatars().catch((err) =>
+          console.error("[steam] syncMissingAvatars falhou:", err instanceof Error ? err.message : err),
+        ),
+      );
+    }
+
     return NextResponse.json(result, { status: result.status === "created" ? 201 : 200 });
   } catch (error) {
     return handleRouteError(error);

@@ -35,95 +35,108 @@ export interface RivalryH2HSummary {
 /**
  * Confronto direto (V/D/winrate/KD) calculado a partir dos resultados reais de partida —
  * mesma fonte usada na comparação de jogadores (já validada).
+ *
+ * Antes: 1 query de outcomes por jogador de cada rivalidade candidata (até 2 × take*2 =
+ * ~20 queries para take=10). Agora: todos os outcomes de todos os jogadores envolvidos
+ * são buscados em uma única query e agrupados em memória — mesmo cálculo por par,
+ * fonte de dados idêntica.
  */
 export async function listTopRivalriesWithH2H(take = 10): Promise<RivalryH2HSummary[]> {
   const candidates = await rivalryRepo.listTopRivalries(take * 2);
+  if (candidates.length === 0) return [];
 
-  const summaries = await Promise.all(
-    candidates.map(async (r) => {
-      const [outcomesA, outcomesB] = await Promise.all([
-        statsRepo.getPlayerMatchOutcomes(r.playerAId),
-        statsRepo.getPlayerMatchOutcomes(r.playerBId),
-      ]);
-      const h2h = processH2HMatches(r.playerAId, r.playerBId, outcomesA, outcomesB);
-      const winsA = h2h.against.wins[r.playerAId] ?? 0;
-      const winsB = h2h.against.wins[r.playerBId] ?? 0;
-      const total = h2h.against.total;
-
-      // Partidas de confronto direto (times opostos), ordenadas da mais recente
-      const matchesBMap = new Map(outcomesB.map((o) => [o.match.id, o]));
-      const againstMatches = outcomesA
-        .filter((oa) => {
-          const ob = matchesBMap.get(oa.match.id);
-          return ob && oa.team !== ob.team;
-        })
-        .sort((a, b) => new Date(b.match.playedAt).getTime() - new Date(a.match.playedAt).getTime());
-
-      // Último confronto
-      const lastMatch = againstMatches[0]?.match ?? null;
-      let lastMatchDetail = null;
-
-      if (lastMatch) {
-        const statA = outcomesA.find((o) => o.match.id === lastMatch.id);
-        const statB = outcomesB.find((o) => o.match.id === lastMatch.id);
-        if (statA) {
-          const scoreA = statA.team === "A" ? lastMatch.scoreTeamA : lastMatch.scoreTeamB;
-          const scoreB = statA.team === "A" ? lastMatch.scoreTeamB : lastMatch.scoreTeamA;
-
-          const buildStats = (o: typeof statA) => {
-            const k = o.kills ?? 0;
-            const d = o.deaths ?? 0;
-            return { kills: k, deaths: d, kd: d > 0 ? Math.round((k / d) * 100) / 100 : k };
-          };
-
-          lastMatchDetail = {
-            id: lastMatch.id,
-            mapName: lastMatch.map.name,
-            scoreA,
-            scoreB,
-            statsA: buildStats(statA),
-            statsB: statB ? buildStats(statB) : null,
-          };
-        }
-      }
-
-      // K/D médio nos confrontos diretos
-      let avgKdA: number | null = null;
-      let avgKdB: number | null = null;
-
-      if (againstMatches.length > 0) {
-        const matchIdsAgainst = new Set(againstMatches.map((m) => m.match.id));
-
-        const statsAInAgainst = outcomesA.filter((o) => matchIdsAgainst.has(o.match.id));
-        const statsBInAgainst = outcomesB.filter((o) => matchIdsAgainst.has(o.match.id));
-
-        if (statsAInAgainst.length > 0) {
-          const totalKillsA = statsAInAgainst.reduce((s, o) => s + (o.kills ?? 0), 0);
-          const totalDeathsA = statsAInAgainst.reduce((s, o) => s + (o.deaths ?? 0), 0);
-          avgKdA = totalDeathsA > 0 ? Math.round((totalKillsA / totalDeathsA) * 100) / 100 : null;
-        }
-
-        if (statsBInAgainst.length > 0) {
-          const totalKillsB = statsBInAgainst.reduce((s, o) => s + (o.kills ?? 0), 0);
-          const totalDeathsB = statsBInAgainst.reduce((s, o) => s + (o.deaths ?? 0), 0);
-          avgKdB = totalDeathsB > 0 ? Math.round((totalKillsB / totalDeathsB) * 100) / 100 : null;
-        }
-      }
-
-      return {
-        id: r.id,
-        playerA: { id: r.playerA.id, nickname: r.playerA.nickname, avatarUrl: r.playerA.avatarUrl },
-        playerB: { id: r.playerB.id, nickname: r.playerB.nickname, avatarUrl: r.playerB.avatarUrl },
-        matchesAgainst: total,
-        winsA,
-        winsB,
-        winrateA: total > 0 ? Math.round((winsA / total) * 100) : 0,
-        avgKdA,
-        avgKdB,
-        lastMatch: lastMatchDetail,
-      };
-    })
+  const playerIds = Array.from(
+    new Set(candidates.flatMap((r) => [r.playerAId, r.playerBId])),
   );
+  const allOutcomes = await statsRepo.getPlayerMatchOutcomesForPlayers(playerIds);
+
+  const outcomesByPlayer = new Map<string, typeof allOutcomes>();
+  for (const id of playerIds) outcomesByPlayer.set(id, []);
+  for (const o of allOutcomes) {
+    outcomesByPlayer.get(o.playerId)?.push(o);
+  }
+
+  const summaries = candidates.map((r) => {
+    const outcomesA = outcomesByPlayer.get(r.playerAId) ?? [];
+    const outcomesB = outcomesByPlayer.get(r.playerBId) ?? [];
+    const h2h = processH2HMatches(r.playerAId, r.playerBId, outcomesA, outcomesB);
+    const winsA = h2h.against.wins[r.playerAId] ?? 0;
+    const winsB = h2h.against.wins[r.playerBId] ?? 0;
+    const total = h2h.against.total;
+
+    // Partidas de confronto direto (times opostos), ordenadas da mais recente
+    const matchesBMap = new Map(outcomesB.map((o) => [o.match.id, o]));
+    const againstMatches = outcomesA
+      .filter((oa) => {
+        const ob = matchesBMap.get(oa.match.id);
+        return ob && oa.team !== ob.team;
+      })
+      .sort((a, b) => new Date(b.match.playedAt).getTime() - new Date(a.match.playedAt).getTime());
+
+    // Último confronto
+    const lastMatch = againstMatches[0]?.match ?? null;
+    let lastMatchDetail = null;
+
+    if (lastMatch) {
+      const statA = outcomesA.find((o) => o.match.id === lastMatch.id);
+      const statB = outcomesB.find((o) => o.match.id === lastMatch.id);
+      if (statA) {
+        const scoreA = statA.team === "A" ? lastMatch.scoreTeamA : lastMatch.scoreTeamB;
+        const scoreB = statA.team === "A" ? lastMatch.scoreTeamB : lastMatch.scoreTeamA;
+
+        const buildStats = (o: typeof statA) => {
+          const k = o.kills ?? 0;
+          const d = o.deaths ?? 0;
+          return { kills: k, deaths: d, kd: d > 0 ? Math.round((k / d) * 100) / 100 : k };
+        };
+
+        lastMatchDetail = {
+          id: lastMatch.id,
+          mapName: lastMatch.map.name,
+          scoreA,
+          scoreB,
+          statsA: buildStats(statA),
+          statsB: statB ? buildStats(statB) : null,
+        };
+      }
+    }
+
+    // K/D médio nos confrontos diretos
+    let avgKdA: number | null = null;
+    let avgKdB: number | null = null;
+
+    if (againstMatches.length > 0) {
+      const matchIdsAgainst = new Set(againstMatches.map((m) => m.match.id));
+
+      const statsAInAgainst = outcomesA.filter((o) => matchIdsAgainst.has(o.match.id));
+      const statsBInAgainst = outcomesB.filter((o) => matchIdsAgainst.has(o.match.id));
+
+      if (statsAInAgainst.length > 0) {
+        const totalKillsA = statsAInAgainst.reduce((s, o) => s + (o.kills ?? 0), 0);
+        const totalDeathsA = statsAInAgainst.reduce((s, o) => s + (o.deaths ?? 0), 0);
+        avgKdA = totalDeathsA > 0 ? Math.round((totalKillsA / totalDeathsA) * 100) / 100 : null;
+      }
+
+      if (statsBInAgainst.length > 0) {
+        const totalKillsB = statsBInAgainst.reduce((s, o) => s + (o.kills ?? 0), 0);
+        const totalDeathsB = statsBInAgainst.reduce((s, o) => s + (o.deaths ?? 0), 0);
+        avgKdB = totalDeathsB > 0 ? Math.round((totalKillsB / totalDeathsB) * 100) / 100 : null;
+      }
+    }
+
+    return {
+      id: r.id,
+      playerA: { id: r.playerA.id, nickname: r.playerA.nickname, avatarUrl: r.playerA.avatarUrl },
+      playerB: { id: r.playerB.id, nickname: r.playerB.nickname, avatarUrl: r.playerB.avatarUrl },
+      matchesAgainst: total,
+      winsA,
+      winsB,
+      winrateA: total > 0 ? Math.round((winsA / total) * 100) : 0,
+      avgKdA,
+      avgKdB,
+      lastMatch: lastMatchDetail,
+    };
+  });
 
   return summaries
     .filter((s) => s.matchesAgainst > 0)

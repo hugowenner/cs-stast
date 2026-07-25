@@ -150,3 +150,32 @@ export function getPlayerMatchOutcomes(playerId: string) {
     orderBy: { match: { playedAt: "asc" } },
   });
 }
+
+/**
+ * Mesma seleção de `getPlayerMatchOutcomes`, mas para múltiplos jogadores em uma
+ * única query — usada para eliminar o N+1 de `rivalry.service.listTopRivalriesWithH2H`,
+ * que antes buscava os outcomes de cada jogador de cada rivalidade individualmente.
+ */
+export function getPlayerMatchOutcomesForPlayers(playerIds: string[]) {
+  return prisma.playerMatchStats.findMany({
+    where: { playerId: { in: playerIds } },
+    select: {
+      playerId: true,
+      team: true,
+      rating: true,
+      eloAfter: true,
+      kills: true,
+      deaths: true,
+      match: {
+        select: {
+          id: true,
+          playedAt: true,
+          scoreTeamA: true,
+          scoreTeamB: true,
+          map: { select: { name: true } },
+        },
+      },
+    },
+    orderBy: { match: { playedAt: "asc" } },
+  });
+}

@@ -132,7 +132,7 @@ export interface HallOfFameRecord {
 
 type PlayerRow = { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null };
 
-async function loadCompetitiveDataset() {
+export async function loadCompetitiveDataset() {
   const activePlayers = await prisma.player.findMany({
     where: { trackedPlayer: { active: true } },
   });
@@ -152,7 +152,7 @@ async function loadCompetitiveDataset() {
   return { activePlayers, statsByPlayer, allStats };
 }
 
-type CompetitiveDataset = Awaited<ReturnType<typeof loadCompetitiveDataset>>;
+export type CompetitiveDataset = Awaited<ReturnType<typeof loadCompetitiveDataset>>;
 
 function isWin(s: { team: string; match: { scoreTeamA: number; scoreTeamB: number } }): boolean {
   return (
@@ -1009,6 +1009,452 @@ function getPerformanceExtremesFromDataset(dataset: CompetitiveDataset): {
 // loadCompetitiveDataset), todo o resto é cálculo em memória sobre o mesmo dataset.
 // ---------------------------------------------------------------------------
 
+export interface MonitoredPlayerEntry {
+  rank: number;
+  player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null };
+  rating: number;
+  adr: number;
+  kd: number;
+  kast: number;
+  winrate: number;
+  hsPercent: number;
+  matchCount: number;
+  totalKills: number;
+  totalDeaths: number;
+  totalAssists: number;
+  forma: string;
+  bestMap: string | null;
+  worstMap: string | null;
+  lastMatchDate: Date | null;
+}
+
+const MONITORED_RECENT_WINDOW = 10;
+
+function getMonitoredPlayersFromDataset(dataset: CompetitiveDataset): MonitoredPlayerEntry[] {
+  const entries: MonitoredPlayerEntry[] = [];
+
+  for (const player of dataset.activePlayers) {
+    // stats already sorted desc by playedAt — take the most recent 10
+    const stats = (dataset.statsByPlayer.get(player.id) ?? []).slice(0, MONITORED_RECENT_WINDOW);
+    if (stats.length === 0) continue;
+
+    const matchCount = stats.length;
+    const avgRating = stats.reduce((sum, s) => sum + s.rating, 0) / matchCount;
+    const avgAdr = stats.reduce((sum, s) => sum + s.adr, 0) / matchCount;
+    const avgKast = stats.reduce((sum, s) => sum + s.kast, 0) / matchCount;
+    const totalKills = stats.reduce((sum, s) => sum + s.kills, 0);
+    const totalDeaths = stats.reduce((sum, s) => sum + s.deaths, 0);
+    const totalAssists = stats.reduce((sum, s) => sum + s.assists, 0);
+    const totalHeadshots = stats.reduce((sum, s) => sum + s.headshots, 0);
+    const kd = totalDeaths > 0 ? totalKills / totalDeaths : totalKills;
+    const hsPercent = totalKills > 0 ? (totalHeadshots / totalKills) * 100 : 0;
+
+    let wins = 0;
+    for (const s of stats) if (isWin(s)) wins++;
+    const winrate = (wins / matchCount) * 100;
+
+    const recentStats = stats.slice(0, 5);
+    let recentWins = 0;
+    for (const s of recentStats) if (isWin(s)) recentWins++;
+    let forma = "Oscilando";
+    if (recentWins === 5) forma = "Excelente";
+    else if (recentWins === 4) forma = "Em alta";
+    else if (recentWins === 3) forma = "Estável";
+
+    // Best and worst map by avg rating (min 2 appearances)
+    const mapRatings = new Map<string, number[]>();
+    for (const s of stats) {
+      const m = s.match.map.name;
+      const arr = mapRatings.get(m) ?? [];
+      arr.push(s.rating);
+      mapRatings.set(m, arr);
+    }
+    let bestMap: string | null = null;
+    let worstMap: string | null = null;
+    let bestMapRating = -Infinity;
+    let worstMapRating = Infinity;
+    for (const [mapName, ratings] of mapRatings.entries()) {
+      if (ratings.length < 2) continue;
+      const avg = ratings.reduce((a, b) => a + b, 0) / ratings.length;
+      if (avg > bestMapRating) { bestMapRating = avg; bestMap = mapName; }
+      if (avg < worstMapRating) { worstMapRating = avg; worstMap = mapName; }
+    }
+    if (bestMap === worstMap) worstMap = null;
+
+    // stats is sorted desc by playedAt — first entry is most recent
+    const lastMatchDate = stats[0]?.match.playedAt ?? null;
+
+    entries.push({
+      rank: 0, // preenchido após ordenação
+      player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl, levelGc: player.levelGc },
+      rating: Number(avgRating.toFixed(2)),
+      adr: Math.round(avgAdr),
+      kd: Number(kd.toFixed(2)),
+      kast: Math.round(avgKast),
+      winrate: Math.round(winrate),
+      hsPercent: Math.round(hsPercent),
+      matchCount,
+      totalKills,
+      totalDeaths,
+      totalAssists,
+      forma,
+      bestMap,
+      worstMap,
+      lastMatchDate,
+    });
+  }
+
+  const sorted = entries.sort((a, b) => b.rating - a.rating);
+  sorted.forEach((e, i) => { e.rank = i + 1; });
+  return sorted;
+}
+
+// ---------------------------------------------------------------------------
+// Cards inteligentes — todos derivados do mesmo CompetitiveDataset (zero queries
+// extras). Cada função abaixo alimenta um card específico do Dashboard.
+// ---------------------------------------------------------------------------
+
+const RECENT_WINDOW = 10; // "últimas 10 partidas", regra comum às funções abaixo
+const MIN_RECENT_MATCHES = 3; // mesmo piso usado em getJogadorDaSemanaFromDataset
+const MIN_STREAK_TO_SHOW = 2; // uma vitória isolada não é uma "sequência"
+
+/** Métricas médias de uma janela de partidas (temporada inteira ou últimas N). */
+function computeWindowMetrics(stats: CompetitiveDataset["allStats"]) {
+  const matchCount = stats.length;
+  if (matchCount === 0) {
+    return { rating: 0, adr: 0, kd: 0, winrate: 0, matchCount: 0 };
+  }
+  const totalKills = stats.reduce((sum, s) => sum + s.kills, 0);
+  const totalDeaths = stats.reduce((sum, s) => sum + s.deaths, 0);
+  const avgRating = stats.reduce((sum, s) => sum + s.rating, 0) / matchCount;
+  const avgAdr = stats.reduce((sum, s) => sum + s.adr, 0) / matchCount;
+  const kd = totalDeaths > 0 ? totalKills / totalDeaths : totalKills;
+
+  let wins = 0;
+  for (const s of stats) if (isWin(s)) wins++;
+  const winrate = (wins / matchCount) * 100;
+
+  return { rating: avgRating, adr: avgAdr, kd, winrate, matchCount };
+}
+
+// ─── Funcionalidade 1: Hot Streak / Cold Streak ────────────────────────────
+
+export interface StreakEntry {
+  player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null };
+  type: "hot" | "cold";
+  /** Vitórias (hot) ou derrotas (cold) consecutivas, contadas a partir da partida mais recente. */
+  streak: number;
+  recentRating: number;
+  /** Variação percentual do ADR das últimas 10 partidas frente à média da temporada. */
+  adrChangePercent: number;
+  matchCount: number;
+}
+
+function getStreaksFromDataset(dataset: CompetitiveDataset): { hot: StreakEntry[]; cold: StreakEntry[] } {
+  const hot: StreakEntry[] = [];
+  const cold: StreakEntry[] = [];
+
+  for (const player of dataset.activePlayers) {
+    const fullStats = dataset.statsByPlayer.get(player.id) ?? [];
+    const recentStats = fullStats.slice(0, RECENT_WINDOW); // regra: só últimas 10
+    if (recentStats.length < MIN_RECENT_MATCHES) continue; // sem partidas suficientes
+
+    // recentStats já vem ordenado desc por playedAt — índice 0 é a partida mais recente.
+    const mostRecentIsWin = isWin(recentStats[0]);
+    let streak = 0;
+    for (const s of recentStats) {
+      if (isWin(s) === mostRecentIsWin) streak++;
+      else break;
+    }
+    if (streak < MIN_STREAK_TO_SHOW) continue;
+
+    const recentMetrics = computeWindowMetrics(recentStats);
+    const seasonMetrics = computeWindowMetrics(fullStats);
+    const adrChangePercent =
+      seasonMetrics.adr > 0 ? ((recentMetrics.adr - seasonMetrics.adr) / seasonMetrics.adr) * 100 : 0;
+
+    const entry: StreakEntry = {
+      player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl, levelGc: player.levelGc },
+      type: mostRecentIsWin ? "hot" : "cold",
+      streak,
+      recentRating: Number(recentMetrics.rating.toFixed(2)),
+      adrChangePercent: Math.round(adrChangePercent),
+      matchCount: recentMetrics.matchCount,
+    };
+
+    if (mostRecentIsWin) hot.push(entry);
+    else cold.push(entry);
+  }
+
+  hot.sort((a, b) => b.streak - a.streak || b.recentRating - a.recentRating);
+  cold.sort((a, b) => b.streak - a.streak || a.recentRating - b.recentRating);
+
+  return { hot, cold };
+}
+
+// ─── Funcionalidades 2 e 3: Evolução recente / Queda de performance ────────
+
+export interface SeasonComparisonEntry {
+  player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null };
+  season: { rating: number; adr: number; kd: number; winrate: number; matchCount: number };
+  recent: { rating: number; adr: number; kd: number; winrate: number; matchCount: number };
+  diff: { rating: number; adr: number; kd: number; winrate: number };
+}
+
+/**
+ * Compara a média da temporada inteira com a média das últimas 10 partidas de cada
+ * jogador. Alimenta tanto "Evolução Recente" (diff positivo) quanto "Queda de
+ * Performance" (diff negativo) — mesma fonte de dados, sem duplicar cálculo.
+ */
+function getSeasonComparisonFromDataset(dataset: CompetitiveDataset): SeasonComparisonEntry[] {
+  const entries: SeasonComparisonEntry[] = [];
+
+  for (const player of dataset.activePlayers) {
+    const fullStats = dataset.statsByPlayer.get(player.id) ?? [];
+    const recentStats = fullStats.slice(0, RECENT_WINDOW);
+    if (recentStats.length < MIN_RECENT_MATCHES) continue;
+
+    const season = computeWindowMetrics(fullStats);
+    const recent = computeWindowMetrics(recentStats);
+
+    entries.push({
+      player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl, levelGc: player.levelGc },
+      season: {
+        rating: Number(season.rating.toFixed(2)),
+        adr: Math.round(season.adr),
+        kd: Number(season.kd.toFixed(2)),
+        winrate: Math.round(season.winrate),
+        matchCount: season.matchCount,
+      },
+      recent: {
+        rating: Number(recent.rating.toFixed(2)),
+        adr: Math.round(recent.adr),
+        kd: Number(recent.kd.toFixed(2)),
+        winrate: Math.round(recent.winrate),
+        matchCount: recent.matchCount,
+      },
+      diff: {
+        rating: Number((recent.rating - season.rating).toFixed(2)),
+        adr: Math.round(recent.adr - season.adr),
+        kd: Number((recent.kd - season.kd).toFixed(2)),
+        winrate: Math.round(recent.winrate - season.winrate),
+      },
+    });
+  }
+
+  // Desc por diff de rating — quem mais evoluiu primeiro, quem mais caiu por último.
+  return entries.sort((a, b) => b.diff.rating - a.diff.rating);
+}
+
+// ─── Funcionalidade 4: Melhor dupla do momento ─────────────────────────────
+
+const MIN_TOGETHER_RECENT = 3; // menor que o piso da temporada (6): janela é só 10 partidas
+
+/**
+ * Mesma lógica de pareamento de getDuoLeaderboardFromDataset, mas restrita às últimas
+ * 10 partidas de cada jogador (não a temporada inteira). Reaproveita o tipo DuoSummary.
+ */
+function getBestRecentDuoFromDataset(dataset: CompetitiveDataset): DuoSummary | null {
+  const { activePlayers, statsByPlayer } = dataset;
+
+  let best: DuoSummary | null = null;
+  let bestWinrate = -1;
+  let bestRating = -1;
+
+  for (let i = 0; i < activePlayers.length; i++) {
+    for (let j = i + 1; j < activePlayers.length; j++) {
+      const pA = activePlayers[i];
+      const pB = activePlayers[j];
+      const recentA = (statsByPlayer.get(pA.id) ?? []).slice(0, RECENT_WINDOW);
+      const recentB = (statsByPlayer.get(pB.id) ?? []).slice(0, RECENT_WINDOW);
+      const recentBByMatch = new Map(recentB.map((s) => [s.matchId, s]));
+
+      let togetherTotal = 0;
+      let togetherWins = 0;
+      let ratingSum = 0;
+
+      for (const sA of recentA) {
+        const sB = recentBByMatch.get(sA.matchId);
+        if (sB && sA.team === sB.team) {
+          togetherTotal++;
+          if (isWin(sA)) togetherWins++;
+          ratingSum += (sA.rating + sB.rating) / 2;
+        }
+      }
+
+      if (togetherTotal >= MIN_TOGETHER_RECENT) {
+        const winrate = (togetherWins / togetherTotal) * 100;
+        const avgRating = ratingSum / togetherTotal;
+
+        if (winrate > bestWinrate || (winrate === bestWinrate && avgRating > bestRating)) {
+          bestWinrate = winrate;
+          bestRating = avgRating;
+          best = {
+            playerA: { id: pA.id, nickname: pA.nickname, avatarUrl: pA.avatarUrl },
+            playerB: { id: pB.id, nickname: pB.nickname, avatarUrl: pB.avatarUrl },
+            total: togetherTotal,
+            wins: togetherWins,
+            winrate: Math.round(winrate),
+            avgRating: Number(avgRating.toFixed(2)),
+          };
+        }
+      }
+    }
+  }
+
+  return best;
+}
+
+// ─── Funcionalidade 5: Curiosidade da Semana ───────────────────────────────
+
+export interface WeeklyCuriosity {
+  id: string;
+  text: string;
+}
+
+const MIN_GAMES_ON_MAP_FOR_CURIOSITY = 3;
+
+/**
+ * Gera candidatos de curiosidade a partir de regras determinísticas (sem IA) e
+ * escolhe o de maior "score" — não há empate relevante na prática, mas o critério
+ * de desempate é a ordem em que os candidatos foram avaliados.
+ */
+function getWeeklyCuriosityFromDataset(
+  dataset: CompetitiveDataset,
+  streaks: { hot: StreakEntry[]; cold: StreakEntry[] },
+  seasonComparison: SeasonComparisonEntry[],
+): WeeklyCuriosity | null {
+  const candidates: { id: string; text: string; score: number }[] = [];
+
+  // 1. Maior sequência de vitórias atual
+  const topHot = streaks.hot[0];
+  if (topHot && topHot.streak >= 3) {
+    candidates.push({
+      id: `curiosity-hot-${topHot.player.id}`,
+      text: `${topHot.player.nickname} venceu ${topHot.streak} das últimas ${topHot.matchCount} partidas.`,
+      score: topHot.streak * 10,
+    });
+  }
+
+  // 2. Maior sequência de derrotas atual
+  const topCold = streaks.cold[0];
+  if (topCold && topCold.streak >= 3) {
+    candidates.push({
+      id: `curiosity-cold-${topCold.player.id}`,
+      text: `${topCold.player.nickname} perdeu ${topCold.streak} seguidas.`,
+      score: topCold.streak * 9,
+    });
+  }
+
+  // 3. Jogador invicto em algum mapa (mínimo de partidas na temporada, para não ser trivial)
+  for (const player of dataset.activePlayers) {
+    const stats = dataset.statsByPlayer.get(player.id) ?? [];
+    const byMap = new Map<string, { wins: number; total: number }>();
+    for (const s of stats) {
+      const mapName = s.match.map.name;
+      const entry = byMap.get(mapName) ?? { wins: 0, total: 0 };
+      entry.total++;
+      if (isWin(s)) entry.wins++;
+      byMap.set(mapName, entry);
+    }
+    for (const [mapName, entry] of byMap.entries()) {
+      if (entry.total >= MIN_GAMES_ON_MAP_FOR_CURIOSITY && entry.wins === entry.total) {
+        candidates.push({
+          id: `curiosity-invicto-${player.id}-${mapName}`,
+          text: `${player.nickname} está invicto na ${mapName} (${entry.total} partidas).`,
+          score: entry.total * 8,
+        });
+      }
+    }
+  }
+
+  // 4. Maior aumento de ADR nas últimas 10 partidas frente à temporada
+  const topAdrGain = [...seasonComparison].sort((a, b) => b.diff.adr - a.diff.adr)[0];
+  if (topAdrGain && topAdrGain.season.adr > 0) {
+    const adrPercent = Math.round((topAdrGain.diff.adr / topAdrGain.season.adr) * 100);
+    if (adrPercent >= 10) {
+      candidates.push({
+        id: `curiosity-adr-${topAdrGain.player.id}`,
+        text: `${topAdrGain.player.nickname} aumentou o ADR em ${adrPercent}% nas últimas partidas.`,
+        score: adrPercent,
+      });
+    }
+  }
+
+  if (candidates.length === 0) return null;
+
+  candidates.sort((a, b) => b.score - a.score);
+  const winner = candidates[0];
+  return { id: winner.id, text: winner.text };
+}
+
+// ─── Funcionalidade 6: Alertas Inteligentes ────────────────────────────────
+
+export interface SmartAlert {
+  id: string;
+  text: string;
+  severity: "positive" | "warning";
+}
+
+const RATING_MILESTONES = [1.3, 1.2, 1.1, 1.0];
+
+/**
+ * Não recebe o dataset diretamente: opera sobre `seasonComparison` (já calculado por
+ * getSeasonComparisonFromDataset) e sobre bestMap/worstMap, que a Dashboard já busca
+ * separadamente via statsService.getMapWinrates(). Evita uma nova query e duplicar a
+ * lógica de cálculo de winrate por mapa, que já existe em stats.service.ts.
+ */
+export function getSmartAlerts(
+  seasonComparison: SeasonComparisonEntry[],
+  bestMap: { map: string; winrate: number; matchesPlayed: number } | null,
+  worstMap: { map: string; winrate: number; matchesPlayed: number } | null,
+): SmartAlert[] {
+  const alerts: SmartAlert[] = [];
+
+  // Jogadores que cruzaram um patamar de Rating nas últimas 10 partidas (não estavam lá na temporada)
+  for (const entry of seasonComparison) {
+    const milestone = RATING_MILESTONES.find((m) => entry.recent.rating >= m && entry.season.rating < m);
+    if (milestone) {
+      alerts.push({
+        id: `alert-milestone-${entry.player.id}`,
+        text: `${entry.player.nickname} chegou em Rating ${milestone.toFixed(2)}`,
+        severity: "positive",
+      });
+    }
+  }
+
+  // Jogadores com queda de rating >= 10% nas últimas 10 partidas frente à temporada
+  for (const entry of seasonComparison) {
+    if (entry.season.rating <= 0) continue;
+    const dropPercent = (entry.diff.rating / entry.season.rating) * 100;
+    if (dropPercent <= -10) {
+      alerts.push({
+        id: `alert-drop-${entry.player.id}`,
+        text: `${entry.player.nickname} caiu mais de 10% no Rating`,
+        severity: "warning",
+      });
+    }
+  }
+
+  // Mapa mais forte / mais fraco da temporada (mesmos dados já usados no card Map Pool)
+  if (bestMap) {
+    alerts.push({
+      id: "alert-best-map",
+      text: `${bestMap.map} é o mapa mais forte do time (${bestMap.winrate.toFixed(0)}% WR)`,
+      severity: "positive",
+    });
+  }
+  if (worstMap) {
+    alerts.push({
+      id: "alert-worst-map",
+      text: `Evitem ${worstMap.map} — ${worstMap.winrate.toFixed(0)}% de aproveitamento na temporada`,
+      severity: "warning",
+    });
+  }
+
+  return alerts.slice(0, 5);
+}
+
 export interface DashboardCompetitiveBundle {
   powerRanking: PowerRankingEntry[];
   momentum: PlayerMomentumEntry[];
@@ -1023,31 +1469,62 @@ export interface DashboardCompetitiveBundle {
   records: HallOfFameRecord[];
   bestPerformance: PerformanceExtreme | null;
   worstPerformance: PerformanceExtreme | null;
+  monitoredPlayers: MonitoredPlayerEntry[];
+  hotStreaks: StreakEntry[];
+  coldStreaks: StreakEntry[];
+  seasonComparison: SeasonComparisonEntry[];
+  topGainers: SeasonComparisonEntry[];
+  topDecliners: SeasonComparisonEntry[];
+  bestRecentDuo: DuoSummary | null;
+  weeklyCuriosity: WeeklyCuriosity | null;
 }
 
-export async function getDashboardCompetitiveBundle(): Promise<DashboardCompetitiveBundle> {
-  const dataset = await loadCompetitiveDataset();
+/**
+ * Aceita um dataset pré-carregado (compartilhado com dashboard.service via
+ * Promise única em page.tsx) para evitar buscar PlayerMatchStats duas vezes na
+ * mesma requisição. Chamadores sem dataset em mãos continuam funcionando normalmente.
+ */
+export async function getDashboardCompetitiveBundle(
+  dataset?: CompetitiveDataset,
+): Promise<DashboardCompetitiveBundle> {
+  const ds = dataset ?? (await loadCompetitiveDataset());
 
   const [decisive, weeklyHighlights] = await Promise.all([
-    getDecisivePlayersFromDataset(dataset, 3),
-    getWeeklyHighlightsFromDataset(dataset),
+    getDecisivePlayersFromDataset(ds, 3),
+    getWeeklyHighlightsFromDataset(ds),
   ]);
 
-  const extremes = getPerformanceExtremesFromDataset(dataset);
+  const extremes = getPerformanceExtremesFromDataset(ds);
+
+  const streaks = getStreaksFromDataset(ds);
+  const seasonComparison = getSeasonComparisonFromDataset(ds);
+  const topGainers = seasonComparison.filter((e) => e.diff.rating > 0).slice(0, 3);
+  const topDecliners = [...seasonComparison]
+    .reverse()
+    .filter((e) => e.diff.rating < 0)
+    .slice(0, 3);
 
   return {
-    powerRanking: getPowerRankingFromDataset(dataset, 5),
-    momentum: getPlayerMomentumFromDataset(dataset, 3),
+    powerRanking: getPowerRankingFromDataset(ds, 5),
+    momentum: getPlayerMomentumFromDataset(ds, 3),
     decisive,
-    archetypes: getPlayerArchetypesFromDataset(dataset),
-    matchups: getPlayerMatchupsFromDataset(dataset),
-    jogadorDaSemana: getJogadorDaSemanaFromDataset(dataset),
-    duos: getDuoLeaderboardFromDataset(dataset, 2),
-    dominantTrio: getDominantTrioFromDataset(dataset),
-    mapSpecialists: getMapSpecialistsFromDataset(dataset),
+    archetypes: getPlayerArchetypesFromDataset(ds),
+    matchups: getPlayerMatchupsFromDataset(ds),
+    jogadorDaSemana: getJogadorDaSemanaFromDataset(ds),
+    duos: getDuoLeaderboardFromDataset(ds, 2),
+    dominantTrio: getDominantTrioFromDataset(ds),
+    mapSpecialists: getMapSpecialistsFromDataset(ds),
     weeklyHighlights,
-    records: getHallOfFameRecordsFromDataset(dataset),
+    records: getHallOfFameRecordsFromDataset(ds),
     bestPerformance: extremes.best,
     worstPerformance: extremes.worst,
+    monitoredPlayers: getMonitoredPlayersFromDataset(ds),
+    hotStreaks: streaks.hot,
+    coldStreaks: streaks.cold,
+    seasonComparison,
+    topGainers,
+    topDecliners,
+    bestRecentDuo: getBestRecentDuoFromDataset(ds),
+    weeklyCuriosity: getWeeklyCuriosityFromDataset(ds, streaks, seasonComparison),
   };
 }

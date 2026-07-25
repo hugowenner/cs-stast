@@ -98,6 +98,83 @@ export async function syncPlayerSteamProfile(steamId: string): Promise<"synced" 
   }
 }
 
+// ─── Sync somente de jogadores sem avatar ────────────────────────────────────
+
+/**
+ * Busca e salva avatares apenas para jogadores monitorados que ainda não têm
+ * avatarUrl. Chamada automaticamente após cada nova partida da GC via `after()`.
+ * Segura para re-execução: idempotente, jogadores já sincronizados são ignorados.
+ */
+export async function syncMissingAvatars(): Promise<{ synced: number; failed: number }> {
+  let key: string;
+  try {
+    key = getSteamKey();
+    void key; // usado implicitamente via getPlayerSummaries
+  } catch {
+    console.warn("[steam] syncMissingAvatars: STEAM_API_KEY não configurada — ignorando.");
+    return { synced: 0, failed: 0 };
+  }
+
+  const players = await prisma.player.findMany({
+    where: { avatarUrl: null, trackedPlayer: { active: true } },
+    select: { id: true, steamId: true, nickname: true },
+  });
+
+  if (players.length === 0) return { synced: 0, failed: 0 };
+
+  const validIds = players.filter((p) => isSteamId64(p.steamId));
+
+  if (validIds.length === 0) {
+    console.log(`[steam] syncMissingAvatars: ${players.length} sem avatar, nenhum com SteamID64 válido.`);
+    return { synced: 0, failed: players.length };
+  }
+
+  console.log(`[steam] syncMissingAvatars: buscando avatar de ${validIds.length} jogador(es).`);
+
+  let summaries: SteamSummary[] = [];
+  try {
+    summaries = await getPlayerSummaries(validIds.map((p) => p.steamId));
+  } catch (err) {
+    console.error("[steam] syncMissingAvatars: falha na Steam API:", err instanceof Error ? err.message : err);
+    return { synced: 0, failed: validIds.length };
+  }
+
+  const summaryMap = new Map(summaries.map((s) => [s.steamid, s]));
+  let synced = 0;
+  let failed = 0;
+
+  for (const p of validIds) {
+    const s = summaryMap.get(p.steamId);
+    if (!s) {
+      console.warn(`[steam] syncMissingAvatars: ${p.nickname} (${p.steamId}) não encontrado na Steam.`);
+      failed++;
+      continue;
+    }
+    try {
+      await prisma.player.update({
+        where: { id: p.id },
+        data: {
+          avatarUrl: s.avatarfull,
+          steamNickname: s.personaname,
+          steamAvatarSmall: s.avatar,
+          steamAvatarMedium: s.avatarmedium,
+          steamAvatarFull: s.avatarfull,
+          steamProfileUrl: s.profileurl,
+          steamLastSync: new Date(),
+        },
+      });
+      synced++;
+      console.log(`[steam] syncMissingAvatars: ✓ ${p.nickname}`);
+    } catch (err) {
+      failed++;
+      console.error(`[steam] syncMissingAvatars: erro ao salvar ${p.nickname}:`, err instanceof Error ? err.message : err);
+    }
+  }
+
+  console.log(`[steam] syncMissingAvatars: ${synced} sincronizados, ${failed} falhas.`);
+  return { synced, failed };
+}
+
 // ─── Sync em lote de todos os tracked players ─────────────────────────────────
 
 export interface SteamSyncResult {
