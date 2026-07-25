@@ -194,6 +194,8 @@ export async function ingestMatchSync(
     const killEvents: { killerId: string; victimId: string }[] = [];
     const acePlayers = new Set<string>();
     const fiveKPlayers = new Set<string>();
+    const multiKill4Players = new Set<string>();
+    const multiKill3Players = new Set<string>();
 
     for (const p of input.players) {
       if (!p.killsDetail || p.killsDetail.length === 0) continue;
@@ -224,8 +226,10 @@ export async function ingestMatchSync(
           fiveKPlayers.add(killer.id);
           events.push({ playerId: killer.id, type: "ACE" as EventType, roundNumber });
         } else if (kills.length === 4) {
+          multiKill4Players.add(killer.id);
           events.push({ playerId: killer.id, type: "MULTI_KILL_4" as EventType, roundNumber });
         } else if (kills.length === 3) {
+          multiKill3Players.add(killer.id);
           events.push({ playerId: killer.id, type: "MULTI_KILL_3" as EventType, roundNumber });
         }
       }
@@ -259,13 +263,36 @@ export async function ingestMatchSync(
       careerTotalsByPlayerId.set(player.id, await statsRepo.getPlayerCareerTotals(player.id));
     }
 
+    const totalRounds = input.scoreTeamA + input.scoreTeamB;
+
     const achievementInputs: PlayerMatchAchievementInput[] = input.players.map((p) => {
       const player = playerBySteamId.get(p.steamId)!;
       const career = careerTotalsByPlayerId.get(player.id)!;
+      const rating = ratingByPlayerId.get(player.id)!;
+      const scoreSelf = p.team === "A" ? input.scoreTeamA : input.scoreTeamB;
+      const scoreOpp = p.team === "A" ? input.scoreTeamB : input.scoreTeamA;
+
+      const careerClutchWins =
+        (career._sum.clutch1v1Wins ?? 0) +
+        (career._sum.clutch1v2Wins ?? 0) +
+        (career._sum.clutch1v3Wins ?? 0) +
+        (career._sum.clutch1v4Wins ?? 0) +
+        (career._sum.clutch1v5Wins ?? 0);
+
       return {
         playerId: player.id,
         entryKills: p.entryKills,
+        entryDeaths: p.entryDeaths,
+        tradeKills: p.tradeKills,
         headshots: p.headshots,
+        kills: p.kills,
+        deaths: p.deaths,
+        assists: p.assists,
+        adr: p.adr,
+        rating: rating.rating,
+        kast: p.kast,
+        totalRounds,
+        wonMatch: scoreSelf > scoreOpp,
         clutchWinsByTier: {
           1: p.clutches?.["1v1"]?.wins ?? 0,
           2: p.clutches?.["1v2"]?.wins ?? 0,
@@ -275,9 +302,15 @@ export async function ingestMatchSync(
         },
         hadAce: acePlayers.has(player.id),
         hadFiveK: fiveKPlayers.has(player.id),
+        hadMultiKill3: multiKill3Players.has(player.id),
+        hadMultiKill4: multiKill4Players.has(player.id),
         careerMatchesPlayed: career._count._all,
         careerKills: career._sum.kills ?? 0,
         careerHeadshots: career._sum.headshots ?? 0,
+        careerEntryKills: career._sum.entryKills ?? 0,
+        careerClutchWins,
+        careerAssists: career._sum.assists ?? 0,
+        careerAvgRating: career._avg.rating ?? 0,
       };
     });
 

@@ -13,7 +13,21 @@ export function listStatsForPlayer(playerId: string, take = 50) {
 export function getPlayerCareerTotals(playerId: string) {
   return prisma.playerMatchStats.aggregate({
     where: { playerId },
-    _sum: { kills: true, deaths: true, assists: true, headshots: true },
+    _sum: {
+      kills: true,
+      deaths: true,
+      assists: true,
+      headshots: true,
+      // Campos abaixo adicionados para o AchievementEngine (conquistas cumulativas
+      // Entry Fragger, Clutch Master, Team Player) — mesma query já existente,
+      // sem nenhuma consulta nova ao banco.
+      entryKills: true,
+      clutch1v1Wins: true,
+      clutch1v2Wins: true,
+      clutch1v3Wins: true,
+      clutch1v4Wins: true,
+      clutch1v5Wins: true,
+    },
     _avg: { rating: true, adr: true, kast: true, impact: true },
     _count: { _all: true },
   });

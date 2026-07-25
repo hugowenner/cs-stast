@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import { AnimatedNumber } from "@/components/motion/animated-number";
 import type { SeasonComparisonEntry } from "@/server/services/competitive.service";
@@ -8,41 +8,71 @@ interface SeasonEvolutionSectionProps {
   decliners: SeasonComparisonEntry[];
 }
 
-function ComparisonList({ entries, accent }: { entries: SeasonComparisonEntry[]; accent: "good" | "critical" }) {
+function FeaturedEntry({ entry, accent }: { entry: SeasonComparisonEntry; accent: "good" | "critical" }) {
   const color = accent === "good" ? "text-status-good" : "text-status-critical";
 
-  if (entries.length === 0) {
-    return <p className="text-xs text-muted-foreground/55 px-4 py-6 text-center">Sem dados suficientes ainda.</p>;
-  }
+  return (
+    <div className="px-4 py-4 flex items-start gap-3.5">
+      <PlayerAvatar nickname={entry.player.nickname} avatarUrl={entry.player.avatarUrl} size="md" />
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-black text-white truncate">{entry.player.nickname}</p>
+        <div className="flex items-center gap-1.5 mt-1 text-[11px] tabular-nums">
+          <span className="text-muted-foreground/60 font-semibold">{entry.season.rating.toFixed(2)}</span>
+          <ArrowRight className="size-2.5 text-muted-foreground/40 shrink-0" />
+          <span className={`font-black ${color}`}>{entry.recent.rating.toFixed(2)}</span>
+          <span className="text-[9px] text-muted-foreground/50 ml-0.5">Rating</span>
+        </div>
+        <div className="grid grid-cols-3 gap-1.5 mt-3">
+          {[
+            { label: "Rating", diff: entry.diff.rating.toFixed(2) },
+            { label: "ADR", diff: entry.diff.adr.toString() },
+            { label: "WR", diff: `${entry.diff.winrate}%` },
+          ].map((stat) => (
+            <div key={stat.label} className={`text-center rounded-lg p-1.5 border ${accent === "good" ? "bg-status-good/5 border-status-good/10" : "bg-status-critical/5 border-status-critical/10"}`}>
+              <p className="text-[7px] uppercase tracking-widest font-bold text-muted-foreground/60">{stat.label}</p>
+              <p className={`text-xs font-black mt-0.5 tabular-nums ${color}`}>
+                {Number(stat.diff) >= 0 ? "+" : ""}{stat.diff}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CompactRow({ entry, accent }: { entry: SeasonComparisonEntry; accent: "good" | "critical" }) {
+  const color = accent === "good" ? "text-status-good" : "text-status-critical";
 
   return (
-    <div className="divide-y divide-white/[0.04]">
-      {entries.map((entry) => (
-        <div key={entry.player.id} className="px-4 py-3.5 flex items-center gap-3">
-          <PlayerAvatar nickname={entry.player.nickname} avatarUrl={entry.player.avatarUrl} size="sm" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-white truncate">{entry.player.nickname}</p>
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <span className={`text-[10px] font-black tabular-nums ${color}`}>
-                {entry.diff.rating >= 0 ? "+" : ""}{entry.diff.rating.toFixed(2)} Rating
-              </span>
-              <span className="text-[10px] text-muted-foreground/55 tabular-nums">
-                {entry.diff.adr >= 0 ? "+" : ""}{entry.diff.adr} ADR
-              </span>
-              <span className="text-[10px] text-muted-foreground/55 tabular-nums">
-                {entry.diff.winrate >= 0 ? "+" : ""}{entry.diff.winrate}% WR
-              </span>
-            </div>
-          </div>
-          <div className="text-right shrink-0">
-            <p className="text-xs font-black text-white/90 tabular-nums">
-              <AnimatedNumber value={entry.recent.rating} decimals={2} duration={0.6} />
-            </p>
-            <p className="text-[8px] uppercase tracking-widest text-muted-foreground/55 font-bold">Últimas 10</p>
-          </div>
-        </div>
-      ))}
+    <div className="px-4 py-2.5 flex items-center gap-3">
+      <PlayerAvatar nickname={entry.player.nickname} avatarUrl={entry.player.avatarUrl} size="sm" />
+      <p className="text-xs font-bold text-white/90 truncate flex-1 min-w-0">{entry.player.nickname}</p>
+      <span className={`text-[11px] font-black tabular-nums shrink-0 ${color}`}>
+        {entry.diff.rating >= 0 ? "+" : ""}{entry.diff.rating.toFixed(2)}
+      </span>
     </div>
+  );
+}
+
+function ComparisonPanel({ entries, accent }: { entries: SeasonComparisonEntry[]; accent: "good" | "critical" }) {
+  if (entries.length === 0) {
+    return <p className="text-xs text-muted-foreground/55 px-4 py-8 text-center">Sem dados suficientes ainda.</p>;
+  }
+
+  const [top, ...rest] = entries;
+
+  return (
+    <>
+      <FeaturedEntry entry={top} accent={accent} />
+      {rest.length > 0 && (
+        <div className="border-t border-white/[0.04] divide-y divide-white/[0.03]">
+          {rest.map((entry) => (
+            <CompactRow key={entry.player.id} entry={entry} accent={accent} />
+          ))}
+        </div>
+      )}
+    </>
   );
 }
 
@@ -51,19 +81,19 @@ export function SeasonEvolutionSection({ gainers, decliners }: SeasonEvolutionSe
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
-        <div className="px-4 py-3.5 border-b border-white/[0.05] flex items-center gap-2">
+      <div className="glass-panel rounded-2xl border border-status-good/20 bg-status-good/[0.015] overflow-hidden">
+        <div className="px-4 py-3.5 border-b border-status-good/10 flex items-center gap-2">
           <TrendingUp className="size-3.5 text-status-good shrink-0" />
           <p className="text-[10px] uppercase tracking-widest font-bold text-status-good/80">Maior Evolução</p>
         </div>
-        <ComparisonList entries={gainers} accent="good" />
+        <ComparisonPanel entries={gainers} accent="good" />
       </div>
-      <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
-        <div className="px-4 py-3.5 border-b border-white/[0.05] flex items-center gap-2">
+      <div className="glass-panel rounded-2xl border border-status-critical/20 bg-status-critical/[0.015] overflow-hidden">
+        <div className="px-4 py-3.5 border-b border-status-critical/10 flex items-center gap-2">
           <TrendingDown className="size-3.5 text-status-critical shrink-0" />
           <p className="text-[10px] uppercase tracking-widest font-bold text-status-critical/80">Queda de Performance</p>
         </div>
-        <ComparisonList entries={decliners} accent="critical" />
+        <ComparisonPanel entries={decliners} accent="critical" />
       </div>
     </div>
   );

@@ -1307,9 +1307,15 @@ function getBestRecentDuoFromDataset(dataset: CompetitiveDataset): DuoSummary | 
 
 // ─── Funcionalidade 5: Curiosidade da Semana ───────────────────────────────
 
+export type WeeklyCuriosityCategory = "streak-hot" | "streak-cold" | "map" | "adr";
+
 export interface WeeklyCuriosity {
   id: string;
   text: string;
+  category: WeeklyCuriosityCategory;
+  player: { id: string; nickname: string; avatarUrl: string | null } | null;
+  /** Métrica de apoio exibida junto ao texto (ex: "6" para streak, "Nuke" para mapa). */
+  metric: string;
 }
 
 const MIN_GAMES_ON_MAP_FOR_CURIOSITY = 3;
@@ -1317,14 +1323,16 @@ const MIN_GAMES_ON_MAP_FOR_CURIOSITY = 3;
 /**
  * Gera candidatos de curiosidade a partir de regras determinísticas (sem IA) e
  * escolhe o de maior "score" — não há empate relevante na prática, mas o critério
- * de desempate é a ordem em que os candidatos foram avaliados.
+ * de desempate é a ordem em que os candidatos foram avaliados. `category`/`player`/
+ * `metric` são metadados puramente de apresentação (não influenciam qual candidato
+ * vence) — permitem que o card escolha ícone/avatar corretos sem repetir a lógica.
  */
 function getWeeklyCuriosityFromDataset(
   dataset: CompetitiveDataset,
   streaks: { hot: StreakEntry[]; cold: StreakEntry[] },
   seasonComparison: SeasonComparisonEntry[],
 ): WeeklyCuriosity | null {
-  const candidates: { id: string; text: string; score: number }[] = [];
+  const candidates: (WeeklyCuriosity & { score: number })[] = [];
 
   // 1. Maior sequência de vitórias atual
   const topHot = streaks.hot[0];
@@ -1332,6 +1340,9 @@ function getWeeklyCuriosityFromDataset(
     candidates.push({
       id: `curiosity-hot-${topHot.player.id}`,
       text: `${topHot.player.nickname} venceu ${topHot.streak} das últimas ${topHot.matchCount} partidas.`,
+      category: "streak-hot",
+      player: { id: topHot.player.id, nickname: topHot.player.nickname, avatarUrl: topHot.player.avatarUrl },
+      metric: `${topHot.streak}`,
       score: topHot.streak * 10,
     });
   }
@@ -1342,6 +1353,9 @@ function getWeeklyCuriosityFromDataset(
     candidates.push({
       id: `curiosity-cold-${topCold.player.id}`,
       text: `${topCold.player.nickname} perdeu ${topCold.streak} seguidas.`,
+      category: "streak-cold",
+      player: { id: topCold.player.id, nickname: topCold.player.nickname, avatarUrl: topCold.player.avatarUrl },
+      metric: `${topCold.streak}`,
       score: topCold.streak * 9,
     });
   }
@@ -1362,6 +1376,9 @@ function getWeeklyCuriosityFromDataset(
         candidates.push({
           id: `curiosity-invicto-${player.id}-${mapName}`,
           text: `${player.nickname} está invicto na ${mapName} (${entry.total} partidas).`,
+          category: "map",
+          player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl },
+          metric: mapName,
           score: entry.total * 8,
         });
       }
@@ -1376,6 +1393,13 @@ function getWeeklyCuriosityFromDataset(
       candidates.push({
         id: `curiosity-adr-${topAdrGain.player.id}`,
         text: `${topAdrGain.player.nickname} aumentou o ADR em ${adrPercent}% nas últimas partidas.`,
+        category: "adr",
+        player: {
+          id: topAdrGain.player.id,
+          nickname: topAdrGain.player.nickname,
+          avatarUrl: topAdrGain.player.avatarUrl,
+        },
+        metric: `+${adrPercent}%`,
         score: adrPercent,
       });
     }
@@ -1384,16 +1408,20 @@ function getWeeklyCuriosityFromDataset(
   if (candidates.length === 0) return null;
 
   candidates.sort((a, b) => b.score - a.score);
-  const winner = candidates[0];
-  return { id: winner.id, text: winner.text };
+  const { score: _score, ...winner } = candidates[0];
+  return winner;
 }
 
 // ─── Funcionalidade 6: Alertas Inteligentes ────────────────────────────────
+
+export type SmartAlertKind = "milestone" | "drop" | "best-map" | "worst-map";
 
 export interface SmartAlert {
   id: string;
   text: string;
   severity: "positive" | "warning";
+  kind: SmartAlertKind;
+  player: { id: string; nickname: string; avatarUrl: string | null } | null;
 }
 
 const RATING_MILESTONES = [1.3, 1.2, 1.1, 1.0];
@@ -1402,7 +1430,8 @@ const RATING_MILESTONES = [1.3, 1.2, 1.1, 1.0];
  * Não recebe o dataset diretamente: opera sobre `seasonComparison` (já calculado por
  * getSeasonComparisonFromDataset) e sobre bestMap/worstMap, que a Dashboard já busca
  * separadamente via statsService.getMapWinrates(). Evita uma nova query e duplicar a
- * lógica de cálculo de winrate por mapa, que já existe em stats.service.ts.
+ * lógica de cálculo de winrate por mapa, que já existe em stats.service.ts. `kind`/
+ * `player` são metadados de apresentação — não mudam quais alertas disparam.
  */
 export function getSmartAlerts(
   seasonComparison: SeasonComparisonEntry[],
@@ -1419,6 +1448,8 @@ export function getSmartAlerts(
         id: `alert-milestone-${entry.player.id}`,
         text: `${entry.player.nickname} chegou em Rating ${milestone.toFixed(2)}`,
         severity: "positive",
+        kind: "milestone",
+        player: { id: entry.player.id, nickname: entry.player.nickname, avatarUrl: entry.player.avatarUrl },
       });
     }
   }
@@ -1432,6 +1463,8 @@ export function getSmartAlerts(
         id: `alert-drop-${entry.player.id}`,
         text: `${entry.player.nickname} caiu mais de 10% no Rating`,
         severity: "warning",
+        kind: "drop",
+        player: { id: entry.player.id, nickname: entry.player.nickname, avatarUrl: entry.player.avatarUrl },
       });
     }
   }
@@ -1442,6 +1475,8 @@ export function getSmartAlerts(
       id: "alert-best-map",
       text: `${bestMap.map} é o mapa mais forte do time (${bestMap.winrate.toFixed(0)}% WR)`,
       severity: "positive",
+      kind: "best-map",
+      player: null,
     });
   }
   if (worstMap) {
@@ -1449,6 +1484,8 @@ export function getSmartAlerts(
       id: "alert-worst-map",
       text: `Evitem ${worstMap.map} — ${worstMap.winrate.toFixed(0)}% de aproveitamento na temporada`,
       severity: "warning",
+      kind: "worst-map",
+      player: null,
     });
   }
 
