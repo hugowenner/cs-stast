@@ -106,14 +106,6 @@ export interface PlayerMatchupSummary {
   } | null;
 }
 
-export interface WeeklyHighlight {
-  id: string;
-  category: "evolution" | "streak" | "record" | "leader" | "map";
-  title: string;
-  description: string;
-  meta: string;
-}
-
 export interface HallOfFameRecord {
   category: string;
   playerName: string;
@@ -161,6 +153,26 @@ function isWin(s: { team: string; match: { scoreTeamA: number; scoreTeamB: numbe
   );
 }
 
+const FORMA_WINDOW = 5;
+
+/**
+ * "Forma" (tendência) de um jogador nas últimas 5 partidas — fonte única usada tanto
+ * pelo Ranking Competitivo quanto por Jogadores Monitorados (antes duplicada nos dois
+ * lugares com a mesma lógica copiada). Funciona com qualquer array já ordenado desc
+ * por playedAt — passar a temporada inteira ou uma janela já recortada dá o mesmo
+ * resultado, pois só os 5 primeiros elementos importam.
+ */
+function computeForma(stats: CompetitiveDataset["allStats"]): string {
+  const recentStats = stats.slice(0, FORMA_WINDOW);
+  let recentWins = 0;
+  for (const s of recentStats) if (isWin(s)) recentWins++;
+
+  if (recentWins === 5) return "Excelente";
+  if (recentWins === 4) return "Em alta";
+  if (recentWins === 3) return "Estável";
+  return "Oscilando";
+}
+
 const MIN_MATCHES_FOR_RANKING = 3;
 
 function getPowerRankingFromDataset(dataset: CompetitiveDataset, take = 5): PowerRankingEntry[] {
@@ -184,16 +196,7 @@ function getPowerRankingFromDataset(dataset: CompetitiveDataset, take = 5): Powe
     for (const s of stats) if (isWin(s)) wins++;
     const winrate = (wins / totalMatches) * 100;
 
-    const recentStats = stats.slice(0, 5);
-    let recentWins = 0;
-    for (const s of recentStats) if (isWin(s)) recentWins++;
-
-    let forma = "Oscilando";
-    if (recentWins === 5) forma = "Excelente";
-    else if (recentWins === 4) forma = "Em alta";
-    else if (recentWins === 3) forma = "Estável";
-    else if (recentWins === 2) forma = "Oscilando";
-    else if (recentWins === 1) forma = "Oscilando";
+    const forma = computeForma(stats);
 
     entries.push({
       player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl, levelGc: player.levelGc },
@@ -423,27 +426,30 @@ function getJogadorDaSemanaFromDataset(dataset: CompetitiveDataset): JogadorDaSe
       const evolution = seasonRating > 0 ? ((avgRatingRecent - seasonRating) / seasonRating) * 100 : 0;
       const evolutionRounded = Math.round(evolution);
 
-      let evolutionText = "";
-      if (evolutionRounded > 3) {
-        evolutionText = `+${evolutionRounded}% evolução`;
-      } else if (evolutionRounded < -3) {
-        evolutionText = `${evolutionRounded}% queda`;
-      } else {
-        evolutionText = "Desempenho excelente";
-      }
-
       let recentWins = 0;
       for (const s of recentStats) if (isWin(s)) recentWins++;
       const winrateRecent = (recentWins / recentMatchesCount) * 100;
 
-      let totalWins = 0;
-      for (const s of stats) if (isWin(s)) totalWins++;
-      const winrateSeason = (totalWins / stats.length) * 100;
+      // Classificação por rating absoluto primeiro (qualidade real), evolução só como
+      // desempate — antes o texto dependia só da variação, então um jogador estável
+      // com rating mediano podia ser rotulado "Desempenho excelente".
+      let evolutionText = "";
+      if (avgRatingRecent >= 1.2) {
+        evolutionText = "🔥 Dominando a semana";
+      } else if (avgRatingRecent >= 1.0) {
+        evolutionText = "📈 Boa fase";
+      } else if (evolutionRounded > 5) {
+        evolutionText = "🚀 Em evolução";
+      } else {
+        evolutionText = "Estável";
+      }
 
       bestPlayer = {
         player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl, levelGc: player.levelGc },
         rating: Number(avgRatingRecent.toFixed(2)),
-        winrate: Math.round(winrateSeason),
+        // Winrate agora é da mesma janela do rating (últimas 10) — antes misturava
+        // rating recente com winrate da temporada inteira na mesma UI.
+        winrate: Math.round(winrateRecent),
         evolution: evolutionRounded,
         evolutionText,
       };
@@ -768,120 +774,6 @@ function getPlayerMatchupsFromDataset(dataset: CompetitiveDataset): PlayerMatchu
   return summaries;
 }
 
-async function getWeeklyHighlightsFromDataset(dataset: CompetitiveDataset): Promise<WeeklyHighlight[]> {
-  // Data da última partida entre os jogadores ativos, usada para simular "hoje".
-  // (Preserva o mesmo critério prático do código original: sem partidas ativas, sem destaques.)
-  const latestMatch = dataset.allStats[0]?.match ?? null;
-  if (!latestMatch) return [];
-
-  const today = new Date(latestMatch.playedAt);
-  const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-  const highlights: WeeklyHighlight[] = [];
-
-  // 1. Evoluções individuais da semana (last 7 days matches rating vs overall rating)
-  for (const player of dataset.activePlayers) {
-    const stats = dataset.statsByPlayer.get(player.id) ?? [];
-    if (stats.length === 0) continue;
-
-    const overallRating = stats.reduce((sum, s) => sum + s.rating, 0) / stats.length;
-    const weeklyStats = stats.filter((s) => new Date(s.match.playedAt) >= sevenDaysAgo);
-
-    if (weeklyStats.length >= 2) {
-      const weeklyRating = weeklyStats.reduce((sum, s) => sum + s.rating, 0) / weeklyStats.length;
-      const diff = overallRating > 0 ? ((weeklyRating - overallRating) / overallRating) * 100 : 0;
-      if (diff >= 8) {
-        highlights.push({
-          id: `evo-${player.id}`,
-          category: "evolution",
-          title: `${player.nickname} em evolução`,
-          description: `Desempenho disparou +${diff.toFixed(0)}% nas partidas desta semana.`,
-          meta: `Rating de ${weeklyRating.toFixed(2)} recente`,
-        });
-      }
-    }
-  }
-
-  // 2. Sequências ativas na semana (win streak) — stats já ordenado desc, percorremos do mais antigo pro mais novo.
-  for (const player of dataset.activePlayers) {
-    const stats = [...(dataset.statsByPlayer.get(player.id) ?? [])].reverse();
-
-    let currentStreak = 0;
-    for (const stat of stats) {
-      if (isWin(stat)) {
-        currentStreak++;
-      } else {
-        currentStreak = 0;
-      }
-    }
-
-    if (currentStreak >= 3) {
-      highlights.push({
-        id: `streak-${player.id}`,
-        category: "streak",
-        title: "Sequência ativa",
-        description: `${player.nickname} vem embalado com ${currentStreak} vitórias seguidas no lobby.`,
-        meta: "Sequência imbatível",
-      });
-    }
-  }
-
-  // 3. Melhor jogo/kills da semana (kills >= 26)
-  const weeklyStatsAll = dataset.allStats.filter((s) => new Date(s.match.playedAt) >= sevenDaysAgo);
-  const topWeeklyStats = [...weeklyStatsAll].sort((a, b) => b.kills - a.kills)[0] ?? null;
-  const topWeeklyPlayer = topWeeklyStats
-    ? dataset.activePlayers.find((p) => p.id === topWeeklyStats.playerId)
-    : null;
-
-  if (topWeeklyStats && topWeeklyPlayer && topWeeklyStats.kills >= 26) {
-    highlights.push({
-      id: `record-kills`,
-      category: "record",
-      title: "Atuação de destaque",
-      description: `${topWeeklyPlayer.nickname} destacou-se com ${topWeeklyStats.kills} kills na ${topWeeklyStats.match.map.name}.`,
-      meta: `Rating de ${topWeeklyStats.rating.toFixed(2)}`,
-    });
-  }
-
-  // 4. Mapa mais jogado na semana (dedup por matchId, já que cada partida gera N linhas de PlayerMatchStats)
-  const weeklyMatchesById = new Map<string, { mapName: string }>();
-  for (const s of weeklyStatsAll) {
-    weeklyMatchesById.set(s.match.id, { mapName: s.match.map.name });
-  }
-
-  if (weeklyMatchesById.size >= 2) {
-    const mapCounts = new Map<string, number>();
-    for (const m of weeklyMatchesById.values()) {
-      mapCounts.set(m.mapName, (mapCounts.get(m.mapName) ?? 0) + 1);
-    }
-    const sortedMaps = Array.from(mapCounts.entries()).sort((a, b) => b[1] - a[1]);
-    const dominantMap = sortedMaps[0];
-    if (dominantMap) {
-      highlights.push({
-        id: "weekly-map",
-        category: "map",
-        title: "🗺️ O mapa da semana",
-        description: `O lobby se estabeleceu na ${dominantMap[0]} esta semana, com ${dominantMap[1]} confrontos disputados.`,
-        meta: `${dominantMap[1]} partidas jogadas`,
-      });
-    }
-  }
-
-  // 5. Líder do ranking mantido
-  const leaderboard = getPowerRankingFromDataset(dataset, 1);
-  if (leaderboard[0]) {
-    highlights.push({
-      id: "weekly-leader",
-      category: "leader",
-      title: "👑 Líder do Ranking",
-      description: `${leaderboard[0].player.nickname} lidera o ranking com rating médio de ${leaderboard[0].rating.toFixed(2)}.`,
-      meta: "Líder geral",
-    });
-  }
-
-  return highlights;
-}
-
 function getHallOfFameRecordsFromDataset(dataset: CompetitiveDataset): HallOfFameRecord[] {
   const findBestBy = <K extends "rating" | "kills" | "adr" | "eloAfter">(key: K) => {
     let best: (typeof dataset.allStats)[number] | null = null;
@@ -971,7 +863,9 @@ function getPerformanceExtremesFromDataset(dataset: CompetitiveDataset): {
   best: PerformanceExtreme | null;
   worst: PerformanceExtreme | null;
 } {
-  const MIN_TOTAL_ROUNDS = 20;
+  const MIN_TOTAL_ROUNDS = 20; // partida precisa ter duração mínima (exclui abortadas/incompletas)
+  const MIN_KILLS_IN_MATCH = 5; // volume mínimo do jogador na partida (exclui desconexão/sub/erro de payload)
+  const MIN_PLAYER_MATCHES = 5; // jogador precisa ter presença mínima na temporada (exclui "1 partida ruim")
 
   let bestStat: (typeof dataset.allStats)[number] | null = null;
   let worstStat: (typeof dataset.allStats)[number] | null = null;
@@ -979,7 +873,13 @@ function getPerformanceExtremesFromDataset(dataset: CompetitiveDataset): {
   for (const s of dataset.allStats) {
     const totalRounds = s.match.scoreTeamA + s.match.scoreTeamB;
     if (totalRounds < MIN_TOTAL_ROUNDS) continue;
+    if (s.kills < MIN_KILLS_IN_MATCH) continue;
 
+    const playerMatchCount = dataset.statsByPlayer.get(s.playerId)?.length ?? 0;
+    if (playerMatchCount < MIN_PLAYER_MATCHES) continue;
+
+    // Melhor e pior usam exatamente o mesmo universo elegível — nunca aplicar um piso
+    // só para "pior atuação" e deixar a "melhor" sem os mesmos filtros.
     if (!bestStat || s.rating > bestStat.rating) bestStat = s;
     if (!worstStat || s.rating < worstStat.rating) worstStat = s;
   }
@@ -1002,6 +902,56 @@ function getPerformanceExtremesFromDataset(dataset: CompetitiveDataset): {
   };
 
   return { best: toExtreme(bestStat), worst: toExtreme(worstStat) };
+}
+
+// ─── Performance por mapa (comunidade) ─────────────────────────────────────
+
+export interface MapPerformanceEntry {
+  map: string;
+  matchesPlayed: number;
+  winrate: number;
+}
+
+const MIN_MATCHES_FOR_MAP_HIGHLIGHT = 5;
+
+/**
+ * Mesmo cálculo que antes vivia em stats.service.getMapWinrates() (chamada via query
+ * própria) e era refeito de novo em page.tsx (sort/find de bestMap/worstMap). Agora
+ * roda sobre o mesmo dataset.allStats já carregado — zero query nova — e o bundle
+ * entrega mapWinrates/bestMap/worstMap prontos, uma única fonte de verdade.
+ */
+function getMapPerformanceFromDataset(dataset: CompetitiveDataset): {
+  mapWinrates: MapPerformanceEntry[];
+  bestMap: MapPerformanceEntry | null;
+  worstMap: MapPerformanceEntry | null;
+} {
+  const byMap = new Map<string, { mapName: string; wins: number; appearances: number; matchIds: Set<string> }>();
+
+  for (const s of dataset.allStats) {
+    const key = s.match.mapId;
+    const entry = byMap.get(key) ?? {
+      mapName: s.match.map.name,
+      wins: 0,
+      appearances: 0,
+      matchIds: new Set<string>(),
+    };
+    entry.appearances += 1;
+    if (isWin(s)) entry.wins += 1;
+    entry.matchIds.add(s.match.id);
+    byMap.set(key, entry);
+  }
+
+  const mapWinrates: MapPerformanceEntry[] = Array.from(byMap.values()).map((entry) => ({
+    map: entry.mapName,
+    matchesPlayed: entry.matchIds.size,
+    winrate: entry.appearances > 0 ? Math.round((entry.wins / entry.appearances) * 1000) / 10 : 0,
+  }));
+
+  const eligible = mapWinrates.filter((m) => m.matchesPlayed >= MIN_MATCHES_FOR_MAP_HIGHLIGHT);
+  const bestMap = [...eligible].sort((a, b) => b.winrate - a.winrate)[0] ?? null;
+  const worstMap = [...eligible].sort((a, b) => a.winrate - b.winrate)[0] ?? null;
+
+  return { mapWinrates, bestMap, worstMap };
 }
 
 // ---------------------------------------------------------------------------
@@ -1053,13 +1003,7 @@ function getMonitoredPlayersFromDataset(dataset: CompetitiveDataset): MonitoredP
     for (const s of stats) if (isWin(s)) wins++;
     const winrate = (wins / matchCount) * 100;
 
-    const recentStats = stats.slice(0, 5);
-    let recentWins = 0;
-    for (const s of recentStats) if (isWin(s)) recentWins++;
-    let forma = "Oscilando";
-    if (recentWins === 5) forma = "Excelente";
-    else if (recentWins === 4) forma = "Em alta";
-    else if (recentWins === 3) forma = "Estável";
+    const forma = computeForma(stats);
 
     // Best and worst map by avg rating (min 2 appearances)
     const mapRatings = new Map<string, number[]>();
@@ -1307,7 +1251,7 @@ function getBestRecentDuoFromDataset(dataset: CompetitiveDataset): DuoSummary | 
 
 // ─── Funcionalidade 5: Curiosidade da Semana ───────────────────────────────
 
-export type WeeklyCuriosityCategory = "streak-hot" | "streak-cold" | "map" | "adr";
+export type WeeklyCuriosityCategory = "streak-hot" | "streak-cold" | "map" | "adr" | "weekly-kills";
 
 export interface WeeklyCuriosity {
   id: string;
@@ -1405,6 +1349,31 @@ function getWeeklyCuriosityFromDataset(
     }
   }
 
+  // 5. Melhor atuação em kills nos últimos 7 dias corridos (absorvido do extinto
+  // getWeeklyHighlightsFromDataset — era o único conteúdo dali que não duplicava
+  // outro card; os demais (evolução semanal, streak semanal, líder do ranking, mapa
+  // mais jogado) já são cobertos por Evolução Recente, Hot Streak e Ranking Competitivo).
+  const latestMatch = dataset.allStats[0]?.match ?? null;
+  if (latestMatch) {
+    const sevenDaysAgo = new Date(new Date(latestMatch.playedAt).getTime() - 7 * 24 * 60 * 60 * 1000);
+    const weeklyStats = dataset.allStats.filter((s) => new Date(s.match.playedAt) >= sevenDaysAgo);
+    const topWeekly = [...weeklyStats].sort((a, b) => b.kills - a.kills)[0] ?? null;
+    const topWeeklyPlayer = topWeekly
+      ? dataset.activePlayers.find((p) => p.id === topWeekly.playerId)
+      : null;
+
+    if (topWeekly && topWeeklyPlayer && topWeekly.kills >= 26) {
+      candidates.push({
+        id: `curiosity-weekly-kills-${topWeeklyPlayer.id}`,
+        text: `${topWeeklyPlayer.nickname} fez ${topWeekly.kills} kills na ${topWeekly.match.map.name} essa semana.`,
+        category: "weekly-kills",
+        player: { id: topWeeklyPlayer.id, nickname: topWeeklyPlayer.nickname, avatarUrl: topWeeklyPlayer.avatarUrl },
+        metric: `${topWeekly.kills}`,
+        score: topWeekly.kills * 2,
+      });
+    }
+  }
+
   if (candidates.length === 0) return null;
 
   candidates.sort((a, b) => b.score - a.score);
@@ -1435,8 +1404,8 @@ const RATING_MILESTONES = [1.3, 1.2, 1.1, 1.0];
  */
 export function getSmartAlerts(
   seasonComparison: SeasonComparisonEntry[],
-  bestMap: { map: string; winrate: number; matchesPlayed: number } | null,
-  worstMap: { map: string; winrate: number; matchesPlayed: number } | null,
+  bestMap: MapPerformanceEntry | null,
+  worstMap: MapPerformanceEntry | null,
 ): SmartAlert[] {
   const alerts: SmartAlert[] = [];
 
@@ -1502,7 +1471,6 @@ export interface DashboardCompetitiveBundle {
   duos: DuoSummary[];
   dominantTrio: TrioSummary | null;
   mapSpecialists: MapSpecialist[];
-  weeklyHighlights: WeeklyHighlight[];
   records: HallOfFameRecord[];
   bestPerformance: PerformanceExtreme | null;
   worstPerformance: PerformanceExtreme | null;
@@ -1514,6 +1482,10 @@ export interface DashboardCompetitiveBundle {
   topDecliners: SeasonComparisonEntry[];
   bestRecentDuo: DuoSummary | null;
   weeklyCuriosity: WeeklyCuriosity | null;
+  /** Winrate por mapa da comunidade — fonte única para o gráfico Map Pool, InsightTiles e Smart Alerts. */
+  mapWinrates: MapPerformanceEntry[];
+  bestMap: MapPerformanceEntry | null;
+  worstMap: MapPerformanceEntry | null;
 }
 
 /**
@@ -1526,12 +1498,10 @@ export async function getDashboardCompetitiveBundle(
 ): Promise<DashboardCompetitiveBundle> {
   const ds = dataset ?? (await loadCompetitiveDataset());
 
-  const [decisive, weeklyHighlights] = await Promise.all([
-    getDecisivePlayersFromDataset(ds, 3),
-    getWeeklyHighlightsFromDataset(ds),
-  ]);
+  const decisive = await getDecisivePlayersFromDataset(ds, 3);
 
   const extremes = getPerformanceExtremesFromDataset(ds);
+  const mapPerformance = getMapPerformanceFromDataset(ds);
 
   const streaks = getStreaksFromDataset(ds);
   const seasonComparison = getSeasonComparisonFromDataset(ds);
@@ -1551,7 +1521,6 @@ export async function getDashboardCompetitiveBundle(
     duos: getDuoLeaderboardFromDataset(ds, 2),
     dominantTrio: getDominantTrioFromDataset(ds),
     mapSpecialists: getMapSpecialistsFromDataset(ds),
-    weeklyHighlights,
     records: getHallOfFameRecordsFromDataset(ds),
     bestPerformance: extremes.best,
     worstPerformance: extremes.worst,
@@ -1562,6 +1531,9 @@ export async function getDashboardCompetitiveBundle(
     topGainers,
     topDecliners,
     bestRecentDuo: getBestRecentDuoFromDataset(ds),
+    mapWinrates: mapPerformance.mapWinrates,
+    bestMap: mapPerformance.bestMap,
+    worstMap: mapPerformance.worstMap,
     weeklyCuriosity: getWeeklyCuriosityFromDataset(ds, streaks, seasonComparison),
   };
 }
