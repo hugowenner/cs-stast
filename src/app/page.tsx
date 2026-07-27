@@ -9,6 +9,7 @@ import { SectionHeader } from "@/components/dashboard/section-header";
 import { InsightTiles } from "@/components/dashboard/insight-tiles";
 import { DuoParceriasSection } from "@/components/dashboard/duo-parcerias-section";
 import { PerformanceExtremesSection } from "@/components/dashboard/performance-extremes-section";
+import { HallOfFame } from "@/components/dashboard/hall-of-fame";
 import { StreaksSection } from "@/components/dashboard/streaks-section";
 import { SeasonEvolutionSection } from "@/components/dashboard/season-evolution-section";
 import { BestRecentDuoCard } from "@/components/dashboard/best-recent-duo-card";
@@ -18,12 +19,15 @@ import { CoachReportCard } from "@/components/ui/coach-report-card";
 import { RivalryCarousel } from "@/components/rivalries/rivalry-carousel";
 import { ConfrontationsCarousel } from "@/components/matches/confrontations-carousel";
 import { MonitoredPlayersCarousel } from "@/components/players/monitored-players-carousel";
+import { ArchetypesCarousel } from "@/components/dashboard/archetypes-carousel";
+import { MatchupsCarousel } from "@/components/dashboard/matchups-carousel";
+import { DecisivePlayersSection } from "@/components/dashboard/decisive-players-section";
+import { MapSpecialistsGrid } from "@/components/dashboard/map-specialists-grid";
 import { RankingTable } from "@/components/ranking/ranking-table";
 import type { RecentMatchCardData } from "@/components/matches/recent-matches-carousel";
 import { safeQuery } from "@/server/safeQuery";
 import * as dashboardService from "@/server/services/dashboard.service";
 import * as matchService from "@/server/services/match.service";
-import * as statsService from "@/server/services/stats.service";
 import * as competitiveService from "@/server/services/competitive.service";
 import * as achievementService from "@/server/services/achievement.service";
 import * as rivalryService from "@/server/services/rivalry.service";
@@ -47,7 +51,6 @@ const EMPTY_COMPETITIVE_BUNDLE: competitiveService.DashboardCompetitiveBundle = 
   duos: [],
   dominantTrio: null,
   mapSpecialists: [],
-  weeklyHighlights: [],
   records: [],
   bestPerformance: null,
   worstPerformance: null,
@@ -59,6 +62,9 @@ const EMPTY_COMPETITIVE_BUNDLE: competitiveService.DashboardCompetitiveBundle = 
   topDecliners: [],
   bestRecentDuo: null,
   weeklyCuriosity: null,
+  mapWinrates: [],
+  bestMap: null,
+  worstMap: null,
 };
 
 export default async function DashboardPage() {
@@ -68,7 +74,7 @@ export default async function DashboardPage() {
   // então continua rodando em paralelo com as demais chamadas independentes.
   const datasetPromise = competitiveService.loadCompetitiveDataset();
 
-  const [summary, recentMatches, competitive, mapWinrates, recentAchievements, topRivalries] =
+  const [summary, recentMatches, competitive, recentAchievements, topRivalries] =
     await Promise.all([
       safeQuery(async () => dashboardService.getDashboardSummary(await datasetPromise), {
         totalMatches: 0,
@@ -84,13 +90,16 @@ export default async function DashboardPage() {
         async () => competitiveService.getDashboardCompetitiveBundle(await datasetPromise),
         EMPTY_COMPETITIVE_BUNDLE,
       ),
-      safeQuery(() => statsService.getMapWinrates(), []),
       safeQuery(() => achievementService.listRecent(4), []),
       safeQuery(() => rivalryService.listTopRivalriesWithH2H(10), []),
     ]);
 
   const {
     powerRanking,
+    archetypes,
+    matchups,
+    decisive,
+    mapSpecialists,
     momentum,
     jogadorDaSemana,
     duos,
@@ -99,29 +108,29 @@ export default async function DashboardPage() {
     worstPerformance,
     monitoredPlayers,
     hotStreaks,
+    records,
     coldStreaks,
     seasonComparison,
     topGainers,
     topDecliners,
     bestRecentDuo,
     weeklyCuriosity,
+    mapWinrates,
+    bestMap,
+    worstMap,
   } = competitive;
-
-  const sortedMaps = [...mapWinrates].sort((a, b) => b.winrate - a.winrate);
-  const bestMap = sortedMaps.find((m) => m.matchesPlayed >= 2) ?? null;
-  const worstMap = [...mapWinrates].filter((m) => m.matchesPlayed >= 2).sort((a, b) => a.winrate - b.winrate)[0] ?? null;
 
   const hottestPlayer = momentum.find((m) => m.status === "up") ?? null;
   const coldestPlayer = momentum.find((m) => m.status === "down") ?? null;
 
-  // Combina dados já carregados (seasonComparison do bundle competitivo + bestMap/worstMap
-  // do statsService) sem nenhuma query extra.
+  // seasonComparison e bestMap/worstMap já vêm prontos do bundle competitivo — mesma
+  // fonte usada pelo Map Pool e pelos Insight Tiles, sem nenhuma query extra aqui.
   const smartAlerts = competitiveService.getSmartAlerts(seasonComparison, bestMap, worstMap);
 
   return (
     <div className="flex flex-col gap-10 lg:gap-14">
 
-      {/* ═══ ZONA 1 — Season Overview ═══ */}
+      {/* ═══ 1. Resumo da Temporada ═══ */}
       <section className="flex flex-col gap-4">
         <FadeIn>
           <SeasonHero
@@ -166,7 +175,12 @@ export default async function DashboardPage() {
         />
       </section>
 
-      {/* ═══ ZONA 2 — Últimos Confrontos ═══ */}
+      {/* ═══ 2. 🏆 Hall da Fama ═══ */}
+      <FadeIn delay={0.05}>
+        <HallOfFame records={records} monitoredPlayers={monitoredPlayers} />
+      </FadeIn>
+
+      {/* ═══ 3. Últimos Confrontos ═══ */}
       {recentMatches.length > 0 && (
         <section>
           <FadeIn delay={0.07}>
@@ -183,44 +197,15 @@ export default async function DashboardPage() {
         </section>
       )}
 
-      {/* ═══ ZONA 3 — Confrontos Diretos ═══ */}
+      {/* ═══ 4. Ranking Competitivo ═══ */}
       <section>
-        <FadeIn delay={0.07}>
-          <SectionHeader
-            title="Confrontos Diretos"
-            subtitle="Histórico de rivalidades entre os jogadores monitorados"
-            href="/compare"
-            linkLabel="Scout H2H"
-          />
-        </FadeIn>
-
-        {topRivalries.length > 0 ? (
-          <FadeIn delay={0.08}>
-            <RivalryCarousel rivalries={topRivalries} />
-          </FadeIn>
-        ) : (
-          <FadeIn delay={0.08}>
-            <div className="glass-panel rounded-2xl border border-white/[0.07] p-10 text-center">
-              <Swords className="size-6 text-muted-foreground/35 mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground/55">Nenhum confronto direto registrado ainda.</p>
-            </div>
-          </FadeIn>
-        )}
-
-        {/* Parcerias */}
-        <DuoParceriasSection duos={duos} dominantTrio={dominantTrio} />
-      </section>
-
-      {/* ═══ ZONA 3 — Performance ═══ */}
-      <section>
-        <FadeIn delay={0.12}>
-          <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-muted-foreground/60 mb-4">Performance</p>
+        <FadeIn delay={0.09}>
+          <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-muted-foreground/60 mb-4">Ranking Competitivo</p>
         </FadeIn>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+          <RankingTable entries={powerRanking} formaStyle={FORMA_STYLE} delay={0.1} className="lg:col-span-2" />
 
-          <RankingTable entries={powerRanking} formaStyle={FORMA_STYLE} delay={0.13} className="lg:col-span-2" />
-
-          <FadeIn delay={0.14}>
+          <FadeIn delay={0.11}>
             {jogadorDaSemana ? (
               <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
                 <div className="px-5 pt-5 pb-5">
@@ -261,142 +246,238 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      {/* ═══ DESTAQUES DA TEMPORADA ═══ */}
+      {/* ═══ 5. Melhores Parcerias e Rivalidades ═══ */}
+      <section className="flex flex-col gap-8">
+        <div>
+          <DuoParceriasSection duos={duos} dominantTrio={dominantTrio} />
+        </div>
+
+        <div>
+          <FadeIn delay={0.12}>
+            <SectionHeader
+              title="Confrontos Diretos"
+              subtitle="Histórico de rivalidades entre os jogadores monitorados"
+              href="/compare"
+              linkLabel="Scout H2H"
+              className="mb-4"
+            />
+          </FadeIn>
+
+          {topRivalries.length > 0 ? (
+            <FadeIn delay={0.13}>
+              <RivalryCarousel rivalries={topRivalries} />
+            </FadeIn>
+          ) : (
+            <FadeIn delay={0.13}>
+              <div className="glass-panel rounded-2xl border border-white/[0.07] p-10 text-center">
+                <Swords className="size-6 text-muted-foreground/35 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground/55">Nenhum confronto direto registrado ainda.</p>
+              </div>
+            </FadeIn>
+          )}
+        </div>
+
+        {matchups.some((m) => m.dominates || m.struggles) && (
+          <div>
+            <FadeIn delay={0.14}>
+              <SectionHeader
+                title="Soberania H2H"
+                subtitle="Quem domina e quem sofre contra quem, cabeça a cabeça"
+                className="mb-4"
+              />
+            </FadeIn>
+            <FadeIn delay={0.142}>
+              <MatchupsCarousel matchups={matchups} />
+            </FadeIn>
+          </div>
+        )}
+      </section>
+
+      {/* ═══ 6. Perfil de Jogo (Archetypes) ═══ */}
+      {archetypes.length > 0 && (
+        <section>
+          <FadeIn delay={0.145}>
+            <SectionHeader
+              title="Perfil de Jogo"
+              subtitle="O estilo de cada jogador, baseado nos dados da temporada"
+              className="mb-4"
+            />
+          </FadeIn>
+          <FadeIn delay={0.148}>
+            <ArchetypesCarousel archetypes={archetypes} />
+          </FadeIn>
+        </section>
+      )}
+
+      {/* ═══ 7. Jogadores Decisivos ═══ */}
+      {decisive.length > 0 && (
+        <section>
+          <FadeIn delay={0.15}>
+            <SectionHeader
+              title="Jogadores Decisivos"
+              subtitle="Quem mais impacta rounds — por entry kills, trades e clutches"
+              className="mb-4"
+            />
+          </FadeIn>
+          <FadeIn delay={0.152}>
+            <DecisivePlayersSection decisive={decisive} />
+          </FadeIn>
+        </section>
+      )}
+
+      {/* ═══ 8. Especialistas por Mapa ═══ */}
+      {mapSpecialists.length > 0 && (
+        <section>
+          <FadeIn delay={0.154}>
+            <SectionHeader
+              title="Especialistas por Mapa"
+              subtitle="O melhor jogador da temporada em cada mapa, por rating médio"
+              className="mb-4"
+            />
+          </FadeIn>
+          <FadeIn delay={0.156}>
+            <MapSpecialistsGrid specialists={mapSpecialists} />
+          </FadeIn>
+        </section>
+      )}
+
+      {/* ═══ 9. Destaques da Temporada (Performance Extremes) ═══ */}
       <PerformanceExtremesSection best={bestPerformance} worst={worstPerformance} />
 
-      {/* ═══ Sequências Atuais (Hot Streak / Cold Streak) ═══ */}
+      {/* ═══ 10. Sequências Atuais (Hot Streak / Cold Streak) ═══ */}
       {(hotStreaks.length > 0 || coldStreaks.length > 0) && (
         <section>
-          <FadeIn delay={0.155}>
+          <FadeIn delay={0.158}>
             <SectionHeader
               title="Sequências Atuais"
               subtitle="Baseado nas últimas 10 partidas de cada jogador monitorado"
               className="mb-4"
             />
           </FadeIn>
-          <FadeIn delay={0.157}>
+          <FadeIn delay={0.16}>
             <StreaksSection hot={hotStreaks} cold={coldStreaks} />
           </FadeIn>
         </section>
       )}
 
-      {/* ═══ Evolução Recente / Queda de Performance ═══ */}
+      {/* ═══ 11. Evolução Recente / Queda de Performance ═══ */}
       {(topGainers.length > 0 || topDecliners.length > 0) && (
         <section>
-          <FadeIn delay={0.159}>
+          <FadeIn delay={0.162}>
             <SectionHeader
               title="Evolução Recente"
               subtitle="Temporada inteira vs últimas 10 partidas"
               className="mb-4"
             />
           </FadeIn>
-          <FadeIn delay={0.161}>
+          <FadeIn delay={0.164}>
             <SeasonEvolutionSection gainers={topGainers} decliners={topDecliners} />
           </FadeIn>
         </section>
       )}
 
-      {/* ═══ Dupla do Momento / Curiosidade / Alertas ═══ */}
-      <section>
-        <FadeIn delay={0.163}>
+      {/* ═══ 12. Análises IA & Estratégia ═══ */}
+      <section className="flex flex-col gap-6">
+        <FadeIn delay={0.166}>
           <SectionHeader
             title="Análises Inteligentes"
             subtitle="Dupla em alta, curiosidade da semana e alertas automáticos"
             className="mb-4"
           />
         </FadeIn>
-        <FadeIn delay={0.165}>
+        <FadeIn delay={0.168}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
             <BestRecentDuoCard duo={bestRecentDuo} />
             <WeeklyCuriosityCard curiosity={weeklyCuriosity} />
             <SmartAlertsCard alerts={smartAlerts} />
           </div>
         </FadeIn>
-      </section>
 
-      {/* ═══ ZONA 4 — Estratégia ═══ */}
-      <section>
-        <FadeIn delay={0.16}>
-          <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-muted-foreground/60 mb-4">Estratégia</p>
-        </FadeIn>
-        <FadeIn delay={0.17}>
-          <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
-            <div className="px-5 py-4 border-b border-white/[0.05]">
-              <p className="text-sm font-bold text-white">Map Pool</p>
-            </div>
-            <div className="p-4">
-              <MapWinrateChart data={mapWinrates} />
-              <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-white/[0.04]">
-                {bestMap && (
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-status-good/5 border border-status-good/10">
-                    <span className="flex items-center gap-1.5 text-status-good font-semibold text-[10px]">
-                      <Flame className="size-3" /> Melhor desempenho
-                    </span>
-                    <span className="text-white/90 font-bold text-[10px]">{bestMap.map} · {bestMap.winrate.toFixed(0)}%</span>
-                  </div>
-                )}
-                {worstMap && (
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-status-critical/5 border border-status-critical/10">
-                    <span className="flex items-center gap-1.5 text-status-critical font-semibold text-[10px]">
-                      <ShieldAlert className="size-3" /> Mapa problema
-                    </span>
-                    <span className="text-white/90 font-bold text-[10px]">{worstMap.map} · {worstMap.winrate.toFixed(0)}%</span>
-                  </div>
-                )}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch mt-2">
+          {/* Map Pool */}
+          <FadeIn delay={0.17} className="lg:col-span-1">
+            <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden h-full flex flex-col">
+              <div className="px-5 py-4 border-b border-white/[0.05]">
+                <p className="text-sm font-bold text-white">Map Pool</p>
+              </div>
+              <div className="p-4 flex-1 flex flex-col justify-between">
+                <MapWinrateChart data={mapWinrates} />
+                <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-white/[0.04]">
+                  {bestMap && (
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-status-good/5 border border-status-good/10">
+                      <span className="flex items-center gap-1.5 text-status-good font-semibold text-[10px]">
+                        <Flame className="size-3" /> Melhor desempenho
+                      </span>
+                      <span className="text-white/90 font-bold text-[10px]">{bestMap.map} · {bestMap.winrate.toFixed(0)}%</span>
+                    </div>
+                  )}
+                  {worstMap && (
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-status-critical/5 border border-status-critical/10">
+                      <span className="flex items-center gap-1.5 text-status-critical font-semibold text-[10px]">
+                        <ShieldAlert className="size-3" /> Mapa problema
+                      </span>
+                      <span className="text-white/90 font-bold text-[10px]">{worstMap.map} · {worstMap.winrate.toFixed(0)}%</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        </FadeIn>
-      </section>
+          </FadeIn>
 
-      {/* ═══ Coach IA ═══ */}
-      <FadeIn delay={0.2}>
-        <div className="relative">
-          <div className="absolute -inset-px rounded-2xl bg-gradient-to-r from-primary/12 via-accent-violet/6 to-transparent pointer-events-none" />
-          <CoachReportCard apiUrl="/api/coach/dashboard" />
+          {/* Coach IA */}
+          <FadeIn delay={0.172} className="lg:col-span-2">
+            <div className="relative h-full">
+              <div className="absolute -inset-px rounded-2xl bg-gradient-to-r from-primary/12 via-accent-violet/6 to-transparent pointer-events-none" />
+              <CoachReportCard apiUrl="/api/coach/dashboard" />
+            </div>
+          </FadeIn>
         </div>
-      </FadeIn>
-
-      {/* ═══ ZONA 5 — Conquistas Recentes ═══ */}
-      <section>
-        <FadeIn delay={0.22}>
-          <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-muted-foreground/60 mb-4">Conquistas Recentes</p>
-        </FadeIn>
-        <FadeIn delay={0.23}>
-          <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
-            {recentAchievements.length === 0 ? (
-              <p className="text-muted-foreground/55 py-10 text-center text-sm">Nenhuma conquista ainda.</p>
-            ) : (
-              <div className="divide-y divide-white/[0.04]">
-                {recentAchievements.map((entry, i) => (
-                  <AchievementFeedItem key={entry.id} entry={entry} index={i} />
-                ))}
-              </div>
-            )}
-          </div>
-        </FadeIn>
       </section>
 
-      {/* ═══ ZONA 5.5 — Jogadores Monitorados ═══ */}
-      {monitoredPlayers.length > 0 && (
-        <section>
-          <FadeIn delay={0.22}>
-            <SectionHeader
-              title="Jogadores Monitorados"
-              subtitle="Forma recente de cada jogador — últimas 10 partidas"
-              href="/players"
-              linkLabel="Ver todos"
-            />
+      {/* ═══ 13. Conquistas Recentes & Outros ═══ */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        {/* Conquistas Recentes */}
+        <div>
+          <FadeIn delay={0.174}>
+            <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-muted-foreground/60 mb-4">Conquistas Recentes</p>
           </FadeIn>
-          <FadeIn delay={0.23}>
-            <MonitoredPlayersCarousel players={monitoredPlayers} />
+          <FadeIn delay={0.176}>
+            <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
+              {recentAchievements.length === 0 ? (
+                <p className="text-muted-foreground/55 py-10 text-center text-sm">Nenhuma conquista ainda.</p>
+              ) : (
+                <div className="divide-y divide-white/[0.04]">
+                  {recentAchievements.map((entry, i) => (
+                    <AchievementFeedItem key={entry.id} entry={entry} index={i} />
+                  ))}
+                </div>
+              )}
+            </div>
           </FadeIn>
-        </section>
-      )}
+        </div>
 
-      {/* ═══ ZONA 6 — Últimas Partidas ═══ */}
+        {/* Jogadores Monitorados */}
+        {monitoredPlayers.length > 0 && (
+          <div>
+            <FadeIn delay={0.178}>
+              <SectionHeader
+                title="Jogadores Monitorados"
+                subtitle="Forma recente de cada jogador — últimas 10 partidas"
+                href="/players"
+                linkLabel="Ver todos"
+                className="mb-4"
+              />
+            </FadeIn>
+            <FadeIn delay={0.18}>
+              <MonitoredPlayersCarousel players={monitoredPlayers} />
+            </FadeIn>
+          </div>
+        )}
+      </section>
+
+      {/* Últimas Partidas */}
       <section>
-        <FadeIn delay={0.24}>
+        <FadeIn delay={0.182}>
           <SectionHeader
             title="Últimas Partidas"
             href="/sessions"
@@ -404,7 +485,7 @@ export default async function DashboardPage() {
             className="mb-4"
           />
         </FadeIn>
-        <FadeIn delay={0.25}>
+        <FadeIn delay={0.184}>
           <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
             {recentMatches.length === 0 ? (
               <p className="text-muted-foreground/55 py-10 text-center text-sm">Nenhuma partida.</p>

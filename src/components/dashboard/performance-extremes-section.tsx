@@ -58,7 +58,7 @@ export function PerformanceExtremesSection({ best, worst }: PerformanceExtremesS
             <div className="glass-panel rounded-2xl border border-status-critical/20 bg-status-critical/[0.02] overflow-hidden">
               <div className="px-5 py-3.5 border-b border-status-critical/10 flex items-center gap-2">
                 <ShieldAlert className="size-3.5 text-status-critical shrink-0" />
-                <p className="text-[10px] uppercase tracking-widest font-bold text-status-critical/80">Menor Impacto Registrado</p>
+                <p className="text-[10px] uppercase tracking-widest font-bold text-status-critical/80">Pior Atuação Registrada</p>
               </div>
               <div className="px-5 py-4 flex items-start gap-4">
                 <PlayerAvatar nickname={worst.player.nickname} avatarUrl={worst.player.avatarUrl} size="md" />

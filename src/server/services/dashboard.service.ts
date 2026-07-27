@@ -4,18 +4,19 @@ import * as playerRepo from "@/server/repositories/player.repository";
 import * as sessionRepo from "@/server/repositories/session.repository";
 import * as statsService from "@/server/services/stats.service";
 import type { CompetitiveDataset } from "@/server/services/competitive.service";
+import { communityMatchWhere, communityMatchStatsWhere } from "@/server/domain/matchClassification";
 
 /**
- * Reaproveita dataset.allStats (mesma query já feita por competitive.service) quando
- * disponível, em vez de buscar PlayerMatchStats de novo. Sem dataset (ex: rota do Coach,
- * que chama getDashboardSummary isoladamente), busca com o mesmo shape (include de map
- * incluído para bater com o tipo de CompetitiveDataset["allStats"]) para preservar o
- * comportamento standalone original.
+ * Reaproveita dataset.allStats (mesma query já feita por competitive.service, já
+ * filtrada para partidas COMUNIDADE) quando disponível, em vez de buscar
+ * PlayerMatchStats de novo. Sem dataset (ex: rota do Coach, que chama
+ * getDashboardSummary isoladamente), busca com o mesmo shape E o mesmo filtro de
+ * comunidade, para o resultado standalone continuar idêntico ao caminho com dataset.
  */
 function loadSummaryStats(dataset?: CompetitiveDataset) {
   if (dataset) return Promise.resolve(dataset.allStats);
   return prisma.playerMatchStats.findMany({
-    where: { player: { trackedPlayer: { active: true } } },
+    where: { player: { trackedPlayer: { active: true } }, ...communityMatchStatsWhere() },
     include: { match: { include: { map: true } } },
   });
 }
@@ -23,16 +24,16 @@ function loadSummaryStats(dataset?: CompetitiveDataset) {
 export async function getDashboardSummary(dataset?: CompetitiveDataset) {
   const [totalMatches, totalPlayers, totalSessions, latestSession, allStats, allMatchesCount, roundsAgg] =
     await Promise.all([
-      matchRepo.countMatches(),
+      matchRepo.countCommunityMatches(),
       playerRepo.countPlayers(),
       sessionRepo.countSessions(),
       sessionRepo.getLatestSession(),
       loadSummaryStats(dataset),
-      // Antes: prisma.match.findMany() sem where — trazia todas as colunas de todas as
-      // partidas só para (a) contar o total e (b) somar scoreTeamA+scoreTeamB. Mesmo
-      // escopo (nenhum filtro), agora via count()+aggregate() em vez de carregar as linhas.
-      prisma.match.count(),
-      prisma.match.aggregate({ _sum: { scoreTeamA: true, scoreTeamB: true } }),
+      // Estatísticas gerais são coletivas por definição — contam só partidas COMUNIDADE
+      // (ver domain/matchClassification.ts). Via count()+aggregate() em vez de carregar
+      // as linhas inteiras.
+      prisma.match.count({ where: communityMatchWhere() }),
+      prisma.match.aggregate({ where: communityMatchWhere(), _sum: { scoreTeamA: true, scoreTeamB: true } }),
     ]);
 
   // Aritmética comunitária
@@ -55,9 +56,10 @@ export async function getDashboardSummary(dataset?: CompetitiveDataset) {
   const avgWinrate = allStats.length > 0 ? (wins / allStats.length) * 100 : 0;
   const totalRounds = (roundsAgg._sum.scoreTeamA ?? 0) + (roundsAgg._sum.scoreTeamB ?? 0);
 
-  // Mapa dominante
+  // Mapa dominante — também é uma métrica coletiva, só partidas COMUNIDADE.
   const mapCounts = await prisma.match.groupBy({
     by: ["mapId"],
+    where: communityMatchWhere(),
     _count: { id: true },
   });
   const dominantMapGroup = [...mapCounts].sort((a, b) => b._count.id - a._count.id)[0];

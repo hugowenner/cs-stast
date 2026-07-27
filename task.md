@@ -2,6 +2,11 @@
 
 - [x] Modificar `prisma/schema.prisma` adicionando `levelGc` em `Player` e `PlayerMatchStats`.
 - [x] Criar e executar a migration Prisma (`prisma migrate dev` localmente).
+- [x] **Fase 4: Arquétipos por Percentil**
+  - [x] Update `getPlayerArchetypesFromDataset` in `src/server/services/competitive.service.ts`
+  - [x] Update or add unit tests for archetypes in `src/server/services/competitive.test.ts`
+- [x] **Fase 5: Curiosidades Rotativas**
+  - [x] Update `getWeeklyCuriosityFromDataset` in `src/server/services/competitive.service.ts` to rotate using `dayOfYear % candidates.length` tests for archetypes in `src/server/services/competitive.test.ts`
 - [x] Atualizar o DTO `syncPlayerMatchStatsSchema` em `src/server/dtos/sync.dto.ts` para validar `levelGc`.
 - [x] Atualizar o adapter da GC em `src/server/adapters/gamersclub/types.ts` e `normalize.ts` para mapear `levelGc`.
 - [x] Adicionar testes unitários de normalização para `levelGc` em `normalize.test.ts`.

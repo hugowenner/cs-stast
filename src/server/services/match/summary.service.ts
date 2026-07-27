@@ -1,4 +1,5 @@
 import type { MatchMetadataDTO } from "@/server/dtos/matchDetails.dto";
+import { getMatchType } from "@/server/domain/matchClassification";
 
 export function formatMatchSummary(match: any): MatchMetadataDTO {
   const durationMin = Math.floor(match.durationSeconds / 60);
@@ -34,5 +35,8 @@ export function formatMatchSummary(match: any): MatchMetadataDTO {
     source: match.gamersClubMatchId ? "gamersclub" : "local",
     sourceId: match.gamersClubMatchId,
     eloChangeGroup,
+    matchType: getMatchType(match.trackedPlayersCount),
+    trackedPlayersCount: match.trackedPlayersCount,
+    demoUrl: match.demoUrl,
   };
 }

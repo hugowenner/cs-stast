@@ -1,14 +1,20 @@
 import { prisma } from "@/server/db";
 import type { EventType, MatchTeam, Prisma } from "@/generated/prisma";
 import { trackedMatchWhere, trackedPlayerWhere } from "./player.repository";
+import { communityMatchWhere } from "@/server/domain/matchClassification";
 
 export function findMatchByGamersClubId(gamersClubMatchId: string) {
   return prisma.match.findUnique({ where: { gamersClubMatchId } });
 }
 
-export function countMatches() {
+/**
+ * Total de partidas COMUNIDADE (>= 2 jogadores monitorados) — é o número usado nas
+ * estatísticas gerais do Dashboard ("X partidas analisadas"). Partidas SOLO existem no
+ * banco e nunca deixam de ser sincronizadas, só não entram nessa contagem coletiva.
+ */
+export function countCommunityMatches() {
   return prisma.match.count({
-    where: trackedMatchWhere(),
+    where: communityMatchWhere(),
   });
 }
 
@@ -82,6 +88,8 @@ export interface CreateMatchPlayerStatInput {
   eloBefore: number;
   eloAfter: number;
   levelGc?: number | null;
+  clutchesWon: number;
+  flashAssists: number;
 }
 
 export interface CreateMatchEventInput {
@@ -100,8 +108,11 @@ export interface CreateMatchInput {
   scoreTeamA: number;
   scoreTeamB: number;
   durationSeconds: number;
+  /** Quantos jogadores monitorados ativos participaram — ver matchClassification.ts. */
+  trackedPlayersCount: number;
   playerStats: CreateMatchPlayerStatInput[];
   events: CreateMatchEventInput[];
+  demoUrl?: string | null;
 }
 
 /**
@@ -120,6 +131,8 @@ export function createMatchWithStats(input: CreateMatchInput) {
         scoreTeamA: input.scoreTeamA,
         scoreTeamB: input.scoreTeamB,
         durationSeconds: input.durationSeconds,
+        trackedPlayersCount: input.trackedPlayersCount,
+        demoUrl: input.demoUrl ?? null,
       },
     });
 

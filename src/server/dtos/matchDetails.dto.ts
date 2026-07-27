@@ -1,3 +1,5 @@
+import type { MatchType } from "@/server/domain/matchClassification";
+
 export interface PlayerMatchDTO {
   id: string;
   nickname: string;
@@ -53,6 +55,9 @@ export interface MatchMetadataDTO {
   source: string;
   sourceId: string | null;
   eloChangeGroup: number; // Somatório de ELO ganho/perdido pelos jogadores da watchlist nesta partida
+  matchType: MatchType; // SOLO ou COMMUNITY — ver domain/matchClassification.ts
+  trackedPlayersCount: number;
+  demoUrl: string | null;
 }
 
 export interface MatchTimelineEventDTO {

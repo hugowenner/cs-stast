@@ -12,6 +12,7 @@ export interface RecentMatchCardData {
   scoreTeamB: number;
   map: { name: string };
   session: { name: string };
+  trackedPlayersCount: number;
   playerStats: {
     team: string;
     kills: number;

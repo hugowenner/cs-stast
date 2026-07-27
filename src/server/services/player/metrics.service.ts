@@ -9,8 +9,19 @@ import {
 
 export function calculateOverview(
   careerTotals: {
-    _sum: { kills: number | null; deaths: number | null; assists: number | null; headshots: number | null };
-    _avg: { rating: number | null; adr: number | null; kast: number | null; impact: number | null };
+    _sum: {
+      kills: number | null;
+      deaths: number | null;
+      assists: number | null;
+      headshots: number | null;
+      entryKills: number | null;
+    };
+    _avg: {
+      rating: number | null;
+      adr: number | null;
+      kast: number | null;
+      impact: number | null;
+    };
     _count: { _all: number };
   },
   outcomes: any[],
@@ -21,9 +32,13 @@ export function calculateOverview(
   const kills = careerTotals._sum.kills ?? 0;
   const deaths = careerTotals._sum.deaths ?? 0;
   const headshots = careerTotals._sum.headshots ?? 0;
+  const assists = careerTotals._sum.assists ?? 0;
+  const entryKills = careerTotals._sum.entryKills ?? 0;
 
   const kd = calculateKD(kills, deaths);
   const hsPercentage = calculateHSPercentage(headshots, kills);
+  const assistsAvg = totalMatches > 0 ? Math.round((assists / totalMatches) * 100) / 100 : 0;
+  const impactAvg = Math.round((careerTotals._avg.impact ?? 0) * 100) / 100;
 
   let wins = 0;
   let losses = 0;
@@ -76,6 +91,9 @@ export function calculateOverview(
     adrAvg: Math.round((careerTotals._avg.adr ?? 0) * 10) / 10,
     kastAvg: Math.round((careerTotals._avg.kast ?? 0) * 10) / 10,
     hsPercentage,
+    assistsAvg,
+    impactAvg,
+    entryKills,
     summaryCoach: {
       bestMap: bestMap ? { name: bestMap.mapName, winrate: bestMap.winrate } : null,
       worstMap: worstMap && worstMap.mapName !== bestMap?.mapName ? { name: worstMap.mapName, winrate: worstMap.winrate } : null,

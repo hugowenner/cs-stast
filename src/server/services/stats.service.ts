@@ -2,6 +2,7 @@ import * as statsRepo from "@/server/repositories/playerMatchStats.repository";
 import * as playerRepo from "@/server/repositories/player.repository";
 import type { RankingMetric } from "@/server/repositories/playerMatchStats.repository";
 import { prisma } from "@/server/db";
+import { communityMatchWhere } from "@/server/domain/matchClassification";
 
 export async function getRanking(metric: RankingMetric, take?: number) {
   const rows = await statsRepo.getRankingByMetric(metric, take);
@@ -22,10 +23,11 @@ export async function getRanking(metric: RankingMetric, take?: number) {
 
 const MIN_MATCHES_FOR_EXTRA_RANKINGS = 3;
 
-// K/D ranking — kills/deaths não é um campo diretamente agregável, calcula em memória
+// K/D ranking — kills/deaths não é um campo diretamente agregável, calcula em memória.
+// Ranking é métrica coletiva — só partidas COMUNIDADE (ver matchClassification.ts).
 export async function getKdRanking(take = 20) {
   const rows = await prisma.playerMatchStats.findMany({
-    where: { player: { trackedPlayer: { active: true } } },
+    where: { player: { trackedPlayer: { active: true } }, match: communityMatchWhere() },
     select: { playerId: true, kills: true, deaths: true },
   });
 
@@ -53,10 +55,11 @@ export async function getKdRanking(take = 20) {
     .slice(0, take);
 }
 
-// Consistência — % de partidas com rating >= 1.0, mínimo de partidas
+// Consistência — % de partidas com rating >= 1.0, mínimo de partidas. Métrica
+// coletiva — só partidas COMUNIDADE.
 export async function getConsistencyRanking(take = 20) {
   const rows = await prisma.playerMatchStats.findMany({
-    where: { player: { trackedPlayer: { active: true } } },
+    where: { player: { trackedPlayer: { active: true } }, match: communityMatchWhere() },
     select: { playerId: true, rating: true },
   });
 
@@ -83,10 +86,11 @@ export async function getConsistencyRanking(take = 20) {
     .slice(0, take);
 }
 
-// Evolução — compara rating das últimas 5 partidas vs média geral (mín 5 partidas)
+// Evolução — compara rating das últimas 5 partidas vs média geral (mín 5 partidas).
+// Métrica coletiva — só partidas COMUNIDADE.
 export async function getEvolutionRanking(take = 20) {
   const rows = await prisma.playerMatchStats.findMany({
-    where: { player: { trackedPlayer: { active: true } } },
+    where: { player: { trackedPlayer: { active: true } }, match: communityMatchWhere() },
     select: { playerId: true, rating: true },
     orderBy: { match: { playedAt: "desc" } },
   });
@@ -160,6 +164,95 @@ export async function getMapWinrates() {
   }));
 }
 
+export async function getHsRanking(take = 20) {
+  const rows = await prisma.playerMatchStats.findMany({
+    where: { player: { trackedPlayer: { active: true } }, match: communityMatchWhere() },
+    select: { playerId: true, kills: true, headshots: true },
+  });
+
+  const byPlayer = new Map<string, { kills: number; headshots: number; count: number }>();
+  for (const s of rows) {
+    const cur = byPlayer.get(s.playerId) ?? { kills: 0, headshots: 0, count: 0 };
+    cur.kills += s.kills;
+    cur.headshots += s.headshots;
+    cur.count++;
+    byPlayer.set(s.playerId, cur);
+  }
+
+  const playerIds = Array.from(byPlayer.keys());
+  const players = await playerRepo.findPlayersByIds(playerIds);
+  const playerById = new Map(players.map((p) => [p.id, p]));
+
+  return Array.from(byPlayer.entries())
+    .filter(([, s]) => s.count >= MIN_MATCHES_FOR_EXTRA_RANKINGS && s.kills > 0)
+    .map(([playerId, s]) => ({
+      player: playerById.get(playerId) ?? null,
+      matchesPlayed: s.count,
+      value: Math.round((s.headshots / s.kills) * 1000) / 10,
+    }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, take);
+}
+
+export async function getEntryKillsRanking(take = 20) {
+  const rows = await prisma.playerMatchStats.findMany({
+    where: { player: { trackedPlayer: { active: true } }, match: communityMatchWhere() },
+    select: { playerId: true, entryKills: true },
+  });
+
+  const byPlayer = new Map<string, { entryKills: number; count: number }>();
+  for (const s of rows) {
+    const cur = byPlayer.get(s.playerId) ?? { entryKills: 0, count: 0 };
+    cur.entryKills += s.entryKills;
+    cur.count++;
+    byPlayer.set(s.playerId, cur);
+  }
+
+  const playerIds = Array.from(byPlayer.keys());
+  const players = await playerRepo.findPlayersByIds(playerIds);
+  const playerById = new Map(players.map((p) => [p.id, p]));
+
+  return Array.from(byPlayer.entries())
+    .filter(([, s]) => s.count >= MIN_MATCHES_FOR_EXTRA_RANKINGS)
+    .map(([playerId, s]) => ({
+      player: playerById.get(playerId) ?? null,
+      matchesPlayed: s.count,
+      value: Math.round((s.entryKills / s.count) * 100) / 100,
+    }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, take);
+}
+
+export async function getSupportRanking(take = 20) {
+  const rows = await prisma.playerMatchStats.findMany({
+    where: { player: { trackedPlayer: { active: true } }, match: communityMatchWhere() },
+    select: { playerId: true, assists: true, flashAssists: true },
+  });
+
+  const byPlayer = new Map<string, { assists: number; flashAssists: number; count: number }>();
+  for (const s of rows) {
+    const cur = byPlayer.get(s.playerId) ?? { assists: 0, flashAssists: 0, count: 0 };
+    cur.assists += s.assists;
+    cur.flashAssists += s.flashAssists;
+    cur.count++;
+    byPlayer.set(s.playerId, cur);
+  }
+
+  const playerIds = Array.from(byPlayer.keys());
+  const players = await playerRepo.findPlayersByIds(playerIds);
+  const playerById = new Map(players.map((p) => [p.id, p]));
+
+  return Array.from(byPlayer.entries())
+    .filter(([, s]) => s.count >= MIN_MATCHES_FOR_EXTRA_RANKINGS)
+    .map(([playerId, s]) => ({
+      player: playerById.get(playerId) ?? null,
+      matchesPlayed: s.count,
+      value: Math.round(((s.assists + s.flashAssists) / s.count) * 100) / 100,
+    }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, take);
+}
+
 export async function getPlayerEloTimeline(playerId: string) {
   const rows = await statsRepo.getPlayerEloHistory(playerId);
   return rows.map((row) => ({
@@ -168,3 +261,4 @@ export async function getPlayerEloTimeline(playerId: string) {
     elo: row.eloAfter,
   }));
 }
+

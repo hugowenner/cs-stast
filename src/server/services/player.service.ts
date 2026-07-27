@@ -46,6 +46,7 @@ export async function getPlayerDetail(id: string): Promise<PlayerProfileDTO | nu
     kills: stat.kills,
     deaths: stat.deaths,
     assists: stat.assists,
+    hsPercentage: stat.kills > 0 ? Math.round((stat.headshots / stat.kills) * 1000) / 10 : 0,
     rating: Math.round(stat.rating * 100) / 100,
   }));
 

@@ -13,7 +13,10 @@ export async function getPlayerComparison(
   playerAId: string,
   playerBId: string
 ): Promise<PlayerComparisonDTO | null> {
-  // Obter detalhes de perfil individual e estatísticas em paralelo
+  // Obter detalhes de perfil individual e estatísticas em paralelo. outcomesA/outcomesB
+  // usam TODAS as partidas do jogador (SOLO + COMUNIDADE) — corretamente, pois
+  // alimentam timeline/insights individuais, que são dados de perfil (assim como o
+  // perfil do jogador em si, devem refletir toda a evolução do jogador).
   const [
     detailA,
     detailB,
@@ -24,6 +27,7 @@ export async function getPlayerComparison(
     catalog,
     totalsA,
     totalsB,
+    communityOutcomes,
   ] = await Promise.all([
     getPlayerDetail(playerAId),
     getPlayerDetail(playerBId),
@@ -34,14 +38,20 @@ export async function getPlayerComparison(
     achievementRepo.listAchievementCatalog(),
     statsRepo.getPlayerCareerTotals(playerAId),
     statsRepo.getPlayerCareerTotals(playerBId),
+    // Já filtrado por communityMatchWhere() — usado só para o H2H (item 1 abaixo).
+    // H2H é estatística coletiva (correlaciona 2 jogadores): não pode nascer de uma
+    // partida SOLO, mesmo que hoje ambos sejam monitorados (ver domain/matchClassification.ts).
+    statsRepo.getPlayerMatchOutcomesForPlayers([playerAId, playerBId]),
   ]);
 
   if (!detailA || !detailB) {
     return null;
   }
 
-  // 1. Processar dados H2H (Juntos e Contra)
-  const h2h = processH2HMatches(playerAId, playerBId, outcomesA, outcomesB);
+  // 1. Processar dados H2H (Juntos e Contra) — só a partir de partidas COMUNIDADE.
+  const communityOutcomesA = communityOutcomes.filter((o) => o.playerId === playerAId);
+  const communityOutcomesB = communityOutcomes.filter((o) => o.playerId === playerBId);
+  const h2h = processH2HMatches(playerAId, playerBId, communityOutcomesA, communityOutcomesB);
 
   // 2. Processar DTOs dos Jogadores
   const playerADTO = {

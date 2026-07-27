@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Calendar, Clock, ExternalLink, Shield } from "lucide-react";
+import { Calendar, Clock, Download, ExternalLink, Shield } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
+import { MatchTypeBadge } from "@/components/matches/match-type-badge";
 import type { MatchMetadataDTO } from "@/server/dtos/matchDetails.dto";
 
 export function MatchHeader({ match }: { match: MatchMetadataDTO }) {
@@ -19,7 +20,8 @@ export function MatchHeader({ match }: { match: MatchMetadataDTO }) {
         </div>
       }
       subtitle={
-        <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+          <MatchTypeBadge trackedPlayersCount={match.trackedPlayersCount} />
           <span className="flex items-center gap-1.5">
             <Calendar className="size-3.5" />
             {new Date(match.playedAt).toLocaleDateString("pt-BR", {
@@ -45,6 +47,16 @@ export function MatchHeader({ match }: { match: MatchMetadataDTO }) {
       }
       actions={
         <div className="flex items-center gap-4 text-right">
+          {match.demoUrl && (
+            <a
+              href={match.demoUrl.startsWith("http") ? match.demoUrl : `https://gamersclub.com.br${match.demoUrl}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 rounded-md border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors"
+            >
+              Baixar Demo <Download className="size-3" />
+            </a>
+          )}
           {match.sourceId && (
             <a
               href={`https://gamersclub.com.br/lobby/match/${match.sourceId}`}

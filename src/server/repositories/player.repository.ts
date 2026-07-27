@@ -62,6 +62,19 @@ export function countPlayers() {
   });
 }
 
+/**
+ * Conta quantos dos `playerIds` informados são jogadores monitorados ativos. Usado na
+ * ingestão de partida para classificar SOLO x COMUNIDADE (ver
+ * src/server/domain/matchClassification.ts) — uma única query de contagem, não busca
+ * as linhas inteiras.
+ */
+export function countActiveTrackedPlayersAmong(playerIds: string[]) {
+  if (playerIds.length === 0) return Promise.resolve(0);
+  return prisma.trackedPlayer.count({
+    where: { playerId: { in: playerIds }, active: true },
+  });
+}
+
 export function listPlayers(params: { skip?: number; take?: number } = {}) {
   return prisma.player.findMany({
     where: trackedPlayerWhere(),

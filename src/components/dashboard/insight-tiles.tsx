@@ -1,15 +1,12 @@
 import { FadeIn } from "@/components/motion/fade-in";
 import { Zap, TrendingDown, Map, AlertTriangle } from "lucide-react";
-import type { PlayerMomentumEntry } from "@/server/services/competitive.service";
-import type * as statsService from "@/server/services/stats.service";
-
-type MapWinrateEntry = Awaited<ReturnType<typeof statsService.getMapWinrates>>[number];
+import type { PlayerMomentumEntry, MapPerformanceEntry } from "@/server/services/competitive.service";
 
 interface InsightTilesProps {
   hottestPlayer: PlayerMomentumEntry | null;
   coldestPlayer: PlayerMomentumEntry | null;
-  bestMap: MapWinrateEntry | null;
-  worstMap: MapWinrateEntry | null;
+  bestMap: MapPerformanceEntry | null;
+  worstMap: MapPerformanceEntry | null;
 }
 
 export function InsightTiles({ hottestPlayer, coldestPlayer, bestMap, worstMap }: InsightTilesProps) {

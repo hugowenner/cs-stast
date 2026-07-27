@@ -114,3 +114,90 @@ describe("getMapSpecialistsFromDataset", () => {
     expect(infernoSpec?.rating).toBe(1.50);
   });
 });
+
+describe("getPlayerArchetypesFromDataset (Percentile-based)", () => {
+  it("deve distribuir os arquétipos corretamente com base no percentil relativo", () => {
+    const dataset = {
+      activePlayers: [
+        { id: "p_entry", nickname: "EntryGod", avatarUrl: null, levelGc: 20 },
+        { id: "p_hs", nickname: "OneTap", avatarUrl: null, levelGc: 20 },
+        { id: "p_clutch", nickname: "ClutchKing", avatarUrl: null, levelGc: 20 },
+        { id: "p_support", nickname: "UtilityKing", avatarUrl: null, levelGc: 20 },
+        { id: "p_impact", nickname: "ImpactGod", avatarUrl: null, levelGc: 20 },
+        { id: "p_consistent", nickname: "ConsistentMr", avatarUrl: null, levelGc: 20 },
+      ],
+      statsByPlayer: new Map(),
+      allStats: [] as any[],
+    };
+
+    const statsEntry = [
+      { playerId: "p_entry", kills: 15, headshots: 5, entryKills: 3, clutchesWon: 0, assists: 1, flashAssists: 0, rating: 1.05, adr: 80.0, kast: 70 },
+      { playerId: "p_entry", kills: 15, headshots: 5, entryKills: 3, clutchesWon: 0, assists: 1, flashAssists: 0, rating: 1.05, adr: 80.0, kast: 70 },
+      { playerId: "p_entry", kills: 15, headshots: 5, entryKills: 3, clutchesWon: 0, assists: 1, flashAssists: 0, rating: 1.05, adr: 80.0, kast: 70 },
+    ];
+
+    const statsHs = [
+      { playerId: "p_hs", kills: 15, headshots: 12, entryKills: 0, clutchesWon: 0, assists: 1, flashAssists: 0, rating: 1.00, adr: 75.0, kast: 70 },
+      { playerId: "p_hs", kills: 15, headshots: 12, entryKills: 0, clutchesWon: 0, assists: 1, flashAssists: 0, rating: 1.00, adr: 75.0, kast: 70 },
+      { playerId: "p_hs", kills: 15, headshots: 12, entryKills: 0, clutchesWon: 0, assists: 1, flashAssists: 0, rating: 1.00, adr: 75.0, kast: 70 },
+    ];
+
+    const statsClutch = [
+      { playerId: "p_clutch", kills: 15, headshots: 5, entryKills: 0, clutchesWon: 2, assists: 1, flashAssists: 0, rating: 1.00, adr: 75.0, kast: 70 },
+      { playerId: "p_clutch", kills: 15, headshots: 5, entryKills: 0, clutchesWon: 2, assists: 1, flashAssists: 0, rating: 1.00, adr: 75.0, kast: 70 },
+      { playerId: "p_clutch", kills: 15, headshots: 5, entryKills: 0, clutchesWon: 2, assists: 1, flashAssists: 0, rating: 1.00, adr: 75.0, kast: 70 },
+    ];
+
+    const statsSupport = [
+      { playerId: "p_support", kills: 15, headshots: 5, entryKills: 0, clutchesWon: 0, assists: 3, flashAssists: 3, rating: 1.00, adr: 75.0, kast: 70 },
+      { playerId: "p_support", kills: 15, headshots: 5, entryKills: 0, clutchesWon: 0, assists: 3, flashAssists: 3, rating: 1.00, adr: 75.0, kast: 70 },
+      { playerId: "p_support", kills: 15, headshots: 5, entryKills: 0, clutchesWon: 0, assists: 3, flashAssists: 3, rating: 1.00, adr: 75.0, kast: 70 },
+    ];
+
+    const statsImpact = [
+      { playerId: "p_impact", kills: 25, headshots: 5, entryKills: 0, clutchesWon: 0, assists: 1, flashAssists: 0, rating: 1.50, adr: 120.0, kast: 70 },
+      { playerId: "p_impact", kills: 25, headshots: 5, entryKills: 0, clutchesWon: 0, assists: 1, flashAssists: 0, rating: 1.50, adr: 120.0, kast: 70 },
+      { playerId: "p_impact", kills: 25, headshots: 5, entryKills: 0, clutchesWon: 0, assists: 1, flashAssists: 0, rating: 1.50, adr: 120.0, kast: 70 },
+    ];
+
+    const statsConsistent = [
+      { playerId: "p_consistent", kills: 15, headshots: 5, entryKills: 0, clutchesWon: 0, assists: 1, flashAssists: 0, rating: 1.15, adr: 75.0, kast: 95 },
+      { playerId: "p_consistent", kills: 15, headshots: 5, entryKills: 0, clutchesWon: 0, assists: 1, flashAssists: 0, rating: 1.15, adr: 75.0, kast: 95 },
+      { playerId: "p_consistent", kills: 15, headshots: 5, entryKills: 0, clutchesWon: 0, assists: 1, flashAssists: 0, rating: 1.15, adr: 75.0, kast: 95 },
+    ];
+
+    const allStats = [
+      ...statsEntry,
+      ...statsHs,
+      ...statsClutch,
+      ...statsSupport,
+      ...statsImpact,
+      ...statsConsistent,
+    ];
+
+    dataset.allStats = allStats;
+    dataset.statsByPlayer.set("p_entry", statsEntry);
+    dataset.statsByPlayer.set("p_hs", statsHs);
+    dataset.statsByPlayer.set("p_clutch", statsClutch);
+    dataset.statsByPlayer.set("p_support", statsSupport);
+    dataset.statsByPlayer.set("p_impact", statsImpact);
+    dataset.statsByPlayer.set("p_consistent", statsConsistent);
+
+    // @ts-ignore
+    const result = getPlayerArchetypesFromDataset(dataset);
+
+    const entryPlayer = result.find((r: any) => r.player.id === "p_entry");
+    const hsPlayer = result.find((r: any) => r.player.id === "p_hs");
+    const clutchPlayer = result.find((r: any) => r.player.id === "p_clutch");
+    const supportPlayer = result.find((r: any) => r.player.id === "p_support");
+    const impactPlayer = result.find((r: any) => r.player.id === "p_impact");
+    const consistentPlayer = result.find((r: any) => r.player.id === "p_consistent");
+
+    expect(entryPlayer?.archetype).toBe("entry");
+    expect(hsPlayer?.archetype).toBe("headshot");
+    expect(clutchPlayer?.archetype).toBe("clutch");
+    expect(supportPlayer?.archetype).toBe("support");
+    expect(impactPlayer?.archetype).toBe("impact");
+    expect(consistentPlayer?.archetype).toBe("consistent");
+  });
+});

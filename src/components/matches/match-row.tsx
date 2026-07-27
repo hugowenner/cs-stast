@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PlayerAvatar } from "@/components/players/player-avatar";
+import { MatchTypeBadge } from "@/components/matches/match-type-badge";
 
 export interface MatchRowData {
   id: string;
@@ -8,6 +9,7 @@ export interface MatchRowData {
   scoreTeamB: number;
   map: { name: string };
   session: { name: string };
+  trackedPlayersCount: number;
   playerStats: {
     rating: number;
     player: { id: string; nickname: string; avatarUrl: string | null };
@@ -38,6 +40,9 @@ export function MatchRow({ match }: { match: MatchRowData }) {
       </div>
 
       <div className="flex items-center gap-3 shrink-0">
+        <div className="hidden sm:block">
+          <MatchTypeBadge trackedPlayersCount={match.trackedPlayersCount} />
+        </div>
         <div className="flex items-center gap-1.5 text-sm font-bold tabular-nums">
           <span className={won && winningTeam === "A" ? "text-status-good" : "text-muted-foreground"}>
             {match.scoreTeamA}

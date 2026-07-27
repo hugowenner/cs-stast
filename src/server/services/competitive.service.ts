@@ -1,4 +1,5 @@
 import { prisma } from "@/server/db";
+import { communityMatchStatsWhere } from "@/server/domain/matchClassification";
 
 export interface PowerRankingEntry {
   player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null };
@@ -22,11 +23,15 @@ export interface PlayerEvolutionEntry {
 
 export interface PlayerArchetype {
   player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null };
-  archetype: "entry" | "clutch" | "headshot" | "consistent" | "tactician" | "impact";
+  archetype: "entry" | "clutch" | "headshot" | "consistent" | "tactician" | "impact" | "support";
   label: string;
   metricLabel: string;
   metricValue: string;
   rankText: string;
+  /** Rating médio da temporada — já calculado internamente para o score do archetype
+   * "impact", só nunca tinha sido exposto no retorno. */
+  rating: number;
+  matchCount: number;
 }
 
 export interface JogadorDaSemanaInfo {
@@ -124,13 +129,26 @@ export interface HallOfFameRecord {
 
 type PlayerRow = { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null };
 
+/**
+ * Dataset compartilhado de TODO o dashboard competitivo — e a única camada que decide
+ * "quais partidas contam como estatística coletiva". Filtra por
+ * communityMatchStatsWhere() (>= 2 jogadores monitorados na partida — ver
+ * domain/matchClassification.ts) direto no banco, então toda função *FromDataset()
+ * que opera sobre este dataset (ranking, streaks, duplas, destaques, archetypes,
+ * matchups, hall da fama, map pool etc.) já herda a regra automaticamente, sem
+ * precisar reimplementar o filtro em cada uma. Partidas SOLO nunca são excluídas do
+ * banco — só ficam fora deste dataset agregado.
+ */
 export async function loadCompetitiveDataset() {
   const activePlayers = await prisma.player.findMany({
     where: { trackedPlayer: { active: true } },
   });
 
   const allStats = await prisma.playerMatchStats.findMany({
-    where: { playerId: { in: activePlayers.map((p) => p.id) } },
+    where: {
+      playerId: { in: activePlayers.map((p) => p.id) },
+      ...communityMatchStatsWhere(),
+    },
     include: { match: { include: { map: true } } },
     orderBy: { match: { playedAt: "desc" } },
   });
@@ -246,7 +264,6 @@ function getPlayerEvolutionsFromDataset(
 
 function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): PlayerArchetype[] {
   const MIN_MATCHES_BASIC = 3;
-  const MIN_MATCHES_FULL = 5;
   const MIN_KILLS_FOR_HS = 25;
 
   type RawStats = {
@@ -263,6 +280,8 @@ function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): PlayerArch
     avgKast: number;
     consistencyRate: number;
     consistentGames: number;
+    supportRate: number;
+    impactCombined: number;
   };
 
   const rawList: RawStats[] = [];
@@ -277,9 +296,11 @@ function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): PlayerArch
     const totalEntryKills = stats.reduce((sum, s) => sum + s.entryKills, 0);
     const totalClutchWins = stats.reduce(
       (sum, s) =>
-        sum + s.clutch1v1Wins + s.clutch1v2Wins + s.clutch1v3Wins + s.clutch1v4Wins + s.clutch1v5Wins,
+        sum + Math.max(s.clutchesWon, s.clutch1v1Wins + s.clutch1v2Wins + s.clutch1v3Wins + s.clutch1v4Wins + s.clutch1v5Wins),
       0,
     );
+    const totalAssists = stats.reduce((sum, s) => sum + s.assists, 0);
+    const totalFlashAssists = stats.reduce((sum, s) => sum + s.flashAssists, 0);
 
     const avgRating = stats.reduce((sum, s) => sum + s.rating, 0) / totalMatches;
     const avgAdr = stats.reduce((sum, s) => sum + s.adr, 0) / totalMatches;
@@ -290,6 +311,8 @@ function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): PlayerArch
     const clutchWinsPerMatch = totalClutchWins / totalMatches;
     const consistentGames = stats.filter((s) => s.rating >= 1.0).length;
     const consistencyRate = (consistentGames / totalMatches) * 100;
+    const supportRate = (totalAssists + totalFlashAssists) / totalMatches;
+    const impactCombined = avgRating * 0.7 + (avgAdr / 100) * 0.3;
 
     rawList.push({
       player,
@@ -305,52 +328,71 @@ function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): PlayerArch
       avgKast,
       consistencyRate,
       consistentGames,
+      supportRate,
+      impactCombined,
     });
   }
 
+  // Filtra jogadores elegíveis para cálculo de percentil
+  const eligibleList = rawList.filter((r) => r.totalMatches >= MIN_MATCHES_BASIC);
+
+  const getPercentile = (val: number, allVals: number[]) => {
+    if (allVals.length <= 1) return 100;
+    const less = allVals.filter((v) => v < val).length;
+    const equal = allVals.filter((v) => v === val).length;
+    return ((less + equal / 2) / allVals.length) * 100;
+  };
+
+  const allEntry = eligibleList.map((r) => r.entryKillsPerMatch);
+  const allImpact = eligibleList.map((r) => r.impactCombined);
+  const allConsistency = eligibleList.map((r) => r.consistencyRate);
+  const allHs = eligibleList.map((r) => r.hsRate);
+  const allSupport = eligibleList.map((r) => r.supportRate);
+  const allClutch = eligibleList.map((r) => r.clutchWinsPerMatch);
+
   return rawList.map((item) => {
-    // Computa score para cada archetype — maior score vence.
-    // Score 0 significa não elegível; valores positivos significam elegível.
-    const scores: { type: PlayerArchetype["archetype"]; score: number }[] = [];
-
-    // 💀 HS Specialist: alto HS% com volume mínimo de kills (evita amostra irrelevante)
-    if (item.totalKills >= MIN_KILLS_FOR_HS && item.totalMatches >= MIN_MATCHES_BASIC && item.hsRate >= 48) {
-      scores.push({ type: "headshot", score: (item.hsRate - 44) * 2 });
+    if (item.totalMatches < MIN_MATCHES_BASIC) {
+      return {
+        player: item.player,
+        archetype: "tactician" as const,
+        label: "Curinga/Tático",
+        metricLabel: "Partidas jogadas",
+        metricValue: `${item.totalMatches} partidas`,
+        rankText: "Dados insuficientes",
+        rating: Math.round(item.avgRating * 100) / 100,
+        matchCount: item.totalMatches,
+      };
     }
 
-    // ⚔️ Entry Fragger: abre rounds consistentemente (por partida, não valor absoluto)
-    if (item.totalMatches >= MIN_MATCHES_BASIC && item.totalEntryKills > 0) {
-      scores.push({ type: "entry", score: item.entryKillsPerMatch * 60 });
-    }
+    const entryScore = getPercentile(item.entryKillsPerMatch, allEntry);
+    const impactScore = getPercentile(item.impactCombined, allImpact);
+    const consistentScore = getPercentile(item.consistencyRate, allConsistency);
+    const hsScore = getPercentile(item.hsRate, allHs);
+    const supportScore = getPercentile(item.supportRate, allSupport);
+    const clutchScore = getPercentile(item.clutchWinsPerMatch, allClutch);
 
-    // 🧠 Clutch Player: salva rounds difíceis — taxa por partida, mínimo de jogos
-    if (item.totalMatches >= MIN_MATCHES_FULL && item.clutchWinsPerMatch >= 0.1) {
-      scores.push({ type: "clutch", score: item.clutchWinsPerMatch * 150 });
-    }
-
-    // 🔥 Impact Player: alto impacto combinado (rating + ADR) — mínimo de jogos
-    if (item.totalMatches >= MIN_MATCHES_FULL && item.avgRating >= 1.05) {
-      const ratingNorm = (item.avgRating - 1.0) * 120;
-      const adrBonus = Math.max(0, item.avgAdr - 70) * 0.4;
-      scores.push({ type: "impact", score: ratingNorm + adrBonus });
-    }
-
-    // 🛡️ Consistency Player: desempenho estável acima do limiar — mínimo de jogos
-    if (item.totalMatches >= MIN_MATCHES_FULL && item.consistencyRate >= 55) {
-      scores.push({ type: "consistent", score: Math.max(0, item.consistencyRate - 50) * 0.8 });
-    }
+    const scores = [
+      { type: "entry" as const, score: entryScore },
+      { type: "impact" as const, score: impactScore },
+      { type: "consistent" as const, score: consistentScore },
+      { type: "headshot" as const, score: hsScore },
+      { type: "support" as const, score: supportScore },
+      { type: "clutch" as const, score: clutchScore },
+    ];
 
     scores.sort((a, b) => b.score - a.score);
     const best = scores[0];
-    const archetype: PlayerArchetype["archetype"] = best?.score > 0 ? best.type : "tactician";
 
-    let label = "Leitura de Jogo";
+    // Se o maior percentil for menor que 60%, ele é classificado como Curinga/Tático
+    const archetype = best.score >= 60 ? best.type : ("tactician" as const);
+
+    let label = "Curinga/Tático";
     let metricLabel = "Presença no lobby";
     let metricValue = `${item.totalMatches} partidas`;
     let rankText = "Jogador versátil";
 
     if (archetype === "headshot") {
-      label = "Especialista em Precisão";
+      label = "Headshot Machine";
       metricLabel = "Taxa de Headshot";
       metricValue = `${item.hsRate.toFixed(1)}% (${item.totalKills} kills)`;
       const sorted = [...rawList]
@@ -359,7 +401,7 @@ function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): PlayerArch
       const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
       rankText = `${pos}º maior HS% com volume`;
     } else if (archetype === "entry") {
-      label = "Primeiro Contato";
+      label = "Entry Fragger";
       metricLabel = "Aberturas por Partida";
       metricValue = `${item.entryKillsPerMatch.toFixed(1)}/partida · ${item.totalEntryKills} total`;
       const sorted = [...rawList]
@@ -368,41 +410,52 @@ function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): PlayerArch
       const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
       rankText = `${pos}º em opening kills/partida`;
     } else if (archetype === "clutch") {
-      label = "Especialista em Clutch";
+      label = "Clutch Player";
       metricLabel = "Clutches por Partida";
       metricValue = `${item.clutchWinsPerMatch.toFixed(2)}/partida · ${item.totalClutchWins} salvos`;
       const sorted = [...rawList]
-        .filter((r) => r.totalMatches >= MIN_MATCHES_FULL)
+        .filter((r) => r.totalMatches >= MIN_MATCHES_BASIC)
         .sort((a, b) => b.clutchWinsPerMatch - a.clutchWinsPerMatch);
       const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
       rankText = `${pos}º em clutches salvos`;
     } else if (archetype === "impact") {
-      label = "Jogador de Impacto";
+      label = "Rifler de Impacto";
       metricLabel = "Rating + ADR";
       metricValue = `${item.avgRating.toFixed(2)} rating · ${Math.round(item.avgAdr)} ADR`;
       const sorted = [...rawList]
-        .filter((r) => r.totalMatches >= MIN_MATCHES_FULL)
+        .filter((r) => r.totalMatches >= MIN_MATCHES_BASIC)
         .sort((a, b) => b.avgRating - a.avgRating);
       const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
       rankText = `${pos}º maior rating da comunidade`;
     } else if (archetype === "consistent") {
-      label = "Consistência";
+      label = "Consistente";
       metricLabel = "Partidas Estáveis";
       metricValue = `${item.consistencyRate.toFixed(0)}% acima de 1.0 (${item.consistentGames}/${item.totalMatches})`;
       const sorted = [...rawList]
-        .filter((r) => r.totalMatches >= MIN_MATCHES_FULL)
+        .filter((r) => r.totalMatches >= MIN_MATCHES_BASIC)
         .sort((a, b) => b.consistencyRate - a.consistencyRate);
       const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
       rankText = `${pos}º em consistência`;
+    } else if (archetype === "support") {
+      label = "Suporte";
+      metricLabel = "Suporte por Partida";
+      metricValue = `${item.supportRate.toFixed(1)} assistências/partida`;
+      const sorted = [...rawList]
+        .filter((r) => r.totalMatches >= MIN_MATCHES_BASIC)
+        .sort((a, b) => b.supportRate - a.supportRate);
+      const pos = sorted.findIndex((s) => s.player.id === item.player.id) + 1;
+      rankText = `${pos}º em assistências de suporte`;
     }
 
     return {
-      player: { id: item.player.id, nickname: item.player.nickname, avatarUrl: item.player.avatarUrl, levelGc: item.player.levelGc },
+      player: item.player,
       archetype,
       label,
       metricLabel,
       metricValue,
       rankText,
+      rating: Math.round(item.avgRating * 100) / 100,
+      matchCount: item.totalMatches,
     };
   });
 }
@@ -615,10 +668,13 @@ async function getDecisivePlayersFromDataset(
   // Check global (todo o banco, não só jogadores ativos) se clutches/trades estão populados —
   // mantido como query separada e leve para preservar o escopo original desse sanity-check.
   const aggregateAll = await prisma.playerMatchStats.aggregate({
-    _sum: { tradeKills: true, clutch1v1Wins: true, clutch1v2Wins: true },
+    _sum: { tradeKills: true, clutch1v1Wins: true, clutch1v2Wins: true, clutchesWon: true },
   });
   const totalTradesInDb = aggregateAll._sum.tradeKills ?? 0;
-  const totalClutchesInDb = (aggregateAll._sum.clutch1v1Wins ?? 0) + (aggregateAll._sum.clutch1v2Wins ?? 0);
+  const totalClutchesInDb =
+    (aggregateAll._sum.clutch1v1Wins ?? 0) +
+    (aggregateAll._sum.clutch1v2Wins ?? 0) +
+    (aggregateAll._sum.clutchesWon ?? 0);
   const hideTradesAndClutches = totalTradesInDb === 0 && totalClutchesInDb === 0;
 
   const entries: DecisivePlayerEntry[] = [];
@@ -634,7 +690,7 @@ async function getDecisivePlayersFromDataset(
     const tradeKills = stats.reduce((sum, s) => sum + s.tradeKills, 0);
     const clutchWins = stats.reduce(
       (sum, s) =>
-        sum + s.clutch1v1Wins + s.clutch1v2Wins + s.clutch1v3Wins + s.clutch1v4Wins + s.clutch1v5Wins,
+        sum + Math.max(s.clutchesWon, s.clutch1v1Wins + s.clutch1v2Wins + s.clutch1v3Wins + s.clutch1v4Wins + s.clutch1v5Wins),
       0
     );
 
@@ -1251,7 +1307,7 @@ function getBestRecentDuoFromDataset(dataset: CompetitiveDataset): DuoSummary | 
 
 // ─── Funcionalidade 5: Curiosidade da Semana ───────────────────────────────
 
-export type WeeklyCuriosityCategory = "streak-hot" | "streak-cold" | "map" | "adr" | "weekly-kills";
+export type WeeklyCuriosityCategory = "streak-hot" | "streak-cold" | "map" | "adr" | "weekly-kills" | "headshot-king" | "impact-beast" | "duo-perfect";
 
 export interface WeeklyCuriosity {
   id: string;
@@ -1304,7 +1360,7 @@ function getWeeklyCuriosityFromDataset(
     });
   }
 
-  // 3. Jogador invicto em algum mapa (mínimo de partidas na temporada, para não ser trivial)
+  // 3. Jogador invicto em algum mapa (mínimo de partidas na temporada)
   for (const player of dataset.activePlayers) {
     const stats = dataset.statsByPlayer.get(player.id) ?? [];
     const byMap = new Map<string, { wins: number; total: number }>();
@@ -1349,10 +1405,7 @@ function getWeeklyCuriosityFromDataset(
     }
   }
 
-  // 5. Melhor atuação em kills nos últimos 7 dias corridos (absorvido do extinto
-  // getWeeklyHighlightsFromDataset — era o único conteúdo dali que não duplicava
-  // outro card; os demais (evolução semanal, streak semanal, líder do ranking, mapa
-  // mais jogado) já são cobertos por Evolução Recente, Hot Streak e Ranking Competitivo).
+  // 5. Melhor atuação em kills nos últimos 7 dias corridos
   const latestMatch = dataset.allStats[0]?.match ?? null;
   if (latestMatch) {
     const sevenDaysAgo = new Date(new Date(latestMatch.playedAt).getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -1374,10 +1427,74 @@ function getWeeklyCuriosityFromDataset(
     }
   }
 
+  // 6. Rei do HS
+  let topHsPlayer: any = null;
+  let topHsRate = 0;
+  for (const player of dataset.activePlayers) {
+    const stats = dataset.statsByPlayer.get(player.id) ?? [];
+    if (stats.length < 3) continue;
+    const kills = stats.reduce((sum, s) => sum + s.kills, 0);
+    const hs = stats.reduce((sum, s) => sum + s.headshots, 0);
+    const hsRate = kills > 0 ? (hs / kills) * 100 : 0;
+    if (hsRate > topHsRate) {
+      topHsRate = hsRate;
+      topHsPlayer = player;
+    }
+  }
+  if (topHsPlayer && topHsRate >= 45) {
+    candidates.push({
+      id: `curiosity-hs-${topHsPlayer.id}`,
+      text: `${topHsPlayer.nickname} lidera a precisão com ${topHsRate.toFixed(1)}% de HS nas últimas partidas.`,
+      category: "headshot-king",
+      player: { id: topHsPlayer.id, nickname: topHsPlayer.nickname, avatarUrl: topHsPlayer.avatarUrl },
+      metric: `${topHsRate.toFixed(1)}%`,
+      score: Math.round(topHsRate),
+    });
+  }
+
+  // 7. Maior Impacto
+  let bestMatchRating: any = null;
+  for (const s of dataset.allStats) {
+    if (!bestMatchRating || s.rating > bestMatchRating.rating) {
+      bestMatchRating = s;
+    }
+  }
+  if (bestMatchRating && bestMatchRating.rating >= 1.45) {
+    const p = dataset.activePlayers.find((x) => x.id === bestMatchRating.playerId);
+    if (p) {
+      candidates.push({
+        id: `curiosity-impact-${p.id}-${bestMatchRating.match.id}`,
+        text: `${p.nickname} destruiu a partida com ${bestMatchRating.rating.toFixed(2)} de Rating na ${bestMatchRating.match.map.name}.`,
+        category: "impact-beast",
+        player: { id: p.id, nickname: p.nickname, avatarUrl: p.avatarUrl },
+        metric: `${bestMatchRating.rating.toFixed(2)}`,
+        score: Math.round(bestMatchRating.rating * 50),
+      });
+    }
+  }
+
+  // 8. Melhor Dupla Recente
+  const bestDuo = getBestRecentDuoFromDataset(dataset);
+  if (bestDuo && bestDuo.winrate >= 66) {
+    candidates.push({
+      id: `curiosity-duo-${bestDuo.playerA.id}-${bestDuo.playerB.id}`,
+      text: `A dupla ${bestDuo.playerA.nickname} + ${bestDuo.playerB.nickname} venceu ${bestDuo.wins} de ${bestDuo.total} jogos juntos recentemente (${bestDuo.winrate}% winrate).`,
+      category: "duo-perfect",
+      player: { id: bestDuo.playerA.id, nickname: bestDuo.playerA.nickname, avatarUrl: bestDuo.playerA.avatarUrl },
+      metric: `${bestDuo.winrate}%`,
+      score: bestDuo.winrate,
+    });
+  }
+
   if (candidates.length === 0) return null;
 
-  candidates.sort((a, b) => b.score - a.score);
-  const { score: _score, ...winner } = candidates[0];
+  // Seleção rotativa baseada no dia do ano
+  const dayOfYear = Math.floor(
+    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
+  );
+  const selectedIndex = dayOfYear % candidates.length;
+
+  const { score: _score, ...winner } = candidates[selectedIndex];
   return winner;
 }
 

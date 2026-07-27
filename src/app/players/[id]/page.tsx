@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Crosshair, Skull, Target, Trophy, Percent, Gamepad2, Award } from "lucide-react";
+import { Crosshair, Skull, Target, Trophy, Percent, Gamepad2, Award, Handshake, Flame, Swords } from "lucide-react";
 import { SectionCard } from "@/components/ui/section-card";
 import { StatTile } from "@/components/ui/stat-tile";
 import { FadeIn } from "@/components/motion/fade-in";
@@ -150,6 +150,36 @@ export default async function PlayerDetailPage({ params }: { params: Promise<{ i
         />
       </FadeIn>
 
+      {/* Estatísticas de Impacto */}
+      <FadeIn delay={0.11}>
+        <div className="mb-3 mt-1">
+          <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-muted-foreground/60">Estatísticas de Impacto</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <StatTile
+            label="Assistências"
+            value={`${overview.assistsAvg.toFixed(1)} média`}
+            icon={Handshake}
+            accent="violet"
+            context="Colaboração por partida"
+          />
+          <StatTile
+            label="Impacto"
+            value={overview.impactAvg.toFixed(2)}
+            icon={Flame}
+            accent="cyan"
+            context="Dano e agressividade"
+          />
+          <StatTile
+            label="Entry"
+            value={overview.entryKills.toString()}
+            icon={Swords}
+            accent="violet"
+            context="Primeiras eliminações"
+          />
+        </div>
+      </FadeIn>
+
       {/* Gráficos de Evolução */}
       <FadeIn delay={0.12}>
         <ProfileChartsSection
@@ -217,7 +247,7 @@ export default async function PlayerDetailPage({ params }: { params: Promise<{ i
                       {match.mapName} · {match.playedAt.toLocaleDateString("pt-BR")}
                     </p>
                     <p className="text-muted-foreground text-xs mt-0.5">
-                      Desempenho: {match.kills} kills / {match.deaths} mortes / {match.assists} assistências
+                      Desempenho: {match.kills} kills / {match.deaths} mortes / {match.assists} assistências · {match.hsPercentage.toFixed(0)}% HS
                     </p>
                   </div>
                   <RatingBadge rating={match.rating} />

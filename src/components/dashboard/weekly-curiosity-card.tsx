@@ -1,4 +1,4 @@
-import { Lightbulb, Flame, Snowflake, Map, TrendingUp } from "lucide-react";
+import { Lightbulb, Flame, Snowflake, Map, TrendingUp, Crosshair, Zap, Swords } from "lucide-react";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import type { WeeklyCuriosity, WeeklyCuriosityCategory } from "@/server/services/competitive.service";
 
@@ -6,11 +6,15 @@ interface WeeklyCuriosityCardProps {
   curiosity: WeeklyCuriosity | null;
 }
 
-const CATEGORY_META: Record<WeeklyCuriosityCategory, { icon: typeof Flame; label: string; color: string }> = {
+const CATEGORY_META: Record<WeeklyCuriosityCategory, { icon: any; label: string; color: string }> = {
   "streak-hot": { icon: Flame, label: "Sequência de vitórias", color: "text-status-good" },
   "streak-cold": { icon: Snowflake, label: "Sequência de derrotas", color: "text-status-critical" },
   map: { icon: Map, label: "Domínio de mapa", color: "text-accent-cyan" },
   adr: { icon: TrendingUp, label: "Evolução de dano", color: "text-status-good" },
+  "weekly-kills": { icon: Crosshair, label: "Atuação da semana", color: "text-status-warning" },
+  "headshot-king": { icon: Crosshair, label: "Rei do HS", color: "text-accent-cyan" },
+  "impact-beast": { icon: Zap, label: "Atuação de Impacto", color: "text-primary" },
+  "duo-perfect": { icon: Swords, label: "Parceria Perfeita", color: "text-accent-violet" },
 };
 
 export function WeeklyCuriosityCard({ curiosity }: WeeklyCuriosityCardProps) {
@@ -28,7 +32,7 @@ export function WeeklyCuriosityCard({ curiosity }: WeeklyCuriosityCardProps) {
     );
   }
 
-  const meta = CATEGORY_META[curiosity.category];
+  const meta = CATEGORY_META[curiosity.category] ?? { icon: Lightbulb, label: "Curiosidade", color: "text-accent-violet" };
   const CategoryIcon = meta.icon;
 
   return (

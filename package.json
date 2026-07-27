@@ -22,6 +22,7 @@
     "test:watch": "vitest",
     "demo": "node scripts/demo/run-demo.mjs",
     "empty-demo": "node scripts/demo/run-demo.mjs --empty",
+    "demo:snapshot": "node scripts/demo/snapshot-demo.mjs",
     "reset-demo": "node scripts/demo/reset-demo.mjs"
   },
   "dependencies": {

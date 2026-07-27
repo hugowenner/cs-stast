@@ -3,6 +3,7 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import { ChevronLeft, ChevronRight, ArrowRight, Swords, Shield } from "lucide-react";
 import { PlayerAvatar } from "@/components/players/player-avatar";
+import { MatchTypeBadge } from "@/components/matches/match-type-badge";
 import Link from "next/link";
 import type { RecentMatchCardData } from "./recent-matches-carousel";
 
@@ -69,7 +70,10 @@ function ConfrontationCard({ match }: { match: RecentMatchCardData }) {
           <Shield className="size-3 text-muted-foreground/45 shrink-0" />
         )}
         <span className="text-xs font-bold text-white/85 capitalize truncate">{mapName}</span>
-        <span className="ml-auto text-[9px] text-muted-foreground/55 shrink-0">{date}</span>
+        <span className="ml-auto shrink-0">
+          <MatchTypeBadge trackedPlayersCount={match.trackedPlayersCount} />
+        </span>
+        <span className="text-[9px] text-muted-foreground/55 shrink-0">{date}</span>
       </div>
 
       {/* ── Corpo ─────────────────────────────────────────────────────── */}

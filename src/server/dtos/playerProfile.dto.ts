@@ -17,6 +17,9 @@ export interface PlayerProfileDTO {
     adrAvg: number;
     kastAvg: number;
     hsPercentage: number;
+    assistsAvg: number;
+    impactAvg: number;
+    entryKills: number;
     summaryCoach: {
       bestMap: { name: string; winrate: number } | null;
       worstMap: { name: string; winrate: number } | null;
@@ -61,6 +64,7 @@ export interface PlayerProfileDTO {
     kills: number;
     deaths: number;
     assists: number;
+    hsPercentage: number;
     rating: number;
   }[];
 }

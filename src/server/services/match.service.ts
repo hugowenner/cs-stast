@@ -10,6 +10,7 @@ import * as importRepo from "@/server/repositories/import.repository";
 import { calculateRating } from "@/server/domain/rating";
 import { calculateEloUpdates, DEFAULT_ELO } from "@/server/domain/elo";
 import { calculateRivalryDeltas } from "@/server/domain/rivalry";
+import { isCommunityMatch } from "@/server/domain/matchClassification";
 import {
   evaluateMatchAchievements,
   type PlayerMatchAchievementInput,
@@ -112,6 +113,13 @@ export async function ingestMatchSync(
       }
     }
 
+    // Classificação SOLO x COMUNIDADE (ver domain/matchClassification.ts) — calculada
+    // uma única vez aqui, na ingestão, e persistida em Match.trackedPlayersCount.
+    // Roda depois do linkTrackedPlayer acima para já enxergar vínculos recém-criados.
+    const trackedPlayersCount = await playerRepo.countActiveTrackedPlayersAmong(
+      players.map((p) => p.id),
+    );
+
     const playerBySteamId = new Map(players.map((p) => [p.steamId, p]));
 
     // Aproximação: total de rounds da partida = soma do placar (ignora nuances de overtime).
@@ -184,6 +192,8 @@ export async function ingestMatchSync(
         eloBefore: elo.eloBefore,
         eloAfter: elo.eloAfter,
         levelGc: p.levelGc ?? null,
+        clutchesWon: p.clutchesWon ?? 0,
+        flashAssists: p.flashAssists ?? 0,
       };
     });
 
@@ -243,16 +253,26 @@ export async function ingestMatchSync(
       scoreTeamA: input.scoreTeamA,
       scoreTeamB: input.scoreTeamB,
       durationSeconds: input.durationSeconds,
+      trackedPlayersCount,
       playerStats,
       events,
+      demoUrl: input.demoUrl ?? null,
     });
 
-    const rivalryDeltas = calculateRivalryDeltas(
-      eloInputs.map((e) => ({ playerId: e.playerId, team: e.team })),
-      killEvents,
-    );
-    for (const delta of rivalryDeltas) {
-      await rivalryRepo.applyRivalryDelta(delta.playerAId, delta.playerBId, delta);
+    // Rivalidade é estatística coletiva (correlaciona 2 jogadores) — nenhuma estatística
+    // coletiva pode nascer de uma partida SOLO (ver domain/matchClassification.ts).
+    // Sem esta guarda, uma partida SOLO ainda geraria deltas entre o único jogador
+    // monitorado e cada um dos outros participantes; se algum deles fosse monitorado
+    // depois, a "rivalidade" apareceria retroativamente, mesmo tendo nascido de uma
+    // partida que nunca teve 2 jogadores monitorados de fato.
+    if (isCommunityMatch(trackedPlayersCount)) {
+      const rivalryDeltas = calculateRivalryDeltas(
+        eloInputs.map((e) => ({ playerId: e.playerId, team: e.team })),
+        killEvents,
+      );
+      for (const delta of rivalryDeltas) {
+        await rivalryRepo.applyRivalryDelta(delta.playerAId, delta.playerBId, delta);
+      }
     }
 
     const careerTotalsByPlayerId = new Map<

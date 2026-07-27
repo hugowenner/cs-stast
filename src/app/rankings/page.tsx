@@ -17,6 +17,8 @@ const METRICS = [
   { value: "consistency", label: "Consistência" },
   { value: "evolution", label: "Evolução" },
   { value: "elo", label: "Hub ELO" },
+  { value: "hs", label: "HS%" },
+  { value: "entry", label: "Entry Kills" },
 ] as const;
 
 type Metric = (typeof METRICS)[number]["value"];
@@ -39,7 +41,11 @@ export default async function RankingsPage({
             ? statsService.getConsistencyRanking(50)
             : metric === "evolution"
               ? statsService.getEvolutionRanking(50)
-              : statsService.getRanking(metric, 50),
+              : metric === "hs"
+                ? statsService.getHsRanking(50)
+                : metric === "entry"
+                  ? statsService.getEntryKillsRanking(50)
+                  : statsService.getRanking(metric, 50),
     [],
   );
 
@@ -55,7 +61,11 @@ export default async function RankingsPage({
                 ? "Comparação das últimas 5 partidas vs média da temporada"
                 : metric === "kd"
                   ? "Kills/Deaths total acumulado — mín. 3 partidas"
-                  : "Liga interna baseada nas partidas sincronizadas"
+                  : metric === "hs"
+                    ? "Porcentagem de Headshots acumulada — mín. 3 partidas"
+                    : metric === "entry"
+                      ? "Média de Entry Kills por partida — mín. 3 partidas"
+                      : "Liga interna baseada nas partidas sincronizadas"
           }
         />
       </FadeIn>
@@ -121,9 +131,11 @@ export default async function RankingsPage({
                       }`}>
                         {metric === "consistency"
                           ? `${entry.value}%`
-                          : metric === "evolution"
-                            ? `${entry.value > 0 ? "+" : ""}${entry.value}%`
-                            : entry.value}
+                          : metric === "hs"
+                            ? `${entry.value}%`
+                            : metric === "evolution"
+                              ? `${entry.value > 0 ? "+" : ""}${entry.value}%`
+                              : entry.value}
                       </span>
                     }
                   />

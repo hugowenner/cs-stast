@@ -79,6 +79,15 @@ model Match {
   scoreTeamA        Int
   scoreTeamB        Int
   durationSeconds   Int
+  demoUrl           String?
+
+  /// Quantos jogadores monitorados (TrackedPlayer.active = true) participaram desta
+  /// partida, calculado uma vez na ingestão (src/server/services/match.service.ts) e
+  /// nunca recalculado depois. Fonte de verdade da classificação SOLO (< 2) vs
+  /// COMUNIDADE (>= 2) — ver src/server/domain/matchClassification.ts. Guardado como
+  /// contagem (não como enum) para permitir métricas futuras mais granulares (ex.:
+  /// Rating Solo x Equipe) sem precisar de outra migration.
+  trackedPlayersCount Int @default(0)
 
   playerStats  PlayerMatchStats[]
   events       Event[]
@@ -86,6 +95,7 @@ model Match {
 
   @@index([sessionId])
   @@index([playedAt])
+  @@index([trackedPlayersCount])
 }
 
 /// Estatísticas de um jogador em uma partida — granularidade base de todo o sistema;
@@ -112,6 +122,8 @@ model PlayerMatchStats {
   entryKills  Int
   entryDeaths Int
   tradeKills  Int
+  clutchesWon  Int @default(0)
+  flashAssists Int @default(0)
 
   clutch1v1Attempts Int @default(0)
   clutch1v1Wins     Int @default(0)
