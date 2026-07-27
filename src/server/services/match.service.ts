@@ -203,7 +203,6 @@ export async function ingestMatchSync(
     const events: CreateMatchEventInput[] = [];
     const killEvents: { killerId: string; victimId: string }[] = [];
     const acePlayers = new Set<string>();
-    const fiveKPlayers = new Set<string>();
     const multiKill4Players = new Set<string>();
     const multiKill3Players = new Set<string>();
 
@@ -233,7 +232,6 @@ export async function ingestMatchSync(
 
         if (kills.length >= 5) {
           acePlayers.add(killer.id);
-          fiveKPlayers.add(killer.id);
           events.push({ playerId: killer.id, type: "ACE" as EventType, roundNumber });
         } else if (kills.length === 4) {
           multiKill4Players.add(killer.id);
@@ -310,6 +308,7 @@ export async function ingestMatchSync(
         assists: p.assists,
         adr: p.adr,
         rating: rating.rating,
+        impact: rating.impact,
         kast: p.kast,
         totalRounds,
         wonMatch: scoreSelf > scoreOpp,
@@ -321,7 +320,6 @@ export async function ingestMatchSync(
           5: p.clutches?.["1v5"]?.wins ?? 0,
         },
         hadAce: acePlayers.has(player.id),
-        hadFiveK: fiveKPlayers.has(player.id),
         hadMultiKill3: multiKill3Players.has(player.id),
         hadMultiKill4: multiKill4Players.has(player.id),
         careerMatchesPlayed: career._count._all,

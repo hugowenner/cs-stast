@@ -34,23 +34,18 @@ scripts/demo/generate-sqlite-schema.mjs
   lê prisma/schema.prisma
   troca provider "postgresql" → "sqlite" e o output do client
   escreve prisma/schema.sqlite.prisma (gitignored, sempre gerado, nunca editado à mão)
-
-scripts/demo/generate-provider.mjs sqlite|postgres
-  reescreve src/server/db.provider.ts — a única indireção que db.ts usa
-  para saber qual driver adapter + Prisma Client importar
 ```
 
-`npm run dev` e `npm run build` têm hooks `predev`/`prebuild` que **sempre regeneram `db.provider.ts` de volta para Postgres antes de rodar** — então esquecer de sair do modo demo nunca quebra o fluxo normal.
+A escolha do driver (Postgres vs SQLite) é feita em runtime pelo próprio `src/server/db.ts`, que detecta o banco pelo protocolo da `DATABASE_URL` (`file:` / `sqlite:` → SQLite, `postgres:` / `postgresql:` → Postgres). Não há arquivo gerado para trocar, não há hooks `predev`/`prebuild` — o ambiente dita tudo.
 
 ## O que `npm run demo` faz, na ordem
 
-1. Aponta `db.provider.ts` para SQLite.
-2. Gera `prisma/schema.sqlite.prisma` a partir do schema real.
-3. `prisma db push` — cria `prisma/dev.db` a partir desse schema (sem histórico de migrations — é descartável, não precisa).
-4. `prisma generate` — gera o Prisma Client para SQLite em `src/generated/prisma-sqlite`.
-5. Roda o seed (`prisma/seed.ts`) — catálogo de achievements e mapas.
-6. Ingesta `src/server/adapters/gamersclub/fixtures/match-standard.json` através do pipeline real (`normalizeGamersClubMatch` → `ingestMatchSync`) — exercita adapter, Zod, Services, RatingCalculator, EloEngine, AchievementEngine e RivalryEngine de verdade. **`npm run empty-demo` pula esta etapa** — banco sai do passo 5 direto para o 7, com 0 partidas.
-7. Sobe `next dev -p 3210`.
+1. Gera `prisma/schema.sqlite.prisma` a partir do schema real.
+2. `prisma db push` — cria `prisma/dev.db` a partir desse schema (sem histórico de migrations — é descartável, não precisa).
+3. `prisma generate` — gera o Prisma Client para SQLite em `src/generated/prisma-sqlite`.
+4. Roda o seed (`prisma/seed.ts`) — catálogo de achievements e mapas.
+5. Ingesta `src/server/adapters/gamersclub/fixtures/match-standard.json` através do pipeline real (`normalizeGamersClubMatch` → `ingestMatchSync`) — exercita adapter, Zod, Services, RatingCalculator, EloEngine, AchievementEngine e RivalryEngine de verdade. **`npm run empty-demo` pula esta etapa** — banco sai do passo 4 direto para o 6, com 0 partidas.
+6. Sobe `next dev -p 3210`.
 
 ## Diferenças do Postgres (leia antes de generalizar um resultado)
 

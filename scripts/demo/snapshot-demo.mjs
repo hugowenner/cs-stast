@@ -58,12 +58,7 @@ for (const target of [dbPath, `${dbPath}-journal`]) {
   }
 }
 
-// Passos 1-5 — preparar o SQLite, igual ao `npm run demo` (sem seed, sem partida fake).
-run(
-  "node",
-  ["scripts/demo/generate-provider.mjs", "sqlite"],
-  "apontando db.provider.ts para SQLite",
-);
+// Passos 1-4 — preparar o SQLite, igual ao `npm run demo` (sem seed, sem partida fake).
 run("node", ["scripts/demo/generate-sqlite-schema.mjs"], "gerando prisma/schema.sqlite.prisma");
 run(
   "npx",

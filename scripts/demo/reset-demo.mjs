@@ -1,9 +1,8 @@
 #!/usr/bin/env node
-/** `npm run reset-demo` — apaga o banco de demo (SQLite) e restaura o wiring de Postgres. */
+/** `npm run reset-demo` — apaga os artefatos do banco de demo (SQLite). */
 import { rmSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { spawnSync } from "node:child_process";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "../..");
@@ -22,9 +21,4 @@ for (const target of targets) {
   }
 }
 
-spawnSync("node", ["scripts/demo/generate-provider.mjs", "postgres"], {
-  cwd: root,
-  stdio: "inherit",
-  shell: true,
-});
 console.log("[reset-demo] pronto — de volta ao Postgres.");

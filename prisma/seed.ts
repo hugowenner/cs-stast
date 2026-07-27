@@ -1,3 +1,6 @@
+// Carrega .env antes de qualquer import que acesse process.env (db.ts inicializa
+// o adapter na linha de módulo, então precisa de DATABASE_URL já disponível).
+import "dotenv/config";
 import { prisma } from "@/server/db";
 import { ACHIEVEMENT_CATALOG } from "@/server/domain/achievementCatalog";
 

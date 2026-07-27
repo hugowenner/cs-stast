@@ -75,6 +75,13 @@ export function countActiveTrackedPlayersAmong(playerIds: string[]) {
   });
 }
 
+export function findPlayerBasicById(id: string) {
+  return prisma.player.findUnique({
+    where: { id },
+    select: { id: true, nickname: true, avatarUrl: true },
+  });
+}
+
 export function listPlayers(params: { skip?: number; take?: number } = {}) {
   return prisma.player.findMany({
     where: trackedPlayerWhere(),

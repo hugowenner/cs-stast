@@ -49,6 +49,36 @@ export interface NewPlayerAchievement {
  * Se esse invariante for violado algum dia, prefira o erro de constraint único ao
  * silêncio de um skipDuplicates.
  */
+export interface AchievementUnlockStats {
+  countByAchievementId: Map<string, number>;
+  countByPlayerId: Map<string, number>;
+  totalUnlocks: number;
+}
+
+/**
+ * Uma query, dois resultados: contagem de desbloqueios por conquista e por jogador.
+ * Usa distinct (playerId, achievementId) para contar jogadores únicos por conquista —
+ * a mesma conquista pode aparecer N vezes para um jogador (ex: Ace em múltiplas partidas),
+ * mas só conta como 1 para fins de raridade e ranking de colecionador.
+ */
+export async function getAchievementsStats(): Promise<AchievementUnlockStats> {
+  const unlocks = await prisma.playerAchievement.findMany({
+    where: trackedPlayerStatsWhere(),
+    select: { playerId: true, achievementId: true },
+    distinct: ["playerId", "achievementId"],
+  });
+
+  const countByAchievementId = new Map<string, number>();
+  const countByPlayerId = new Map<string, number>();
+
+  for (const { achievementId, playerId } of unlocks) {
+    countByAchievementId.set(achievementId, (countByAchievementId.get(achievementId) ?? 0) + 1);
+    countByPlayerId.set(playerId, (countByPlayerId.get(playerId) ?? 0) + 1);
+  }
+
+  return { countByAchievementId, countByPlayerId, totalUnlocks: unlocks.length };
+}
+
 export function createPlayerAchievements(entries: NewPlayerAchievement[]) {
   if (entries.length === 0) return Promise.resolve({ count: 0 });
   return prisma.playerAchievement.createMany({ data: entries });

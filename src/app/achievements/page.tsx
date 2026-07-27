@@ -1,79 +1,65 @@
-import { Trophy } from "lucide-react";
-import { SectionCard } from "@/components/ui/section-card";
-import { PageHeader } from "@/components/ui/page-header";
-import { RankRow } from "@/components/ui/rank-row";
 import { FadeIn } from "@/components/motion/fade-in";
-import { AchievementFeedItem } from "@/components/achievements/achievement-feed-item";
 import { safeQuery } from "@/server/safeQuery";
 import * as achievementService from "@/server/services/achievement.service";
-import { cn } from "@/lib/utils";
+import { ACHIEVEMENT_CATALOG, ACHIEVEMENT_CATEGORY } from "@/server/domain/achievementCatalog";
+import type { AchievementCategory } from "@/server/domain/achievementCatalog";
+import { AchievementHero } from "@/components/achievements/achievement-hero";
+import { AchievementCatalog } from "@/components/achievements/achievement-catalog";
+import { AchievementFeed } from "@/components/achievements/achievement-feed";
 
-const TIER_STYLE: Record<string, string> = {
-  bronze: "text-[#d95926] bg-[#d95926]/15",
-  silver: "text-muted-foreground bg-white/10",
-  gold: "text-status-warning bg-status-warning/15",
-  legendary: "text-accent-violet bg-accent-violet/15",
-};
+const CATEGORY_ORDER: AchievementCategory[] = ["combate", "clutch", "carreira"];
 
 export default async function AchievementsPage() {
-  const [catalog, recent] = await Promise.all([
-    safeQuery(() => achievementService.listCatalog(), []),
-    safeQuery(() => achievementService.listRecent(20), []),
-  ]);
+  const stats = await safeQuery(
+    () => achievementService.getPageStats(),
+    {
+      totalInCatalog: ACHIEVEMENT_CATALOG.length,
+      totalUnlocks: 0,
+      topCollector: null,
+      rarestEntry: null,
+      unlockCountByCode: new Map<string, number>(),
+      recentUnlocks: [],
+    },
+  );
+
+  const categories = CATEGORY_ORDER.map((category) => ({
+    category,
+    entries: ACHIEVEMENT_CATALOG
+      .filter((e) => ACHIEVEMENT_CATEGORY[e.code] === category)
+      .map((e) => ({ ...e, unlockCount: stats.unlockCountByCode.get(e.code) ?? 0 })),
+  }));
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
+      {/* Hero compacto */}
       <FadeIn>
-        <PageHeader title="🏆 Mural da Fama" subtitle="Catálogo de conquistas e quem desbloqueou o quê" />
+        <AchievementHero
+          totalInCatalog={stats.totalInCatalog}
+          totalUnlocks={stats.totalUnlocks}
+          topCollector={stats.topCollector}
+          rarestEntry={stats.rarestEntry}
+        />
       </FadeIn>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <FadeIn delay={0.05}>
-          <SectionCard title="Catálogo">
-            {catalog.length === 0 ? (
-              <p className="text-muted-foreground py-8 text-center text-sm">
-                Catálogo ainda não semeado — rode <code>npm run db:seed</code>.
-              </p>
-            ) : (
-              <div className="flex flex-col gap-1">
-                {catalog.map((achievement) => (
-                  <RankRow
-                    key={achievement.id}
-                    icon={
-                      <div
-                        className={cn(
-                          "flex size-9 shrink-0 items-center justify-center rounded-lg",
-                          TIER_STYLE[achievement.tier] ?? "text-foreground bg-white/10",
-                        )}
-                      >
-                        <Trophy className="size-4" />
-                      </div>
-                    }
-                    title={achievement.name}
-                    subtitle={achievement.description}
-                  />
-                ))}
-              </div>
-            )}
-          </SectionCard>
-        </FadeIn>
+      {/* Catálogo com accordion + filtros + busca */}
+      <FadeIn delay={0.04}>
+        <AchievementCatalog categories={categories} />
+      </FadeIn>
 
-        <FadeIn delay={0.1}>
-          <SectionCard title="Desbloqueadas recentemente" variant="highlight">
-            {recent.length === 0 ? (
-              <p className="text-muted-foreground py-8 text-center text-sm">
-                Nenhuma conquista ainda.
-              </p>
-            ) : (
-              <div className="flex flex-col divide-y divide-white/5">
-                {recent.map((entry) => (
-                  <AchievementFeedItem key={entry.id} entry={entry} />
-                ))}
-              </div>
-            )}
-          </SectionCard>
-        </FadeIn>
-      </div>
+      {/* Feed de desbloqueios recentes */}
+      <FadeIn delay={0.08}>
+        <div className="flex flex-col gap-3">
+          <div>
+            <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-muted-foreground/60">
+              Desbloqueios Recentes
+            </p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground/45">
+              Histórico de conquistas da comunidade, ordenado por data.
+            </p>
+          </div>
+          <AchievementFeed unlocks={stats.recentUnlocks} />
+        </div>
+      </FadeIn>
     </div>
   );
 }

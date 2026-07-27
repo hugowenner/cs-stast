@@ -99,11 +99,6 @@ async function ensurePortFree(port) {
 
 if (!existsSync(join(root, "prisma"))) mkdirSync(join(root, "prisma"));
 
-run(
-  "node",
-  ["scripts/demo/generate-provider.mjs", "sqlite"],
-  "apontando db.provider.ts para SQLite",
-);
 run("node", ["scripts/demo/generate-sqlite-schema.mjs"], "gerando prisma/schema.sqlite.prisma");
 run(
   "npx",
