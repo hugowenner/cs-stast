@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 // Importamos a função de interesse
 // @ts-ignore -- Precisamos ignorar o ts-ignore caso por algum motivo a compilação do teste se comporte diferente
-import { getMapSpecialistsFromDataset, getPlayerArchetypesFromDataset } from "./competitive.service";
+import { getMapSpecialistsFromDataset, getPlayerArchetypesFromDataset, getAdvancedPerformanceStatsFromDataset } from "./competitive.service";
 
 describe("getMapSpecialistsFromDataset", () => {
   it("eleger o jogador com melhor rating entre os elegíveis (dois jogadores diferentes no mesmo mapa)", () => {
@@ -199,5 +199,49 @@ describe("getPlayerArchetypesFromDataset (Percentile-based)", () => {
     expect(supportPlayer?.archetype).toBe("support");
     expect(impactPlayer?.archetype).toBe("impact");
     expect(consistentPlayer?.archetype).toBe("consistent");
+  });
+});
+
+describe("getAdvancedPerformanceStatsFromDataset", () => {
+  it("ignora valores nulos nas médias de damage e gcRating e calcula as médias corretamente (Caso 1 e 2)", () => {
+    const dataset = {
+      activePlayers: [{ id: "playerA", nickname: "Jogador A", avatarUrl: null, levelGc: 14 }],
+      statsByPlayer: new Map(),
+      allStats: [
+        { playerId: "playerA", matchId: "m1", damage: 1000, gcRating: 1.10, doubleKills: 2 },
+        { playerId: "playerA", matchId: "m2", damage: null, gcRating: null, doubleKills: null },
+        { playerId: "playerA", matchId: "m3", damage: 2000, gcRating: 1.30, doubleKills: 3 },
+      ],
+    };
+    
+    // @ts-ignore
+    const stats = getAdvancedPerformanceStatsFromDataset(dataset);
+
+    expect(stats.sampleSize).toBe(2); // Apenas m1 e m3 possuem dados GC avançados
+    expect(stats.averageDamage).toBe(1500); // (1000 + 2000) / 2
+    expect(stats.averageGcRating).toBe(1.20); // (1.10 + 1.30) / 2
+    expect(stats.totalDoubleKills).toBe(5); // 2 + 3
+  });
+
+  it("retorna nulos se todas as estatísticas forem nulas (Caso 3 - banco histórico)", () => {
+    const dataset = {
+      activePlayers: [{ id: "playerA", nickname: "Jogador A", avatarUrl: null, levelGc: 14 }],
+      statsByPlayer: new Map(),
+      allStats: [
+        { playerId: "playerA", matchId: "m1", damage: null, gcRating: null, doubleKills: null },
+        { playerId: "playerA", matchId: "m2", damage: null, gcRating: null, doubleKills: null },
+      ],
+    };
+
+    // @ts-ignore
+    const stats = getAdvancedPerformanceStatsFromDataset(dataset);
+
+    expect(stats.sampleSize).toBe(0);
+    expect(stats.averageDamage).toBeNull();
+    expect(stats.averageGcRating).toBeNull();
+    expect(stats.totalDoubleKills).toBeNull();
+    expect(stats.totalTripleKills).toBeNull();
+    expect(stats.totalQuadKills).toBeNull();
+    expect(stats.totalAces).toBeNull();
   });
 });

@@ -1675,6 +1675,17 @@ export interface DashboardCompetitiveBundle {
   mapWinrates: MapPerformanceEntry[];
   bestMap: MapPerformanceEntry | null;
   worstMap: MapPerformanceEntry | null;
+  advancedPerformance: AdvancedPerformanceStats;
+}
+
+export interface AdvancedPerformanceStats {
+  sampleSize: number;
+  averageDamage: number | null;
+  averageGcRating: number | null;
+  totalDoubleKills: number | null;
+  totalTripleKills: number | null;
+  totalQuadKills: number | null;
+  totalAces: number | null;
 }
 
 /**
@@ -1724,5 +1735,65 @@ export async function getDashboardCompetitiveBundle(
     bestMap: mapPerformance.bestMap,
     worstMap: mapPerformance.worstMap,
     weeklyCuriosity: getWeeklyCuriosityFromDataset(ds, streaks, seasonComparison),
+    advancedPerformance: getAdvancedPerformanceStatsFromDataset(ds),
+  };
+}
+
+export function getAdvancedPerformanceStatsFromDataset(
+  dataset: CompetitiveDataset
+): AdvancedPerformanceStats {
+  const { allStats } = dataset;
+
+  const advancedStats = allStats.filter(
+    (s) =>
+      s.damage != null ||
+      s.gcRating != null ||
+      s.doubleKills != null ||
+      s.tripleKills != null ||
+      s.quadKills != null ||
+      s.aces != null
+  );
+
+  const matchIdsWithAdvancedData = new Set(advancedStats.map((s) => s.matchId));
+  const sampleSize = matchIdsWithAdvancedData.size;
+
+  const damageStats = allStats.filter((s) => s.damage != null);
+  const averageDamage = damageStats.length > 0
+    ? Math.round(damageStats.reduce((sum, s) => sum + s.damage!, 0) / damageStats.length)
+    : null;
+
+  const gcRatingStats = allStats.filter((s) => s.gcRating != null);
+  const averageGcRating = gcRatingStats.length > 0
+    ? Number((gcRatingStats.reduce((sum, s) => sum + s.gcRating!, 0) / gcRatingStats.length).toFixed(2))
+    : null;
+
+  const doubleKillsStats = allStats.filter((s) => s.doubleKills != null);
+  const totalDoubleKills = doubleKillsStats.length > 0
+    ? doubleKillsStats.reduce((sum, s) => sum + s.doubleKills!, 0)
+    : null;
+
+  const tripleKillsStats = allStats.filter((s) => s.tripleKills != null);
+  const totalTripleKills = tripleKillsStats.length > 0
+    ? tripleKillsStats.reduce((sum, s) => sum + s.tripleKills!, 0)
+    : null;
+
+  const quadKillsStats = allStats.filter((s) => s.quadKills != null);
+  const totalQuadKills = quadKillsStats.length > 0
+    ? quadKillsStats.reduce((sum, s) => sum + s.quadKills!, 0)
+    : null;
+
+  const acesStats = allStats.filter((s) => s.aces != null);
+  const totalAces = acesStats.length > 0
+    ? acesStats.reduce((sum, s) => sum + s.aces!, 0)
+    : null;
+
+  return {
+    sampleSize,
+    averageDamage,
+    averageGcRating,
+    totalDoubleKills,
+    totalTripleKills,
+    totalQuadKills,
+    totalAces,
   };
 }

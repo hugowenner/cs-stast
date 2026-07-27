@@ -27,6 +27,7 @@ import { MapSpecialistsGrid } from "@/components/dashboard/map-specialists-grid"
 import { RankingTable } from "@/components/ranking/ranking-table";
 import type { RecentMatchCardData } from "@/components/matches/recent-matches-carousel";
 import { SectionContainer } from "@/components/dashboard/section-container";
+import { AdvancedPerformanceSection } from "@/components/dashboard/AdvancedPerformanceSection";
 import { safeQuery } from "@/server/safeQuery";
 import * as dashboardService from "@/server/services/dashboard.service";
 import * as matchService from "@/server/services/match.service";
@@ -67,6 +68,15 @@ const EMPTY_COMPETITIVE_BUNDLE: competitiveService.DashboardCompetitiveBundle = 
   mapWinrates: [],
   bestMap: null,
   worstMap: null,
+  advancedPerformance: {
+    sampleSize: 0,
+    averageDamage: null,
+    averageGcRating: null,
+    totalDoubleKills: null,
+    totalTripleKills: null,
+    totalQuadKills: null,
+    totalAces: null,
+  },
 };
 
 export default async function DashboardPage() {
@@ -120,6 +130,7 @@ export default async function DashboardPage() {
     mapWinrates,
     bestMap,
     worstMap,
+    advancedPerformance,
   } = competitive;
 
   const hottestPlayer = momentum.find((m) => m.status === "up") ?? null;
@@ -194,6 +205,15 @@ export default async function DashboardPage() {
         delay={0.05}
       >
         <HallOfFame records={records} monitoredPlayers={monitoredPlayers} />
+      </SectionContainer>
+
+      {/* ═══ Performance Avançada GC ═══ */}
+      <SectionContainer
+        title="⚡ Performance Avançada GC"
+        subtitle="Métricas reais extraídas da Gamers Club (dano, rating e multikills da temporada)"
+        delay={0.06}
+      >
+        <AdvancedPerformanceSection stats={advancedPerformance} />
       </SectionContainer>
 
       {/* ═══ 3. Últimos Confrontos ═══ */}
