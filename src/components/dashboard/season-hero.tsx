@@ -1,4 +1,4 @@
-import { Trophy, TrendingUp, Compass, Award } from "lucide-react";
+import { Trophy, Award, TrendingUp, Compass } from "lucide-react";
 
 export function SeasonHero({
   seasonLabel,
@@ -13,57 +13,76 @@ export function SeasonHero({
   communityWinrate: number;
   dominantMap: { name: string; percentage: number } | null;
 }) {
+  // "julho de 2026" → "Julho 2026"
+  const label = seasonLabel.replace(" de ", " ").replace(/^\w/, (c) => c.toUpperCase());
+
   return (
-    <div className="glass-panel glow-ring relative overflow-hidden rounded-2xl border border-white/10 p-5 sm:p-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-gradient-to-r from-white/[0.01] to-white/[0.03]">
-      <div className="flex items-center gap-3">
-        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent-violet/20 text-accent-violet">
-          <Trophy className="size-5" />
-        </div>
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Temporada Atual
+    <div className="glass-panel relative overflow-hidden rounded-2xl border border-white/[0.07] px-5 py-4">
+      {/* Linha 1: header compacto */}
+      <div className="flex items-center justify-between mb-3.5">
+        <div className="flex items-center gap-2">
+          <Trophy className="size-3.5 shrink-0 text-accent-violet" />
+          <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground/55">
+            Season 1 · {label}
           </p>
-          <h1 className="text-lg font-bold text-white capitalize">{seasonLabel}</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">{totalMatches} partidas analisadas</p>
         </div>
+        <p className="text-[9px] tabular-nums text-muted-foreground/40">
+          {totalMatches} partidas
+        </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 sm:gap-5 divide-x divide-white/5">
-        <div className="text-center sm:text-right px-2 sm:px-4 first:pl-0">
-          <div className="inline-flex items-center gap-1 text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-            <Award className="size-3 text-status-warning" />
-            MVP
+      {/* Linha 2: MVP (protagonista) + métricas secundárias */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {/* MVP */}
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-status-warning/12">
+            <Award className="size-4 text-status-warning" />
           </div>
-          <p className="text-sm sm:text-base font-bold text-white truncate mt-0.5">
-            {bestPlayer?.nickname ?? "—"}
-          </p>
-          <p className="text-[10px] text-muted-foreground">
-            {bestPlayer?.rating ? `${bestPlayer.rating.toFixed(2)} Rating` : "Sem dados"}
-          </p>
+          <div className="min-w-0">
+            <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted-foreground/50 leading-none mb-1">
+              MVP da Temporada
+            </p>
+            <p className="text-xl font-black text-white leading-none truncate">
+              {bestPlayer?.nickname ?? "—"}
+            </p>
+            <p className="text-[10px] font-bold text-status-warning/80 tabular-nums mt-1 leading-none">
+              {bestPlayer ? `${bestPlayer.rating.toFixed(2)} Rating` : "Sem dados"}
+            </p>
+          </div>
         </div>
 
-        <div className="text-center sm:text-right px-2 sm:px-4">
-          <div className="inline-flex items-center gap-1 text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-            <TrendingUp className="size-3 text-accent-cyan" />
-            Winrate
+        {/* Métricas secundárias */}
+        <div className="flex items-center gap-5 sm:gap-6 shrink-0 pl-0 sm:pl-4">
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-1">
+              <TrendingUp className="size-2.5 text-accent-cyan shrink-0" />
+              <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted-foreground/50 leading-none">
+                Winrate
+              </p>
+            </div>
+            <p className="text-lg font-black text-white tabular-nums leading-none">
+              {communityWinrate}%
+            </p>
           </div>
-          <p className="text-sm sm:text-base font-black text-white mt-0.5">
-            {communityWinrate}%
-          </p>
-          <p className="text-[10px] text-muted-foreground">da comunidade</p>
-        </div>
 
-        <div className="text-center sm:text-right px-2 sm:px-4">
-          <div className="inline-flex items-center gap-1 text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-            <Compass className="size-3 text-accent-violet" />
-            Mapa
+          <div className="h-7 w-px bg-white/[0.06] shrink-0" />
+
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-1">
+              <Compass className="size-2.5 text-accent-violet shrink-0" />
+              <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted-foreground/50 leading-none">
+                Mapa Favorito
+              </p>
+            </div>
+            <p className="text-base font-black text-white leading-none truncate">
+              {dominantMap?.name ?? "—"}
+            </p>
+            {dominantMap?.percentage != null && (
+              <p className="text-[9px] text-muted-foreground/45 tabular-nums leading-none">
+                {dominantMap.percentage}%
+              </p>
+            )}
           </div>
-          <p className="text-sm sm:text-base font-bold text-white truncate mt-0.5">
-            {dominantMap?.name ?? "—"}
-          </p>
-          <p className="text-[10px] text-muted-foreground">
-            {dominantMap?.percentage ? `${dominantMap.percentage}% dos jogos` : "Sem dados"}
-          </p>
         </div>
       </div>
     </div>

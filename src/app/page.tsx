@@ -5,6 +5,7 @@ import { PlayerAvatar } from "@/components/players/player-avatar";
 import { AchievementFeedItem } from "@/components/achievements/achievement-feed-item";
 import { MapWinrateChart } from "@/components/charts/map-winrate-chart";
 import { SeasonHero } from "@/components/dashboard/season-hero";
+import { MuralDaTemporada } from "@/components/dashboard/mural-da-temporada";
 import { SectionHeader } from "@/components/dashboard/section-header";
 import { InsightTiles } from "@/components/dashboard/insight-tiles";
 import { DuoParceriasSection } from "@/components/dashboard/duo-parcerias-section";
@@ -33,7 +34,7 @@ import * as competitiveService from "@/server/services/competitive.service";
 import * as achievementService from "@/server/services/achievement.service";
 import * as rivalryService from "@/server/services/rivalry.service";
 import Link from "next/link";
-import { Flame, ShieldAlert, Swords } from "lucide-react";
+import { Flame, ShieldAlert, Swords, RefreshCw, Crosshair, Zap, TrendingUp, Target } from "lucide-react";
 import { FORMA_STYLE } from "@/lib/forma";
 
 export const dynamic = "force-dynamic";
@@ -143,25 +144,26 @@ export default async function DashboardPage() {
           />
         </FadeIn>
 
-        {/* 5 stat tiles compactos */}
+        {/* KPI pills compactos */}
         <FadeIn delay={0.03}>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+          <div className="flex flex-wrap gap-2">
             {[
-              { label: "Rounds",    num: summary.community.totalRounds,   suffix: "",  decimals: 0 },
-              { label: "Kills",     num: summary.community.totalKills,     suffix: "",  decimals: 0 },
-              { label: "ADR Médio", num: summary.community.avgAdr,         suffix: "",  decimals: 0 },
-              { label: "K/D Médio", num: summary.community.avgKd,          suffix: "",  decimals: 2 },
-              { label: "HS%",       num: summary.community.avgHsPercent,   suffix: "%", decimals: 0 },
-            ].map((stat) => (
-              <div key={stat.label} className="glass-panel rounded-xl border border-white/[0.06] px-4 py-3 text-center">
-                <p className="text-[9px] uppercase tracking-widest text-muted-foreground/65 font-bold">{stat.label}</p>
-                <p className="text-lg font-black text-white mt-1 tabular-nums">
-                  <AnimatedNumber
-                    value={stat.num}
-                    decimals={stat.decimals}
-                    suffix={stat.suffix}
-                  />
-                </p>
+              { label: "Rounds", num: summary.community.totalRounds,  suffix: "",  decimals: 0, Icon: RefreshCw },
+              { label: "Kills",  num: summary.community.totalKills,    suffix: "",  decimals: 0, Icon: Crosshair },
+              { label: "ADR",    num: summary.community.avgAdr,        suffix: "",  decimals: 0, Icon: Zap       },
+              { label: "K/D",    num: summary.community.avgKd,         suffix: "",  decimals: 2, Icon: TrendingUp},
+              { label: "HS%",    num: summary.community.avgHsPercent,  suffix: "%", decimals: 0, Icon: Target    },
+            ].map(({ label, num, suffix, decimals, Icon }) => (
+              <div key={label} className="flex items-center gap-2 glass-panel rounded-xl border border-white/[0.06] px-3 py-2">
+                <Icon className="size-3 shrink-0 text-muted-foreground/40" />
+                <div>
+                  <p className="text-sm font-black text-white tabular-nums leading-none">
+                    <AnimatedNumber value={num} decimals={decimals} suffix={suffix} />
+                  </p>
+                  <p className="text-[8px] uppercase tracking-widest text-muted-foreground/50 font-bold leading-none mt-0.5">
+                    {label}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
@@ -175,6 +177,15 @@ export default async function DashboardPage() {
           worstMap={worstMap}
         />
       </section>
+
+      {/* ═══ Mural da Temporada ═══ */}
+      <SectionContainer
+        title="📊 Mural da Temporada"
+        subtitle="Quadro resumido de performance, arquétipos e estatísticas competitivas"
+        delay={0.04}
+      >
+        <MuralDaTemporada competitive={competitive} />
+      </SectionContainer>
 
       {/* ═══ 2. 🏆 Hall da Fama ═══ */}
       <SectionContainer
@@ -204,7 +215,7 @@ export default async function DashboardPage() {
         subtitle="Posição atual baseada na performance geral das partidas comunidade"
         delay={0.09}
       >
-        <RankingTable entries={powerRanking} formaStyle={FORMA_STYLE} delay={0.1} className="w-full" />
+        <RankingTable entries={powerRanking.slice(0, 5)} formaStyle={FORMA_STYLE} delay={0.1} className="w-full" />
       </SectionContainer>
 
       {/* ═══ 5. Destaque da Semana ═══ */}

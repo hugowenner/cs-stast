@@ -11,6 +11,7 @@ export interface PowerRankingEntry {
   kd: number;
   matchCount: number;
   forma: string;
+  hsPercent: number;
 }
 
 export interface PlayerEvolutionEntry {
@@ -209,6 +210,8 @@ function getPowerRankingFromDataset(dataset: CompetitiveDataset, take = 5): Powe
     const totalKills = stats.reduce((sum, s) => sum + s.kills, 0);
     const totalDeaths = stats.reduce((sum, s) => sum + s.deaths, 0);
     const kd = totalDeaths > 0 ? totalKills / totalDeaths : totalKills;
+    const totalHeadshots = stats.reduce((sum, s) => sum + s.headshots, 0);
+    const hsPercent = totalKills > 0 ? (totalHeadshots / totalKills) * 100 : 0;
 
     let wins = 0;
     for (const s of stats) if (isWin(s)) wins++;
@@ -226,6 +229,7 @@ function getPowerRankingFromDataset(dataset: CompetitiveDataset, take = 5): Powe
       kd: Number(kd.toFixed(2)),
       matchCount: totalMatches,
       forma,
+      hsPercent: Math.round(hsPercent),
     });
   }
 
@@ -262,7 +266,7 @@ function getPlayerEvolutionsFromDataset(
   return entries.sort((a, b) => Math.abs(b.diffPercent) - Math.abs(a.diffPercent)).slice(0, take);
 }
 
-function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): PlayerArchetype[] {
+export function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): PlayerArchetype[] {
   const MIN_MATCHES_BASIC = 3;
   const MIN_KILLS_FOR_HS = 25;
 
@@ -296,7 +300,15 @@ function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): PlayerArch
     const totalEntryKills = stats.reduce((sum, s) => sum + s.entryKills, 0);
     const totalClutchWins = stats.reduce(
       (sum, s) =>
-        sum + Math.max(s.clutchesWon, s.clutch1v1Wins + s.clutch1v2Wins + s.clutch1v3Wins + s.clutch1v4Wins + s.clutch1v5Wins),
+        sum +
+        Math.max(
+          s.clutchesWon,
+          (s.clutch1v1Wins || 0) +
+            (s.clutch1v2Wins || 0) +
+            (s.clutch1v3Wins || 0) +
+            (s.clutch1v4Wins || 0) +
+            (s.clutch1v5Wins || 0),
+        ),
       0,
     );
     const totalAssists = stats.reduce((sum, s) => sum + s.assists, 0);
@@ -1629,7 +1641,7 @@ export async function getDashboardCompetitiveBundle(
     .slice(0, 3);
 
   return {
-    powerRanking: getPowerRankingFromDataset(ds, 5),
+    powerRanking: getPowerRankingFromDataset(ds, 15),
     momentum: getPlayerMomentumFromDataset(ds, 3),
     decisive,
     archetypes: getPlayerArchetypesFromDataset(ds),
