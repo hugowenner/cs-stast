@@ -2,6 +2,9 @@
 
 - [x] Modificar `prisma/schema.prisma` adicionando `levelGc` em `Player` e `PlayerMatchStats`.
 - [x] Criar e executar a migration Prisma (`prisma migrate dev` localmente).
+- [x] **Fase 2: Ajuste nos Componentes Internos**
+  - [x] Limpar `SectionHeader` e margens de `src/components/dashboard/duo-parcerias-section.tsx`
+  - [x] Ajustar padding de `src/components/dashboard/performance-extremes-section.tsx`
 - [x] **Fase 4: Arquétipos por Percentil**
   - [x] Update `getPlayerArchetypesFromDataset` in `src/server/services/competitive.service.ts`
   - [x] Update or add unit tests for archetypes in `src/server/services/competitive.test.ts`
