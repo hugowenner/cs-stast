@@ -6,7 +6,7 @@ import {
 } from "@/server/analytics/session.analytics";
 import type { SessionSummaryDTO } from "@/server/dtos/sessionSummary.dto";
 
-export function listSessions(params: { skip?: number; take?: number }) {
+export function listSessions(params: { skip?: number; take?: number; where?: any }) {
   return sessionRepo.listSessions(params);
 }
 

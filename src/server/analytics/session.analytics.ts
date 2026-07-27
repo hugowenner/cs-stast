@@ -501,3 +501,173 @@ export function computeSmartSession(
     bestDuo,
   };
 }
+
+export interface SimpleSessionSummary {
+  id: string;
+  name: string;
+  date: Date;
+  totalMatches: number;
+  wins: number;
+  losses: number;
+  winrate: number;
+  eloChangeGroup: number;
+  ratingAvg: number;
+  adrAvg: number;
+  hsPercentage: number;
+  durationText: string;
+  mvpName: string;
+  mvpRating: number;
+  mapNames: string[];
+  players: { id: string; nickname: string; avatarUrl: string | null }[];
+  mood: "excellent" | "good" | "stable" | "difficult" | "disaster";
+}
+
+export function getSessionMood(winrate: number, eloChangeGroup: number): SimpleSessionSummary["mood"] {
+  if (winrate >= 70 && eloChangeGroup > 0) return "excellent";
+  if (winrate >= 50 && eloChangeGroup >= 0) return "good";
+  if (winrate < 50 && eloChangeGroup < 0) return "difficult";
+  if (winrate < 30 && eloChangeGroup <= -35) return "disaster";
+  return "stable";
+}
+
+export type DbSessionListItem = Awaited<ReturnType<typeof import("@/server/repositories/session.repository").listSessions>>[number];
+
+export function computeSimpleSessionSummary(session: DbSessionListItem): SimpleSessionSummary {
+  const matches = session.matches;
+  const totalMatches = matches.length;
+
+  let wins = 0;
+  let losses = 0;
+  let totalRating = 0;
+  let totalAdr = 0;
+  let totalKills = 0;
+  let totalHeadshots = 0;
+  let ratingCount = 0;
+  let eloChangeGroup = 0;
+
+  const playerRatings = new Map<string, { sum: number; count: number; nickname: string }>();
+  const uniquePlayersMap = new Map<string, { id: string; nickname: string; avatarUrl: string | null }>();
+  const mapNamesSet = new Set<string>();
+
+  matches.forEach((match) => {
+    mapNamesSet.add(match.map.name);
+    let groupWins = 0;
+    let groupLosses = 0;
+
+    match.playerStats.forEach((stat) => {
+      eloChangeGroup += stat.eloAfter - stat.eloBefore;
+      totalRating += stat.rating;
+      totalAdr += stat.adr;
+      totalKills += stat.kills;
+      totalHeadshots += stat.headshots;
+      ratingCount++;
+
+      const scoreSelf = stat.team === "A" ? match.scoreTeamA : match.scoreTeamB;
+      const scoreOpp = stat.team === "A" ? match.scoreTeamB : match.scoreTeamA;
+      if (scoreSelf > scoreOpp) groupWins++;
+      else if (scoreSelf < scoreOpp) groupLosses++;
+
+      // MVP tracking
+      const p = playerRatings.get(stat.playerId) ?? { sum: 0, count: 0, nickname: stat.player.nickname };
+      p.sum += stat.rating;
+      p.count++;
+      playerRatings.set(stat.playerId, p);
+
+      // Unique players
+      uniquePlayersMap.set(stat.playerId, {
+        id: stat.playerId,
+        nickname: stat.player.nickname,
+        avatarUrl: stat.player.avatarUrl,
+      });
+    });
+
+    if (groupWins > groupLosses) wins++;
+    else if (groupWins < groupLosses) losses++;
+  });
+
+  const winrate = totalMatches > 0 ? (wins / totalMatches) * 100 : 50;
+  const ratingAvg = ratingCount > 0 ? totalRating / ratingCount : 0;
+  const adrAvg = ratingCount > 0 ? totalAdr / ratingCount : 0;
+  const hsPercentage = totalKills > 0 ? (totalHeadshots / totalKills) * 100 : 0;
+
+  // Duration
+  let durationText = "—";
+  if (totalMatches > 0) {
+    const playTimes = matches.map((m) => new Date(m.playedAt).getTime());
+    const minTime = Math.min(...playTimes);
+    const maxTime = Math.max(...playTimes);
+    const durationMs = maxTime - minTime + 45 * 60 * 1000; // adding 45 minutes for last match
+    const hours = Math.floor(durationMs / (3600 * 1000));
+    const minutes = Math.floor((durationMs % (3600 * 1000)) / (60 * 1000));
+    durationText = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+  }
+
+  // MVP
+  let mvpName = "—";
+  let mvpRating = 0;
+  playerRatings.forEach((p) => {
+    const avg = p.sum / p.count;
+    if (avg > mvpRating) {
+      mvpRating = avg;
+      mvpName = p.nickname;
+    }
+  });
+
+  return {
+    id: session.id,
+    name: session.name,
+    date: session.date,
+    totalMatches,
+    wins,
+    losses,
+    winrate,
+    eloChangeGroup,
+    ratingAvg: Number(ratingAvg.toFixed(2)),
+    adrAvg: Number(adrAvg.toFixed(1)),
+    hsPercentage: Math.round(hsPercentage),
+    durationText,
+    mvpName,
+    mvpRating: Number(mvpRating.toFixed(2)),
+    mapNames: Array.from(mapNamesSet),
+    players: Array.from(uniquePlayersMap.values()),
+    mood: getSessionMood(winrate, eloChangeGroup),
+  };
+}
+
+export interface SessionsOverview {
+  totalSessions: number;
+  lastSessionDate: Date | null;
+  monthlyActiveDays: number;
+  avgMatchesPerSession: number;
+  bestSession: { name: string; ratingAvg: number } | null;
+}
+
+export function calculateSessionsOverview(sessions: SimpleSessionSummary[]): SessionsOverview {
+  const totalSessions = sessions.length;
+  const lastSessionDate = sessions[0]?.date ?? null;
+
+  const now = new Date();
+  const currentMonthSessions = sessions.filter((s) => {
+    const d = new Date(s.date);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  const monthlyActiveDays = currentMonthSessions.length;
+
+  const totalMatches = sessions.reduce((sum, s) => sum + s.totalMatches, 0);
+  const avgMatchesPerSession = totalSessions > 0 ? totalMatches / totalSessions : 0;
+
+  let bestSession: SessionsOverview["bestSession"] = null;
+  sessions.forEach((s) => {
+    if (!bestSession || s.ratingAvg > bestSession.ratingAvg) {
+      bestSession = { name: s.name, ratingAvg: s.ratingAvg };
+    }
+  });
+
+  return {
+    totalSessions,
+    lastSessionDate,
+    monthlyActiveDays,
+    avgMatchesPerSession: Number(avgMatchesPerSession.toFixed(1)),
+    bestSession,
+  };
+}

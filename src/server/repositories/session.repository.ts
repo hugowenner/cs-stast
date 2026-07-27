@@ -25,9 +25,55 @@ export function renameSession(id: string, name: string) {
   return prisma.session.update({ where: { id }, data: { name } });
 }
 
-export function listSessions(params: { skip?: number; take?: number } = {}) {
+export function listSessions(params: { skip?: number; take?: number; where?: any } = {}) {
   return prisma.session.findMany({
-    where: trackedSessionWhere(),
+    where: {
+      ...trackedSessionWhere(),
+      ...(params.where || {}),
+    },
+    select: {
+      id: true,
+      name: true,
+      date: true,
+      createdAt: true,
+      matches: {
+        where: trackedMatchWhere(),
+        select: {
+          id: true,
+          playedAt: true,
+          scoreTeamA: true,
+          scoreTeamB: true,
+          map: {
+            select: {
+              name: true,
+            },
+          },
+          playerStats: {
+            where: {
+              player: trackedPlayerWhere(),
+            },
+            select: {
+              rating: true,
+              kills: true,
+              headshots: true,
+              adr: true,
+              eloBefore: true,
+              eloAfter: true,
+              team: true,
+              playerId: true,
+              player: {
+                select: {
+                  id: true,
+                  nickname: true,
+                  avatarUrl: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { playedAt: "asc" },
+      },
+    },
     skip: params.skip,
     take: params.take ?? 20,
     orderBy: { date: "desc" },
