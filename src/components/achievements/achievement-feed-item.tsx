@@ -2,7 +2,17 @@
 
 import { Trophy, Star, Flame, Zap } from "lucide-react";
 import { PlayerAvatar } from "@/components/players/player-avatar";
-import type { RecentUnlock } from "@/server/services/achievement.service";
+
+// Tipo narrower: só os campos usados pelo componente.
+// Evita acoplamento ao tipo Prisma completo e permite reutilização em páginas
+// que não carregam o Player com todos os campos (ex: /players/[id]).
+type FeedEntry = {
+  id: string;
+  earnedAt: Date;
+  achievement: { tier: string; name: string };
+  player: { nickname: string; avatarUrl: string | null };
+  match?: { map?: { name: string } | null } | null;
+};
 
 const TIER: Record<string, { color: string; bg: string; border: string; label: string }> = {
   bronze:    { color: "text-[#c97a48]",      bg: "bg-[#c97a48]/8",      border: "border-[#c97a48]/20",     label: "Comum"    },
@@ -22,7 +32,7 @@ export function AchievementFeedItem({
   entry,
   index = 0,
 }: {
-  entry: RecentUnlock;
+  entry: FeedEntry;
   index?: number;
 }) {
   const tier = TIER[entry.achievement.tier] ?? TIER.bronze;
