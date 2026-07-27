@@ -28,12 +28,15 @@ function createPrismaClient(): PrismaClientPg {
       // require() condicional: @prisma/adapter-better-sqlite3 está em devDependencies e usa
       // bindings nativos — não pode ser bundled pelo Webpack. Importar no topo causaria falha
       // em produção (Vercel) mesmo que o branch nunca fosse executado.
+      // turbopackIgnore/webpackIgnore: impede que o bundler tente resolver esses módulos
+      // em build time. O branch SQLite nunca é atingido em produção (DATABASE_URL é postgres);
+      // sem o comment, o Turbopack falha com "Module not found" mesmo sem executar o código.
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3") as {
+      const { PrismaBetterSqlite3 } = require(/* turbopackIgnore: true */ /* webpackIgnore: true */ "@prisma/adapter-better-sqlite3") as {
         PrismaBetterSqlite3: typeof PrismaBetterSqlite3Type;
       };
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { PrismaClient: SqliteClient } = require("@/generated/prisma-sqlite") as {
+      const { PrismaClient: SqliteClient } = require(/* turbopackIgnore: true */ /* webpackIgnore: true */ "@/generated/prisma-sqlite") as {
         PrismaClient: typeof PrismaClientSqlite;
       };
       const adapter = new PrismaBetterSqlite3({ url });
