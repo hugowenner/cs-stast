@@ -117,6 +117,7 @@ export interface HallOfFameRecord {
   playerName: string;
   value: string;
   detail: string;
+  matchId?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -856,11 +857,46 @@ function getHallOfFameRecordsFromDataset(dataset: CompetitiveDataset): HallOfFam
   const maxAdr = findBestBy("adr");
   const eloLeader = findBestBy("eloAfter");
 
+  // Maior K/D
+  let maxKdStat: (typeof dataset.allStats)[number] | null = null;
+  let maxKdVal = 0;
+  for (const s of dataset.allStats) {
+    if (s.deaths === 0 && s.kills === 0) continue;
+    const kd = s.deaths > 0 ? s.kills / s.deaths : s.kills;
+    if (!maxKdStat || kd > maxKdVal) {
+      maxKdStat = s;
+      maxKdVal = kd;
+    }
+  }
+
+  // Maior HS% (mínimo de 10 kills para relevância)
+  let maxHsStat: (typeof dataset.allStats)[number] | null = null;
+  let maxHsVal = 0;
+  for (const s of dataset.allStats) {
+    if (s.kills >= 10) {
+      const hs = (s.headshots / s.kills) * 100;
+      if (!maxHsStat || hs > maxHsVal) {
+        maxHsStat = s;
+        maxHsVal = hs;
+      }
+    }
+  }
+  if (!maxHsStat) {
+    for (const s of dataset.allStats) {
+      if (s.kills > 0) {
+        const hs = (s.headshots / s.kills) * 100;
+        if (!maxHsStat || hs > maxHsVal) {
+          maxHsStat = s;
+          maxHsVal = hs;
+        }
+      }
+    }
+  }
+
   let maxStreak = 0;
   let maxStreakPlayer = "N/A";
 
   for (const player of dataset.activePlayers) {
-    // stats já ordenado desc; percorremos do mais antigo pro mais novo pra achar a maior sequência.
     const stats = [...(dataset.statsByPlayer.get(player.id) ?? [])].reverse();
     let currentStreak = 0;
     let playerMaxStreak = 0;
@@ -889,6 +925,26 @@ function getHallOfFameRecordsFromDataset(dataset: CompetitiveDataset): HallOfFam
       playerName: playerName(maxRating),
       value: maxRating.rating.toFixed(2),
       detail: `Registrado no mapa ${maxRating.match.map.name}`,
+      matchId: maxRating.match.id,
+    });
+  }
+  if (maxKdStat) {
+    const calculatedKd = maxKdStat.deaths > 0 ? maxKdStat.kills / maxKdStat.deaths : maxKdStat.kills;
+    records.push({
+      category: "Maior K/D em Jogo",
+      playerName: playerName(maxKdStat),
+      value: `${calculatedKd.toFixed(2)} K/D`,
+      detail: `Registrado no mapa ${maxKdStat.match.map.name}`,
+      matchId: maxKdStat.match.id,
+    });
+  }
+  if (maxAdr) {
+    records.push({
+      category: "Maior ADR em Jogo",
+      playerName: playerName(maxAdr),
+      value: `${maxAdr.adr.toFixed(1)} ADR`,
+      detail: `Dano médio por round na ${maxAdr.match.map.name}`,
+      matchId: maxAdr.match.id,
     });
   }
   if (maxKills) {
@@ -897,14 +953,17 @@ function getHallOfFameRecordsFromDataset(dataset: CompetitiveDataset): HallOfFam
       playerName: playerName(maxKills),
       value: `${maxKills.kills} kills`,
       detail: `Partida no mapa ${maxKills.match.map.name}`,
+      matchId: maxKills.match.id,
     });
   }
-  if (maxAdr) {
+  if (maxHsStat) {
+    const calculatedHs = maxHsStat.kills > 0 ? (maxHsStat.headshots / maxHsStat.kills) * 100 : 0;
     records.push({
-      category: "Maior ADR em Jogo",
-      playerName: playerName(maxAdr),
-      value: maxAdr.adr.toFixed(1),
-      detail: `Dano médio por round na ${maxAdr.match.map.name}`,
+      category: "Maior HS% em Jogo",
+      playerName: playerName(maxHsStat),
+      value: `${calculatedHs.toFixed(0)}% HS`,
+      detail: `Registrado no mapa ${maxHsStat.match.map.name}`,
+      matchId: maxHsStat.match.id,
     });
   }
   if (maxStreak > 0) {
@@ -919,8 +978,9 @@ function getHallOfFameRecordsFromDataset(dataset: CompetitiveDataset): HallOfFam
     records.push({
       category: "Pico de Rating do Hub",
       playerName: playerName(eloLeader),
-      value: `${eloLeader.eloAfter}`,
-      detail: "Rating calculado pelo CS2 Stats Hub",
+      value: `${eloLeader.eloAfter} pontos`,
+      detail: "Ranking interno CS2 Stats Hub",
+      matchId: eloLeader.match.id,
     });
   }
 
