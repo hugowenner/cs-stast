@@ -49,7 +49,7 @@ export function AchievementCategory({
       {/* Cards grid */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {entries.map((entry) => (
-          <AchievementCard key={entry.code} entry={entry} unlockCount={entry.unlockCount} />
+          <AchievementCard key={entry.code} entry={entry} />
         ))}
       </div>
     </section>
