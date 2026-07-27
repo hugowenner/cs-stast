@@ -37,6 +37,7 @@ export function normalizeGamersClubMatch(raw: GamersClubMatchPayload): SyncMatch
     scoreTeamB: toNumber(jogos.score_b),
     durationSeconds: 0,
     demoUrl: jogos.demo ? String(jogos.demo) : undefined,
+    roundsJson: jogos.rounds ?? undefined,
     players,
   };
 }
@@ -70,6 +71,8 @@ function normalizeTeam(
       tradeKills: toNumber(entry.trade),
       clutchesWon: toNumber(entry.clutch_won),
       flashAssists: toNumber(entry.flash_assist),
+      damage: entry.damage !== undefined ? toNumber(entry.damage) : undefined,
+      gcRating: entry.rating_points !== undefined ? toNumber(entry.rating_points) : undefined,
     };
   });
 }

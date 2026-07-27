@@ -80,6 +80,7 @@ model Match {
   scoreTeamB        Int
   durationSeconds   Int
   demoUrl           String?
+  roundsJson        Json?
 
   /// Quantos jogadores monitorados (TrackedPlayer.active = true) participaram desta
   /// partida, calculado uma vez na ingestão (src/server/services/match.service.ts) e
@@ -118,6 +119,13 @@ model PlayerMatchStats {
   rating Float
   kast   Float
   impact Float
+
+  damage       Int?
+  gcRating     Float?
+  doubleKills  Int?
+  tripleKills  Int?
+  quadKills    Int?
+  aces         Int?
 
   entryKills  Int
   entryDeaths Int

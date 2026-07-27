@@ -30,6 +30,12 @@ export const syncPlayerMatchStatsSchema = z.object({
   tradeKills: z.number().int().min(0).default(0),
   clutchesWon: z.number().int().min(0).default(0).optional(),
   flashAssists: z.number().int().min(0).default(0).optional(),
+  damage: z.number().int().min(0).optional(),
+  gcRating: z.number().min(0).optional(),
+  doubleKills: z.number().int().min(0).optional(),
+  tripleKills: z.number().int().min(0).optional(),
+  quadKills: z.number().int().min(0).optional(),
+  aces: z.number().int().min(0).optional(),
   clutches: z
     .object({
       "1v1": clutchTierSchema.optional(),
@@ -51,6 +57,7 @@ export const syncMatchSchema = z.object({
   scoreTeamB: z.number().int().min(0),
   durationSeconds: z.number().int().min(0).default(0),
   demoUrl: z.string().url().or(z.string()).optional(),
+  roundsJson: z.unknown().optional(),
   players: z.array(syncPlayerMatchStatsSchema).min(1),
 });
 

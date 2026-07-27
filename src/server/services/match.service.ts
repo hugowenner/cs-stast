@@ -165,6 +165,32 @@ export async function ingestMatchSync(
       const player = playerBySteamId.get(p.steamId)!;
       const rating = ratingByPlayerId.get(player.id)!;
       const elo = eloByPlayerId.get(player.id)!;
+
+      // Calcular decomposição de multikills baseando-se em killsDetail, se presente
+      let doubleKills: number | null = null;
+      let tripleKills: number | null = null;
+      let quadKills: number | null = null;
+      let aces: number | null = null;
+
+      if (p.killsDetail && p.killsDetail.length > 0) {
+        const killsByRound = new Map<number, number>();
+        for (const kill of p.killsDetail) {
+          killsByRound.set(kill.roundNumber, (killsByRound.get(kill.roundNumber) ?? 0) + 1);
+        }
+        
+        doubleKills = 0;
+        tripleKills = 0;
+        quadKills = 0;
+        aces = 0;
+
+        for (const count of killsByRound.values()) {
+          if (count === 2) doubleKills++;
+          else if (count === 3) tripleKills++;
+          else if (count === 4) quadKills++;
+          else if (count >= 5) aces++;
+        }
+      }
+
       return {
         playerId: player.id,
         team: p.team as MatchTeam,
@@ -194,6 +220,12 @@ export async function ingestMatchSync(
         levelGc: p.levelGc ?? null,
         clutchesWon: p.clutchesWon ?? 0,
         flashAssists: p.flashAssists ?? 0,
+        damage: p.damage ?? null,
+        gcRating: p.gcRating ?? null,
+        doubleKills,
+        tripleKills,
+        quadKills,
+        aces,
       };
     });
 
@@ -255,6 +287,7 @@ export async function ingestMatchSync(
       playerStats,
       events,
       demoUrl: input.demoUrl ?? null,
+      roundsJson: input.roundsJson !== undefined ? (input.roundsJson as any) : undefined,
     });
 
     // Rivalidade é estatística coletiva (correlaciona 2 jogadores) — nenhuma estatística

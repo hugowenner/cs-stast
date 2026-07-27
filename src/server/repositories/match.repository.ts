@@ -90,6 +90,12 @@ export interface CreateMatchPlayerStatInput {
   levelGc?: number | null;
   clutchesWon: number;
   flashAssists: number;
+  damage?: number | null;
+  gcRating?: number | null;
+  doubleKills?: number | null;
+  tripleKills?: number | null;
+  quadKills?: number | null;
+  aces?: number | null;
 }
 
 export interface CreateMatchEventInput {
@@ -113,6 +119,7 @@ export interface CreateMatchInput {
   playerStats: CreateMatchPlayerStatInput[];
   events: CreateMatchEventInput[];
   demoUrl?: string | null;
+  roundsJson?: Prisma.InputJsonValue | undefined;
 }
 
 /**
@@ -133,6 +140,7 @@ export function createMatchWithStats(input: CreateMatchInput) {
         durationSeconds: input.durationSeconds,
         trackedPlayersCount: input.trackedPlayersCount,
         demoUrl: input.demoUrl ?? null,
+        roundsJson: input.roundsJson ?? undefined,
       },
     });
 

@@ -92,9 +92,14 @@ describe("normalizeGamersClubMatch", () => {
       kast: 65,
       entryKills: 1,
       levelGc: 14,
+      damage: 1939,
     });
     // player.avatar é path relativo ("players/avatar/757573/757573"), não URL — omitido.
     expect(costa?.avatarUrl).toBeUndefined();
+
+    // Validar timeline de rounds
+    expect(result.roundsJson).toBeInstanceOf(Array);
+    expect(result.roundsJson).toHaveLength(2);
   });
 
   it("produz um resultado real que passa na validação Zod de POST /api/sync/match", () => {
