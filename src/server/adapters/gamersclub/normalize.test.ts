@@ -114,4 +114,22 @@ describe("normalizeGamersClubMatch", () => {
       "de_algumMapaNovo",
     );
   });
+
+  it("aceita gcRating negativo e o preserva sem alteração", () => {
+    const result = normalizeGamersClubMatch({
+      id: "123",
+      jogos: {
+        players: {
+          team_a: [
+            {
+              nb_kill: "10",
+              rating_points: "-1.5",
+              player: { plSteamID64: "123" }
+            }
+          ]
+        }
+      }
+    });
+    expect(result.players[0].gcRating).toBe(-1.5);
+  });
 });

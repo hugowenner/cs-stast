@@ -31,7 +31,7 @@ export const syncPlayerMatchStatsSchema = z.object({
   clutchesWon: z.number().int().min(0).default(0).optional(),
   flashAssists: z.number().int().min(0).default(0).optional(),
   damage: z.number().int().min(0).optional(),
-  gcRating: z.number().min(0).optional(),
+  gcRating: z.number().optional(),
   doubleKills: z.number().int().min(0).optional(),
   tripleKills: z.number().int().min(0).optional(),
   quadKills: z.number().int().min(0).optional(),
