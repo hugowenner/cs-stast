@@ -31,15 +31,6 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
 
   return (
     <section className="mt-2">
-      <div className="mb-4">
-        <h2 className="text-sm font-bold text-white flex items-center gap-2">
-          🏆 Hall da Fama
-        </h2>
-        <p className="text-[10px] text-muted-foreground/65 mt-0.5">
-          Recordes históricos e picos de performance da temporada
-        </p>
-      </div>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
         {records.map((record) => {
           // Busca o jogador monitorado correspondente ao apelido para pegar o avatarUrl e o ID correto

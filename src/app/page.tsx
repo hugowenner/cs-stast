@@ -190,7 +190,7 @@ export default async function DashboardPage() {
       {/* ═══ 2. 🏆 Hall da Fama ═══ */}
       <SectionContainer
         title="🏆 Hall da Fama"
-        subtitle="Os recordistas da temporada e maiores pontuações"
+        subtitle="Recordes históricos e maiores picos de performance da temporada"
         delay={0.05}
       >
         <HallOfFame records={records} monitoredPlayers={monitoredPlayers} />
