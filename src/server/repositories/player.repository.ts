@@ -151,3 +151,69 @@ export async function repairTrackedPlayerLinks(): Promise<number> {
 
   return fixed;
 }
+
+export async function listPlayersWithBasicStats() {
+  const players = await prisma.player.findMany({
+    where: trackedPlayerWhere(),
+    select: {
+      id: true,
+      nickname: true,
+      avatarUrl: true,
+      levelGc: true,
+    },
+    orderBy: { nickname: "asc" },
+  });
+
+  const seasonStart = new Date("2026-07-01T00:00:00Z");
+
+  const seasonAverages = await prisma.playerMatchStats.groupBy({
+    by: ["playerId"],
+    _avg: {
+      rating: true,
+    },
+    where: {
+      player: {
+        trackedPlayer: {
+          active: true,
+        },
+      },
+      match: {
+        playedAt: {
+          gte: seasonStart,
+        },
+      },
+    },
+  });
+
+  const careerAverages = await prisma.playerMatchStats.groupBy({
+    by: ["playerId"],
+    _avg: {
+      rating: true,
+    },
+    where: {
+      player: {
+        trackedPlayer: {
+          active: true,
+        },
+      },
+    },
+  });
+
+  const seasonRatingByPlayer = Object.fromEntries(
+    seasonAverages.map((r) => [r.playerId, r._avg.rating])
+  );
+  const careerRatingByPlayer = Object.fromEntries(
+    careerAverages.map((r) => [r.playerId, r._avg.rating])
+  );
+
+  return players.map((p) => {
+    const seasonRating = seasonRatingByPlayer[p.id];
+    const careerRating = careerRatingByPlayer[p.id];
+    const finalRating = seasonRating ?? careerRating ?? 1.00;
+
+    return {
+      ...p,
+      rating: Number(finalRating.toFixed(2)),
+    };
+  });
+}

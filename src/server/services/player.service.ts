@@ -13,6 +13,10 @@ export function listPlayers(params: { skip?: number; take?: number }) {
   return playerRepo.listPlayers(params);
 }
 
+export function listPlayersWithBasicStats() {
+  return playerRepo.listPlayersWithBasicStats();
+}
+
 export function upsertPlayer(data: {
   steamId: string;
   nickname: string;
