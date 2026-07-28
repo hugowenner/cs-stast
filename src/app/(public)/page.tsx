@@ -239,15 +239,13 @@ export default async function DashboardPage() {
               <div className="glass-panel rounded-2xl border border-white/[0.07] p-5 flex flex-col justify-between hover:bg-white/[0.01] transition-all duration-300 shadow-lg min-h-[160px]">
                 <div>
                   <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5 select-none">
-                    <span>🥈 Double Kill (2K)</span>
+                    <span>Double Kill (2K)</span>
                   </h3>
                   <div className="flex flex-col gap-2.5">
-                    {multikillsLeaderboards.doubleKills.map((p, idx) => (
-                      <div key={p.playerId} className="flex items-center justify-between text-xs">
+                    {multikillsLeaderboards.doubleKills.map((p) => (
+                      <div key={p.playerId} className="flex items-center justify-between text-xs py-0.5">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-[10px] font-bold text-muted-foreground select-none w-4">
-                            {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : idx === 3 ? "4️⃣" : idx === 4 ? "5️⃣" : "6️⃣"}
-                          </span>
+                          <PlayerAvatar nickname={p.nickname} avatarUrl={p.avatarUrl} size="sm" />
                           <span className="font-semibold text-foreground truncate">{p.nickname}</span>
                         </div>
                         <span className="font-mono font-bold text-foreground bg-white/5 px-2 py-0.5 rounded-md border border-white/5">{p.count}</span>
@@ -263,15 +261,13 @@ export default async function DashboardPage() {
               <div className="glass-panel rounded-2xl border border-white/[0.07] p-5 flex flex-col justify-between hover:bg-white/[0.01] transition-all duration-300 shadow-lg min-h-[160px]">
                 <div>
                   <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5 select-none">
-                    <span>🥉 Triple Kill (3K)</span>
+                    <span>Triple Kill (3K)</span>
                   </h3>
                   <div className="flex flex-col gap-2.5">
-                    {multikillsLeaderboards.tripleKills.map((p, idx) => (
-                      <div key={p.playerId} className="flex items-center justify-between text-xs">
+                    {multikillsLeaderboards.tripleKills.map((p) => (
+                      <div key={p.playerId} className="flex items-center justify-between text-xs py-0.5">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-[10px] font-bold text-muted-foreground select-none w-4">
-                            {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : idx === 3 ? "4️⃣" : idx === 4 ? "5️⃣" : "6️⃣"}
-                          </span>
+                          <PlayerAvatar nickname={p.nickname} avatarUrl={p.avatarUrl} size="sm" />
                           <span className="font-semibold text-foreground truncate">{p.nickname}</span>
                         </div>
                         <span className="font-mono font-bold text-foreground bg-white/5 px-2 py-0.5 rounded-md border border-white/5">{p.count}</span>
@@ -287,15 +283,13 @@ export default async function DashboardPage() {
               <div className="glass-panel rounded-2xl border border-white/[0.07] p-5 flex flex-col justify-between hover:bg-white/[0.01] transition-all duration-300 shadow-lg min-h-[160px]">
                 <div>
                   <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5 select-none">
-                    <span>🏅 Quad Kill (4K)</span>
+                    <span>Quad Kill (4K)</span>
                   </h3>
                   <div className="flex flex-col gap-2.5">
-                    {multikillsLeaderboards.quadKills.map((p, idx) => (
-                      <div key={p.playerId} className="flex items-center justify-between text-xs">
+                    {multikillsLeaderboards.quadKills.map((p) => (
+                      <div key={p.playerId} className="flex items-center justify-between text-xs py-0.5">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-[10px] font-bold text-muted-foreground select-none w-4">
-                            {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : idx === 3 ? "4️⃣" : idx === 4 ? "5️⃣" : "6️⃣"}
-                          </span>
+                          <PlayerAvatar nickname={p.nickname} avatarUrl={p.avatarUrl} size="sm" />
                           <span className="font-semibold text-foreground truncate">{p.nickname}</span>
                         </div>
                         <span className="font-mono font-bold text-foreground bg-white/5 px-2 py-0.5 rounded-md border border-white/5">{p.count}</span>
@@ -311,15 +305,13 @@ export default async function DashboardPage() {
               <div className="glass-panel rounded-2xl border border-white/[0.07] p-5 flex flex-col justify-between hover:bg-white/[0.01] transition-all duration-300 shadow-lg min-h-[160px]">
                 <div>
                   <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5 select-none">
-                    <span>👑 Aces (5K)</span>
+                    <span>Aces (5K)</span>
                   </h3>
                   <div className="flex flex-col gap-2.5">
-                    {multikillsLeaderboards.aces.map((p, idx) => (
-                      <div key={p.playerId} className="flex items-center justify-between text-xs">
+                    {multikillsLeaderboards.aces.map((p) => (
+                      <div key={p.playerId} className="flex items-center justify-between text-xs py-0.5">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-[10px] font-bold text-muted-foreground select-none w-4">
-                            {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : idx === 3 ? "4️⃣" : idx === 4 ? "5️⃣" : "6️⃣"}
-                          </span>
+                          <PlayerAvatar nickname={p.nickname} avatarUrl={p.avatarUrl} size="sm" />
                           <span className="font-semibold text-foreground truncate">{p.nickname}</span>
                         </div>
                         <span className="font-mono font-bold text-foreground bg-white/5 px-2 py-0.5 rounded-md border border-white/5">{p.count}</span>
