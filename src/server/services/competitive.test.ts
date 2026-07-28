@@ -247,46 +247,48 @@ describe("getAdvancedPerformanceStatsFromDataset", () => {
 });
 
 describe("getMultikillsLeaderboards", () => {
-  it("calcula somatórios e rankeia top 3 jogadores por categoria de multikills", () => {
+  it("calcula somatórios e rankeia top 6 de forma decrescente, ignorando zeros", () => {
     const dataset = {
       activePlayers: [
-        { id: "playerA", nickname: "Jogador A", avatarUrl: null, levelGc: 14 },
-        { id: "playerB", nickname: "Jogador B", avatarUrl: null, levelGc: 12 },
-        { id: "playerC", nickname: "Jogador C", avatarUrl: null, levelGc: 10 },
+        { id: "p1", nickname: "Player 1", avatarUrl: null, levelGc: 10 },
+        { id: "p2", nickname: "Player 2", avatarUrl: null, levelGc: 10 },
+        { id: "p3", nickname: "Player 3", avatarUrl: null, levelGc: 10 },
+        { id: "p4", nickname: "Player 4", avatarUrl: null, levelGc: 10 },
+        { id: "p5", nickname: "Player 5", avatarUrl: null, levelGc: 10 },
+        { id: "p6", nickname: "Player 6", avatarUrl: null, levelGc: 10 },
+        { id: "p7", nickname: "Player 7", avatarUrl: null, levelGc: 10 },
+        { id: "p8", nickname: "Player 8", avatarUrl: null, levelGc: 10 },
       ],
       statsByPlayer: new Map(),
       allStats: [
-        // Jogador A
-        { playerId: "playerA", doubleKills: 5, tripleKills: 2, quadKills: 0, aces: 1 },
-        { playerId: "playerA", doubleKills: 3, tripleKills: 1, quadKills: 1, aces: 0 },
-        // Jogador B
-        { playerId: "playerB", doubleKills: 10, tripleKills: 0, quadKills: 2, aces: 0 },
-        // Jogador C
-        { playerId: "playerC", doubleKills: 0, tripleKills: 4, quadKills: 0, aces: 0 },
+        { playerId: "p1", doubleKills: 10 },
+        { playerId: "p2", doubleKills: 20 },
+        { playerId: "p3", doubleKills: 30 },
+        { playerId: "p4", doubleKills: 40 },
+        { playerId: "p5", doubleKills: 50 },
+        { playerId: "p6", doubleKills: 60 },
+        { playerId: "p7", doubleKills: 70 }, // Mais alto
+        { playerId: "p8", doubleKills: 0 },  // Inelegível (zero)
       ],
     };
 
     // @ts-ignore
     const result = getMultikillsLeaderboards(dataset);
 
-    // Double Kills: Player B (10), Player A (8), Player C (0 - deve ser ignorado)
-    expect(result.doubleKills).toHaveLength(2);
-    expect(result.doubleKills[0]).toMatchObject({ playerId: "playerB", count: 10 });
-    expect(result.doubleKills[1]).toMatchObject({ playerId: "playerA", count: 8 });
+    // Double Kills deve ter tamanho 6 (dos 7 elegíveis), ordenado desc. p8 (zero) deve ser ignorado.
+    expect(result.doubleKills).toHaveLength(6);
+    expect(result.doubleKills[0]).toMatchObject({ playerId: "p7", count: 70 });
+    expect(result.doubleKills[1]).toMatchObject({ playerId: "p6", count: 60 });
+    expect(result.doubleKills[2]).toMatchObject({ playerId: "p5", count: 50 });
+    expect(result.doubleKills[3]).toMatchObject({ playerId: "p4", count: 40 });
+    expect(result.doubleKills[4]).toMatchObject({ playerId: "p3", count: 30 });
+    expect(result.doubleKills[5]).toMatchObject({ playerId: "p2", count: 20 });
+    // p1 (10) ficou fora do Top 6 (slice)
 
-    // Triple Kills: Player C (4), Player A (3), Player B (0 - ignorado)
-    expect(result.tripleKills).toHaveLength(2);
-    expect(result.tripleKills[0]).toMatchObject({ playerId: "playerC", count: 4 });
-    expect(result.tripleKills[1]).toMatchObject({ playerId: "playerA", count: 3 });
-
-    // Quad Kills: Player B (2), Player A (1), Player C (0 - ignorado)
-    expect(result.quadKills).toHaveLength(2);
-    expect(result.quadKills[0]).toMatchObject({ playerId: "playerB", count: 2 });
-    expect(result.quadKills[1]).toMatchObject({ playerId: "playerA", count: 1 });
-
-    // Aces: Player A (1), Player B e C (0 - ignorados)
-    expect(result.aces).toHaveLength(1);
-    expect(result.aces[0]).toMatchObject({ playerId: "playerA", count: 1 });
+    // Outros campos de multikill estão vazios, portanto vazios (resiliência)
+    expect(result.tripleKills).toHaveLength(0);
+    expect(result.quadKills).toHaveLength(0);
+    expect(result.aces).toHaveLength(0);
   });
 });
 

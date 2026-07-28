@@ -246,7 +246,7 @@ export default async function DashboardPage() {
                       <div key={p.playerId} className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="text-[10px] font-bold text-muted-foreground select-none w-4">
-                            {idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉"}
+                            {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : idx === 3 ? "4️⃣" : idx === 4 ? "5️⃣" : "6️⃣"}
                           </span>
                           <span className="font-semibold text-foreground truncate">{p.nickname}</span>
                         </div>
@@ -270,7 +270,7 @@ export default async function DashboardPage() {
                       <div key={p.playerId} className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="text-[10px] font-bold text-muted-foreground select-none w-4">
-                            {idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉"}
+                            {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : idx === 3 ? "4️⃣" : idx === 4 ? "5️⃣" : "6️⃣"}
                           </span>
                           <span className="font-semibold text-foreground truncate">{p.nickname}</span>
                         </div>
@@ -294,7 +294,7 @@ export default async function DashboardPage() {
                       <div key={p.playerId} className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="text-[10px] font-bold text-muted-foreground select-none w-4">
-                            {idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉"}
+                            {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : idx === 3 ? "4️⃣" : idx === 4 ? "5️⃣" : "6️⃣"}
                           </span>
                           <span className="font-semibold text-foreground truncate">{p.nickname}</span>
                         </div>
@@ -318,7 +318,7 @@ export default async function DashboardPage() {
                       <div key={p.playerId} className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="text-[10px] font-bold text-muted-foreground select-none w-4">
-                            {idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉"}
+                            {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : idx === 3 ? "4️⃣" : idx === 4 ? "5️⃣" : "6️⃣"}
                           </span>
                           <span className="font-semibold text-foreground truncate">{p.nickname}</span>
                         </div>

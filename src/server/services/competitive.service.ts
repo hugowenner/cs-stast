@@ -1836,7 +1836,7 @@ export function getMultikillsLeaderboards(dataset: CompetitiveDataset): Multikil
     aceMap.set(s.playerId, (aceMap.get(s.playerId) ?? 0) + (s.aces ?? 0));
   }
 
-  const getTop3 = (map: Map<string, number>): MultikillLeaderboardEntry[] => {
+  const getTop6 = (map: Map<string, number>): MultikillLeaderboardEntry[] => {
     return Array.from(map.entries())
       .map(([playerId, count]) => {
         const player = activePlayers.find((pl) => pl.id === playerId);
@@ -1849,13 +1849,13 @@ export function getMultikillsLeaderboards(dataset: CompetitiveDataset): Multikil
       })
       .filter((entry) => entry.count > 0)
       .sort((a, b) => b.count - a.count)
-      .slice(0, 3);
+      .slice(0, 6);
   };
 
   return {
-    doubleKills: getTop3(doubleMap),
-    tripleKills: getTop3(tripleMap),
-    quadKills: getTop3(quadMap),
-    aces: getTop3(aceMap),
+    doubleKills: getTop6(doubleMap),
+    tripleKills: getTop6(tripleMap),
+    quadKills: getTop6(quadMap),
+    aces: getTop6(aceMap),
   };
 }
