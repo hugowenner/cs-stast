@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import type { HallOfFameRecord, MonitoredPlayerEntry } from "@/server/services/competitive.service";
@@ -8,6 +9,7 @@ import { cn } from "@/lib/utils";
 
 interface HallOfFameProps {
   records: HallOfFameRecord[];
+  recentRecords: HallOfFameRecord[];
   monitoredPlayers: MonitoredPlayerEntry[];
 }
 
@@ -92,126 +94,166 @@ function extractMapName(detail: string): string | null {
   return match ? match[1] : null;
 }
 
-export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
-  if (records.length === 0) return null;
+export function HallOfFame({ records, recentRecords, monitoredPlayers }: HallOfFameProps) {
+  const [activeTab, setActiveTab] = useState<"recent" | "season">(() => {
+    return recentRecords && recentRecords.length > 0 ? "recent" : "season";
+  });
+
+  if (records.length === 0 && recentRecords.length === 0) return null;
+
+  const recordsToRender = activeTab === "recent" ? recentRecords : records;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {records.map((record) => {
-        const meta = METADATA_BY_CATEGORY[record.category] || {
-          title: record.category,
-          icon: Trophy,
-          medal: "🥇",
-          medalLabel: "Destaque",
-          description: "Recorde da temporada",
-          colorClass: "border-white/[0.07] bg-white/[0.01]",
-          iconColor: "text-white",
-        };
+    <div className="flex flex-col gap-4">
+      {/* Tab Switcher */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setActiveTab("recent")}
+          className={cn(
+            "px-4 py-1.5 rounded-xl text-[10px] uppercase tracking-wider font-extrabold transition-all border cursor-pointer select-none",
+            activeTab === "recent"
+              ? "bg-white/[0.08] border-white/10 text-white font-extrabold shadow-sm"
+              : "bg-white/[0.015] border-white/[0.04] text-muted-foreground/80 hover:bg-white/[0.04] hover:text-white"
+          )}
+        >
+          ⚡ Recente (Últimos 14 dias)
+        </button>
+        <button
+          onClick={() => setActiveTab("season")}
+          className={cn(
+            "px-4 py-1.5 rounded-xl text-[10px] uppercase tracking-wider font-extrabold transition-all border cursor-pointer select-none",
+            activeTab === "season"
+              ? "bg-white/[0.08] border-white/10 text-white font-extrabold shadow-sm"
+              : "bg-white/[0.015] border-white/[0.04] text-muted-foreground/80 hover:bg-white/[0.04] hover:text-white"
+          )}
+        >
+          🏆 Histórico (Temporada)
+        </button>
+      </div>
 
-        const matchedPlayer = monitoredPlayers.find(
-          (mp) => mp.player.nickname.toLowerCase() === record.playerName.toLowerCase()
-        )?.player;
+      {recordsToRender.length === 0 ? (
+        <div className="glass-panel border border-white/[0.06] rounded-2xl p-8 text-center text-muted-foreground/70 text-xs font-semibold">
+          Nenhum recorde registrado nesta janela recente.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {recordsToRender.map((record) => {
+            const meta = METADATA_BY_CATEGORY[record.category] || {
+              title: record.category,
+              icon: Trophy,
+              medal: "🥇",
+              medalLabel: "Destaque",
+              description: "Recorde da temporada",
+              colorClass: "border-white/[0.07] bg-white/[0.01]",
+              iconColor: "text-white",
+            };
 
-        const mapName = extractMapName(record.detail);
-        const IconComponent = meta.icon;
+            const matchedPlayer = monitoredPlayers.find(
+              (mp) => mp.player.nickname.toLowerCase() === record.playerName.toLowerCase()
+            )?.player;
 
-        return (
-          <div
-            key={record.category}
-            className={cn(
-              "glass-panel border rounded-2xl p-3.5 flex flex-col justify-between relative group overflow-hidden transition-all duration-300 hover:scale-[1.015]",
-              meta.colorClass
-            )}
-          >
-            {/* Glow effect no hover */}
-            <div className="absolute -inset-px bg-gradient-to-r from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-2xl" />
+            const mapName = extractMapName(record.detail);
+            const IconComponent = meta.icon;
 
-            {/* Cabeçalho do Card (Compacto) */}
-            <div className="flex items-center justify-between gap-1.5 border-b border-white/[0.04] pb-2 mb-2">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <IconComponent className={cn("size-3.5 shrink-0", meta.iconColor)} />
-                <span className="text-[11px] font-black text-white truncate">{meta.title}</span>
-              </div>
-              <span
-                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[8px] font-black bg-white/[0.02] border border-white/[0.06] text-muted-foreground/80 uppercase tracking-wider select-none shrink-0"
-                title={meta.medalLabel}
+            return (
+              <div
+                key={record.category}
+                className={cn(
+                  "glass-panel border rounded-2xl p-3.5 flex flex-col justify-between relative group overflow-hidden transition-all duration-300 hover:scale-[1.015]",
+                  meta.colorClass
+                )}
               >
-                {meta.medal} {meta.medalLabel}
-              </span>
-            </div>
+                {/* Glow effect no hover */}
+                <div className="absolute -inset-px bg-gradient-to-r from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-2xl" />
 
-            {/* Corpo do Card (Compactado e com Link de Evidência) */}
-            <div className="flex flex-col gap-2.5 py-1.5 flex-1 justify-between">
-              {/* Player Row: Avatar, Nickname & Nível GC na mesma linha */}
-              <div className="flex items-center gap-1.5 min-w-0 bg-white/[0.015] border border-white/[0.04] p-1.5 rounded-xl justify-center">
-                <PlayerAvatar
-                  nickname={matchedPlayer?.nickname || record.playerName}
-                  avatarUrl={matchedPlayer?.avatarUrl || null}
-                  size="sm"
-                />
-                <div className="flex items-center gap-1 min-w-0">
-                  {matchedPlayer ? (
+                {/* Cabeçalho do Card (Compacto) */}
+                <div className="flex items-center justify-between gap-1.5 border-b border-white/[0.04] pb-2 mb-2">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <IconComponent className={cn("size-3.5 shrink-0", meta.iconColor)} />
+                    <span className="text-[11px] font-black text-white truncate">{meta.title}</span>
+                  </div>
+                  <span
+                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[8px] font-black bg-white/[0.02] border border-white/[0.06] text-muted-foreground/80 uppercase tracking-wider select-none shrink-0"
+                    title={meta.medalLabel}
+                  >
+                    {meta.medal} {meta.medalLabel}
+                  </span>
+                </div>
+
+                {/* Corpo do Card (Compactado e com Link de Evidência) */}
+                <div className="flex flex-col gap-2.5 py-1.5 flex-1 justify-between">
+                  {/* Player Row: Avatar, Nickname & Nível GC na mesma linha */}
+                  <div className="flex items-center gap-1.5 min-w-0 bg-white/[0.015] border border-white/[0.04] p-1.5 rounded-xl justify-center">
+                    <PlayerAvatar
+                      nickname={matchedPlayer?.nickname || record.playerName}
+                      avatarUrl={matchedPlayer?.avatarUrl || null}
+                      size="sm"
+                    />
+                    <div className="flex items-center gap-1 min-w-0">
+                      {matchedPlayer ? (
+                        <Link
+                          href={`/players/${matchedPlayer.id}`}
+                          className="text-xs font-black text-white hover:text-primary transition-colors truncate max-w-[90px]"
+                        >
+                          {matchedPlayer.nickname}
+                        </Link>
+                      ) : (
+                        <span className="text-xs font-black text-white truncate max-w-[90px]">
+                          {record.playerName}
+                        </span>
+                      )}
+                      {matchedPlayer ? (
+                        <span className="text-[9px] text-muted-foreground/60 font-bold bg-white/[0.04] border border-white/[0.06] px-1 py-0.5 rounded flex items-center gap-0.5 shrink-0 select-none">
+                          🏅 {matchedPlayer.levelGc ?? "—"} GC
+                        </span>
+                      ) : (
+                        <span className="text-[8px] text-muted-foreground/50 font-bold bg-white/[0.02] border border-white/[0.04] px-1 py-0.5 rounded shrink-0 select-none">
+                          Visitante
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Valor em destaque & Descrição Curta */}
+                  <div className="text-center flex flex-col items-center justify-center gap-0.5 my-1">
+                    <p className="text-3xl font-black text-white tracking-tight leading-none tabular-nums">
+                      {record.value}
+                    </p>
+                    <p className="text-[9.5px] text-muted-foreground/75 font-semibold mt-1">
+                      {meta.description}
+                    </p>
+                  </div>
+
+                  {/* Link de Prova / Evidência */}
+                  {record.matchId && (
                     <Link
-                      href={`/players/${matchedPlayer.id}`}
-                      className="text-xs font-black text-white hover:text-primary transition-colors truncate max-w-[90px]"
+                      href={`/matches/${record.matchId}`}
+                      className="mt-0.5 flex items-center justify-center gap-1 py-1 rounded-lg border border-primary/10 hover:border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary text-[9px] font-black uppercase tracking-wider transition-all duration-200 w-full group/btn"
                     >
-                      {matchedPlayer.nickname}
+                      <span>Ver Partida</span>
+                      <span className="group-hover/btn:translate-x-0.5 transition-transform">▶</span>
                     </Link>
-                  ) : (
-                    <span className="text-xs font-black text-white truncate max-w-[90px]">
-                      {record.playerName}
-                    </span>
                   )}
-                  {matchedPlayer ? (
-                    <span className="text-[9px] text-muted-foreground/60 font-bold bg-white/[0.04] border border-white/[0.06] px-1 py-0.5 rounded flex items-center gap-0.5 shrink-0 select-none">
-                      🏅 {matchedPlayer.levelGc ?? "—"} GC
+                </div>
+
+                {/* Rodapé do Card (Compacto) */}
+                <div className="border-t border-white/[0.04] pt-2 mt-2 flex items-center justify-between text-[9px] text-muted-foreground/45">
+                  <span>Estatística</span>
+                  {mapName ? (
+                    <span className="inline-flex items-center gap-0.5 text-accent-cyan font-bold uppercase tracking-wider text-[7.5px] select-none">
+                      📍 {mapName}
                     </span>
                   ) : (
-                    <span className="text-[8px] text-muted-foreground/50 font-bold bg-white/[0.02] border border-white/[0.04] px-1 py-0.5 rounded shrink-0 select-none">
-                      Visitante
+                    <span className="text-muted-foreground/35 font-bold text-[7.5px]">
+                      🏆 Geral
                     </span>
                   )}
                 </div>
               </div>
-
-              {/* Valor em destaque & Descrição Curta */}
-              <div className="text-center flex flex-col items-center justify-center gap-0.5 my-1">
-                <p className="text-3xl font-black text-white tracking-tight leading-none tabular-nums">
-                  {record.value}
-                </p>
-                <p className="text-[9.5px] text-muted-foreground/75 font-semibold mt-1">
-                  {meta.description}
-                </p>
-              </div>
-
-              {/* Link de Prova / Evidência */}
-              {record.matchId && (
-                <Link
-                  href={`/matches/${record.matchId}`}
-                  className="mt-0.5 flex items-center justify-center gap-1 py-1 rounded-lg border border-primary/10 hover:border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary text-[9px] font-black uppercase tracking-wider transition-all duration-200 w-full group/btn"
-                >
-                  <span>Ver Partida</span>
-                  <span className="group-hover/btn:translate-x-0.5 transition-transform">▶</span>
-                </Link>
-              )}
-            </div>
-
-            {/* Rodapé do Card (Compacto) */}
-            <div className="border-t border-white/[0.04] pt-2 mt-2 flex items-center justify-between text-[9px] text-muted-foreground/45">
-              <span>Estatística</span>
-              {mapName ? (
-                <span className="inline-flex items-center gap-0.5 text-accent-cyan font-bold uppercase tracking-wider text-[7.5px] select-none">
-                  📍 {mapName}
-                </span>
-              ) : (
-                <span className="text-muted-foreground/35 font-bold text-[7.5px]">
-                  🏆 Geral
-                </span>
-              )}
-            </div>
-          </div>
-        );
-      })}
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

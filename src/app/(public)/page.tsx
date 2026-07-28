@@ -28,6 +28,7 @@ import { RankingTable } from "@/components/ranking/ranking-table";
 import type { RecentMatchCardData } from "@/components/matches/recent-matches-carousel";
 import { SectionContainer } from "@/components/dashboard/section-container";
 import { AdvancedPerformanceSection } from "@/components/dashboard/AdvancedPerformanceSection";
+import { NarratorSection } from "@/components/dashboard/narrator-section";
 import { safeQuery } from "@/server/safeQuery";
 import * as dashboardService from "@/server/services/dashboard.service";
 import * as matchService from "@/server/services/match.service";
@@ -83,6 +84,8 @@ const EMPTY_COMPETITIVE_BUNDLE: competitiveService.DashboardCompetitiveBundle = 
     quadKills: [],
     aces: [],
   },
+  highlightsPool: [],
+  recentRecords: [],
 };
 
 export default async function DashboardPage() {
@@ -138,6 +141,8 @@ export default async function DashboardPage() {
     worstMap,
     advancedPerformance,
     multikillsLeaderboards,
+    highlightsPool,
+    recentRecords,
   } = competitive;
 
   const hottestPlayer = momentum.find((m) => m.status === "up") ?? null;
@@ -196,6 +201,17 @@ export default async function DashboardPage() {
         />
       </section>
 
+      {/* ═══ 🔥 Histórias da Semana ═══ */}
+      {highlightsPool && highlightsPool.length > 0 && (
+        <SectionContainer
+          title="🔥 Histórias da Semana"
+          subtitle="Destaques analíticos de performance e parcerias quentes calculados pelo Hub"
+          delay={0.035}
+        >
+          <NarratorSection highlights={highlightsPool} />
+        </SectionContainer>
+      )}
+
       {/* ═══ Mural da Temporada ═══ */}
       <SectionContainer
         title="📊 Mural da Temporada"
@@ -211,7 +227,7 @@ export default async function DashboardPage() {
         subtitle="Recordes históricos e maiores picos de performance da temporada"
         delay={0.05}
       >
-        <HallOfFame records={records} monitoredPlayers={monitoredPlayers} />
+        <HallOfFame records={records} recentRecords={recentRecords} monitoredPlayers={monitoredPlayers} />
       </SectionContainer>
 
       {/* ═══ Performance Avançada GC ═══ */}
@@ -394,7 +410,7 @@ export default async function DashboardPage() {
           subtitle="Duplas e trios com maior sinergia e winrate na temporada"
           delay={0.12}
         >
-          <DuoParceriasSection duos={duos} dominantTrio={dominantTrio} />
+          <DuoParceriasSection duos={duos} dominantTrio={dominantTrio} highlightsPool={highlightsPool} />
         </SectionContainer>
       )}
 

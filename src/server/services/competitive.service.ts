@@ -1,5 +1,7 @@
 import { prisma } from "@/server/db";
 import { communityMatchStatsWhere } from "@/server/domain/matchClassification";
+import { generateHighlights } from "@/server/services/highlights/highlights.service";
+import { DashboardHighlight } from "@/server/services/highlights/highlight.types";
 
 export interface PowerRankingEntry {
   player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null };
@@ -843,10 +845,15 @@ function getPlayerMatchupsFromDataset(dataset: CompetitiveDataset): PlayerMatchu
   return summaries;
 }
 
-function getHallOfFameRecordsFromDataset(dataset: CompetitiveDataset): HallOfFameRecord[] {
+function getHallOfFameRecordsFromDataset(
+  dataset: CompetitiveDataset,
+  statsOverride?: typeof dataset.allStats
+): HallOfFameRecord[] {
+  const statsToUse = statsOverride ?? dataset.allStats;
+
   const findBestBy = <K extends "rating" | "kills" | "adr" | "eloAfter">(key: K) => {
     let best: (typeof dataset.allStats)[number] | null = null;
-    for (const s of dataset.allStats) {
+    for (const s of statsToUse) {
       if (!best || s[key] > best[key]) best = s;
     }
     return best;
@@ -860,7 +867,7 @@ function getHallOfFameRecordsFromDataset(dataset: CompetitiveDataset): HallOfFam
   // Maior K/D
   let maxKdStat: (typeof dataset.allStats)[number] | null = null;
   let maxKdVal = 0;
-  for (const s of dataset.allStats) {
+  for (const s of statsToUse) {
     if (s.deaths === 0 && s.kills === 0) continue;
     const kd = s.deaths > 0 ? s.kills / s.deaths : s.kills;
     if (!maxKdStat || kd > maxKdVal) {
@@ -872,7 +879,7 @@ function getHallOfFameRecordsFromDataset(dataset: CompetitiveDataset): HallOfFam
   // Maior HS% (mínimo de 10 kills para relevância)
   let maxHsStat: (typeof dataset.allStats)[number] | null = null;
   let maxHsVal = 0;
-  for (const s of dataset.allStats) {
+  for (const s of statsToUse) {
     if (s.kills >= 10) {
       const hs = (s.headshots / s.kills) * 100;
       if (!maxHsStat || hs > maxHsVal) {
@@ -882,7 +889,7 @@ function getHallOfFameRecordsFromDataset(dataset: CompetitiveDataset): HallOfFam
     }
   }
   if (!maxHsStat) {
-    for (const s of dataset.allStats) {
+    for (const s of statsToUse) {
       if (s.kills > 0) {
         const hs = (s.headshots / s.kills) * 100;
         if (!maxHsStat || hs > maxHsVal) {
@@ -897,7 +904,11 @@ function getHallOfFameRecordsFromDataset(dataset: CompetitiveDataset): HallOfFam
   let maxStreakPlayer = "N/A";
 
   for (const player of dataset.activePlayers) {
-    const stats = [...(dataset.statsByPlayer.get(player.id) ?? [])].reverse();
+    const rawPlayerStats = dataset.statsByPlayer.get(player.id) ?? [];
+    const playerStats = statsOverride
+      ? rawPlayerStats.filter((s) => statsOverride.some((so) => so.matchId === s.matchId))
+      : rawPlayerStats;
+    const stats = [...playerStats].reverse();
     let currentStreak = 0;
     let playerMaxStreak = 0;
     for (const stat of stats) {
@@ -1677,6 +1688,8 @@ export interface DashboardCompetitiveBundle {
   worstMap: MapPerformanceEntry | null;
   advancedPerformance: AdvancedPerformanceStats;
   multikillsLeaderboards: MultikillsBundle;
+  highlightsPool: DashboardHighlight[];
+  recentRecords: HallOfFameRecord[];
 }
 
 export interface MultikillLeaderboardEntry {
@@ -1726,6 +1739,14 @@ export async function getDashboardCompetitiveBundle(
     .filter((e) => e.diff.rating < 0)
     .slice(0, 3);
 
+  const maxDate = ds.allStats.reduce(
+    (max, s) => (s.match.playedAt.getTime() > max.getTime() ? s.match.playedAt : max),
+    new Date(0)
+  );
+  const fourteenDaysAgo = new Date(maxDate.getTime() - 14 * 24 * 60 * 60 * 1000);
+  const recentStats = ds.allStats.filter((s) => s.match.playedAt >= fourteenDaysAgo);
+  const recentRecords = getHallOfFameRecordsFromDataset(ds, recentStats);
+
   return {
     powerRanking: getPowerRankingFromDataset(ds, 15),
     momentum: getPlayerMomentumFromDataset(ds, 3),
@@ -1752,6 +1773,8 @@ export async function getDashboardCompetitiveBundle(
     weeklyCuriosity: getWeeklyCuriosityFromDataset(ds, streaks, seasonComparison),
     advancedPerformance: getAdvancedPerformanceStatsFromDataset(ds),
     multikillsLeaderboards: getMultikillsLeaderboards(ds),
+    highlightsPool: generateHighlights(ds),
+    recentRecords,
   };
 }
 
