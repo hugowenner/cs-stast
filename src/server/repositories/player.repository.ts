@@ -217,3 +217,137 @@ export async function listPlayersWithBasicStats() {
     };
   });
 }
+
+export async function getPlayersAdminSummary() {
+  const [totalPlayers, totalTracked, activeTracked, pausedTracked, totalMatches, latestImport] = await Promise.all([
+    prisma.player.count(),
+    prisma.trackedPlayer.count(),
+    prisma.trackedPlayer.count({ where: { active: true } }),
+    prisma.trackedPlayer.count({ where: { active: false } }),
+    prisma.match.count(),
+    prisma.import.findFirst({
+      where: { status: "SUCCESS" },
+      orderBy: { finishedAt: "desc" },
+    }),
+  ]);
+
+  return {
+    totalPlayers,
+    totalTracked,
+    activeTracked,
+    pausedTracked,
+    totalMatches,
+    latestSync: latestImport?.finishedAt || null,
+  };
+}
+
+export async function listPlayersForAdmin(params: {
+  search?: string;
+  filter?: string;
+  skip?: number;
+  take?: number;
+}) {
+  const { search, filter, skip = 0, take = 10 } = params;
+  const where: any = {};
+
+  if (search) {
+    where.OR = [
+      { nickname: { contains: search, mode: "insensitive" } },
+      { steamNickname: { contains: search, mode: "insensitive" } },
+      { steamId: { contains: search, mode: "insensitive" } },
+      { gamersClubId: { contains: search, mode: "insensitive" } },
+    ];
+  }
+
+  if (filter === "active") {
+    where.trackedPlayer = { active: true };
+  } else if (filter === "paused") {
+    where.OR = [
+      { trackedPlayer: { active: false } },
+      { trackedPlayer: null },
+    ];
+  } else if (filter === "never_synced") {
+    where.OR = [
+      { steamLastSync: null },
+      { matchStats: { none: {} } }
+    ];
+  } else if (filter === "error") {
+    where.OR = [
+      { steamId: "" },
+      { gamersClubId: null },
+      { steamLastSync: null },
+      { matchStats: { none: {} } }
+    ];
+  }
+
+  const total = await prisma.player.count({ where });
+
+  const players = await prisma.player.findMany({
+    where,
+    include: {
+      trackedPlayer: true,
+      matchStats: {
+        orderBy: {
+          match: {
+            playedAt: "desc",
+          },
+        },
+        take: 1,
+        select: {
+          match: {
+            select: {
+              playedAt: true,
+            },
+          },
+        },
+      },
+      _count: {
+        select: {
+          matchStats: true,
+        },
+      },
+    },
+    orderBy: { nickname: "asc" },
+    skip,
+    take,
+  });
+
+  const playerIds = players.map((p) => p.id);
+  const averages = await prisma.playerMatchStats.groupBy({
+    by: ["playerId"],
+    _avg: {
+      rating: true,
+    },
+    where: {
+      playerId: { in: playerIds },
+    },
+  });
+
+  const ratingByPlayer = Object.fromEntries(
+    averages.map((a) => [a.playerId, a._avg.rating || 1.00])
+  );
+
+  const mappedPlayers = players.map((p) => {
+    const latestMatchDate = p.matchStats[0]?.match.playedAt || null;
+    const rating = ratingByPlayer[p.id] || 1.00;
+    return {
+      id: p.id,
+      nickname: p.nickname,
+      steamNickname: p.steamNickname,
+      avatarUrl: p.avatarUrl,
+      steamId: p.steamId,
+      gamersClubId: p.gamersClubId,
+      levelGc: p.levelGc,
+      steamLastSync: p.steamLastSync,
+      active: p.trackedPlayer?.active ?? false,
+      matchCount: p._count.matchStats,
+      latestMatchDate,
+      rating: Number(rating.toFixed(2)),
+    };
+  });
+
+  return {
+    players: mappedPlayers,
+    total,
+  };
+}

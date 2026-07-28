@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { LayoutShell } from "@/components/layout/layout-shell";
 import { Providers } from "@/app/providers";
 import "./globals.css";
 
@@ -32,7 +31,7 @@ export default function RootLayout({
     >
       <body className="min-h-full">
         <Providers>
-          <LayoutShell>{children}</LayoutShell>
+          {children}
         </Providers>
       </body>
     </html>
