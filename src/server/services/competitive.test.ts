@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 // Importamos a função de interesse
 // @ts-ignore -- Precisamos ignorar o ts-ignore caso por algum motivo a compilação do teste se comporte diferente
-import { getMapSpecialistsFromDataset, getPlayerArchetypesFromDataset, getAdvancedPerformanceStatsFromDataset } from "./competitive.service";
+import { getMapSpecialistsFromDataset, getPlayerArchetypesFromDataset, getAdvancedPerformanceStatsFromDataset, getMultikillsLeaderboards } from "./competitive.service";
 
 describe("getMapSpecialistsFromDataset", () => {
   it("eleger o jogador com melhor rating entre os elegíveis (dois jogadores diferentes no mesmo mapa)", () => {
@@ -245,3 +245,48 @@ describe("getAdvancedPerformanceStatsFromDataset", () => {
     expect(stats.totalAces).toBeNull();
   });
 });
+
+describe("getMultikillsLeaderboards", () => {
+  it("calcula somatórios e rankeia top 3 jogadores por categoria de multikills", () => {
+    const dataset = {
+      activePlayers: [
+        { id: "playerA", nickname: "Jogador A", avatarUrl: null, levelGc: 14 },
+        { id: "playerB", nickname: "Jogador B", avatarUrl: null, levelGc: 12 },
+        { id: "playerC", nickname: "Jogador C", avatarUrl: null, levelGc: 10 },
+      ],
+      statsByPlayer: new Map(),
+      allStats: [
+        // Jogador A
+        { playerId: "playerA", doubleKills: 5, tripleKills: 2, quadKills: 0, aces: 1 },
+        { playerId: "playerA", doubleKills: 3, tripleKills: 1, quadKills: 1, aces: 0 },
+        // Jogador B
+        { playerId: "playerB", doubleKills: 10, tripleKills: 0, quadKills: 2, aces: 0 },
+        // Jogador C
+        { playerId: "playerC", doubleKills: 0, tripleKills: 4, quadKills: 0, aces: 0 },
+      ],
+    };
+
+    // @ts-ignore
+    const result = getMultikillsLeaderboards(dataset);
+
+    // Double Kills: Player B (10), Player A (8), Player C (0 - deve ser ignorado)
+    expect(result.doubleKills).toHaveLength(2);
+    expect(result.doubleKills[0]).toMatchObject({ playerId: "playerB", count: 10 });
+    expect(result.doubleKills[1]).toMatchObject({ playerId: "playerA", count: 8 });
+
+    // Triple Kills: Player C (4), Player A (3), Player B (0 - ignorado)
+    expect(result.tripleKills).toHaveLength(2);
+    expect(result.tripleKills[0]).toMatchObject({ playerId: "playerC", count: 4 });
+    expect(result.tripleKills[1]).toMatchObject({ playerId: "playerA", count: 3 });
+
+    // Quad Kills: Player B (2), Player A (1), Player C (0 - ignorado)
+    expect(result.quadKills).toHaveLength(2);
+    expect(result.quadKills[0]).toMatchObject({ playerId: "playerB", count: 2 });
+    expect(result.quadKills[1]).toMatchObject({ playerId: "playerA", count: 1 });
+
+    // Aces: Player A (1), Player B e C (0 - ignorados)
+    expect(result.aces).toHaveLength(1);
+    expect(result.aces[0]).toMatchObject({ playerId: "playerA", count: 1 });
+  });
+});
+

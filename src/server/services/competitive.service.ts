@@ -1676,6 +1676,21 @@ export interface DashboardCompetitiveBundle {
   bestMap: MapPerformanceEntry | null;
   worstMap: MapPerformanceEntry | null;
   advancedPerformance: AdvancedPerformanceStats;
+  multikillsLeaderboards: MultikillsBundle;
+}
+
+export interface MultikillLeaderboardEntry {
+  playerId: string;
+  nickname: string;
+  avatarUrl: string | null;
+  count: number;
+}
+
+export interface MultikillsBundle {
+  doubleKills: MultikillLeaderboardEntry[];
+  tripleKills: MultikillLeaderboardEntry[];
+  quadKills: MultikillLeaderboardEntry[];
+  aces: MultikillLeaderboardEntry[];
 }
 
 export interface AdvancedPerformanceStats {
@@ -1736,6 +1751,7 @@ export async function getDashboardCompetitiveBundle(
     worstMap: mapPerformance.worstMap,
     weeklyCuriosity: getWeeklyCuriosityFromDataset(ds, streaks, seasonComparison),
     advancedPerformance: getAdvancedPerformanceStatsFromDataset(ds),
+    multikillsLeaderboards: getMultikillsLeaderboards(ds),
   };
 }
 
@@ -1795,5 +1811,51 @@ export function getAdvancedPerformanceStatsFromDataset(
     totalTripleKills,
     totalQuadKills,
     totalAces,
+  };
+}
+
+export function getMultikillsLeaderboards(dataset: CompetitiveDataset): MultikillsBundle {
+  const { activePlayers, allStats } = dataset;
+
+  const doubleMap = new Map<string, number>();
+  const tripleMap = new Map<string, number>();
+  const quadMap = new Map<string, number>();
+  const aceMap = new Map<string, number>();
+
+  for (const p of activePlayers) {
+    doubleMap.set(p.id, 0);
+    tripleMap.set(p.id, 0);
+    quadMap.set(p.id, 0);
+    aceMap.set(p.id, 0);
+  }
+
+  for (const s of allStats) {
+    doubleMap.set(s.playerId, (doubleMap.get(s.playerId) ?? 0) + (s.doubleKills ?? 0));
+    tripleMap.set(s.playerId, (tripleMap.get(s.playerId) ?? 0) + (s.tripleKills ?? 0));
+    quadMap.set(s.playerId, (quadMap.get(s.playerId) ?? 0) + (s.quadKills ?? 0));
+    aceMap.set(s.playerId, (aceMap.get(s.playerId) ?? 0) + (s.aces ?? 0));
+  }
+
+  const getTop3 = (map: Map<string, number>): MultikillLeaderboardEntry[] => {
+    return Array.from(map.entries())
+      .map(([playerId, count]) => {
+        const player = activePlayers.find((pl) => pl.id === playerId);
+        return {
+          playerId,
+          nickname: player?.nickname ?? "Desconhecido",
+          avatarUrl: player?.avatarUrl ?? null,
+          count,
+        };
+      })
+      .filter((entry) => entry.count > 0)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3);
+  };
+
+  return {
+    doubleKills: getTop3(doubleMap),
+    tripleKills: getTop3(tripleMap),
+    quadKills: getTop3(quadMap),
+    aces: getTop3(aceMap),
   };
 }

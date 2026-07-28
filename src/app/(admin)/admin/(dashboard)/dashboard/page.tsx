@@ -1,12 +1,108 @@
-import { MetricCard } from "@/components/admin/MetricCard";
-import { Swords, Users, RefreshCw, Database, FileText, Activity } from "lucide-react";
+import { prisma } from "@/server/db";
+import { AdminStatsCards } from "@/components/admin/dashboard/AdminStatsCards";
+import { SystemHealthCards } from "@/components/admin/dashboard/SystemHealthCards";
+import { ServiceStatus } from "@/components/admin/dashboard/ServiceStatus";
+import { RecentActivity } from "@/components/admin/dashboard/RecentActivity";
+import { QuickMetrics } from "@/components/admin/dashboard/QuickMetrics";
 
 export const metadata = {
   title: "Painel Admin — CS2 Stats Hub",
   description: "Visão geral administrativa do sistema.",
 };
 
-export default function AdminDashboardPage() {
+export default async function AdminDashboardPage() {
+  const start = Date.now();
+  
+  // Database ping logic
+  let isDbConnected = false;
+  let dbLatency = 0;
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    isDbConnected = true;
+    dbLatency = Date.now() - start;
+  } catch (e) {
+    console.error("Database health check failed:", e);
+  }
+
+  // Database size logic
+  let dbSize = "Indisponível";
+  try {
+    const sizeResult = await prisma.$queryRawUnsafe<{ size_bytes: bigint }[]>(
+      `SELECT pg_database_size(current_database()) AS size_bytes`
+    );
+    const sizeBytes = Number(sizeResult[0]?.size_bytes || 0);
+    if (sizeBytes > 0) {
+      dbSize = (sizeBytes / (1024 * 1024)).toFixed(2) + " MB";
+    }
+  } catch (e) {
+    // SQLite or no-permissions fallback
+    console.warn("Could not retrieve real database size, using estimated metadata.", e);
+  }
+
+  // Parallel database metrics fetching (zero N+1 queries)
+  const [
+    totalMatches,
+    activeTracked,
+    totalPlayers,
+    totalMaps,
+    roundsSum,
+    killsSum,
+    latestMatch,
+    totalImports,
+    successImports,
+    latestSyncLog,
+    recentImports,
+  ] = await Promise.all([
+    prisma.match.count(),
+    prisma.trackedPlayer.count({ where: { active: true } }),
+    prisma.player.count(),
+    prisma.map.count(),
+    prisma.match.aggregate({
+      _sum: {
+        scoreTeamA: true,
+        scoreTeamB: true,
+      },
+    }),
+    prisma.playerMatchStats.aggregate({
+      _sum: {
+        kills: true,
+      },
+    }),
+    prisma.match.findFirst({
+      orderBy: { playedAt: "desc" },
+      include: { map: true },
+    }),
+    prisma.import.count(),
+    prisma.import.count({ where: { status: "SUCCESS" } }),
+    prisma.import.findFirst({
+      where: { status: "SUCCESS" },
+      orderBy: { finishedAt: "desc" },
+    }),
+    prisma.import.findMany({
+      take: 5,
+      orderBy: { startedAt: "desc" },
+    }),
+  ]);
+
+  const successRate = totalImports > 0 ? (successImports / totalImports) * 100 : 100;
+  const latestSync = latestSyncLog?.finishedAt || null;
+  const totalRounds = (roundsSum._sum.scoreTeamA || 0) + (roundsSum._sum.scoreTeamB || 0);
+  const totalKills = killsSum._sum.kills || 0;
+
+  // Integrations verification
+  const steamKey = process.env.STEAM_API_KEY;
+  const isSteamConfigured = !!steamKey && steamKey !== "your_steam_api_key";
+  const isSteamKeyValid = isSteamConfigured && /^[0-9a-fA-F]{32}$/.test(steamKey);
+
+  const gcGroupId = process.env.GAMERSCLUB_GROUP_ID || null;
+  const isGcConfigured = !!gcGroupId;
+
+  const deepseekKey = process.env.DEEPSEEK_API_KEY;
+  const isDeepseekConfigured = !!deepseekKey && deepseekKey !== "your_deepseek_api_key";
+  const deepseekModel = process.env.DEEPSEEK_MODEL || "deepseek-chat";
+
+  const nodeEnv = process.env.NODE_ENV || "development";
+
   return (
     <div className="flex flex-col gap-8 animate-fade-in">
       {/* Header section */}
@@ -15,95 +111,54 @@ export default function AdminDashboardPage() {
           Visão Geral do Hub
         </h1>
         <p className="text-xs text-muted-foreground">
-          Estatísticas básicas de infraestrutura e integridade do projeto.
+          Diagnósticos de infraestrutura, integridade das integrações e observabilidade operacional.
         </p>
       </div>
 
-      {/* Grid of Metric Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <MetricCard
-          title="Partidas Registradas"
-          value="342"
-          description="Partidas computadas na temporada atual."
-          icon={Swords}
-          trend={{ value: "+12 na semana", isPositive: true }}
-        />
+      {/* 1. Upper stats metrics */}
+      <AdminStatsCards
+        totalMatches={totalMatches}
+        activeTracked={activeTracked}
+        successRate={successRate}
+        totalImports={totalImports}
+        latestSync={latestSync}
+        dbLatency={dbLatency}
+        dbSize={dbSize}
+      />
 
-        <MetricCard
-          title="Jogadores Ativos"
-          value="18"
-          description="Jogadores monitorados com estatísticas."
-          icon={Users}
-          trend={{ value: "Estável", isPositive: true }}
-        />
+      {/* 2. System status and health check */}
+      <SystemHealthCards
+        dbLatency={dbLatency}
+        isDbConnected={isDbConnected}
+        nodeEnv={nodeEnv}
+      />
+      
+      {/* 3. Service details check */}
+      <ServiceStatus
+        dbLatency={dbLatency}
+        isSteamConfigured={isSteamConfigured}
+        isSteamKeyValid={isSteamKeyValid}
+        isGcConfigured={isGcConfigured}
+        gcGroupId={gcGroupId}
+        latestSyncDate={latestSync}
+        isDeepseekConfigured={isDeepseekConfigured}
+        deepseekModel={deepseekModel}
+      />
 
-        <MetricCard
-          title="Sincronizações"
-          value="98.7%"
-          description="Taxa de sucesso nas sincronizações automáticas."
-          icon={RefreshCw}
-          trend={{ value: "+0.5%", isPositive: true }}
-        />
-
-        <MetricCard
-          title="Banco de Dados"
-          value="14.2 MB"
-          description="Tamanho ocupado pelas tabelas relacionais."
-          icon={Database}
-          trend={{ value: "Normal", isPositive: true }}
-        />
-
-        <MetricCard
-          title="Erros de Logs"
-          value="2"
-          description="Ocorrências registradas nas últimas 24 horas."
-          icon={FileText}
-          trend={{ value: "-4 erros", isPositive: true }}
-        />
-
-        <MetricCard
-          title="Status do Sistema"
-          value="99.98%"
-          description="Uptime global do Hub e APIs integradas."
-          icon={Activity}
-          trend={{ value: "Excelente", isPositive: true }}
-        />
-      </div>
-
-      {/* Placeholder Charts and Tables section */}
+      {/* 4. Timeline activity and quick platform metrics */}
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 rounded-xl border border-white/5 bg-white/[0.01] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-foreground">Sincronizações Recentes</h2>
-            <span className="rounded bg-white/5 px-2 py-0.5 text-[10px] text-muted-foreground">Últimos 7 dias</span>
-          </div>
-          <div className="h-48 flex items-center justify-center border border-dashed border-white/10 rounded-lg text-xs text-muted-foreground bg-white/[0.005]">
-            Área reservada para o gráfico de volume de sincronização.
-          </div>
+        <div className="lg:col-span-2">
+          <QuickMetrics
+            totalPlayers={totalPlayers}
+            totalMaps={totalMaps}
+            totalRounds={totalRounds}
+            totalKills={totalKills}
+            latestMatch={latestMatch}
+          />
         </div>
 
-        <div className="rounded-xl border border-white/5 bg-white/[0.01] p-5">
-          <h2 className="text-sm font-semibold text-foreground mb-4">Atividade do Servidor</h2>
-          <div className="space-y-4">
-            {[
-              { label: "Uso de CPU", val: "12%" },
-              { label: "Uso de Memória", val: "48%" },
-              { label: "Latência DB (Neon)", val: "45ms" },
-            ].map((stat) => (
-              <div key={stat.label} className="space-y-1">
-                <div className="flex justify-between text-xs font-medium">
-                  <span className="text-muted-foreground">{stat.label}</span>
-                  <span className="text-foreground">{stat.val}</span>
-                </div>
-                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-primary rounded-full"
-                    style={{ width: stat.val.includes("ms") ? "15%" : stat.val }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+        <div>
+          <RecentActivity recentImports={recentImports} />
         </div>
       </div>
     </div>

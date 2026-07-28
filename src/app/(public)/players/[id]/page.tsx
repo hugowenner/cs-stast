@@ -180,8 +180,84 @@ export default async function PlayerDetailPage({ params }: { params: Promise<{ i
         </div>
       </FadeIn>
 
+      {/* Métricas Nativas Gamers Club */}
+      <FadeIn delay={0.115}>
+        <div className="mb-3 mt-1">
+          <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-muted-foreground/60">Métricas Nativas Gamers Club</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
+          <StatTile
+            label="GC Rating Médio"
+            value={overview.gcRatingAvg !== null ? overview.gcRatingAvg.toFixed(2) : "N/A"}
+            icon={Trophy}
+            accent="violet"
+            context="Rating da plataforma"
+          />
+          <StatTile
+            label="Dano Total"
+            value={overview.totalDamage.toLocaleString()}
+            icon={Target}
+            accent="cyan"
+            context={`${overview.totalMatches > 0 ? (overview.totalDamage / overview.totalMatches).toFixed(0) : 0} média por partida`}
+          />
+          <StatTile
+            label="Trade Kills"
+            value={overview.tradeKills.toString()}
+            icon={Swords}
+            accent="violet"
+            context={`${overview.totalMatches > 0 ? (overview.tradeKills / overview.totalMatches).toFixed(1) : 0} média por partida`}
+          />
+          <StatTile
+            label="Assistências de Flash"
+            value={overview.flashAssists.toString()}
+            icon={Handshake}
+            accent="cyan"
+            context={`${overview.totalMatches > 0 ? (overview.flashAssists / overview.totalMatches).toFixed(1) : 0} média por partida`}
+          />
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={0.118}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <StatTile
+            label="Clutches Vencidos"
+            value={overview.clutchesWon.toString()}
+            icon={Trophy}
+            accent="violet"
+            context="Situações de clutch vencidas"
+          />
+          
+          <div className="rounded-2xl border border-white/5 bg-zinc-950 p-4 flex flex-col justify-between hover:bg-white/[0.02] transition-colors min-h-[96px]">
+            <div className="flex justify-between items-start">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                Multikills
+              </span>
+              <Gamepad2 className="size-4 text-primary" />
+            </div>
+            <div className="grid grid-cols-4 gap-2 text-center mt-2">
+              <div>
+                <span className="text-sm font-black text-foreground block">{overview.doubleKills}</span>
+                <span className="text-[8px] text-muted-foreground uppercase font-bold">2K</span>
+              </div>
+              <div>
+                <span className="text-sm font-black text-foreground block">{overview.tripleKills}</span>
+                <span className="text-[8px] text-muted-foreground uppercase font-bold">3K</span>
+              </div>
+              <div>
+                <span className="text-sm font-black text-foreground block">{overview.quadKills}</span>
+                <span className="text-[8px] text-muted-foreground uppercase font-bold">4K</span>
+              </div>
+              <div>
+                <span className="text-sm font-black text-foreground block">{overview.aces}</span>
+                <span className="text-[8px] text-muted-foreground uppercase font-bold">Aces</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </FadeIn>
+
       {/* Gráficos de Evolução */}
-      <FadeIn delay={0.12}>
+      <FadeIn delay={0.125}>
         <ProfileChartsSection
           eloTimeline={eloTimelinePoints}
           ratingTimeline={ratingTimelinePoints}

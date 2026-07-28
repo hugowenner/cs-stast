@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Copy, Check, MoreVertical, Eye, Edit3, RefreshCw, Pause, Trash2 } from "lucide-react";
 import { formatRelativeTime } from "./PlayersSummaryCards";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 interface PlayerData {
   id: string;
@@ -35,23 +36,23 @@ export function PlayersTableRow({ player, onActionClick }: PlayersTableRowProps)
     setTimeout(() => setCopiedField(null), 1500);
   };
 
-  // Determine Health status
-  let health: "good" | "warning" | "error" = "good";
-  let healthLabel = "Saudável";
-  
+  // Consolidated Status logic
+  let statusColor = "bg-status-good";
+  let statusText = "Monitorando";
+  let statusBadgeClass = "bg-status-good/10 text-status-good border-status-good/20";
+
   const hasGc = !!player.gamersClubId;
   const hasSteam = !!player.steamId;
   const lastSyncDate = player.steamLastSync ? new Date(player.steamLastSync) : null;
-  const isOldSync = lastSyncDate 
-    ? (Date.now() - lastSyncDate.getTime()) > 7 * 24 * 60 * 60 * 1000 
-    : true;
 
-  if (!hasGc || !hasSteam || player.matchCount === 0 || !lastSyncDate) {
-    health = "error";
-    healthLabel = "Erro";
-  } else if (isOldSync) {
-    health = "warning";
-    healthLabel = "Atenção";
+  if (!player.active) {
+    statusColor = "bg-muted-foreground";
+    statusText = "Pausado";
+    statusBadgeClass = "bg-white/5 text-muted-foreground border-white/10";
+  } else if (!hasGc || !hasSteam || player.matchCount === 0 || !lastSyncDate) {
+    statusColor = "bg-status-critical";
+    statusText = "Falha";
+    statusBadgeClass = "bg-status-critical/10 text-status-critical border-status-critical/20";
   }
 
   return (
@@ -74,7 +75,7 @@ export function PlayersTableRow({ player, onActionClick }: PlayersTableRowProps)
         </div>
       </td>
 
-      {/* Column: Nickname */}
+      {/* Column: Jogador */}
       <td className="px-6 py-4">
         <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-1.5">
@@ -135,11 +136,6 @@ export function PlayersTableRow({ player, onActionClick }: PlayersTableRowProps)
         )}
       </td>
 
-      {/* Column: Rating */}
-      <td className="px-6 py-4 text-xs font-semibold text-foreground">
-        {player.rating.toFixed(2)}
-      </td>
-
       {/* Column: Partidas */}
       <td className="px-6 py-4 text-xs font-medium text-foreground">
         {player.matchCount}
@@ -150,45 +146,21 @@ export function PlayersTableRow({ player, onActionClick }: PlayersTableRowProps)
         {formatRelativeTime(player.latestMatchDate)}
       </td>
 
-      {/* Column: Última Sincronização */}
-      <td className="px-6 py-4 text-xs text-muted-foreground">
-        {formatRelativeTime(player.steamLastSync)}
-      </td>
-
       {/* Column: Status */}
       <td className="px-6 py-4">
         <span
           className={cn(
-            "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold",
-            player.active
-              ? "bg-status-good/10 text-status-good border border-status-good/20"
-              : "bg-white/5 text-muted-foreground border border-white/10"
+            "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold border",
+            statusBadgeClass
           )}
         >
           <span
             className={cn(
               "size-1.5 rounded-full",
-              player.active ? "bg-status-good" : "bg-muted-foreground"
+              statusColor
             )}
           />
-          {player.active ? "Ativo" : "Pausado"}
-        </span>
-      </td>
-
-      {/* Column: Saúde */}
-      <td className="px-6 py-4">
-        <span
-          className={cn(
-            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border",
-            health === "good" && "bg-status-good/5 text-status-good border-status-good/20",
-            health === "warning" && "bg-status-warning/5 text-status-warning border-status-warning/20",
-            health === "error" && "bg-status-critical/5 text-status-critical border-status-critical/20"
-          )}
-        >
-          {health === "good" && "🟢"}
-          {health === "warning" && "🟡"}
-          {health === "error" && "🔴"}
-          <span>{healthLabel}</span>
+          {statusText}
         </span>
       </td>
 
@@ -208,16 +180,13 @@ export function PlayersTableRow({ player, onActionClick }: PlayersTableRowProps)
             
             {/* Context menu */}
             <div className="absolute right-6 top-10 mt-1 w-36 rounded-xl border border-white/10 bg-zinc-950 p-1 shadow-2xl z-40 text-left">
-              <button
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  onActionClick("👁 Ver detalhes", player);
-                }}
+              <Link
+                href={`/admin/players/${player.id}`}
                 className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-white/5 hover:text-foreground transition-colors cursor-pointer"
               >
                 <Eye className="size-3.5" />
-                <span>Ver detalhes</span>
-              </button>
+                <span>Ver jogador</span>
+              </Link>
               <button
                 onClick={() => {
                   setIsMenuOpen(false);

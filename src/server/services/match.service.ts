@@ -166,11 +166,11 @@ export async function ingestMatchSync(
       const rating = ratingByPlayerId.get(player.id)!;
       const elo = eloByPlayerId.get(player.id)!;
 
-      // Calcular decomposição de multikills baseando-se em killsDetail, se presente
-      let doubleKills: number | null = null;
-      let tripleKills: number | null = null;
-      let quadKills: number | null = null;
-      let aces: number | null = null;
+      // Calcular decomposição de multikills baseando-se em killsDetail, se presente, ou usar os valores pré-calculados mapeados da GC
+      let doubleKills: number | null = p.doubleKills ?? null;
+      let tripleKills: number | null = p.tripleKills ?? null;
+      let quadKills: number | null = p.quadKills ?? null;
+      let aces: number | null = p.aces ?? null;
 
       if (p.killsDetail && p.killsDetail.length > 0) {
         const killsByRound = new Map<number, number>();

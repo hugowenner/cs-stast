@@ -20,6 +20,17 @@ export interface PlayerProfileDTO {
     assistsAvg: number;
     impactAvg: number;
     entryKills: number;
+    totalKills: number;
+    totalDeaths: number;
+    totalDamage: number;
+    gcRatingAvg: number | null;
+    tradeKills: number;
+    clutchesWon: number;
+    flashAssists: number;
+    doubleKills: number;
+    tripleKills: number;
+    quadKills: number;
+    aces: number;
     summaryCoach: {
       bestMap: { name: string; winrate: number } | null;
       worstMap: { name: string; winrate: number } | null;

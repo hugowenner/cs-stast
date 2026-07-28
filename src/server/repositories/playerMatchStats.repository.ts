@@ -19,17 +19,22 @@ export function getPlayerCareerTotals(playerId: string) {
       deaths: true,
       assists: true,
       headshots: true,
-      // Campos abaixo adicionados para o AchievementEngine (conquistas cumulativas
-      // Entry Fragger, Clutch Master, Team Player) — mesma query já existente,
-      // sem nenhuma consulta nova ao banco.
       entryKills: true,
       clutch1v1Wins: true,
       clutch1v2Wins: true,
       clutch1v3Wins: true,
       clutch1v4Wins: true,
       clutch1v5Wins: true,
+      tradeKills: true,
+      clutchesWon: true,
+      flashAssists: true,
+      damage: true,
+      doubleKills: true,
+      tripleKills: true,
+      quadKills: true,
+      aces: true,
     },
-    _avg: { rating: true, adr: true, kast: true, impact: true },
+    _avg: { rating: true, adr: true, kast: true, impact: true, gcRating: true },
     _count: { _all: true },
   });
 }

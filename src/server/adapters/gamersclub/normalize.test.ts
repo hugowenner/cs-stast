@@ -132,4 +132,29 @@ describe("normalizeGamersClubMatch", () => {
     });
     expect(result.players[0].gcRating).toBe(-1.5);
   });
+
+  it("mapeia corretamente campos de multikills nativos (nb2kill...nb5kill)", () => {
+    const result = normalizeGamersClubMatch({
+      id: "123",
+      jogos: {
+        players: {
+          team_a: [
+            {
+              nb_kill: "10",
+              player: { plSteamID64: "123" },
+              nb2kill: "5",
+              nb3kill: "4",
+              nb4kill: "1",
+              nb5kill: "0"
+            }
+          ]
+        }
+      }
+    });
+    const player = result.players[0];
+    expect(player.doubleKills).toBe(5);
+    expect(player.tripleKills).toBe(4);
+    expect(player.quadKills).toBe(1);
+    expect(player.aces).toBe(0);
+  });
 });

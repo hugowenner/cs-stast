@@ -15,12 +15,21 @@ export function calculateOverview(
       assists: number | null;
       headshots: number | null;
       entryKills: number | null;
+      tradeKills: number | null;
+      clutchesWon: number | null;
+      flashAssists: number | null;
+      damage: number | null;
+      doubleKills: number | null;
+      tripleKills: number | null;
+      quadKills: number | null;
+      aces: number | null;
     };
     _avg: {
       rating: number | null;
       adr: number | null;
       kast: number | null;
       impact: number | null;
+      gcRating: number | null;
     };
     _count: { _all: number };
   },
@@ -34,6 +43,14 @@ export function calculateOverview(
   const headshots = careerTotals._sum.headshots ?? 0;
   const assists = careerTotals._sum.assists ?? 0;
   const entryKills = careerTotals._sum.entryKills ?? 0;
+  const tradeKills = careerTotals._sum.tradeKills ?? 0;
+  const clutchesWon = careerTotals._sum.clutchesWon ?? 0;
+  const flashAssists = careerTotals._sum.flashAssists ?? 0;
+  const damage = careerTotals._sum.damage ?? 0;
+  const doubleKills = careerTotals._sum.doubleKills ?? 0;
+  const tripleKills = careerTotals._sum.tripleKills ?? 0;
+  const quadKills = careerTotals._sum.quadKills ?? 0;
+  const aces = careerTotals._sum.aces ?? 0;
 
   const kd = calculateKD(kills, deaths);
   const hsPercentage = calculateHSPercentage(headshots, kills);
@@ -94,6 +111,17 @@ export function calculateOverview(
     assistsAvg,
     impactAvg,
     entryKills,
+    totalKills: kills,
+    totalDeaths: deaths,
+    totalDamage: damage,
+    gcRatingAvg: careerTotals._avg.gcRating !== null ? Math.round((careerTotals._avg.gcRating ?? 0) * 100) / 100 : null,
+    tradeKills,
+    clutchesWon,
+    flashAssists,
+    doubleKills,
+    tripleKills,
+    quadKills,
+    aces,
     summaryCoach: {
       bestMap: bestMap ? { name: bestMap.mapName, winrate: bestMap.winrate } : null,
       worstMap: worstMap && worstMap.mapName !== bestMap?.mapName ? { name: worstMap.mapName, winrate: worstMap.winrate } : null,

@@ -62,15 +62,12 @@ export function PlayersTable({ players, onActionClick }: PlayersTableProps) {
           <thead>
             <tr className="border-b border-white/5 bg-white/[0.02] text-[10px] font-bold uppercase tracking-wider text-muted-foreground select-none">
               <th className="px-6 py-3 w-16">Avatar</th>
-              <th className="px-6 py-3">Nick</th>
+              <th className="px-6 py-3">Jogador</th>
               <th className="px-6 py-3">Steam ID</th>
               <th className="px-6 py-3">Gamers Club ID</th>
-              <th className="px-6 py-3">Rating</th>
               <th className="px-6 py-3">Partidas</th>
               <th className="px-6 py-3">Última Partida</th>
-              <th className="px-6 py-3">Última Sinc.</th>
               <th className="px-6 py-3">Status</th>
-              <th className="px-6 py-3">Saúde</th>
               <th className="px-6 py-3 text-right w-20">Ações</th>
             </tr>
           </thead>

@@ -46,6 +46,10 @@ export interface GamersClubPlayerMatchEntry {
   tk?: number | string;
   trade?: number | string;
   banido?: boolean;
+  nb2kill?: number | string;
+  nb3kill?: number | string;
+  nb4kill?: number | string;
+  nb5kill?: number | string;
 }
 
 export interface GamersClubRound {

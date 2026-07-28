@@ -77,6 +77,12 @@ const EMPTY_COMPETITIVE_BUNDLE: competitiveService.DashboardCompetitiveBundle = 
     totalQuadKills: null,
     totalAces: null,
   },
+  multikillsLeaderboards: {
+    doubleKills: [],
+    tripleKills: [],
+    quadKills: [],
+    aces: [],
+  },
 };
 
 export default async function DashboardPage() {
@@ -131,6 +137,7 @@ export default async function DashboardPage() {
     bestMap,
     worstMap,
     advancedPerformance,
+    multikillsLeaderboards,
   } = competitive;
 
   const hottestPlayer = momentum.find((m) => m.status === "up") ?? null;
@@ -215,6 +222,116 @@ export default async function DashboardPage() {
       >
         <AdvancedPerformanceSection stats={advancedPerformance} />
       </SectionContainer>
+
+      {/* ═══ 🏆 Top Multikills da Temporada ═══ */}
+      {(multikillsLeaderboards.doubleKills.length > 0 ||
+        multikillsLeaderboards.tripleKills.length > 0 ||
+        multikillsLeaderboards.quadKills.length > 0 ||
+        multikillsLeaderboards.aces.length > 0) && (
+        <SectionContainer
+          title="🏆 Top Multikills da Temporada"
+          subtitle="Os maiores especialistas em eliminações múltiplas por rodada"
+          delay={0.065}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+            {/* Card: Double Kills */}
+            {multikillsLeaderboards.doubleKills.length > 0 && (
+              <div className="glass-panel rounded-2xl border border-white/[0.07] p-5 flex flex-col justify-between hover:bg-white/[0.01] transition-all duration-300 shadow-lg min-h-[160px]">
+                <div>
+                  <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5 select-none">
+                    <span>🥈 Double Kill (2K)</span>
+                  </h3>
+                  <div className="flex flex-col gap-2.5">
+                    {multikillsLeaderboards.doubleKills.map((p, idx) => (
+                      <div key={p.playerId} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[10px] font-bold text-muted-foreground select-none w-4">
+                            {idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉"}
+                          </span>
+                          <span className="font-semibold text-foreground truncate">{p.nickname}</span>
+                        </div>
+                        <span className="font-mono font-bold text-foreground bg-white/5 px-2 py-0.5 rounded-md border border-white/5">{p.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Card: Triple Kills */}
+            {multikillsLeaderboards.tripleKills.length > 0 && (
+              <div className="glass-panel rounded-2xl border border-white/[0.07] p-5 flex flex-col justify-between hover:bg-white/[0.01] transition-all duration-300 shadow-lg min-h-[160px]">
+                <div>
+                  <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5 select-none">
+                    <span>🥉 Triple Kill (3K)</span>
+                  </h3>
+                  <div className="flex flex-col gap-2.5">
+                    {multikillsLeaderboards.tripleKills.map((p, idx) => (
+                      <div key={p.playerId} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[10px] font-bold text-muted-foreground select-none w-4">
+                            {idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉"}
+                          </span>
+                          <span className="font-semibold text-foreground truncate">{p.nickname}</span>
+                        </div>
+                        <span className="font-mono font-bold text-foreground bg-white/5 px-2 py-0.5 rounded-md border border-white/5">{p.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Card: Quad Kills */}
+            {multikillsLeaderboards.quadKills.length > 0 && (
+              <div className="glass-panel rounded-2xl border border-white/[0.07] p-5 flex flex-col justify-between hover:bg-white/[0.01] transition-all duration-300 shadow-lg min-h-[160px]">
+                <div>
+                  <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5 select-none">
+                    <span>🏅 Quad Kill (4K)</span>
+                  </h3>
+                  <div className="flex flex-col gap-2.5">
+                    {multikillsLeaderboards.quadKills.map((p, idx) => (
+                      <div key={p.playerId} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[10px] font-bold text-muted-foreground select-none w-4">
+                            {idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉"}
+                          </span>
+                          <span className="font-semibold text-foreground truncate">{p.nickname}</span>
+                        </div>
+                        <span className="font-mono font-bold text-foreground bg-white/5 px-2 py-0.5 rounded-md border border-white/5">{p.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Card: Aces */}
+            {multikillsLeaderboards.aces.length > 0 && (
+              <div className="glass-panel rounded-2xl border border-white/[0.07] p-5 flex flex-col justify-between hover:bg-white/[0.01] transition-all duration-300 shadow-lg min-h-[160px]">
+                <div>
+                  <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5 select-none">
+                    <span>👑 Aces (5K)</span>
+                  </h3>
+                  <div className="flex flex-col gap-2.5">
+                    {multikillsLeaderboards.aces.map((p, idx) => (
+                      <div key={p.playerId} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[10px] font-bold text-muted-foreground select-none w-4">
+                            {idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉"}
+                          </span>
+                          <span className="font-semibold text-foreground truncate">{p.nickname}</span>
+                        </div>
+                        <span className="font-mono font-bold text-foreground bg-white/5 px-2 py-0.5 rounded-md border border-white/5">{p.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </SectionContainer>
+      )}
 
       {/* ═══ 3. Últimos Confrontos ═══ */}
       {recentMatches.length > 0 && (

@@ -73,6 +73,10 @@ function normalizeTeam(
       flashAssists: toNumber(entry.flash_assist),
       damage: entry.damage !== undefined ? toNumber(entry.damage) : undefined,
       gcRating: entry.rating_points !== undefined ? toNumber(entry.rating_points) : undefined,
+      doubleKills: entry.nb2kill !== undefined ? toNumber(entry.nb2kill) : undefined,
+      tripleKills: entry.nb3kill !== undefined ? toNumber(entry.nb3kill) : undefined,
+      quadKills: entry.nb4kill !== undefined ? toNumber(entry.nb4kill) : undefined,
+      aces: entry.nb5kill !== undefined ? toNumber(entry.nb5kill) : undefined,
     };
   });
 }
