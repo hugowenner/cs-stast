@@ -203,12 +203,12 @@ function MatchupsTab({ matchups }: { matchups: PlayerMatchupSummary[] }) {
           <div className="flex flex-wrap gap-2">
             {m.dominates && (
               <span className="text-[10px] font-bold text-status-good bg-status-good/10 border border-status-good/20 px-2 py-0.5 rounded-full">
-                ✓ Domina {m.dominates.nickname}
+                ✓ Domina {m.dominates.rivalName}
               </span>
             )}
             {m.struggles && (
               <span className="text-[10px] font-bold text-status-critical bg-status-critical/10 border border-status-critical/20 px-2 py-0.5 rounded-full">
-                ✗ Sofre contra {m.struggles.nickname}
+                ✗ Sofre contra {m.struggles.rivalName}
               </span>
             )}
           </div>
