@@ -3,6 +3,8 @@ import * as teamBalanceService from "@/server/services/team-balance.service";
 import { handleRouteError, parseJsonBody } from "@/server/http";
 import { z } from "zod";
 
+import { checkAdminAuth } from "@/lib/admin/auth";
+
 const patchWinnerSchema = z.object({
   winner: z.enum(["CT", "TR", "DRAW"]).nullable(),
 });
@@ -33,6 +35,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const isAdmin = await checkAdminAuth();
+    if (!isAdmin) {
+      return NextResponse.json(
+        { success: false, error: "Acesso negado: Apenas administradores podem excluir registros." },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
     await teamBalanceService.deleteBalance(id);
     return NextResponse.json({

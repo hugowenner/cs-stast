@@ -301,30 +301,6 @@ export function TeamBalanceClient({ initialPlayers }: TeamBalanceClientProps) {
     }
   }, [availablePlayers, showAlert]);
 
-  // Excluir partida do histórico
-  const handleDeleteHistoryMatch = useCallback(async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!window.confirm("Deseja realmente excluir este registro permanentemente?")) return;
-
-    try {
-      const res = await fetch(`/api/team-balance/matches/${id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (data.success) {
-        if (currentMatchId === id) {
-          setResult(null);
-          setCurrentMatchId(null);
-          setWinner(null);
-        }
-        fetchHistory();
-        showAlert("Registro excluído com sucesso.");
-      } else {
-        showAlert(data.error || "Erro ao excluir registro.", "error");
-      }
-    } catch (error) {
-      console.error("Erro ao excluir:", error);
-      showAlert("Erro ao conectar com servidor.", "error");
-    }
-  }, [currentMatchId, fetchHistory, showAlert]);
 
   // Métricas do Lobby atual
   const avgGcLevel = useMemo(() => {
@@ -920,13 +896,6 @@ export function TeamBalanceClient({ initialPlayers }: TeamBalanceClientProps) {
                           title="Copiar Seed"
                         >
                           <Copy className="size-3.5" />
-                        </button>
-                        <button
-                          onClick={(e) => handleDeleteHistoryMatch(match.id, e)}
-                          className="p-1.5 rounded bg-red-500/5 border border-red-500/10 hover:bg-red-500/15 text-red-400/50 hover:text-red-400 transition-colors"
-                          title="Deletar"
-                        >
-                          <Trash2 className="size-3.5" />
                         </button>
                       </div>
 

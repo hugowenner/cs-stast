@@ -41,7 +41,10 @@
 - [x] Fase 8: Expansão dos Recordes (12 Métricas)
   - [x] Adicionar 5 novas categorias (Maior Impacto, Mais MultiKills, Maior Dano, Maior Clutch, Maior Consistência) no backend
   - [x] Mapear os metadados visuais de design no frontend sem alteração de estilo ou redesenho
-  - [x] Executar testes de tipos e build de produção para certificar estabilidade em vez do intervalo fixo de 30 dias nos rankings
+  - [x] Executar testes de tipos e build de produção para certificar estabilidade
+- [x] Fase 9: Proteção do Histórico de Auditoria
+  - [x] Remover botão de deletar registro do frontend público
+  - [x] Proteger o endpoint `DELETE /api/team-balance/matches/[id]` no backend com `checkAdminAuth()`
   - [x] Mantenha métricas de janela móvel / timelines históricos intocados
   - [x] Validar compilação com `npm run typecheck`
   - [x] Validar regressões com testes unitários (`npm run test`)
