@@ -30,7 +30,18 @@
 - [x] FASE 3.2A — Stats Service
   - [x] Adaptar todos os métodos públicos de `stats.service.ts` para aceitar `seasonId?: string`
   - [x] Resolver a temporada ativa com fallback automático quando `seasonId` for omitido
-  - [x] Alterar consultas Prisma para filtrar por `match.seasonId` em vez do intervalo fixo de 30 dias nos rankings
+  - [x] Alterar consultas Prisma para filtrar por `match.seasonId`
+  - [x] Fase 6: Integração de Navegação e Homologação
+  - [x] Atualizar os menus `sidebar.tsx` e `layout-shell.tsx` para o link interno
+  - [x] Rodar builds de teste (`npm run typecheck` e `npm run build`) para validar a compilação final
+  - [x] Fase 7: Correção do Hall da Fama e Ajuste de Layout
+  - [x] Remover abas extras do Hall da Fama e focar apenas na temporada atual
+  - [x] Renomear todos os rótulos de medalha para "Recorde da Temporada"
+  - [x] Remover seção "Histórias da Semana" e mover "Hall da Fama" para seu lugar
+- [x] Fase 8: Expansão dos Recordes (12 Métricas)
+  - [x] Adicionar 5 novas categorias (Maior Impacto, Mais MultiKills, Maior Dano, Maior Clutch, Maior Consistência) no backend
+  - [x] Mapear os metadados visuais de design no frontend sem alteração de estilo ou redesenho
+  - [x] Executar testes de tipos e build de produção para certificar estabilidade em vez do intervalo fixo de 30 dias nos rankings
   - [x] Mantenha métricas de janela móvel / timelines históricos intocados
   - [x] Validar compilação com `npm run typecheck`
   - [x] Validar regressões com testes unitários (`npm run test`)

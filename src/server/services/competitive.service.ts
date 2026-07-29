@@ -144,28 +144,40 @@ type PlayerRow = { id: string; nickname: string; avatarUrl: string | null; level
  * precisar reimplementar o filtro em cada uma. Partidas SOLO nunca são excluídas do
  * banco — só ficam fora deste dataset agregado.
  */
-export async function loadCompetitiveDataset(seasonId?: string) {
+export async function loadCompetitiveDataset(seasonId?: string | "all") {
   const activePlayers = await prisma.player.findMany({
     where: { trackedPlayer: { active: true } },
   });
 
-  let targetSeasonId = seasonId;
-  if (!targetSeasonId) {
-    const activeSeason = await getActiveSeason();
-    targetSeasonId = activeSeason?.id;
-  }
-
-  const allStats = await prisma.playerMatchStats.findMany({
-    where: {
-      playerId: { in: activePlayers.map((p) => p.id) },
-      match: {
-        seasonId: targetSeasonId || undefined,
-        ...communityMatchWhere(),
+  let allStats;
+  if (seasonId === "all") {
+    allStats = await prisma.playerMatchStats.findMany({
+      where: {
+        playerId: { in: activePlayers.map((p) => p.id) },
+        match: communityMatchWhere(),
       },
-    },
-    include: { match: { include: { map: true } } },
-    orderBy: { match: { playedAt: "desc" } },
-  });
+      include: { match: { include: { map: true } } },
+      orderBy: { match: { playedAt: "desc" } },
+    });
+  } else {
+    let targetSeasonId = seasonId;
+    if (!targetSeasonId) {
+      const activeSeason = await getActiveSeason();
+      targetSeasonId = activeSeason?.id;
+    }
+
+    allStats = await prisma.playerMatchStats.findMany({
+      where: {
+        playerId: { in: activePlayers.map((p) => p.id) },
+        match: {
+          seasonId: targetSeasonId || undefined,
+          ...communityMatchWhere(),
+        },
+      },
+      include: { match: { include: { map: true } } },
+      orderBy: { match: { playedAt: "desc" } },
+    });
+  }
 
   const statsByPlayer = new Map<string, typeof allStats>();
   for (const p of activePlayers) statsByPlayer.set(p.id, []);
@@ -938,6 +950,129 @@ function getHallOfFameRecordsFromDataset(
   const playerName = (s: (typeof dataset.allStats)[number] | null) =>
     dataset.activePlayers.find((p) => p.id === s?.playerId)?.nickname ?? "N/A";
 
+  // 8. Maior Impacto em Jogo
+  let maxImpactStat: (typeof dataset.allStats)[number] | null = null;
+  let maxImpactScore = 0;
+  for (const s of statsToUse) {
+    const score = s.rating * 100 + s.adr;
+    if (!maxImpactStat || score > maxImpactScore) {
+      maxImpactStat = s;
+      maxImpactScore = score;
+    }
+  }
+
+  // 9. Mais MultiKills na Temporada
+  let bestMultiKillPlayer = "N/A";
+  let maxMultiKills = 0;
+  let bestMultiKillDetail = "";
+  for (const player of dataset.activePlayers) {
+    const rawPlayerStats = dataset.statsByPlayer.get(player.id) ?? [];
+    const playerStats = statsOverride
+      ? rawPlayerStats.filter((s) => statsOverride.some((so) => so.matchId === s.matchId))
+      : rawPlayerStats;
+    let doubleSum = 0;
+    let tripleSum = 0;
+    let quadSum = 0;
+    let aceSum = 0;
+    for (const s of playerStats) {
+      doubleSum += s.doubleKills ?? 0;
+      tripleSum += s.tripleKills ?? 0;
+      quadSum += s.quadKills ?? 0;
+      aceSum += s.aces ?? 0;
+    }
+    const total = doubleSum + tripleSum + quadSum + aceSum;
+    if (total > maxMultiKills) {
+      maxMultiKills = total;
+      bestMultiKillPlayer = player.nickname;
+      bestMultiKillDetail = `${doubleSum}x 2K, ${tripleSum}x 3K, ${quadSum}x 4K` + (aceSum > 0 ? `, ${aceSum}x Ace` : "");
+    }
+  }
+
+  // 10. Maior Dano em Jogo
+  let maxDamageStat: (typeof dataset.allStats)[number] | null = null;
+  for (const s of statsToUse) {
+    if (s.damage !== null && s.damage !== undefined) {
+      if (!maxDamageStat || s.damage > (maxDamageStat.damage ?? 0)) {
+        maxDamageStat = s;
+      }
+    }
+  }
+
+  // 11. Maior Clutch na Temporada
+  let bestClutchPlayer = "N/A";
+  let maxClutches = 0;
+  let clutchDetail = "Decisivo nos momentos críticos";
+  for (const player of dataset.activePlayers) {
+    const rawPlayerStats = dataset.statsByPlayer.get(player.id) ?? [];
+    const playerStats = statsOverride
+      ? rawPlayerStats.filter((s) => statsOverride.some((so) => so.matchId === s.matchId))
+      : rawPlayerStats;
+    let totalClutches = 0;
+    let c1v1 = 0, c1v2 = 0, c1v3 = 0, c1v4 = 0, c1v5 = 0;
+    for (const s of playerStats) {
+      totalClutches += s.clutchesWon ?? 0;
+      c1v1 += s.clutch1v1Wins ?? 0;
+      c1v2 += s.clutch1v2Wins ?? 0;
+      c1v3 += s.clutch1v3Wins ?? 0;
+      c1v4 += s.clutch1v4Wins ?? 0;
+      c1v5 += s.clutch1v5Wins ?? 0;
+    }
+    if (totalClutches > maxClutches) {
+      maxClutches = totalClutches;
+      bestClutchPlayer = player.nickname;
+      clutchDetail = `${c1v1}x 1v1, ${c1v2}x 1v2, ${c1v3}x 1v3` + (c1v4 + c1v5 > 0 ? `, ${c1v4 + c1v5}x 1v4+` : "");
+    }
+  }
+
+  // 12. Maior Consistência na Temporada
+  let bestConsistencyPlayer = "N/A";
+  let maxConsistencyScore = 0;
+  let consistencyValue = "1.00 Rating";
+  let consistencyDetail = "Regularidade durante a temporada";
+
+  let minMatches = 3;
+  let candidatePlayers = dataset.activePlayers.filter(p => {
+    const stats = dataset.statsByPlayer.get(p.id) ?? [];
+    const statsToCount = statsOverride
+      ? stats.filter((s) => statsOverride.some((so) => so.matchId === s.matchId))
+      : stats;
+    return statsToCount.length >= minMatches;
+  });
+
+  if (candidatePlayers.length === 0) {
+    minMatches = 1;
+    candidatePlayers = dataset.activePlayers.filter(p => {
+      const stats = dataset.statsByPlayer.get(p.id) ?? [];
+      const statsToCount = statsOverride
+        ? stats.filter((s) => statsOverride.some((so) => so.matchId === s.matchId))
+        : stats;
+      return statsToCount.length >= minMatches;
+    });
+  }
+
+  for (const player of candidatePlayers) {
+    const rawPlayerStats = dataset.statsByPlayer.get(player.id) ?? [];
+    const playerStats = statsOverride
+      ? rawPlayerStats.filter((s) => statsOverride.some((so) => so.matchId === s.matchId))
+      : rawPlayerStats;
+
+    const totalMatches = playerStats.length;
+    if (totalMatches === 0) continue;
+
+    const totalRating = playerStats.reduce((sum, s) => sum + s.rating, 0);
+    const avgRating = totalRating / totalMatches;
+    const aboveBaselineCount = playerStats.filter(s => s.rating >= 1.0).length;
+    const aboveBaselinePct = aboveBaselineCount / totalMatches;
+
+    const score = avgRating * (1 + aboveBaselinePct);
+    if (score > maxConsistencyScore) {
+      maxConsistencyScore = score;
+      bestConsistencyPlayer = player.nickname;
+      consistencyValue = `${avgRating.toFixed(2)} Rating`;
+      consistencyDetail = `${aboveBaselineCount} de ${totalMatches} partidas com rating ≥ 1.0`;
+    }
+  }
+
   const records: HallOfFameRecord[] = [];
 
   if (maxRating) {
@@ -1002,6 +1137,48 @@ function getHallOfFameRecordsFromDataset(
       value: `${eloLeader.eloAfter} pontos`,
       detail: "Ranking interno CS2 Stats Hub",
       matchId: eloLeader.match.id,
+    });
+  }
+  if (maxImpactStat) {
+    records.push({
+      category: "Maior Impacto em Jogo",
+      playerName: playerName(maxImpactStat),
+      value: `${maxImpactStat.rating.toFixed(2)} Rating / ${maxImpactStat.adr.toFixed(1)} ADR`,
+      detail: "Performance mais dominante em uma partida",
+      matchId: maxImpactStat.match.id,
+    });
+  }
+  if (maxMultiKills > 0) {
+    records.push({
+      category: "Mais MultiKills na Temporada",
+      playerName: bestMultiKillPlayer,
+      value: `${maxMultiKills} multikills`,
+      detail: bestMultiKillDetail,
+    });
+  }
+  if (maxDamageStat && maxDamageStat.damage) {
+    records.push({
+      category: "Maior Dano em Jogo",
+      playerName: playerName(maxDamageStat),
+      value: `${maxDamageStat.damage} DMG`,
+      detail: `Dano bruto causado na ${maxDamageStat.match.map.name}`,
+      matchId: maxDamageStat.match.id,
+    });
+  }
+  if (maxClutches > 0) {
+    records.push({
+      category: "Maior Clutch na Temporada",
+      playerName: bestClutchPlayer,
+      value: `${maxClutches} clutches`,
+      detail: clutchDetail,
+    });
+  }
+  if (maxConsistencyScore > 0) {
+    records.push({
+      category: "Maior Consistência na Temporada",
+      playerName: bestConsistencyPlayer,
+      value: consistencyValue,
+      detail: consistencyDetail,
     });
   }
 
@@ -1700,7 +1877,6 @@ export interface DashboardCompetitiveBundle {
   advancedPerformance: AdvancedPerformanceStats;
   multikillsLeaderboards: MultikillsBundle;
   highlightsPool: DashboardHighlight[];
-  recentRecords: HallOfFameRecord[];
 }
 
 export interface MultikillLeaderboardEntry {
@@ -1750,14 +1926,6 @@ export async function getDashboardCompetitiveBundle(
     .filter((e) => e.diff.rating < 0)
     .slice(0, 3);
 
-  const maxDate = ds.allStats.reduce(
-    (max, s) => (s.match.playedAt.getTime() > max.getTime() ? s.match.playedAt : max),
-    new Date(0)
-  );
-  const fourteenDaysAgo = new Date(maxDate.getTime() - 14 * 24 * 60 * 60 * 1000);
-  const recentStats = ds.allStats.filter((s) => s.match.playedAt >= fourteenDaysAgo);
-  const recentRecords = getHallOfFameRecordsFromDataset(ds, recentStats);
-
   return {
     powerRanking: getPowerRankingFromDataset(ds, 15),
     momentum: getPlayerMomentumFromDataset(ds, 3),
@@ -1786,7 +1954,6 @@ export async function getDashboardCompetitiveBundle(
     advancedPerformance: getAdvancedPerformanceStatsFromDataset(ds),
     multikillsLeaderboards: getMultikillsLeaderboards(ds),
     highlightsPool: generateHighlights(ds),
-    recentRecords,
   };
 }
 

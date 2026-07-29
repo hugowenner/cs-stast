@@ -76,7 +76,6 @@ const EMPTY_COMPETITIVE_BUNDLE: competitiveService.DashboardCompetitiveBundle = 
     aces: [],
   },
   highlightsPool: [],
-  recentRecords: [],
 };
 
 export default async function DashboardPage(props: {
@@ -168,7 +167,6 @@ export default async function DashboardPage(props: {
     advancedPerformance,
     multikillsLeaderboards,
     highlightsPool,
-    recentRecords,
   } = competitive;
 
   const hottestPlayer = momentum.find((m) => m.status === "up") ?? null;
@@ -286,15 +284,13 @@ export default async function DashboardPage(props: {
         />
       </SectionContainer>
 
-      {/* ═══ 4. Histórias da Semana ═══ */}
-      {highlightsPool && highlightsPool.length > 0 && (
-        <SectionContainer
-          title="🔥 Histórias da Semana"
-          delay={0.05}
-        >
-          <NarratorSection highlights={highlightsPool} />
-        </SectionContainer>
-      )}
+      {/* ═══ 4. Hall da Fama ═══ */}
+      <SectionContainer
+        title="🏆 Hall da Fama"
+        delay={0.05}
+      >
+        <HallOfFame records={records} monitoredPlayers={monitoredPlayers} />
+      </SectionContainer>
 
       {/* ═══ 5. Ranking Competitivo ═══ */}
       <SectionContainer
@@ -378,13 +374,7 @@ export default async function DashboardPage(props: {
         />
       </SectionContainer>
 
-      {/* ═══ 11. Hall da Fama ═══ */}
-      <SectionContainer
-        title="🏆 Hall da Fama"
-        delay={0.13}
-      >
-        <HallOfFame records={records} recentRecords={recentRecords} monitoredPlayers={monitoredPlayers} />
-      </SectionContainer>
+
 
       {/* ═══ 12. Coach IA ═══ */}
       <SectionContainer
