@@ -58,20 +58,22 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
           );
         })}
 
-        {/* Ferramentas externas */}
+        {/* Ferramentas */}
         <p className="text-muted-foreground mt-4 mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider">
           🛠️ Ferramentas
         </p>
-        <a
-          href="https://cs2-team-balance.vercel.app/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-white/5 hover:text-foreground transition-colors"
+        <Link
+          href="/team-balance"
+          className={cn(
+            "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+            pathname.startsWith("/team-balance")
+              ? "bg-primary/15 text-primary glow-ring"
+              : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+          )}
         >
           <Target className="size-4" />
           <span className="flex-1">🎯 Gerador de Times</span>
-          <ExternalLink className="size-3.5 shrink-0" />
-        </a>
+        </Link>
       </nav>
 
       <div className="text-muted-foreground rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs">

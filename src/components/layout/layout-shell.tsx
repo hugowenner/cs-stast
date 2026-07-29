@@ -58,16 +58,18 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                 </Link>
               );
             })}
-            <a
-              href="https://cs2-team-balance.vercel.app/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
+            <Link
+              href="/team-balance"
+              className={cn(
+                "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
+                pathname.startsWith("/team-balance")
+                  ? "bg-primary/15 text-primary"
+                  : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+              )}
             >
               <Target className="size-3.5" />
               Times
-              <ExternalLink className="size-2.5" />
-            </a>
+            </Link>
           </nav>
 
           {/* Direita: GC status + hamburger mobile */}
@@ -109,17 +111,19 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                 </Link>
               );
             })}
-            <a
-              href="https://cs2-team-balance.vercel.app/"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/team-balance"
               onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
+              className={cn(
+                "flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold transition-colors",
+                pathname.startsWith("/team-balance")
+                  ? "bg-primary/15 text-primary"
+                  : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+              )}
             >
               <Target className="size-3.5 shrink-0" />
               Times
-              <ExternalLink className="size-2.5" />
-            </a>
+            </Link>
           </nav>
         )}
       </header>

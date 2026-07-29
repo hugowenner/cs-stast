@@ -26,14 +26,15 @@ model Player {
   steamProfileUrl   String?
   steamLastSync     DateTime?
 
-  user           User?
-  matchStats     PlayerMatchStats[]
-  events         Event[]             @relation("EventActor")
-  eventsAsVictim Event[]             @relation("EventVictim")
-  achievements   PlayerAchievement[]
-  rivalriesAsA   Rivalry[]           @relation("RivalryPlayerA")
-  rivalriesAsB   Rivalry[]           @relation("RivalryPlayerB")
-  trackedPlayer  TrackedPlayer?
+  user               User?
+  matchStats         PlayerMatchStats[]
+  events             Event[]             @relation("EventActor")
+  eventsAsVictim     Event[]             @relation("EventVictim")
+  achievements       PlayerAchievement[]
+  rivalriesAsA       Rivalry[]           @relation("RivalryPlayerA")
+  rivalriesAsB       Rivalry[]           @relation("RivalryPlayerB")
+  trackedPlayer      TrackedPlayer?
+  teamBalancePlayers TeamBalancePlayer[]
 }
 
 /// Reservado para autenticação na Fase 2. Sem fluxo de login no MVP.
@@ -291,14 +292,14 @@ model Configuration {
 }
 
 model TrackedPlayer {
-  id           String   @id @default(cuid())
-  gamersClubId String   @unique @map("gamersclub_id")
-  active       Boolean  @default(true)
-  nickname     String?
-  createdAt    DateTime @default(now()) @map("created_at")
-  playerId     String?  @unique @map("player_id")
+  id                 String              @id @default(cuid())
+  gamersClubId       String              @unique @map("gamersclub_id")
+  active             Boolean             @default(true)
+  nickname           String?
+  createdAt          DateTime            @default(now()) @map("created_at")
+  playerId           String?             @unique @map("player_id")
 
-  player       Player?  @relation(fields: [playerId], references: [id])
+  player             Player?             @relation(fields: [playerId], references: [id])
 
   @@map("tracked_players")
 }
@@ -329,4 +330,35 @@ model SeasonSnapshot {
   season    Season   @relation(fields: [seasonId], references: [id])
   dashboard Json
   createdAt DateTime @default(now())
+}
+
+model TeamBalanceMatch {
+  id          String   @id @default(cuid())
+  seed        String
+  mode        String   // "RANDOM" ou "BALANCED"
+  metric      String   // "LEVEL" | "RATING" | "ADR" | "KD" | "COMPOUND"
+  difference  Float
+  winner      String?  // "CT" | "TR" | "DRAW" | null
+  createdAt   DateTime @default(now())
+
+  players     TeamBalancePlayer[]
+
+  @@index([createdAt])
+  @@index([seed])
+}
+
+model TeamBalancePlayer {
+  id              String   @id @default(cuid())
+  matchId         String   @map("match_id")
+  playerId        String?  @map("player_id")
+  nickname        String
+  avatar          String?
+  team            String   // "CT" ou "TR"
+  weight          Float
+  guest           Boolean  @default(false)
+
+  match           TeamBalanceMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player          Player?          @relation(fields: [playerId], references: [id], onDelete: SetNull)
+
+  @@map("team_balance_players")
 }
