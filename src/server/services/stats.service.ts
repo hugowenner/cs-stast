@@ -3,9 +3,41 @@ import * as playerRepo from "@/server/repositories/player.repository";
 import type { RankingMetric } from "@/server/repositories/playerMatchStats.repository";
 import { prisma } from "@/server/db";
 import { communityMatchWhere } from "@/server/domain/matchClassification";
+import { getActiveSeason, resolveSeasonId } from "@/server/services/season.service";
 
-export async function getRanking(metric: RankingMetric, take?: number) {
-  const rows = await statsRepo.getRankingByMetric(metric, take);
+const MIN_MATCHES_FOR_EXTRA_RANKINGS = 3;
+
+/**
+ * Utilitário para parsear parâmetros sobrecarregados (seasonId vs take).
+ * Garante 100% de compatibilidade retroativa com chamadas legadas passando apenas o limite numérico.
+ */
+function parseOverloadedArgs(
+  seasonIdOrTake?: string | number,
+  take?: number,
+  defaultTake = 20
+): { targetSeasonId?: string; targetTake: number } {
+  let targetSeasonId: string | undefined;
+  let targetTake = take ?? defaultTake;
+
+  if (typeof seasonIdOrTake === "number") {
+    targetTake = seasonIdOrTake;
+    targetSeasonId = undefined;
+  } else {
+    targetSeasonId = seasonIdOrTake;
+  }
+
+  return { targetSeasonId, targetTake };
+}
+
+export async function getRanking(
+  metric: RankingMetric,
+  seasonIdOrTake?: string | number,
+  take?: number
+) {
+  const { targetSeasonId, targetTake } = parseOverloadedArgs(seasonIdOrTake, take, 20);
+  const resolvedSeasonId = await resolveSeasonId(targetSeasonId);
+  
+  const rows = await statsRepo.getRankingByMetric(metric, resolvedSeasonId, targetTake);
 
   // 1 findMany com todos os IDs de uma vez, em vez de 1 findPlayerById por linha do ranking.
   const players = await playerRepo.findPlayersByIds(rows.map((row) => row.playerId));
@@ -21,13 +53,20 @@ export async function getRanking(metric: RankingMetric, take?: number) {
   });
 }
 
-const MIN_MATCHES_FOR_EXTRA_RANKINGS = 3;
-
 // K/D ranking — kills/deaths não é um campo diretamente agregável, calcula em memória.
-// Ranking é métrica coletiva — só partidas COMUNIDADE (ver matchClassification.ts).
-export async function getKdRanking(take = 20) {
+// Ranking é métrica coletiva — só partidas COMUNIDADE (ver matchClassification.ts) da temporada selecionada.
+export async function getKdRanking(seasonIdOrTake?: string | number, take?: number) {
+  const { targetSeasonId, targetTake } = parseOverloadedArgs(seasonIdOrTake, take, 20);
+  const resolvedSeasonId = await resolveSeasonId(targetSeasonId);
+
   const rows = await prisma.playerMatchStats.findMany({
-    where: { player: { trackedPlayer: { active: true } }, match: communityMatchWhere() },
+    where: {
+      player: { trackedPlayer: { active: true } },
+      match: {
+        seasonId: resolvedSeasonId,
+        ...communityMatchWhere(),
+      },
+    },
     select: { playerId: true, kills: true, deaths: true },
   });
 
@@ -52,14 +91,23 @@ export async function getKdRanking(take = 20) {
       value: Math.round((s.kills / s.deaths) * 100) / 100,
     }))
     .sort((a, b) => b.value - a.value)
-    .slice(0, take);
+    .slice(0, targetTake);
 }
 
 // Consistência — % de partidas com rating >= 1.0, mínimo de partidas. Métrica
-// coletiva — só partidas COMUNIDADE.
-export async function getConsistencyRanking(take = 20) {
+// coletiva — só partidas COMUNIDADE da temporada selecionada.
+export async function getConsistencyRanking(seasonIdOrTake?: string | number, take?: number) {
+  const { targetSeasonId, targetTake } = parseOverloadedArgs(seasonIdOrTake, take, 20);
+  const resolvedSeasonId = await resolveSeasonId(targetSeasonId);
+
   const rows = await prisma.playerMatchStats.findMany({
-    where: { player: { trackedPlayer: { active: true } }, match: communityMatchWhere() },
+    where: {
+      player: { trackedPlayer: { active: true } },
+      match: {
+        seasonId: resolvedSeasonId,
+        ...communityMatchWhere(),
+      },
+    },
     select: { playerId: true, rating: true },
   });
 
@@ -83,14 +131,23 @@ export async function getConsistencyRanking(take = 20) {
       value: Math.round((s.above / s.total) * 1000) / 10, // ex: 72.3%
     }))
     .sort((a, b) => b.value - a.value)
-    .slice(0, take);
+    .slice(0, targetTake);
 }
 
-// Evolução — compara rating das últimas 5 partidas vs média geral (mín 5 partidas).
-// Métrica coletiva — só partidas COMUNIDADE.
-export async function getEvolutionRanking(take = 20) {
+// Evolução — compara rating das últimas 5 partidas vs média geral (mín 5 partidas) na temporada selecionada.
+// Métrica coletiva — só partidas COMUNIDADE da temporada selecionada.
+export async function getEvolutionRanking(seasonIdOrTake?: string | number, take?: number) {
+  const { targetSeasonId, targetTake } = parseOverloadedArgs(seasonIdOrTake, take, 20);
+  const resolvedSeasonId = await resolveSeasonId(targetSeasonId);
+
   const rows = await prisma.playerMatchStats.findMany({
-    where: { player: { trackedPlayer: { active: true } }, match: communityMatchWhere() },
+    where: {
+      player: { trackedPlayer: { active: true } },
+      match: {
+        seasonId: resolvedSeasonId,
+        ...communityMatchWhere(),
+      },
+    },
     select: { playerId: true, rating: true },
     orderBy: { match: { playedAt: "desc" } },
   });
@@ -119,9 +176,10 @@ export async function getEvolutionRanking(take = 20) {
       };
     })
     .sort((a, b) => b.value - a.value)
-    .slice(0, take);
+    .slice(0, targetTake);
 }
 
+// ELO — Histórico, nunca reinicia, ignora filtros de temporada.
 export async function getEloRanking(take?: number) {
   const rows = await statsRepo.getEloLeaderboard(take);
   const players = await playerRepo.findPlayersByIds(rows.map((row) => row.playerId));
@@ -133,8 +191,10 @@ export async function getEloRanking(take?: number) {
   }));
 }
 
-export async function getMapWinrates() {
-  const rows = await statsRepo.getMapWinrates();
+// Map Winrates — Métrica da temporada selecionada.
+export async function getMapWinrates(seasonId?: string) {
+  const targetSeasonId = await resolveSeasonId(seasonId);
+  const rows = await statsRepo.getMapWinrates(targetSeasonId);
 
   const byMap = new Map<
     string,
@@ -164,9 +224,19 @@ export async function getMapWinrates() {
   }));
 }
 
-export async function getHsRanking(take = 20) {
+// Headshots — Métrica da temporada selecionada.
+export async function getHsRanking(seasonIdOrTake?: string | number, take?: number) {
+  const { targetSeasonId, targetTake } = parseOverloadedArgs(seasonIdOrTake, take, 20);
+  const resolvedSeasonId = await resolveSeasonId(targetSeasonId);
+
   const rows = await prisma.playerMatchStats.findMany({
-    where: { player: { trackedPlayer: { active: true } }, match: communityMatchWhere() },
+    where: {
+      player: { trackedPlayer: { active: true } },
+      match: {
+        seasonId: resolvedSeasonId,
+        ...communityMatchWhere(),
+      },
+    },
     select: { playerId: true, kills: true, headshots: true },
   });
 
@@ -191,12 +261,22 @@ export async function getHsRanking(take = 20) {
       value: Math.round((s.headshots / s.kills) * 1000) / 10,
     }))
     .sort((a, b) => b.value - a.value)
-    .slice(0, take);
+    .slice(0, targetTake);
 }
 
-export async function getEntryKillsRanking(take = 20) {
+// Entry Kills — Métrica da temporada selecionada.
+export async function getEntryKillsRanking(seasonIdOrTake?: string | number, take?: number) {
+  const { targetSeasonId, targetTake } = parseOverloadedArgs(seasonIdOrTake, take, 20);
+  const resolvedSeasonId = await resolveSeasonId(targetSeasonId);
+
   const rows = await prisma.playerMatchStats.findMany({
-    where: { player: { trackedPlayer: { active: true } }, match: communityMatchWhere() },
+    where: {
+      player: { trackedPlayer: { active: true } },
+      match: {
+        seasonId: resolvedSeasonId,
+        ...communityMatchWhere(),
+      },
+    },
     select: { playerId: true, entryKills: true },
   });
 
@@ -220,12 +300,22 @@ export async function getEntryKillsRanking(take = 20) {
       value: Math.round((s.entryKills / s.count) * 100) / 100,
     }))
     .sort((a, b) => b.value - a.value)
-    .slice(0, take);
+    .slice(0, targetTake);
 }
 
-export async function getSupportRanking(take = 20) {
+// Support — Métrica da temporada selecionada.
+export async function getSupportRanking(seasonIdOrTake?: string | number, take?: number) {
+  const { targetSeasonId, targetTake } = parseOverloadedArgs(seasonIdOrTake, take, 20);
+  const resolvedSeasonId = await resolveSeasonId(targetSeasonId);
+
   const rows = await prisma.playerMatchStats.findMany({
-    where: { player: { trackedPlayer: { active: true } }, match: communityMatchWhere() },
+    where: {
+      player: { trackedPlayer: { active: true } },
+      match: {
+        seasonId: resolvedSeasonId,
+        ...communityMatchWhere(),
+      },
+    },
     select: { playerId: true, assists: true, flashAssists: true },
   });
 
@@ -250,9 +340,10 @@ export async function getSupportRanking(take = 20) {
       value: Math.round(((s.assists + s.flashAssists) / s.count) * 100) / 100,
     }))
     .sort((a, b) => b.value - a.value)
-    .slice(0, take);
+    .slice(0, targetTake);
 }
 
+// ELO Timeline — Histórico, nunca reinicia, ignora filtros de temporada.
 export async function getPlayerEloTimeline(playerId: string) {
   const rows = await statsRepo.getPlayerEloHistory(playerId);
   return rows.map((row) => ({
@@ -261,4 +352,3 @@ export async function getPlayerEloTimeline(playerId: string) {
     elo: row.eloAfter,
   }));
 }
-

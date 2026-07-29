@@ -25,6 +25,12 @@ export function calculateCacheKey(dto: any): string {
 
 const CACHE_DIR = path.join(process.cwd(), "tmp", "coach-cache");
 
+export function invalidateCoachCache() {
+  if (fs.existsSync(CACHE_DIR)) {
+    fs.rmSync(CACHE_DIR, { recursive: true, force: true });
+  }
+}
+
 interface CacheEntry {
   expiresAt: number;
   report: CoachReportDTO;
@@ -74,7 +80,7 @@ interface PointerEntry {
 }
 
 function getPointer(entityKey: string): PointerEntry | null {
-  const filePath = path.join(POINTER_DIR, `${entityKey}.json`);
+  const filePath = path.join(POINTER_DIR, `${entityKey.replace(/:/g, "_")}.json`);
   if (!fs.existsSync(filePath)) return null;
   try {
     return JSON.parse(fs.readFileSync(filePath, "utf-8"));
@@ -87,11 +93,26 @@ function getPointer(entityKey: string): PointerEntry | null {
 function savePointer(entityKey: string, hash: string, generatedAt: string) {
   try {
     fs.mkdirSync(POINTER_DIR, { recursive: true });
-    const filePath = path.join(POINTER_DIR, `${entityKey}.json`);
+    const filePath = path.join(POINTER_DIR, `${entityKey.replace(/:/g, "_")}.json`);
     fs.writeFileSync(filePath, JSON.stringify({ hash, generatedAt } satisfies PointerEntry, null, 2), "utf-8");
   } catch (err) {
     console.error("Falha ao salvar ponteiro do Coach IA:", err);
   }
+}
+
+function mapEntityKeyWithSeason(entityKey: string, seasonId: string): string {
+  if (entityKey === "dashboard:season") {
+    return `dashboard:season:${seasonId}`;
+  }
+  if (entityKey.startsWith("player:")) {
+    const parts = entityKey.split(":");
+    return `player:${parts[1]}:season:${seasonId}`;
+  }
+  if (entityKey.startsWith("compare:")) {
+    const parts = entityKey.split(":");
+    return `compare:${parts[1]}:${parts[2]}:season:${seasonId}`;
+  }
+  return entityKey;
 }
 
 export interface CoachReportStatus {
@@ -102,12 +123,15 @@ export interface CoachReportStatus {
 
 /**
  * Verifica se já existe uma análise para a entidade, SEM chamar a IA.
- * "fresh" = existe e reflete os dados atuais. "stale" = existe mas os dados mudaram
- * desde a geração (ex.: novas partidas sincronizadas). "none" = nunca foi gerada.
+ * Mapeia e isola chaves de cache por temporada.
+ * "fresh" = existe e reflete os dados atuais. "stale" = existe mas os dados mudaram.
  */
-export function peekCoachReport(dto: any, entityKey: string): CoachReportStatus {
+export function peekCoachReport(dto: any, entityKey: string, seasonId?: string): CoachReportStatus {
+  const resolvedSeasonId = seasonId || dto.seasonId || "default-season";
+  const mappedEntityKey = mapEntityKeyWithSeason(entityKey, resolvedSeasonId);
+
   const currentHash = calculateCacheKey(dto);
-  const pointer = getPointer(entityKey);
+  const pointer = getPointer(mappedEntityKey);
   if (!pointer) return { status: "none", report: null, generatedAt: null };
 
   if (pointer.hash === currentHash) {
@@ -125,15 +149,19 @@ export function peekCoachReport(dto: any, entityKey: string): CoachReportStatus 
 export async function getCoachReport(
   dto: any,
   promptBuilder: (data: any) => string,
-  entityKey: string
+  entityKey: string,
+  seasonId?: string
 ): Promise<CoachReportDTO> {
+  const resolvedSeasonId = seasonId || dto.seasonId || "default-season";
+  const mappedEntityKey = mapEntityKeyWithSeason(entityKey, resolvedSeasonId);
+
   const hash = calculateCacheKey(dto);
 
   // 1. Tentar ler do cache
   const cached = getFromCache(hash);
   if (cached) {
     console.log(`[Coach Cache Hit] Hash: ${hash}`);
-    savePointer(entityKey, hash, cached.generatedAt);
+    savePointer(mappedEntityKey, hash, cached.generatedAt);
     return {
       ...cached,
       processingTimeMs: 0, // Indica hit do cache
@@ -151,7 +179,7 @@ export async function getCoachReport(
 
   // 4. Salvar no cache e atualizar o ponteiro da entidade
   saveToCache(hash, report);
-  savePointer(entityKey, hash, report.generatedAt);
+  savePointer(mappedEntityKey, hash, report.generatedAt);
 
   return report;
 }

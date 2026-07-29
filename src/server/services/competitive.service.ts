@@ -1,7 +1,8 @@
 import { prisma } from "@/server/db";
-import { communityMatchStatsWhere } from "@/server/domain/matchClassification";
+import { communityMatchStatsWhere, communityMatchWhere } from "@/server/domain/matchClassification";
 import { generateHighlights } from "@/server/services/highlights/highlights.service";
 import { DashboardHighlight } from "@/server/services/highlights/highlight.types";
+import { getActiveSeason } from "@/server/services/season.service";
 
 export interface PowerRankingEntry {
   player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null };
@@ -143,15 +144,24 @@ type PlayerRow = { id: string; nickname: string; avatarUrl: string | null; level
  * precisar reimplementar o filtro em cada uma. Partidas SOLO nunca são excluídas do
  * banco — só ficam fora deste dataset agregado.
  */
-export async function loadCompetitiveDataset() {
+export async function loadCompetitiveDataset(seasonId?: string) {
   const activePlayers = await prisma.player.findMany({
     where: { trackedPlayer: { active: true } },
   });
 
+  let targetSeasonId = seasonId;
+  if (!targetSeasonId) {
+    const activeSeason = await getActiveSeason();
+    targetSeasonId = activeSeason?.id;
+  }
+
   const allStats = await prisma.playerMatchStats.findMany({
     where: {
       playerId: { in: activePlayers.map((p) => p.id) },
-      ...communityMatchStatsWhere(),
+      match: {
+        seasonId: targetSeasonId || undefined,
+        ...communityMatchWhere(),
+      },
     },
     include: { match: { include: { map: true } } },
     orderBy: { match: { playedAt: "desc" } },
@@ -1674,6 +1684,7 @@ export interface DashboardCompetitiveBundle {
   records: HallOfFameRecord[];
   bestPerformance: PerformanceExtreme | null;
   worstPerformance: PerformanceExtreme | null;
+  smartAlerts: SmartAlert[];
   monitoredPlayers: MonitoredPlayerEntry[];
   hotStreaks: StreakEntry[];
   coldStreaks: StreakEntry[];
@@ -1760,6 +1771,7 @@ export async function getDashboardCompetitiveBundle(
     records: getHallOfFameRecordsFromDataset(ds),
     bestPerformance: extremes.best,
     worstPerformance: extremes.worst,
+    smartAlerts: getSmartAlerts(seasonComparison, mapPerformance.bestMap, mapPerformance.worstMap),
     monitoredPlayers: getMonitoredPlayersFromDataset(ds),
     hotStreaks: streaks.hot,
     coldStreaks: streaks.cold,

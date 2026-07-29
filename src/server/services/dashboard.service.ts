@@ -1,42 +1,108 @@
 import { prisma } from "@/server/db";
-import * as matchRepo from "@/server/repositories/match.repository";
 import * as playerRepo from "@/server/repositories/player.repository";
-import * as sessionRepo from "@/server/repositories/session.repository";
 import * as statsService from "@/server/services/stats.service";
 import type { CompetitiveDataset } from "@/server/services/competitive.service";
-import { communityMatchWhere, communityMatchStatsWhere } from "@/server/domain/matchClassification";
+import { communityMatchWhere } from "@/server/domain/matchClassification";
+import { getActiveSeason, resolveSeasonId } from "@/server/services/season.service";
 
 /**
  * Reaproveita dataset.allStats (mesma query já feita por competitive.service, já
  * filtrada para partidas COMUNIDADE) quando disponível, em vez de buscar
  * PlayerMatchStats de novo. Sem dataset (ex: rota do Coach, que chama
  * getDashboardSummary isoladamente), busca com o mesmo shape E o mesmo filtro de
- * comunidade, para o resultado standalone continuar idêntico ao caminho com dataset.
+ * comunidade e temporada.
  */
-function loadSummaryStats(dataset?: CompetitiveDataset) {
+function loadSummaryStats(seasonId: string, dataset?: CompetitiveDataset) {
   if (dataset) return Promise.resolve(dataset.allStats);
   return prisma.playerMatchStats.findMany({
-    where: { player: { trackedPlayer: { active: true } }, ...communityMatchStatsWhere() },
+    where: {
+      player: { trackedPlayer: { active: true } },
+      match: {
+        seasonId,
+        ...communityMatchWhere(),
+      },
+    },
     include: { match: { include: { map: true } } },
   });
 }
 
-export async function getDashboardSummary(dataset?: CompetitiveDataset) {
-  const [totalMatches, totalPlayers, totalSessions, latestSession, allStats, allMatchesCount, roundsAgg] =
-    await Promise.all([
-      matchRepo.countCommunityMatches(),
-      playerRepo.countPlayers(),
-      sessionRepo.countSessions(),
-      sessionRepo.getLatestSession(),
-      loadSummaryStats(dataset),
-      // Estatísticas gerais são coletivas por definição — contam só partidas COMUNIDADE
-      // (ver domain/matchClassification.ts). Via count()+aggregate() em vez de carregar
-      // as linhas inteiras.
-      prisma.match.count({ where: communityMatchWhere() }),
-      prisma.match.aggregate({ where: communityMatchWhere(), _sum: { scoreTeamA: true, scoreTeamB: true } }),
-    ]);
+export async function getDashboardSummary(
+  seasonIdOrDataset?: string | CompetitiveDataset,
+  dataset?: CompetitiveDataset
+) {
+  let targetSeasonId: string | undefined;
+  let targetDataset: CompetitiveDataset | undefined;
 
-  // Aritmética comunitária
+  if (seasonIdOrDataset) {
+    if (typeof seasonIdOrDataset === "string") {
+      targetSeasonId = seasonIdOrDataset;
+      targetDataset = dataset;
+    } else {
+      targetDataset = seasonIdOrDataset;
+      targetSeasonId = undefined;
+    }
+  }
+
+  const resolvedSeasonId = await resolveSeasonId(targetSeasonId);
+
+  const [
+    totalMatches,
+    totalPlayers,
+    totalSessions,
+    latestSession,
+    allStats,
+    allMatchesCount,
+    roundsAgg,
+  ] = await Promise.all([
+    // Contagem de partidas da temporada (apenas comunidade)
+    prisma.match.count({
+      where: {
+        seasonId: resolvedSeasonId,
+        ...communityMatchWhere(),
+      },
+    }),
+    // Jogadores monitorados ativos permanecem históricos/globais
+    playerRepo.countPlayers(),
+    // Sessões que contêm partidas da temporada
+    prisma.session.count({
+      where: {
+        matches: {
+          some: {
+            seasonId: resolvedSeasonId,
+            ...communityMatchWhere(),
+          },
+        },
+      },
+    }),
+    // Última sessão com atividade na temporada
+    prisma.session.findFirst({
+      where: {
+        matches: {
+          some: {
+            seasonId: resolvedSeasonId,
+            ...communityMatchWhere(),
+          },
+        },
+      },
+      orderBy: { date: "desc" },
+    }),
+    loadSummaryStats(resolvedSeasonId, targetDataset),
+    prisma.match.count({
+      where: {
+        seasonId: resolvedSeasonId,
+        ...communityMatchWhere(),
+      },
+    }),
+    prisma.match.aggregate({
+      where: {
+        seasonId: resolvedSeasonId,
+        ...communityMatchWhere(),
+      },
+      _sum: { scoreTeamA: true, scoreTeamB: true },
+    }),
+  ]);
+
+  // Aritmética comunitária da temporada
   const totalKills = allStats.reduce((sum, s) => sum + s.kills, 0);
   const totalDeaths = allStats.reduce((sum, s) => sum + s.deaths, 0);
   const totalAdr = allStats.reduce((sum, s) => sum + s.adr, 0);
@@ -56,10 +122,13 @@ export async function getDashboardSummary(dataset?: CompetitiveDataset) {
   const avgWinrate = allStats.length > 0 ? (wins / allStats.length) * 100 : 0;
   const totalRounds = (roundsAgg._sum.scoreTeamA ?? 0) + (roundsAgg._sum.scoreTeamB ?? 0);
 
-  // Mapa dominante — também é uma métrica coletiva, só partidas COMUNIDADE.
+  // Mapa dominante na temporada — só partidas COMUNIDADE.
   const mapCounts = await prisma.match.groupBy({
     by: ["mapId"],
-    where: communityMatchWhere(),
+    where: {
+      seasonId: resolvedSeasonId,
+      ...communityMatchWhere(),
+    },
     _count: { id: true },
   });
   const dominantMapGroup = [...mapCounts].sort((a, b) => b._count.id - a._count.id)[0];
@@ -75,9 +144,9 @@ export async function getDashboardSummary(dataset?: CompetitiveDataset) {
     }
   }
 
-  // Melhor jogador — piso mínimo de partidas para não eleger MVP com amostra pequena
+  // Melhor jogador da temporada — piso mínimo de partidas
   const MIN_MATCHES_FOR_MVP = 10;
-  const ratingLeaderboard = await statsService.getRanking("rating", 50);
+  const ratingLeaderboard = await statsService.getRanking("rating", resolvedSeasonId, 50);
   const bestPlayerEntry = ratingLeaderboard.find(
     (entry) => entry.player && entry.matchesPlayed >= MIN_MATCHES_FOR_MVP,
   );
@@ -87,10 +156,6 @@ export async function getDashboardSummary(dataset?: CompetitiveDataset) {
         rating: bestPlayerEntry.value,
       }
     : null;
-
-  // Nota: recordes individuais (maior kills/clutch/streak) não são recalculados aqui —
-  // esse resultado nunca era exibido na Dashboard; getHallOfFameRecords() (competitive.service.ts)
-  // já calcula os mesmos recordes de forma independente e é o que realmente é renderizado.
 
   return {
     totalMatches,

@@ -6,10 +6,14 @@ import { handleRouteError, parseQuery } from "@/server/http";
 export async function GET(request: NextRequest) {
   try {
     const { metric, take } = parseQuery(request.nextUrl.searchParams, rankingQuerySchema);
+    const { searchParams } = new URL(request.url);
+    const season = searchParams.get("season") || undefined;
+    const targetSeason = season === "current" ? undefined : season;
+
     const ranking =
       metric === "elo"
         ? await statsService.getEloRanking(take)
-        : await statsService.getRanking(metric, take);
+        : await statsService.getRanking(metric, targetSeason, take);
     return NextResponse.json({ metric, ranking });
   } catch (error) {
     return handleRouteError(error);

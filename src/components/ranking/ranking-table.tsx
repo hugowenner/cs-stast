@@ -2,20 +2,33 @@ import { FadeIn } from "@/components/motion/fade-in";
 import { AnimatedNumber } from "@/components/motion/animated-number";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import Link from "next/link";
-import { Trophy } from "lucide-react";
-import type { PowerRankingEntry } from "@/server/services/competitive.service";
+import { Trophy, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import type { PowerRankingEntry, SeasonComparisonEntry } from "@/server/services/competitive.service";
 import type { FormaStyleMap } from "@/lib/forma";
 
 interface RankingTableProps {
   entries: PowerRankingEntry[];
   formaStyle: FormaStyleMap;
+  seasonComparison?: SeasonComparisonEntry[];
   delay?: number;
   className?: string;
 }
 
 const PODIUM_COLORS = ["text-yellow-400", "text-slate-300", "text-amber-600"];
 
-export function RankingTable({ entries, formaStyle, delay = 0.13, className = "lg:col-span-2" }: RankingTableProps) {
+function TrendIcon({ forma }: { forma: string }) {
+  if (forma === "Excelente" || forma === "Em alta") {
+    return <TrendingUp className="size-3 text-status-good shrink-0" />;
+  }
+  if (forma === "Oscilando") {
+    return <TrendingDown className="size-3 text-status-warning shrink-0" />;
+  }
+  return <Minus className="size-3 text-muted-foreground/40 shrink-0" />;
+}
+
+export function RankingTable({ entries, formaStyle, seasonComparison = [], delay = 0.13, className = "lg:col-span-2" }: RankingTableProps) {
+  const diffByPlayer = new Map(seasonComparison.map((e) => [e.player.id, e.diff.rating]));
+
   return (
     <FadeIn delay={delay} className={className}>
       <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
@@ -29,11 +42,20 @@ export function RankingTable({ entries, formaStyle, delay = 0.13, className = "l
         <div className="divide-y divide-white/[0.04]">
           {entries.map((entry, index) => {
             const isTop3 = index < 3;
+            const diff = diffByPlayer.get(entry.player.id);
+            const diffPositive = diff !== undefined && diff > 0;
+            const diffNegative = diff !== undefined && diff < 0;
             return (
-              <div key={entry.player.id} className="px-5 py-3.5 flex items-center gap-4 hover:bg-white/[0.012] transition-colors group/row">
+              <div key={entry.player.id} className="px-5 py-3.5 flex items-center gap-3 hover:bg-white/[0.012] transition-colors group/row">
+                {/* Rank */}
                 <span className={`text-xs font-black w-5 shrink-0 text-center tabular-nums ${isTop3 ? PODIUM_COLORS[index] : "text-muted-foreground/40"}`}>
                   {index + 1}
                 </span>
+                {/* Trend arrow */}
+                <div className="shrink-0">
+                  <TrendIcon forma={entry.forma} />
+                </div>
+                {/* Player info */}
                 <Link href={`/players/${entry.player.id}`} className="flex items-center gap-2.5 min-w-0 flex-1 group">
                   <PlayerAvatar nickname={entry.player.nickname} avatarUrl={entry.player.avatarUrl} size="sm" />
                   <div className="min-w-0">
@@ -47,27 +69,28 @@ export function RankingTable({ entries, formaStyle, delay = 0.13, className = "l
                           </span>
                         );
                       })()}
-                      <span className="text-[10px] text-muted-foreground/50">{entry.matchCount} partidas</span>
+                      {diff !== undefined && (
+                        <span className={`text-[9px] font-bold tabular-nums ${diffPositive ? "text-status-good" : diffNegative ? "text-status-warning" : "text-muted-foreground/40"}`}>
+                          {diffPositive ? "+" : ""}{diff.toFixed(2)}
+                        </span>
+                      )}
+                      <span className="text-[10px] text-muted-foreground/40">{entry.matchCount}j</span>
                     </div>
                   </div>
                 </Link>
+                {/* Stats */}
                 <div className="hidden sm:grid grid-cols-5 gap-4 text-center shrink-0">
                   {[
-                    { label: "Rating", num: entry.rating,    dec: 2, suf: "",  dur: 0.7 },
-                    { label: "ADR",    num: entry.adr,       dec: 0, suf: "",  dur: 0.6 },
-                    { label: "K/D",    num: entry.kd,        dec: 2, suf: "",  dur: 0.65 },
-                    { label: "KAST",   num: entry.kast,      dec: 0, suf: "%", dur: 0.55 },
-                    { label: "WR",     num: entry.winrate,   dec: 0, suf: "%", dur: 0.55 },
+                    { label: "Rating", num: entry.rating,  dec: 2, suf: "",  dur: 0.7 },
+                    { label: "ADR",    num: entry.adr,     dec: 0, suf: "",  dur: 0.6 },
+                    { label: "K/D",    num: entry.kd,      dec: 2, suf: "",  dur: 0.65 },
+                    { label: "KAST",   num: entry.kast,    dec: 0, suf: "%", dur: 0.55 },
+                    { label: "WR",     num: entry.winrate, dec: 0, suf: "%", dur: 0.55 },
                   ].map((col, ci) => (
                     <div key={col.label}>
                       <p className="text-[8px] uppercase tracking-widest text-muted-foreground/60 font-bold">{col.label}</p>
                       <p className="text-xs font-black mt-0.5 text-white/90 tabular-nums">
-                        <AnimatedNumber
-                          value={col.num}
-                          decimals={col.dec}
-                          suffix={col.suf}
-                          duration={col.dur + index * 0.04 + ci * 0.02}
-                        />
+                        <AnimatedNumber value={col.num} decimals={col.dec} suffix={col.suf} duration={col.dur + index * 0.04 + ci * 0.02} />
                       </p>
                     </div>
                   ))}

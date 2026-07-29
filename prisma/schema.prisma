@@ -90,6 +90,9 @@ model Match {
   /// Rating Solo x Equipe) sem precisar de outra migration.
   trackedPlayersCount Int @default(0)
 
+  seasonId            String?
+  season              Season?            @relation(fields: [seasonId], references: [id])
+
   playerStats  PlayerMatchStats[]
   events       Event[]
   achievements PlayerAchievement[]
@@ -97,6 +100,8 @@ model Match {
   @@index([sessionId])
   @@index([playedAt])
   @@index([trackedPlayersCount])
+  @@index([seasonId])
+  @@index([seasonId, playedAt])
 }
 
 /// Estatísticas de um jogador em uma partida — granularidade base de todo o sistema;
@@ -296,4 +301,32 @@ model TrackedPlayer {
   player       Player?  @relation(fields: [playerId], references: [id])
 
   @@map("tracked_players")
+}
+
+enum SeasonStatus {
+  ACTIVE
+  CLOSED
+}
+
+model Season {
+  id        String       @id @default(cuid())
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  status    SeasonStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+
+  matches   Match[]
+  snapshots SeasonSnapshot[]
+
+  @@index([status])
+  @@index([startDate, endDate])
+}
+
+model SeasonSnapshot {
+  id        String   @id @default(cuid())
+  seasonId  String   @unique
+  season    Season   @relation(fields: [seasonId], references: [id])
+  dashboard Json
+  createdAt DateTime @default(now())
 }

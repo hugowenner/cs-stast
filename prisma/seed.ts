@@ -17,6 +17,32 @@ const ACTIVE_DUTY_MAPS = [
 ];
 
 async function main() {
+  const now = new Date();
+  const MONTHS_PT = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+  ];
+  const monthName = `${MONTHS_PT[now.getMonth()]}/${now.getFullYear()}`;
+  const startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+  const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+  const defaultSeason = await prisma.season.upsert({
+    where: { id: "default-season" },
+    create: {
+      id: "default-season",
+      name: monthName,
+      startDate,
+      endDate,
+      status: "ACTIVE",
+    },
+    update: {
+      name: monthName,
+      startDate,
+      endDate,
+    },
+  });
+  console.log(`Seed: Temporada ativa '${defaultSeason.name}' semeada.`);
+
   for (const entry of ACHIEVEMENT_CATALOG) {
     await prisma.achievement.upsert({
       where: { code: entry.code },

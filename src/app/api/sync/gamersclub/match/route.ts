@@ -5,6 +5,7 @@ import { normalizeGamersClubMatch } from "@/server/adapters/gamersclub/normalize
 import type { GamersClubMatchPayload } from "@/server/adapters/gamersclub/types";
 import { HttpError, handleRouteError, parseJsonBody } from "@/server/http";
 import { syncMissingAvatars } from "@/server/services/steam-profile.service";
+import { isMaintenanceMode } from "@/server/services/season.service";
 
 /**
  * Recebe o payload BRUTO de `{url-da-partida}/1` da Gamers Club (a extensão não
@@ -14,6 +15,13 @@ import { syncMissingAvatars } from "@/server/services/steam-profile.service";
  */
 export async function POST(request: Request) {
   try {
+    if (await isMaintenanceMode()) {
+      return NextResponse.json(
+        { error: "O sistema está passando por manutenção para virada de temporada. Por favor, tente novamente mais tarde." },
+        { status: 503 }
+      );
+    }
+
     const { payload } = await parseJsonBody(request, syncProviderMatchSchema);
 
     const normalized = normalizeGamersClubMatch(payload as GamersClubMatchPayload);

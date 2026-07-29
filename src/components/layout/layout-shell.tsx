@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Footer } from "./footer";
 import { Menu, X, BarChart3, CalendarDays, LayoutDashboard, Trophy, Users, HeartHandshake, Target, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -140,7 +139,6 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         </AnimatePresence>
       </main>
 
-      <Footer />
     </div>
   );
 }

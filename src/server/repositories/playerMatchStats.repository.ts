@@ -77,18 +77,11 @@ export async function getEloLeaderboard(take = 20) {
 
 export type RankingMetric = "rating" | "adr" | "kast" | "impact";
 
-export async function getRankingByMetric(metric: RankingMetric, take = 20) {
-  const latestMatch = await prisma.match.findFirst({
-    orderBy: { playedAt: "desc" },
-  });
-  const today = latestMatch ? new Date(latestMatch.playedAt) : new Date();
-  const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-  // Ranking é métrica coletiva — combina o piso de comunidade com a janela de 30 dias.
+export async function getRankingByMetric(metric: RankingMetric, seasonId: string, take = 20) {
   const whereClause = {
     ...trackedPlayerStatsWhere(),
     match: {
-      playedAt: { gte: thirtyDaysAgo },
+      seasonId,
       ...communityMatchWhere(),
     },
   };
@@ -133,9 +126,15 @@ export async function getRankingByMetric(metric: RankingMetric, take = 20) {
   }
 }
 
-export function getMapWinrates() {
+export function getMapWinrates(seasonId: string) {
   return prisma.playerMatchStats.findMany({
-    where: { ...trackedPlayerStatsWhere(), match: communityMatchWhere() },
+    where: {
+      ...trackedPlayerStatsWhere(),
+      match: {
+        seasonId,
+        ...communityMatchWhere(),
+      },
+    },
     select: {
       team: true,
       match: {

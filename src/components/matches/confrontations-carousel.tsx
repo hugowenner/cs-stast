@@ -1,43 +1,85 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
-import { ChevronLeft, ChevronRight, ArrowRight, Swords, Shield } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import { MatchTypeBadge } from "@/components/matches/match-type-badge";
 import Link from "next/link";
 import type { RecentMatchCardData } from "./recent-matches-carousel";
+import { cn } from "@/lib/utils";
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
-
-function kdRatio(kills: number, deaths: number): string {
-  if (deaths === 0) return kills > 0 ? kills.toFixed(2) : "0.00";
-  return (kills / deaths).toFixed(2);
-}
+// ─── helpers ──────────────────────────────────────────────────────────────────
 
 const DATE_FMT = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" });
 
-// ─── Card interno ─────────────────────────────────────────────────────────────
+const POSITION_LABELS = ["🥇", "🥈", "🥉", "4º", "5º", "6º", "7º", "8º", "9º", "10º"];
 
 type PS = RecentMatchCardData["playerStats"][number];
 
-function PlayerRow({ ps, reverse = false }: { ps: PS; reverse?: boolean }) {
+// ─── PlayerRow ─────────────────────────────────────────────────────────────────
+// Rating is the dominant stat. Medal shows rank within the team.
+
+function PlayerRow({ ps, position, isMvp }: { ps: PS; position: number; isMvp: boolean }) {
+  const posLabel = POSITION_LABELS[position] ?? `${position + 1}º`;
+  const isTopThree = position < 3;
+
   return (
-    <div className={`flex items-center gap-2 ${reverse ? "flex-row-reverse" : ""}`}>
+    <div
+      className={cn(
+        "flex items-center gap-1.5 px-2 py-[5px] rounded-lg",
+        isMvp
+          ? "bg-accent-gold/[0.05] border border-accent-gold/[0.12]"
+          : "hover:bg-white/[0.025] transition-colors",
+      )}
+    >
+      {/* Position medal */}
+      <span
+        className={cn(
+          "shrink-0 w-4 text-center leading-none select-none",
+          isTopThree ? "text-[11px]" : "text-[9px] font-bold text-muted-foreground/25",
+        )}
+      >
+        {posLabel}
+      </span>
+
+      {/* Avatar */}
       <PlayerAvatar nickname={ps.player.nickname} avatarUrl={ps.player.avatarUrl} size="sm" />
-      <div className={`min-w-0 flex-1 ${reverse ? "text-right" : ""}`}>
-        <p className="text-[10px] font-bold text-white/90 truncate leading-tight">{ps.player.nickname}</p>
-        <p className="text-[9px] text-muted-foreground/65 tabular-nums leading-tight">
-          {ps.kills}/{ps.deaths} · KD {kdRatio(ps.kills, ps.deaths)} · {Math.round(ps.adr)} ADR
+
+      {/* Name + secondary stats */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1 min-w-0">
+          <p className="text-[10px] font-bold text-white/90 truncate leading-tight">
+            {ps.player.nickname}
+          </p>
+          {isMvp && (
+            <span className="shrink-0 text-[9px] leading-none select-none">🏆</span>
+          )}
+        </div>
+        <p className="text-[8px] text-muted-foreground/40 tabular-nums leading-tight">
+          {ps.kills}/{ps.deaths} · {Math.round(ps.adr)} ADR
         </p>
       </div>
-      <span className="text-[9px] font-bold text-accent-cyan/80 tabular-nums shrink-0 w-7 text-center">
-        {ps.rating.toFixed(2)}
-      </span>
+
+      {/* Rating — protagonist */}
+      <div className="shrink-0 text-right min-w-[28px]">
+        <p className={cn(
+          "text-xs font-black tabular-nums leading-none",
+          isMvp ? "text-accent-gold" : "text-white/80",
+        )}>
+          {ps.rating.toFixed(2)}
+        </p>
+        <p className="text-[7px] text-muted-foreground/25 leading-none mt-0.5 uppercase tracking-wider">
+          rtg
+        </p>
+      </div>
     </div>
   );
 }
 
+// ─── ConfrontationCard ────────────────────────────────────────────────────────
+
 function ConfrontationCard({ match }: { match: RecentMatchCardData }) {
+  const allSorted = [...match.playerStats].sort((a, b) => b.rating - a.rating);
   const sideA = [...match.playerStats.filter((p) => p.team === "A")].sort(
     (a, b) => b.rating - a.rating,
   );
@@ -51,151 +93,222 @@ function ConfrontationCard({ match }: { match: RecentMatchCardData }) {
 
   const hasConfrontation = sideA.length > 0 && sideB.length > 0;
   const is1v1 = sideA.length === 1 && sideB.length === 1;
+  const allSameSide = !hasConfrontation;
 
+  const mvpId = allSorted[0]?.player.id ?? null;
   const date = DATE_FMT.format(new Date(match.playedAt));
-  const mapName = match.map.name;
+
+  // For all-same-side matches, determine their result
+  const monitoredTeam = sideA.length > 0 ? "A" : "B";
+  const monitoredWon = allSameSide && (monitoredTeam === "A" ? wonA : wonB);
+  const monitoredDraw = allSameSide && draw;
+  const monitoredLost = allSameSide && !monitoredWon && !monitoredDraw;
+
+  // Card border reflects result (only when we know which team is "ours")
+  const cardBorderClass = allSameSide
+    ? monitoredWon
+      ? "border-status-good/[0.25]"
+      : monitoredLost
+      ? "border-status-critical/[0.18]"
+      : "border-white/[0.08]"
+    : "border-white/[0.08]";
 
   return (
     <div
       data-card
-      className="glass-panel rounded-2xl border border-white/[0.08] overflow-hidden flex-shrink-0 flex flex-col
-        w-full sm:w-[calc(50%-7px)] lg:w-[calc(33.333%-10px)]"
+      className={cn(
+        "glass-panel rounded-2xl border overflow-hidden flex-shrink-0 flex flex-col",
+        "w-full sm:w-[calc(50%-7px)] lg:w-[calc(33.333%-10px)]",
+        "hover:shadow-xl hover:shadow-black/[0.28] hover:brightness-105 transition-all duration-200",
+        cardBorderClass,
+      )}
       style={{ scrollSnapAlign: "start" }}
     >
-      {/* ── Header ─────────────────────────────────────────────────── */}
-      <div className="px-4 pt-3.5 pb-2.5 border-b border-white/[0.05] flex items-center gap-2">
-        {hasConfrontation ? (
-          <Swords className="size-3 text-muted-foreground/45 shrink-0" />
-        ) : (
-          <Shield className="size-3 text-muted-foreground/45 shrink-0" />
-        )}
-        <span className="text-xs font-bold text-white/85 capitalize truncate">{mapName}</span>
-        <span className="ml-auto shrink-0">
+      {/* ── HEADER: map • type • date — compact single line ───── */}
+      <div className="px-4 py-2 border-b border-white/[0.05] flex items-center gap-2">
+        <span className="text-[10px] font-black text-white/80 uppercase tracking-wide truncate">
+          {match.map.name}
+        </span>
+        <span className="text-muted-foreground/20 text-[9px] shrink-0">•</span>
+        <span className="shrink-0">
           <MatchTypeBadge trackedPlayersCount={match.trackedPlayersCount} />
         </span>
-        <span className="text-[9px] text-muted-foreground/55 shrink-0">{date}</span>
+        <span className="ml-auto text-[9px] text-muted-foreground/40 shrink-0 font-semibold tabular-nums">
+          {date}
+        </span>
       </div>
 
-      {/* ── Corpo ─────────────────────────────────────────────────────── */}
-      <div className="flex-1">
+      {/* ── SCORE HERO ────────────────────────────────────────── */}
+      <div className="px-4 py-2.5 border-b border-white/[0.04] flex items-center justify-between gap-3">
+        {/* Score — largest element in card */}
+        <div className="flex items-center gap-2">
+          <span
+            className={cn(
+              "text-[22px] font-black tabular-nums leading-none",
+              wonA ? "text-status-good" : draw ? "text-white/45" : "text-white/20",
+            )}
+          >
+            {match.scoreTeamA}
+          </span>
+          <span className="text-[11px] text-muted-foreground/20 font-black">×</span>
+          <span
+            className={cn(
+              "text-[22px] font-black tabular-nums leading-none",
+              wonB ? "text-status-good" : draw ? "text-white/45" : "text-white/20",
+            )}
+          >
+            {match.scoreTeamB}
+          </span>
+        </div>
 
-        {/* HERO — 1 vs 1 */}
+        {/* Result badge */}
+        {allSameSide && (
+          <span
+            className={cn(
+              "text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border shrink-0",
+              monitoredWon
+                ? "text-status-good bg-status-good/[0.08] border-status-good/[0.2]"
+                : monitoredDraw
+                ? "text-muted-foreground/50 bg-white/[0.02] border-white/[0.06]"
+                : "text-status-critical bg-status-critical/[0.07] border-status-critical/[0.15]",
+            )}
+          >
+            {monitoredWon ? "Vitória" : monitoredDraw ? "Empate" : "Derrota"}
+          </span>
+        )}
+        {hasConfrontation && !is1v1 && (
+          <span className="text-[8px] font-bold text-muted-foreground/30 uppercase tracking-wider shrink-0">
+            5v5
+          </span>
+        )}
+      </div>
+
+      {/* ── BODY ──────────────────────────────────────────────── */}
+      <div className="flex-1 px-3 py-2 flex flex-col">
+
+        {/* 1v1 layout */}
         {is1v1 && (() => {
           const a = sideA[0];
           const b = sideB[0];
-          const aWon = wonA;
-          const bWon = wonB;
           return (
-            <div className="px-4 py-4 flex items-start gap-3">
-              {/* Jogador A */}
-              <div className={`flex-1 flex flex-col items-center gap-1.5 min-w-0 ${!aWon && !draw ? "opacity-50" : ""}`}>
+            <div className="flex items-stretch gap-3 py-1">
+              {/* Player A */}
+              <div
+                className={cn(
+                  "flex-1 flex flex-col items-center gap-1 py-2 rounded-xl",
+                  !wonA && !draw ? "opacity-40" : "",
+                )}
+              >
                 <PlayerAvatar nickname={a.player.nickname} avatarUrl={a.player.avatarUrl} size="lg" />
-                <p className="text-xs font-bold text-white truncate max-w-full text-center mt-0.5">
+                <p className="text-[10px] font-bold text-white truncate max-w-full text-center leading-tight">
                   {a.player.nickname}
                 </p>
-                {aWon && (
-                  <span className="text-[7px] font-black uppercase tracking-wider text-status-good bg-status-good/10 border border-status-good/20 px-2 py-0.5 rounded-full">
-                    Venceu
-                  </span>
+                {a.player.id === mvpId && (
+                  <span className="text-[9px] text-accent-gold font-black leading-none">🏆 MVP</span>
                 )}
-                <div className="mt-1.5 space-y-1 text-center">
-                  <p className="text-sm font-black text-white tabular-nums">{a.kills} / {a.deaths}</p>
-                  <p className="text-[9px] text-muted-foreground/65">KD {kdRatio(a.kills, a.deaths)}</p>
-                  <p className="text-[9px] text-muted-foreground/55">{Math.round(a.adr)} ADR</p>
-                  <p className="text-[9px] font-bold text-accent-cyan/80">★ {a.rating.toFixed(2)}</p>
+                <div className="mt-1.5 text-center space-y-0.5">
+                  <p className="text-sm font-black text-white tabular-nums leading-none">
+                    {a.rating.toFixed(2)}
+                  </p>
+                  <p className="text-[7px] text-muted-foreground/30 uppercase tracking-wider leading-none">
+                    rating
+                  </p>
+                  <p className="text-[9px] font-semibold text-white/55 tabular-nums mt-1.5">
+                    {a.kills}/{a.deaths}
+                  </p>
+                  <p className="text-[8px] text-muted-foreground/40">{Math.round(a.adr)} ADR</p>
                 </div>
               </div>
 
-              {/* VS */}
-              <div className="flex flex-col items-center justify-center pt-7 shrink-0">
-                <div className="flex flex-col items-center gap-0.5">
-                  <div className="h-6 w-px bg-white/[0.06]" />
-                  <span className="text-[9px] font-black text-muted-foreground/35 uppercase tracking-widest">vs</span>
-                  <div className="h-6 w-px bg-white/[0.06]" />
-                </div>
+              {/* VS divider */}
+              <div className="flex flex-col items-center justify-center shrink-0 gap-1">
+                <div className="flex-1 w-px bg-white/[0.05]" />
+                <span className="text-[8px] font-black text-muted-foreground/20 uppercase tracking-widest">
+                  vs
+                </span>
+                <div className="flex-1 w-px bg-white/[0.05]" />
               </div>
 
-              {/* Jogador B */}
-              <div className={`flex-1 flex flex-col items-center gap-1.5 min-w-0 ${!bWon && !draw ? "opacity-50" : ""}`}>
+              {/* Player B */}
+              <div
+                className={cn(
+                  "flex-1 flex flex-col items-center gap-1 py-2 rounded-xl",
+                  !wonB && !draw ? "opacity-40" : "",
+                )}
+              >
                 <PlayerAvatar nickname={b.player.nickname} avatarUrl={b.player.avatarUrl} size="lg" />
-                <p className="text-xs font-bold text-white truncate max-w-full text-center mt-0.5">
+                <p className="text-[10px] font-bold text-white truncate max-w-full text-center leading-tight">
                   {b.player.nickname}
                 </p>
-                {bWon && (
-                  <span className="text-[7px] font-black uppercase tracking-wider text-status-good bg-status-good/10 border border-status-good/20 px-2 py-0.5 rounded-full">
-                    Venceu
-                  </span>
+                {b.player.id === mvpId && (
+                  <span className="text-[9px] text-accent-gold font-black leading-none">🏆 MVP</span>
                 )}
-                <div className="mt-1.5 space-y-1 text-center">
-                  <p className="text-sm font-black text-white tabular-nums">{b.kills} / {b.deaths}</p>
-                  <p className="text-[9px] text-muted-foreground/65">KD {kdRatio(b.kills, b.deaths)}</p>
-                  <p className="text-[9px] text-muted-foreground/55">{Math.round(b.adr)} ADR</p>
-                  <p className="text-[9px] font-bold text-accent-cyan/80">★ {b.rating.toFixed(2)}</p>
+                <div className="mt-1.5 text-center space-y-0.5">
+                  <p className="text-sm font-black text-white tabular-nums leading-none">
+                    {b.rating.toFixed(2)}
+                  </p>
+                  <p className="text-[7px] text-muted-foreground/30 uppercase tracking-wider leading-none">
+                    rating
+                  </p>
+                  <p className="text-[9px] font-semibold text-white/55 tabular-nums mt-1.5">
+                    {b.kills}/{b.deaths}
+                  </p>
+                  <p className="text-[8px] text-muted-foreground/40">{Math.round(b.adr)} ADR</p>
                 </div>
               </div>
             </div>
           );
         })()}
 
-        {/* TABLE — múltiplos jogadores (ambos os lados) */}
+        {/* 5v5 confrontation layout */}
         {hasConfrontation && !is1v1 && (
-          <div className="grid grid-cols-2 divide-x divide-white/[0.05]">
-            {/* Lado A */}
-            <div className="px-3 py-3 flex flex-col gap-2">
-              <p className={`text-[8px] uppercase tracking-widest font-black leading-none ${wonA ? "text-status-good/85" : "text-muted-foreground/45"}`}>
-                {wonA ? "✓ Vitória" : "Derrota"}
+          <div className="grid grid-cols-2 gap-x-1">
+            {/* Side A */}
+            <div className="flex flex-col gap-0.5">
+              <p
+                className={cn(
+                  "text-[7px] uppercase tracking-widest font-black px-2 pb-1 leading-none",
+                  wonA ? "text-status-good/70" : "text-muted-foreground/30",
+                )}
+              >
+                {wonA ? "✓ Vitória" : draw ? "Empate" : "Derrota"}
               </p>
-              {sideA.map((ps) => (
-                <PlayerRow key={ps.player.id} ps={ps} />
+              {sideA.map((ps, i) => (
+                <PlayerRow key={ps.player.id} ps={ps} position={i} isMvp={ps.player.id === mvpId} />
               ))}
             </div>
-            {/* Lado B */}
-            <div className="px-3 py-3 flex flex-col gap-2">
-              <p className={`text-[8px] uppercase tracking-widest font-black leading-none ${wonB ? "text-status-good/85" : "text-muted-foreground/45"}`}>
-                {wonB ? "✓ Vitória" : "Derrota"}
+            {/* Side B */}
+            <div className="flex flex-col gap-0.5 border-l border-white/[0.04] pl-1">
+              <p
+                className={cn(
+                  "text-[7px] uppercase tracking-widest font-black px-2 pb-1 leading-none",
+                  wonB ? "text-status-good/70" : "text-muted-foreground/30",
+                )}
+              >
+                {wonB ? "✓ Vitória" : draw ? "Empate" : "Derrota"}
               </p>
-              {sideB.map((ps) => (
-                <PlayerRow key={ps.player.id} ps={ps} reverse />
+              {sideB.map((ps, i) => (
+                <PlayerRow key={ps.player.id} ps={ps} position={i} isMvp={ps.player.id === mvpId} />
               ))}
             </div>
           </div>
         )}
 
-        {/* ALL SAME SIDE — todos no mesmo time */}
-        {!hasConfrontation && (
-          <div className="px-4 py-3 flex flex-col gap-2">
-            <p className="text-[8px] uppercase tracking-widest font-bold text-muted-foreground/55 leading-none mb-1">
-              {(wonA && sideA.length > 0) || (wonB && sideB.length > 0) ? "✓ Vitória em equipe" : "Partida em equipe"}
-            </p>
-            {[...sideA, ...sideB].map((ps) => (
-              <div key={ps.player.id} className="flex items-center gap-2">
-                <PlayerAvatar nickname={ps.player.nickname} avatarUrl={ps.player.avatarUrl} size="sm" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-bold text-white/90 truncate">{ps.player.nickname}</p>
-                  <p className="text-[9px] text-muted-foreground/65 tabular-nums">{ps.kills}/{ps.deaths} · KD {kdRatio(ps.kills, ps.deaths)} · {Math.round(ps.adr)} ADR</p>
-                </div>
-                <span className="text-[9px] font-bold text-accent-cyan/80 tabular-nums shrink-0">{ps.rating.toFixed(2)}</span>
-              </div>
+        {/* All same side layout */}
+        {allSameSide && (
+          <div className="flex flex-col gap-0.5">
+            {[...sideA, ...sideB].map((ps, i) => (
+              <PlayerRow key={ps.player.id} ps={ps} position={i} isMvp={ps.player.id === mvpId} />
             ))}
           </div>
         )}
       </div>
 
-      {/* ── Footer: placar + link ─────────────────────────────────────── */}
-      <div className="px-4 py-3 border-t border-white/[0.05] flex items-center justify-between gap-3 mt-auto">
-        <div className="flex items-center gap-1.5">
-          <span className={`text-base font-black tabular-nums ${wonA ? "text-status-good" : draw ? "text-muted-foreground/60" : "text-muted-foreground/40"}`}>
-            {match.scoreTeamA}
-          </span>
-          <span className="text-[10px] text-muted-foreground/30 font-bold">×</span>
-          <span className={`text-base font-black tabular-nums ${wonB ? "text-status-good" : draw ? "text-muted-foreground/60" : "text-muted-foreground/40"}`}>
-            {match.scoreTeamB}
-          </span>
-          {draw && <span className="text-[9px] text-muted-foreground/50 ml-1">Empate</span>}
-        </div>
+      {/* ── FOOTER ─────────────────────────────────────────────── */}
+      <div className="px-4 py-2 border-t border-white/[0.04] flex items-center justify-end">
         <Link
           href={`/matches/${match.id}`}
-          className="text-[10px] text-primary/65 hover:text-primary transition-colors font-semibold inline-flex items-center gap-1 group shrink-0"
+          className="text-[10px] text-primary/50 hover:text-primary transition-colors font-semibold inline-flex items-center gap-1 group"
         >
           Ver detalhes
           <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
@@ -270,7 +383,7 @@ export function ConfrontationsCarousel({ matches }: Props) {
     <div className="flex flex-col gap-3">
       {/* Controles */}
       <div className="flex items-center justify-between">
-        <span className="text-[10px] text-muted-foreground/55 font-semibold tabular-nums">
+        <span className="text-[10px] text-muted-foreground/50 font-semibold tabular-nums">
           {currentIndex + 1} de {matches.length}
         </span>
         <div className="flex items-center gap-1.5">

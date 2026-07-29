@@ -14,6 +14,7 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
+    "db:backfill-seasons": "tsx src/server/admin/backfill-match-seasons.ts",
     "db:studio": "prisma studio",
     "db:migrate-to-postgres": "tsx scripts/migrate-to-postgres.ts",
     "test": "vitest run",
@@ -21,7 +22,8 @@
     "demo": "node scripts/demo/run-demo.mjs",
     "empty-demo": "node scripts/demo/run-demo.mjs --empty",
     "demo:snapshot": "node scripts/demo/snapshot-demo.mjs",
-    "reset-demo": "node scripts/demo/reset-demo.mjs"
+    "reset-demo": "node scripts/demo/reset-demo.mjs",
+    "season:test-rollover": "tsx scripts/test-season-rollover.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

@@ -17,6 +17,7 @@ import {
 } from "@/server/domain/achievements";
 import { grantAchievements } from "@/server/services/achievement.service";
 import { getEloKFactor } from "@/server/services/configuration.service";
+import { ensureCurrentSeason } from "@/server/services/season.service";
 import type {
   CreateMatchEventInput,
   CreateMatchPlayerStatInput,
@@ -94,6 +95,10 @@ export async function ingestMatchSync(
   try {
     const map = await mapRepo.upsertMapByName(input.map);
     const session = await sessionRepo.findOrCreateSessionForDate(input.playedAt);
+    const activeSeason = await ensureCurrentSeason();
+    if (!activeSeason || !activeSeason.id) {
+      throw new Error("Não foi possível determinar uma temporada ativa válida para esta partida.");
+    }
 
     const players = await Promise.all(
       input.players.map((p) =>
@@ -278,6 +283,7 @@ export async function ingestMatchSync(
     const match = await matchRepo.createMatchWithStats({
       sessionId: session.id,
       mapId: map.id,
+      seasonId: activeSeason.id,
       gamersClubMatchId: input.matchId,
       playedAt: input.playedAt,
       scoreTeamA: input.scoreTeamA,

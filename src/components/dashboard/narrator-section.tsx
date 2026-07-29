@@ -12,10 +12,14 @@ import {
   Map as MapIcon,
   ChevronLeft,
   ChevronRight,
-  TrendingDown,
+  Target,
+  Swords,
+  Star,
+  HeartHandshake,
+  Sparkles,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { DashboardHighlight, NarrativeType } from "@/server/services/highlights/highlight.types";
+import type { DashboardHighlight, NarrativeType, HighlightRarity } from "@/server/services/highlights/highlight.types";
 
 interface NarratorSectionProps {
   highlights: DashboardHighlight[];
@@ -59,11 +63,41 @@ export function NarratorSection({ highlights }: NarratorSectionProps) {
       case "RECORD":
         return <Trophy className={`${size} text-accent-gold`} />;
       case "IMPACT":
+      case "ADR_MONSTER":
         return <Zap className={`${size} text-accent-purple`} />;
       case "DOMINANCE":
         return <Crown className={`${size} text-accent-gold`} />;
+      case "CLUTCH_KING":
+        return <Swords className={`${size} text-status-danger`} />;
+      case "HEADSHOT_MACHINE":
+        return <Target className={`${size} text-accent-cyan`} />;
+      case "MULTIKILL_SPECIALIST":
+        return <Star className={`${size} text-accent-gold`} />;
+      case "SUPPORT_HERO":
+        return <HeartHandshake className={`${size} text-status-good`} />;
+      case "CURIOSITY":
+        return <Sparkles className={`${size} text-accent-purple`} />;
+      case "COLD_STREAK":
+        return <Flame className={`${size} text-muted-foreground`} />;
+      case "WEEKLY_STAR":
+      case "CONSISTENCY":
+      case "ENTRY_FRAGGER":
+        return <Star className={`${size} text-accent-cyan`} />;
       default:
         return <Trophy className={`${size} text-muted-foreground`} />;
+    }
+  };
+
+  const getRarityConfig = (rarity: HighlightRarity) => {
+    switch (rarity) {
+      case "legendary":
+        return { label: "👑 Lendária", color: "border-accent-gold/30 text-accent-gold bg-accent-gold/[0.04]" };
+      case "epic":
+        return { label: "⚡ Épica", color: "border-accent-purple/30 text-accent-purple bg-accent-purple/[0.04]" };
+      case "rare":
+        return { label: "💎 Rara", color: "border-accent-cyan/25 text-accent-cyan bg-accent-cyan/[0.03]" };
+      default:
+        return { label: "📊 Comum", color: "border-white/10 text-muted-foreground bg-white/[0.02]" };
     }
   };
 
@@ -87,6 +121,7 @@ export function NarratorSection({ highlights }: NarratorSectionProps) {
   };
 
   const confidence = getConfidenceLevel(activeHighlight.confidence);
+  const rarityConfig = getRarityConfig(activeHighlight.rarity ?? "common");
 
   return (
     <div className="glass-panel rounded-3xl border border-white/[0.06] overflow-hidden grid grid-cols-1 lg:grid-cols-4 min-h-[300px]">
@@ -120,14 +155,19 @@ export function NarratorSection({ highlights }: NarratorSectionProps) {
             transition={{ duration: 0.35, ease: "easeOut" }}
             className="space-y-5 pt-3"
           >
-            {/* Header category badge */}
-            <div className="flex items-center gap-2">
+            {/* Header: raridade + categoria */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={`px-2.5 py-0.5 rounded-full border text-[9px] uppercase tracking-wider font-extrabold ${rarityConfig.color}`}>
+                {rarityConfig.label}
+              </span>
               <span className={`px-2.5 py-0.5 rounded-full border text-[9px] uppercase tracking-wider font-extrabold ${getCategoryColor(activeHighlight.category)}`}>
-                {activeHighlight.category === "competitive" ? "🔥 Competitivo" : activeHighlight.category === "achievement" ? "🏆 Conquista" : "🤝 Social"}
+                {activeHighlight.category === "competitive" ? "Competitivo" : activeHighlight.category === "achievement" ? "Conquista" : activeHighlight.category === "curiosity" ? "Curiosidade" : "Social"}
               </span>
-              <span className="text-[10px] text-muted-foreground/50 font-bold uppercase tracking-wider">
-                {activeHighlight.subtitle}
-              </span>
+              {activeHighlight.subtitle && (
+                <span className="text-[10px] text-muted-foreground/50 font-bold uppercase tracking-wider">
+                  {activeHighlight.subtitle}
+                </span>
+              )}
             </div>
 
             {/* Main stage with avatars and details */}

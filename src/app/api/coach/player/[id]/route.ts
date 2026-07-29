@@ -1,14 +1,18 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { getPlayerDetail } from "@/server/services/player.service";
 import { getCoachReport, peekCoachReport } from "@/server/coach/services/coach.service";
 import { buildPlayerPrompt } from "@/server/coach/builders/player.builder";
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const season = searchParams.get("season") || undefined;
+    const targetSeason = season === "current" ? undefined : season;
+
     const detail = await getPlayerDetail(id);
     if (!detail) {
       return NextResponse.json(
@@ -17,7 +21,7 @@ export async function GET(
       );
     }
 
-    const status = peekCoachReport(detail, `player:${id}`);
+    const status = peekCoachReport(detail, `player:${id}`, targetSeason);
     return NextResponse.json(status);
   } catch (err) {
     return NextResponse.json(
@@ -28,11 +32,15 @@ export async function GET(
 }
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const season = searchParams.get("season") || undefined;
+    const targetSeason = season === "current" ? undefined : season;
+
     const detail = await getPlayerDetail(id);
     if (!detail) {
       return NextResponse.json(
@@ -41,7 +49,7 @@ export async function POST(
       );
     }
 
-    const report = await getCoachReport(detail, buildPlayerPrompt, `player:${id}`);
+    const report = await getCoachReport(detail, buildPlayerPrompt, `player:${id}`, targetSeason);
     return NextResponse.json(report);
   } catch (err) {
     return NextResponse.json(

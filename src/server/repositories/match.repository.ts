@@ -46,7 +46,7 @@ export function listRecentMatches(take = 20) {
   return prisma.match.findMany({
     where: trackedMatchWhere(),
     take,
-    orderBy: { playedAt: "desc" },
+    orderBy: [{ playedAt: "desc" }, { gamersClubMatchId: "desc" }],
     include: {
       map: true,
       session: true,
@@ -109,6 +109,7 @@ export interface CreateMatchEventInput {
 export interface CreateMatchInput {
   sessionId: string;
   mapId: string;
+  seasonId: string;
   gamersClubMatchId?: string | null;
   playedAt: Date;
   scoreTeamA: number;
@@ -133,6 +134,7 @@ export function createMatchWithStats(input: CreateMatchInput) {
       data: {
         sessionId: input.sessionId,
         mapId: input.mapId,
+        seasonId: input.seasonId,
         gamersClubMatchId: input.gamersClubMatchId,
         playedAt: input.playedAt,
         scoreTeamA: input.scoreTeamA,

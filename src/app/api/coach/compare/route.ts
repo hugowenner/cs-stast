@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { getPlayerComparison } from "@/server/services/comparison.service";
 import { getCoachReport, peekCoachReport } from "@/server/coach/services/coach.service";
 import { buildComparisonPrompt } from "@/server/coach/builders/comparison.builder";
@@ -7,16 +7,18 @@ function resolveComparisonParams(request: Request) {
   const { searchParams } = new URL(request.url);
   const playerA = searchParams.get("playerA");
   const playerB = searchParams.get("playerB");
-  return { playerA, playerB };
+  const season = searchParams.get("season") || undefined;
+  return { playerA, playerB, season };
 }
 
 function comparisonEntityKey(playerA: string, playerB: string) {
   return `compare:${[playerA, playerB].sort().join(":")}`;
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const { playerA, playerB } = resolveComparisonParams(request);
+    const { playerA, playerB, season } = resolveComparisonParams(request);
+    const targetSeason = season === "current" ? undefined : season;
 
     if (!playerA || !playerB) {
       return NextResponse.json(
@@ -40,7 +42,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const status = peekCoachReport(comparison, comparisonEntityKey(playerA, playerB));
+    const status = peekCoachReport(comparison, comparisonEntityKey(playerA, playerB), targetSeason);
     return NextResponse.json(status);
   } catch (err) {
     return NextResponse.json(
@@ -50,9 +52,10 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { playerA, playerB } = resolveComparisonParams(request);
+    const { playerA, playerB, season } = resolveComparisonParams(request);
+    const targetSeason = season === "current" ? undefined : season;
 
     if (!playerA || !playerB) {
       return NextResponse.json(
@@ -76,7 +79,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const report = await getCoachReport(comparison, buildComparisonPrompt, comparisonEntityKey(playerA, playerB));
+    const report = await getCoachReport(comparison, buildComparisonPrompt, comparisonEntityKey(playerA, playerB), targetSeason);
     return NextResponse.json(report);
   } catch (err) {
     return NextResponse.json(
