@@ -1,6 +1,6 @@
 import { prisma } from "@/server/db";
 import { trackedPlayerStatsWhere } from "./player.repository";
-import { communityMatchWhere } from "@/server/domain/matchClassification";
+import { communityMatchWhere, individualMatchWhere } from "@/server/domain/matchClassification";
 
 export function listPlayerAchievements(playerId: string) {
   return prisma.playerAchievement.findMany({
@@ -11,16 +11,16 @@ export function listPlayerAchievements(playerId: string) {
 }
 
 /**
- * Feed de "Conquistas Recentes" do Dashboard — métrica coletiva. Conquistas cumulativas
+ * Feed de "Conquistas Recentes" do Dashboard — métrica individual. Conquistas cumulativas
  * (matchId nulo, ex: "1000 Kills") não têm uma partida específica pra checar e sempre
  * aparecem; conquistas por partida (Ace, Clutch etc.) só aparecem se a partida em que
- * foram concedidas for COMUNIDADE (ver domain/matchClassification.ts).
+ * foram concedidas for individual ou comunidade (ver domain/matchClassification.ts).
  */
 export function listRecentAchievements(take = 20) {
   return prisma.playerAchievement.findMany({
     where: {
       ...trackedPlayerStatsWhere(),
-      OR: [{ matchId: null }, { match: communityMatchWhere() }],
+      OR: [{ matchId: null }, { match: individualMatchWhere() }],
     },
     take,
     orderBy: { earnedAt: "desc" },

@@ -33,10 +33,27 @@ export function communityMatchWhere() {
 }
 
 /**
+ * Fragmento de `where` para queries feitas diretamente em `Match`
+ * (ex: prisma.match.count, prisma.match.groupBy, prisma.match.aggregate).
+ * Para métricas individuais (Dashboard geral, histórico do jogador, rankings individuais, conquistas).
+ */
+export function individualMatchWhere() {
+  return { trackedPlayersCount: { gte: 1 } };
+}
+
+/**
  * Mesmo filtro, para queries feitas em `PlayerMatchStats` (via a relação `match`).
  * Use isto em qualquer agregação "coletiva" — ranking, winrate por mapa, streaks,
  * destaques, etc. Nunca em consultas de perfil de jogador (essas devem ver tudo).
  */
 export function communityMatchStatsWhere() {
   return { match: communityMatchWhere() };
+}
+
+/**
+ * Mesmo filtro, para queries feitas em `PlayerMatchStats` (via a relação `match`).
+ * Para métricas individuais.
+ */
+export function individualMatchStatsWhere() {
+  return { match: individualMatchWhere() };
 }

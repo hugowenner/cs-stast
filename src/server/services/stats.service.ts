@@ -2,7 +2,7 @@ import * as statsRepo from "@/server/repositories/playerMatchStats.repository";
 import * as playerRepo from "@/server/repositories/player.repository";
 import type { RankingMetric } from "@/server/repositories/playerMatchStats.repository";
 import { prisma } from "@/server/db";
-import { communityMatchWhere } from "@/server/domain/matchClassification";
+import { communityMatchWhere, individualMatchWhere } from "@/server/domain/matchClassification";
 import { getActiveSeason, resolveSeasonId } from "@/server/services/season.service";
 
 const MIN_MATCHES_FOR_EXTRA_RANKINGS = 3;
@@ -64,7 +64,7 @@ export async function getKdRanking(seasonIdOrTake?: string | number, take?: numb
       player: { trackedPlayer: { active: true } },
       match: {
         seasonId: resolvedSeasonId,
-        ...communityMatchWhere(),
+        ...individualMatchWhere(),
       },
     },
     select: { playerId: true, kills: true, deaths: true },
@@ -105,7 +105,7 @@ export async function getConsistencyRanking(seasonIdOrTake?: string | number, ta
       player: { trackedPlayer: { active: true } },
       match: {
         seasonId: resolvedSeasonId,
-        ...communityMatchWhere(),
+        ...individualMatchWhere(),
       },
     },
     select: { playerId: true, rating: true },
@@ -145,7 +145,7 @@ export async function getEvolutionRanking(seasonIdOrTake?: string | number, take
       player: { trackedPlayer: { active: true } },
       match: {
         seasonId: resolvedSeasonId,
-        ...communityMatchWhere(),
+        ...individualMatchWhere(),
       },
     },
     select: { playerId: true, rating: true },
@@ -234,7 +234,7 @@ export async function getHsRanking(seasonIdOrTake?: string | number, take?: numb
       player: { trackedPlayer: { active: true } },
       match: {
         seasonId: resolvedSeasonId,
-        ...communityMatchWhere(),
+        ...individualMatchWhere(),
       },
     },
     select: { playerId: true, kills: true, headshots: true },
@@ -274,7 +274,7 @@ export async function getEntryKillsRanking(seasonIdOrTake?: string | number, tak
       player: { trackedPlayer: { active: true } },
       match: {
         seasonId: resolvedSeasonId,
-        ...communityMatchWhere(),
+        ...individualMatchWhere(),
       },
     },
     select: { playerId: true, entryKills: true },
@@ -313,7 +313,7 @@ export async function getSupportRanking(seasonIdOrTake?: string | number, take?:
       player: { trackedPlayer: { active: true } },
       match: {
         seasonId: resolvedSeasonId,
-        ...communityMatchWhere(),
+        ...individualMatchWhere(),
       },
     },
     select: { playerId: true, assists: true, flashAssists: true },

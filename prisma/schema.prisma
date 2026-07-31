@@ -35,6 +35,13 @@ model Player {
   rivalriesAsB       Rivalry[]           @relation("RivalryPlayerB")
   trackedPlayer      TrackedPlayer?
   teamBalancePlayers TeamBalancePlayer[]
+
+  matchupsAsKiller   PlayerMatchup[]     @relation("MatchupKiller")
+  matchupsAsVictim   PlayerMatchup[]     @relation("MatchupVictim")
+  clutches           PlayerClutch[]
+  entryDuels         PlayerEntryDuel[]
+  tradesAsVictim     PlayerTradeEvent[]  @relation("TradeVictim")
+  tradesAsTrader     PlayerTradeEvent[]  @relation("TradeTrader")
 }
 
 /// Reservado para autenticação na Fase 2. Sem fluxo de login no MVP.
@@ -97,6 +104,10 @@ model Match {
   playerStats  PlayerMatchStats[]
   events       Event[]
   achievements PlayerAchievement[]
+  matchups     PlayerMatchup[]
+  clutches     PlayerClutch[]
+  entryDuels   PlayerEntryDuel[]
+  trades       PlayerTradeEvent[]
 
   @@index([sessionId])
   @@index([playedAt])
@@ -406,5 +417,86 @@ model MatchPayload {
 
   @@unique([source, sourceMatchId])
   @@map("match_payloads")
+}
+
+model PlayerMatchup {
+  id             String    @id @default(cuid())
+  matchId        String
+  match          Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  
+  killerId       String
+  killer         Player    @relation("MatchupKiller", fields: [killerId], references: [id])
+  victimId       String
+  victim         Player    @relation("MatchupVictim", fields: [victimId], references: [id])
+  
+  kills          Int       @default(0)
+  headshots      Int       @default(0)
+  entryKills     Int       @default(0)
+  tradeKills     Int       @default(0)
+  weapons        Json?     // Ex: { "ak47": 3 }
+  rounds         Json?     // Ex: { "1": { "weapon": "ak47", "hs": true } }
+  avgDistance    Float?
+  
+  createdAt      DateTime  @default(now())
+
+  @@unique([matchId, killerId, victimId])
+  @@index([killerId, victimId])
+  @@index([matchId])
+}
+
+model PlayerClutch {
+  id          String    @id @default(cuid())
+  matchId     String
+  match       Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  playerId    String
+  player      Player    @relation(fields: [playerId], references: [id])
+  
+  opponents   Int       // 1 to 5 (1v1 to 1v5)
+  won         Boolean
+  roundNumber Int
+  side        MatchTeam
+  weapon      String?
+  createdAt   DateTime  @default(now())
+
+  @@index([matchId])
+  @@index([playerId])
+}
+
+model PlayerEntryDuel {
+  id             String    @id @default(cuid())
+  matchId        String
+  match          Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  playerId       String
+  player         Player    @relation(fields: [playerId], references: [id])
+  
+  isKiller       Boolean   // true = entry kill, false = entry death
+  side           MatchTeam
+  weapon         String?
+  roundNumber    Int
+  opponentId     String?
+  createdAt      DateTime  @default(now())
+
+  @@index([matchId])
+  @@index([playerId])
+}
+
+model PlayerTradeEvent {
+  id             String    @id @default(cuid())
+  matchId        String
+  match          Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  
+  victimId       String
+  victim         Player    @relation("TradeVictim", fields: [victimId], references: [id])
+  traderId       String
+  trader         Player    @relation("TradeTrader", fields: [traderId], references: [id])
+  
+  roundNumber    Int
+  timeDiff       Float
+  weapon         String?
+  createdAt      DateTime  @default(now())
+
+  @@index([matchId])
+  @@index([victimId])
+  @@index([traderId])
 }
 

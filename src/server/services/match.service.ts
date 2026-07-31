@@ -11,6 +11,7 @@ import { calculateRating } from "@/server/domain/rating";
 import { calculateEloUpdates, DEFAULT_ELO } from "@/server/domain/elo";
 import { calculateRivalryDeltas } from "@/server/domain/rivalry";
 import { isCommunityMatch } from "@/server/domain/matchClassification";
+import { extractPremiumEvents } from "@/server/services/premium-events.normalizer";
 import {
   evaluateMatchAchievements,
   type PlayerMatchAchievementInput,
@@ -297,6 +298,26 @@ export async function ingestMatchSync(
       }
     }
 
+    let premiumEvents = {};
+    if (options.rawPayload) {
+      const playerMapForPremium = new Map<string, { id: string; team: "A" | "B" }>();
+      for (const p of input.players) {
+        const dbPlayer = playerBySteamId.get(p.steamId);
+        if (dbPlayer) {
+          playerMapForPremium.set(p.steamId, {
+            id: dbPlayer.id,
+            team: p.team as "A" | "B",
+          });
+        }
+      }
+      premiumEvents = extractPremiumEvents(
+        options.rawPayload,
+        "",
+        playerMapForPremium,
+        trackedPlayersCount
+      );
+    }
+
     const match = await matchRepo.createMatchWithStats({
       sessionId: session.id,
       mapId: map.id,
@@ -311,6 +332,7 @@ export async function ingestMatchSync(
       events,
       demoUrl: input.demoUrl ?? null,
       roundsJson: input.roundsJson !== undefined ? (input.roundsJson as any) : undefined,
+      ...premiumEvents,
     });
 
     // Rivalidade é estatística coletiva (correlaciona 2 jogadores) — nenhuma estatística

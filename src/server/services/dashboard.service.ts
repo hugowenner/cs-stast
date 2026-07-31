@@ -2,7 +2,7 @@ import { prisma } from "@/server/db";
 import * as playerRepo from "@/server/repositories/player.repository";
 import * as statsService from "@/server/services/stats.service";
 import type { CompetitiveDataset } from "@/server/services/competitive.service";
-import { communityMatchWhere } from "@/server/domain/matchClassification";
+import { communityMatchWhere, individualMatchWhere } from "@/server/domain/matchClassification";
 import { getActiveSeason, resolveSeasonId } from "@/server/services/season.service";
 
 /**
@@ -19,7 +19,7 @@ function loadSummaryStats(seasonId: string, dataset?: CompetitiveDataset) {
       player: { trackedPlayer: { active: true } },
       match: {
         seasonId,
-        ...communityMatchWhere(),
+        ...individualMatchWhere(),
       },
     },
     include: { match: { include: { map: true } } },
@@ -58,7 +58,7 @@ export async function getDashboardSummary(
     prisma.match.count({
       where: {
         seasonId: resolvedSeasonId,
-        ...communityMatchWhere(),
+        ...individualMatchWhere(),
       },
     }),
     // Jogadores monitorados ativos permanecem históricos/globais
@@ -90,13 +90,13 @@ export async function getDashboardSummary(
     prisma.match.count({
       where: {
         seasonId: resolvedSeasonId,
-        ...communityMatchWhere(),
+        ...individualMatchWhere(),
       },
     }),
     prisma.match.aggregate({
       where: {
         seasonId: resolvedSeasonId,
-        ...communityMatchWhere(),
+        ...individualMatchWhere(),
       },
       _sum: { scoreTeamA: true, scoreTeamB: true },
     }),
@@ -127,7 +127,7 @@ export async function getDashboardSummary(
     by: ["mapId"],
     where: {
       seasonId: resolvedSeasonId,
-      ...communityMatchWhere(),
+      ...individualMatchWhere(),
     },
     _count: { id: true },
   });

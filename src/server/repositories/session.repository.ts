@@ -1,5 +1,14 @@
 import { prisma } from "@/server/db";
-import { trackedMatchWhere, trackedPlayerWhere, trackedSessionWhere } from "./player.repository";
+import { trackedPlayerWhere } from "./player.repository";
+import { communityMatchWhere } from "@/server/domain/matchClassification";
+
+export function communitySessionWhere() {
+  return {
+    matches: {
+      some: communityMatchWhere(),
+    },
+  };
+}
 
 function startOfUtcDay(date: Date) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
@@ -28,7 +37,7 @@ export function renameSession(id: string, name: string) {
 export function listSessions(params: { skip?: number; take?: number; where?: any } = {}) {
   return prisma.session.findMany({
     where: {
-      ...trackedSessionWhere(),
+      ...communitySessionWhere(),
       ...(params.where || {}),
     },
     select: {
@@ -37,7 +46,7 @@ export function listSessions(params: { skip?: number; take?: number; where?: any
       date: true,
       createdAt: true,
       matches: {
-        where: trackedMatchWhere(),
+        where: communityMatchWhere(),
         select: {
           id: true,
           playedAt: true,
@@ -82,13 +91,13 @@ export function listSessions(params: { skip?: number; take?: number; where?: any
 
 export function countSessions() {
   return prisma.session.count({
-    where: trackedSessionWhere(),
+    where: communitySessionWhere(),
   });
 }
 
 export function getLatestSession() {
   return prisma.session.findFirst({
-    where: trackedSessionWhere(),
+    where: communitySessionWhere(),
     orderBy: { date: "desc" },
   });
 }
@@ -98,7 +107,7 @@ export function findSessionById(id: string) {
     where: { id },
     include: {
       matches: {
-        where: trackedMatchWhere(),
+        where: communityMatchWhere(),
         include: {
           map: true,
           playerStats: {

@@ -1,5 +1,5 @@
 import { prisma } from "@/server/db";
-import { communityMatchStatsWhere, communityMatchWhere } from "@/server/domain/matchClassification";
+import { communityMatchStatsWhere, communityMatchWhere, individualMatchWhere } from "@/server/domain/matchClassification";
 import { generateHighlights } from "@/server/services/highlights/highlights.service";
 import { DashboardHighlight } from "@/server/services/highlights/highlight.types";
 import { getActiveSeason } from "@/server/services/season.service";
@@ -154,7 +154,7 @@ export async function loadCompetitiveDataset(seasonId?: string | "all") {
     allStats = await prisma.playerMatchStats.findMany({
       where: {
         playerId: { in: activePlayers.map((p) => p.id) },
-        match: communityMatchWhere(),
+        match: individualMatchWhere(),
       },
       include: { match: { include: { map: true } } },
       orderBy: { match: { playedAt: "desc" } },
@@ -171,7 +171,7 @@ export async function loadCompetitiveDataset(seasonId?: string | "all") {
         playerId: { in: activePlayers.map((p) => p.id) },
         match: {
           seasonId: targetSeasonId || undefined,
-          ...communityMatchWhere(),
+          ...individualMatchWhere(),
         },
       },
       include: { match: { include: { map: true } } },

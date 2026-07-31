@@ -1,7 +1,7 @@
 import { prisma } from "@/server/db";
 import type { EventType, MatchTeam, Prisma } from "@/generated/prisma";
 import { trackedMatchWhere, trackedPlayerWhere } from "./player.repository";
-import { communityMatchWhere } from "@/server/domain/matchClassification";
+import { communityMatchWhere, individualMatchWhere } from "@/server/domain/matchClassification";
 
 export function findMatchByGamersClubId(gamersClubMatchId: string) {
   return prisma.match.findUnique({ where: { gamersClubMatchId } });
@@ -44,7 +44,7 @@ export function findMatchById(id: string) {
 
 export function listRecentMatches(take = 20) {
   return prisma.match.findMany({
-    where: trackedMatchWhere(),
+    where: individualMatchWhere(),
     take,
     orderBy: [{ playedAt: "desc" }, { gamersClubMatchId: "desc" }],
     include: {
@@ -121,6 +121,10 @@ export interface CreateMatchInput {
   events: CreateMatchEventInput[];
   demoUrl?: string | null;
   roundsJson?: Prisma.InputJsonValue | undefined;
+  matchups?: Prisma.PlayerMatchupCreateManyInput[];
+  clutches?: Prisma.PlayerClutchCreateManyInput[];
+  entryDuels?: Prisma.PlayerEntryDuelCreateManyInput[];
+  trades?: Prisma.PlayerTradeEventCreateManyInput[];
 }
 
 /**
@@ -153,6 +157,30 @@ export function createMatchWithStats(input: CreateMatchInput) {
     if (input.events.length > 0) {
       await tx.event.createMany({
         data: input.events.map((event) => ({ ...event, matchId: match.id })),
+      });
+    }
+
+    if (input.matchups && input.matchups.length > 0) {
+      await tx.playerMatchup.createMany({
+        data: input.matchups.map((m) => ({ ...m, matchId: match.id })),
+      });
+    }
+
+    if (input.clutches && input.clutches.length > 0) {
+      await tx.playerClutch.createMany({
+        data: input.clutches.map((c) => ({ ...c, matchId: match.id })),
+      });
+    }
+
+    if (input.entryDuels && input.entryDuels.length > 0) {
+      await tx.playerEntryDuel.createMany({
+        data: input.entryDuels.map((ed) => ({ ...ed, matchId: match.id })),
+      });
+    }
+
+    if (input.trades && input.trades.length > 0) {
+      await tx.playerTradeEvent.createMany({
+        data: input.trades.map((t) => ({ ...t, matchId: match.id })),
       });
     }
 

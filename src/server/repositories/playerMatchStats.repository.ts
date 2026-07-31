@@ -1,6 +1,6 @@
 import { prisma } from "@/server/db";
 import { trackedPlayerStatsWhere } from "./player.repository";
-import { communityMatchWhere } from "@/server/domain/matchClassification";
+import { communityMatchWhere, individualMatchWhere } from "@/server/domain/matchClassification";
 
 export function listStatsForPlayer(playerId: string, take = 50) {
   return prisma.playerMatchStats.findMany({
@@ -67,7 +67,7 @@ export function getLatestEloForPlayers(playerIds: string[]) {
  */
 export async function getEloLeaderboard(take = 20) {
   const rows = await prisma.playerMatchStats.findMany({
-    where: { ...trackedPlayerStatsWhere(), match: communityMatchWhere() },
+    where: { ...trackedPlayerStatsWhere(), match: individualMatchWhere() },
     distinct: ["playerId"],
     orderBy: [{ playerId: "asc" }, { match: { playedAt: "desc" } }],
     select: { playerId: true, eloAfter: true },
@@ -82,7 +82,7 @@ export async function getRankingByMetric(metric: RankingMetric, seasonId: string
     ...trackedPlayerStatsWhere(),
     match: {
       seasonId,
-      ...communityMatchWhere(),
+      ...individualMatchWhere(),
     },
   };
 
@@ -132,7 +132,7 @@ export function getMapWinrates(seasonId: string) {
       ...trackedPlayerStatsWhere(),
       match: {
         seasonId,
-        ...communityMatchWhere(),
+        ...individualMatchWhere(),
       },
     },
     select: {
