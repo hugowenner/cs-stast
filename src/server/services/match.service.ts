@@ -16,6 +16,7 @@ import {
   type PlayerMatchAchievementInput,
 } from "@/server/domain/achievements";
 import { grantAchievements } from "@/server/services/achievement.service";
+import { maybeEnqueueDemoAnalysis } from "@/server/services/sync-job.service";
 import { getEloKFactor } from "@/server/services/configuration.service";
 import { ensureCurrentSeason } from "@/server/services/season.service";
 import type {
@@ -77,6 +78,12 @@ export interface IngestMatchOptions {
   /** Payload bruto do provedor de origem, guardado no Import para reprocessamento/depuração. */
   rawPayload?: unknown;
   source?: string;
+  /**
+   * Quando true, suprime o disparo de maybeEnqueueDemoAnalysis.
+   * Usar quando o chamador é o próprio Worker (via /api/internal/ingest/match) —
+   * a demo já foi processada, re-enfileirar é redundante e polui os logs.
+   */
+  skipEnqueue?: boolean;
 }
 
 export async function ingestMatchSync(
@@ -85,6 +92,16 @@ export async function ingestMatchSync(
 ): Promise<IngestMatchResult> {
   const existing = await matchRepo.findMatchByGamersClubId(input.matchId);
   if (existing) {
+    if (!options.skipEnqueue) {
+      // Partida já existe — tenta enfileirar análise em background se ainda não foi processada.
+      // Fire-and-forget: não bloqueia a resposta do sync.
+      // Prioriza a URL completa vinda do payload (extensão já resolveu via demoDownload)
+      // sobre o que pode estar salvo no banco como apenas filename.
+      maybeEnqueueDemoAnalysis({
+        sourceMatchId: input.matchId,
+        downloadUrl: input.demoUrl ?? existing.demoUrl,
+      }).catch(() => {});
+    }
     return { status: "already-synced", matchId: existing.id };
   }
 
@@ -392,6 +409,12 @@ export async function ingestMatchSync(
     }
 
     await importRepo.completeImportLog(importLog.id, { status: "SUCCESS", matchesImported: 1 });
+
+    // Enfileira análise da demo no Worker em background — fire-and-forget.
+    // Suprimido quando chamado pelo Worker (skipEnqueue=true): demo já foi processada.
+    if (!options.skipEnqueue) {
+      maybeEnqueueDemoAnalysis({ sourceMatchId: input.matchId, downloadUrl: input.demoUrl }).catch(() => {});
+    }
 
     return { status: "created", matchId: match.id };
   } catch (error) {

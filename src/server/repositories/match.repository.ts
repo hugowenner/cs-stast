@@ -190,3 +190,16 @@ export function findMatchDetailsById(id: string) {
     },
   });
 }
+
+export async function deleteMatchByGamersClubId(gamersClubMatchId: string) {
+  return prisma.$transaction(async (tx) => {
+    const match = await tx.match.findUnique({ where: { gamersClubMatchId } });
+    if (!match) return;
+
+    await tx.playerAchievement.deleteMany({ where: { matchId: match.id } });
+    await tx.event.deleteMany({ where: { matchId: match.id } });
+    await tx.playerMatchStats.deleteMany({ where: { matchId: match.id } });
+    await tx.match.delete({ where: { id: match.id } });
+  });
+}
+

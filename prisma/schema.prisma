@@ -362,3 +362,49 @@ model TeamBalancePlayer {
 
   @@map("team_balance_players")
 }
+
+enum SyncJobStatus {
+  PENDING
+  SENT_TO_WORKER
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+/// Fila de jobs de sincronização de demos. O Hub é o produtor (cria PENDING);
+/// o Worker é o consumidor (baixa demo, parseia, devolve resultado via /api/internal/ingest/match).
+model SyncJob {
+  id            String        @id @default(cuid())
+  sourceMatchId String
+  source        String        @default("gamersclub")
+  downloadUrl   String
+  status        SyncJobStatus @default(PENDING)
+  sentAt        DateTime?
+  completedAt   DateTime?
+  errorMessage  String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([status])
+  @@index([sourceMatchId])
+  @@map("sync_jobs")
+}
+
+model MatchPayload {
+  id            String   @id @default(cuid())
+  source        String
+  sourceMatchId String
+  parserVersion String
+  schemaVersion String
+  payload       Json
+  payloadHash   String
+  status        String   @default("STORED")
+  processedAt   DateTime?
+  errorMessage  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([source, sourceMatchId])
+  @@map("match_payloads")
+}
+
