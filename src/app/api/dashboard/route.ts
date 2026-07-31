@@ -12,12 +12,16 @@ export async function GET(request: NextRequest) {
 
     const resolvedSeasonId = await resolveSeasonId(targetSeason);
 
-    // Se a temporada possui um snapshot salvo, carrega dele diretamente em O(1)
+    // Se a temporada possui um snapshot salvo e está FECHADA, carrega dele diretamente em O(1)
     const snapshot = await prisma.seasonSnapshot.findUnique({
       where: { seasonId: resolvedSeasonId },
     });
 
-    if (snapshot) {
+    const seasonRecord = await prisma.season.findUnique({
+      where: { id: resolvedSeasonId },
+    });
+
+    if (snapshot && seasonRecord?.status === "CLOSED") {
       const data = snapshot.dashboard as any;
       const summary = data.dashboard ? data.dashboard.summary : data.summary;
       return NextResponse.json(summary);
