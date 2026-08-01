@@ -7,6 +7,118 @@ export function findMatchByGamersClubId(gamersClubMatchId: string) {
   return prisma.match.findUnique({ where: { gamersClubMatchId } });
 }
 
+export function findMatchWithPlayersByGamersClubId(gamersClubMatchId: string) {
+  return prisma.match.findUnique({
+    where: { gamersClubMatchId },
+    include: {
+      playerStats: {
+        include: { player: { select: { id: true, steamId: true } } },
+      },
+    },
+  });
+}
+
+export interface EnrichMatchPremiumInput {
+  matchId: string;
+  durationSeconds?: number;
+  roundsJson?: Prisma.InputJsonValue;
+  playerPremiumStats: Array<{
+    playerId: string;
+    entryKills: number;
+    entryDeaths: number;
+    tradeKills: number;
+    clutch1v1Attempts: number;
+    clutch1v1Wins: number;
+    clutch1v2Attempts: number;
+    clutch1v2Wins: number;
+    clutch1v3Attempts: number;
+    clutch1v3Wins: number;
+    clutch1v4Attempts: number;
+    clutch1v4Wins: number;
+    clutch1v5Attempts: number;
+    clutch1v5Wins: number;
+    doubleKills: number | null;
+    tripleKills: number | null;
+    quadKills: number | null;
+    aces: number | null;
+    damage: number | null;
+  }>;
+  events: CreateMatchEventInput[];
+  matchups: Prisma.PlayerMatchupCreateManyInput[];
+  clutches: Prisma.PlayerClutchCreateManyInput[];
+  entryDuels: Prisma.PlayerEntryDuelCreateManyInput[];
+  trades: Prisma.PlayerTradeEventCreateManyInput[];
+}
+
+/**
+ * Enriquece uma partida Community com dados Premium do parser de demo.
+ * Nunca toca em campos cuja fonte autoritativa é a API da Gamers Club:
+ * scoreTeamA, scoreTeamB, mapId, playedAt, seasonId, gamersClubMatchId,
+ * trackedPlayersCount, eloBefore, eloAfter, rating, impact.
+ */
+export function enrichMatchWithPremium(input: EnrichMatchPremiumInput) {
+  return prisma.$transaction(async (tx) => {
+    // 1. Campos Premium no nível do Match
+    const matchUpdate: Prisma.MatchUpdateInput = {};
+    if (input.durationSeconds !== undefined) matchUpdate.durationSeconds = input.durationSeconds;
+    if (input.roundsJson !== undefined) matchUpdate.roundsJson = input.roundsJson;
+    if (Object.keys(matchUpdate).length > 0) {
+      await tx.match.update({ where: { id: input.matchId }, data: matchUpdate });
+    }
+
+    // 2. Campos Premium por jogador (sem tocar em kills/deaths/assists/adr/kast/rating/elo)
+    for (const stat of input.playerPremiumStats) {
+      const data: Prisma.PlayerMatchStatsUpdateInput = {
+        entryKills: stat.entryKills,
+        entryDeaths: stat.entryDeaths,
+        tradeKills: stat.tradeKills,
+        clutch1v1Attempts: stat.clutch1v1Attempts,
+        clutch1v1Wins: stat.clutch1v1Wins,
+        clutch1v2Attempts: stat.clutch1v2Attempts,
+        clutch1v2Wins: stat.clutch1v2Wins,
+        clutch1v3Attempts: stat.clutch1v3Attempts,
+        clutch1v3Wins: stat.clutch1v3Wins,
+        clutch1v4Attempts: stat.clutch1v4Attempts,
+        clutch1v4Wins: stat.clutch1v4Wins,
+        clutch1v5Attempts: stat.clutch1v5Attempts,
+        clutch1v5Wins: stat.clutch1v5Wins,
+      };
+      if (stat.doubleKills !== null) data.doubleKills = stat.doubleKills;
+      if (stat.tripleKills !== null) data.tripleKills = stat.tripleKills;
+      if (stat.quadKills !== null) data.quadKills = stat.quadKills;
+      if (stat.aces !== null) data.aces = stat.aces;
+      if (stat.damage !== null) data.damage = stat.damage;
+      await tx.playerMatchStats.updateMany({
+        where: { matchId: input.matchId, playerId: stat.playerId },
+        data,
+      });
+    }
+
+    // 3. Eventos de kill/ace/multikill — substitui (pode ser reprocessamento)
+    await tx.event.deleteMany({ where: { matchId: input.matchId } });
+    if (input.events.length > 0) {
+      await tx.event.createMany({
+        data: input.events.map((e) => ({ ...e, matchId: input.matchId })),
+      });
+    }
+
+    // 4. Tabelas Premium exclusivas — substitui integralmente
+    await tx.playerMatchup.deleteMany({ where: { matchId: input.matchId } });
+    await tx.playerClutch.deleteMany({ where: { matchId: input.matchId } });
+    await tx.playerEntryDuel.deleteMany({ where: { matchId: input.matchId } });
+    await tx.playerTradeEvent.deleteMany({ where: { matchId: input.matchId } });
+
+    if (input.matchups.length > 0)
+      await tx.playerMatchup.createMany({ data: input.matchups });
+    if (input.clutches.length > 0)
+      await tx.playerClutch.createMany({ data: input.clutches });
+    if (input.entryDuels.length > 0)
+      await tx.playerEntryDuel.createMany({ data: input.entryDuels });
+    if (input.trades.length > 0)
+      await tx.playerTradeEvent.createMany({ data: input.trades });
+  });
+}
+
 /**
  * Total de partidas COMUNIDADE (>= 2 jogadores monitorados) — é o número usado nas
  * estatísticas gerais do Dashboard ("X partidas analisadas"). Partidas SOLO existem no
