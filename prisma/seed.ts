@@ -3,6 +3,7 @@
 import "dotenv/config";
 import { prisma } from "@/server/db";
 import { ACHIEVEMENT_CATALOG } from "@/server/domain/achievementCatalog";
+import { getSeasonNameForDate, getSeasonDatesForDate } from "@/server/services/season.service";
 
 const ACTIVE_DUTY_MAPS = [
   "Mirage",
@@ -18,13 +19,8 @@ const ACTIVE_DUTY_MAPS = [
 
 async function main() {
   const now = new Date();
-  const MONTHS_PT = [
-    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-  ];
-  const monthName = `${MONTHS_PT[now.getMonth()]}/${now.getFullYear()}`;
-  const startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-  const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+  const monthName = getSeasonNameForDate(now);
+  const { startDate, endDate } = getSeasonDatesForDate(now);
 
   const defaultSeason = await prisma.season.upsert({
     where: { id: "default-season" },

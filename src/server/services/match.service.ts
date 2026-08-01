@@ -64,8 +64,8 @@ export async function getMatchDetail(id: string): Promise<MatchDetailsDTO | null
   };
 }
 
-export function listRecentMatches(take?: number) {
-  return matchRepo.listRecentMatches(take);
+export function listRecentMatches(take?: number, seasonId?: string) {
+  return matchRepo.listRecentMatches(take, seasonId);
 }
 
 type KillDetail = NonNullable<SyncMatchInput["players"][number]["killsDetail"]>[number];

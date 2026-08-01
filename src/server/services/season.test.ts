@@ -4,6 +4,7 @@ import {
   getSeasonNameForDate,
   rolloverSeason,
   validateSnapshot,
+  ensureCurrentSeason,
 } from "./season.service";
 import { prisma } from "@/server/db";
 
@@ -237,6 +238,113 @@ describe("rolloverSeason Operations", () => {
       expect.objectContaining({
         where: { key: "MAINTENANCE" },
         create: expect.objectContaining({ value: { enabled: false } }),
+      })
+    );
+  });
+});
+
+describe("ensureCurrentSeason Operations", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("deve retornar a temporada ativa atual se ela ainda não expirou", async () => {
+    const futureDate = new Date();
+    futureDate.setHours(futureDate.getHours() + 24); // amanhã
+
+    const mockActive = {
+      id: "active-id",
+      name: "Julho/2026",
+      startDate: new Date("2026-07-01T00:00:00Z"),
+      endDate: futureDate,
+      status: "ACTIVE",
+    };
+
+    vi.mocked(prisma.season.findFirst as any).mockResolvedValue(mockActive);
+
+    const result = await ensureCurrentSeason();
+
+    expect(result).toEqual(mockActive);
+    expect(prisma.season.findFirst).toHaveBeenCalledWith({
+      where: { status: "ACTIVE" },
+    });
+    // Não deve criar ou dar update em nada
+    expect(prisma.season.create).not.toHaveBeenCalled();
+    expect(prisma.season.update).not.toHaveBeenCalled();
+  });
+
+  it("deve disparar rolloverSeason se a temporada ativa atual estiver expirada", async () => {
+    const pastDate = new Date();
+    pastDate.setHours(pastDate.getHours() - 1); // 1 hora atrás
+
+    const mockActive = {
+      id: "expired-id",
+      name: "Julho/2026",
+      startDate: new Date("2026-07-01T00:00:00Z"),
+      endDate: pastDate,
+      status: "ACTIVE",
+    };
+
+    const mockNextActive = {
+      id: "next-id",
+      name: "Agosto/2026",
+      startDate: new Date("2026-08-01T00:00:00Z"),
+      endDate: new Date("2026-08-31T23:59:59.999Z"),
+      status: "ACTIVE",
+    };
+
+    // Mock findFirst para retornar a expirada
+    vi.mocked(prisma.season.findFirst as any).mockImplementation(async (args: any) => {
+      // No rollover, ele busca a ativa novamente
+      if (args.where?.status === "ACTIVE") {
+        return mockActive;
+      }
+      return null;
+    });
+
+    vi.mocked(prisma.season.findUnique as any).mockResolvedValue(mockActive);
+    vi.mocked(prisma.seasonSnapshot.upsert as any).mockResolvedValue({} as any);
+    vi.mocked(prisma.season.update as any).mockResolvedValue({ ...mockActive, status: "CLOSED" } as any);
+    vi.mocked(prisma.season.create as any).mockResolvedValue(mockNextActive as any);
+
+    const result = await ensureCurrentSeason();
+
+    // Deve retornar a nova temporada criada pelo rollover
+    expect(result).toEqual(mockNextActive);
+    expect(prisma.season.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "expired-id" },
+        data: { status: "CLOSED" },
+      })
+    );
+    expect(prisma.season.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          name: "Agosto/2026",
+          status: "ACTIVE",
+        }),
+      })
+    );
+  });
+
+  it("deve criar uma nova temporada para o mês atual se nenhuma temporada ativa existir", async () => {
+    vi.mocked(prisma.season.findFirst as any).mockResolvedValue(null);
+
+    const mockNewSeason = {
+      id: "new-id",
+      name: "Agosto/2026",
+      status: "ACTIVE",
+    };
+    vi.mocked(prisma.season.create as any).mockResolvedValue(mockNewSeason as any);
+
+    const result = await ensureCurrentSeason();
+
+    expect(result).toEqual(mockNewSeason);
+    expect(prisma.season.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: "ACTIVE",
+        }),
       })
     );
   });

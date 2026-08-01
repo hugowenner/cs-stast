@@ -84,7 +84,19 @@ export async function createSeason(data: { name: string; startDate: Date; endDat
  */
 export async function ensureCurrentSeason() {
   const active = await getActiveSeason();
-  if (active) return active;
+  if (active) {
+    const now = new Date();
+    if (now > active.endDate) {
+      console.log(`[Season] Temporada ativa '${active.name}' expirou em ${active.endDate.toISOString()}. Iniciando rollover automático.`);
+      const result = await rolloverSeason();
+      if (result.status === "success" && result.opened) {
+        return result.opened;
+      }
+      const reloadedActive = await getActiveSeason();
+      if (reloadedActive) return reloadedActive;
+    }
+    return active;
+  }
 
   const now = new Date();
   const name = getSeasonNameForDate(now);
@@ -239,6 +251,13 @@ export async function rolloverSeason() {
   if (!activeSeason) {
     console.log("[Season] Nenhuma temporada ativa encontrada para rollover.");
     return { status: "skipped", reason: "no_active_season" };
+  }
+
+  // Proteção contra concorrência/execução precoce: não realiza o rollover se a temporada ativa atual não expirou
+  const now = new Date();
+  if (activeSeason.endDate > now) {
+    console.log(`[Season] Rollover ignorado: a temporada ativa '${activeSeason.name}' ainda não expirou (término em ${activeSeason.endDate.toISOString()}, hora atual: ${now.toISOString()}).`);
+    return { status: "skipped", reason: "active_season_not_expired" };
   }
 
   // Próxima temporada com base no fim da ativa (soma 1 segundo em UTC determinístico)

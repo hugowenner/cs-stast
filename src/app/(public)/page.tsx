@@ -104,7 +104,7 @@ export default async function DashboardPage(props: {
     summary = data.dashboard ? data.dashboard.summary : data.summary;
     competitive = data.dashboard ? data.dashboard.competitive : data.competitive;
     const [liveRecentMatches, liveAchievements, liveRivalries] = await Promise.all([
-      safeQuery(() => matchService.listRecentMatches(10), []),
+      safeQuery(() => matchService.listRecentMatches(10, resolvedSeasonId), []),
       safeQuery(() => achievementService.listRecent(4), []),
       safeQuery(() => rivalryService.listTopRivalriesWithH2H(10), []),
     ]);
@@ -125,7 +125,7 @@ export default async function DashboardPage(props: {
           dominantMap: null,
           bestPlayer: null,
         }),
-        safeQuery(() => matchService.listRecentMatches(10), []),
+        safeQuery(() => matchService.listRecentMatches(10, resolvedSeasonId), []),
         safeQuery(
           async () => competitiveService.getDashboardCompetitiveBundle(await datasetPromise),
           EMPTY_COMPETITIVE_BUNDLE,

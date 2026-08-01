@@ -10,7 +10,8 @@
  *
  * Uso: npm run season:test-rollover
  */
-
+process.env.MOCK_COACH = "true";
+import "dotenv/config";
 import { prisma } from "../src/server/db";
 import {
   rolloverSeason,

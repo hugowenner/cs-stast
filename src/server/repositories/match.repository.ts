@@ -42,9 +42,13 @@ export function findMatchById(id: string) {
   });
 }
 
-export function listRecentMatches(take = 20) {
+export function listRecentMatches(take = 20, seasonId?: string) {
+  const where: any = { ...individualMatchWhere() };
+  if (seasonId) {
+    where.seasonId = seasonId;
+  }
   return prisma.match.findMany({
-    where: individualMatchWhere(),
+    where,
     take,
     orderBy: [{ playedAt: "desc" }, { gamersClubMatchId: "desc" }],
     include: {
