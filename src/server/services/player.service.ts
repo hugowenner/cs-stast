@@ -29,16 +29,19 @@ export function upsertPlayer(data: {
   return playerRepo.upsertPlayerBySteamId(data);
 }
 
-export async function getPlayerDetail(id: string): Promise<PlayerProfileDTO | null> {
+export async function getPlayerDetail(id: string, seasonId?: string): Promise<PlayerProfileDTO | null> {
   const player = await playerRepo.findPlayerById(id);
   if (!player) return null;
 
+  const targetSeasonId = seasonId === "all" ? undefined : seasonId;
+  const targetRivalrySeasonId = seasonId === "all" || !seasonId ? null : seasonId;
+
   const [totals, outcomes, achievements, rivalries, recentStats] = await Promise.all([
-    statsRepo.getPlayerCareerTotals(id),
-    statsRepo.getPlayerMatchOutcomes(id),
-    achievementRepo.listPlayerAchievements(id),
-    rivalryRepo.listRivalriesForPlayer(id),
-    statsRepo.listStatsForPlayer(id, 10),
+    statsRepo.getPlayerCareerTotals(id, targetSeasonId),
+    statsRepo.getPlayerMatchOutcomes(id, targetSeasonId),
+    achievementRepo.listPlayerAchievements(id, targetSeasonId),
+    rivalryRepo.listRivalriesForPlayer(id, targetRivalrySeasonId),
+    statsRepo.listStatsForPlayer(id, 10, targetSeasonId),
   ]);
 
   const maps = calculateMapStats(outcomes);

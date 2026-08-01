@@ -16,11 +16,30 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { safeQuery } from "@/server/safeQuery";
 import * as playerService from "@/server/services/player.service";
 import { winrateContext, ratingContext, adrContext, kastContext, hsContext } from "@/lib/statContext";
+import { SeasonSelect } from "@/components/dashboard/season-select";
+import { listSeasons } from "@/server/services/season.service";
 
-export default async function PlayerDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export const dynamic = "force-dynamic";
+
+export default async function PlayerDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ season?: string }>;
+}) {
   const { id } = await params;
+  const { season } = await searchParams;
+  const targetSeason = season === "all" ? undefined : season;
 
-  const detail = await safeQuery(() => playerService.getPlayerDetail(id), null);
+  const allSeasons = await safeQuery(() => listSeasons(), []);
+  const seasonOptions = [
+    { id: "all", name: "Carreira (Histórico)", status: "CLOSED" as const },
+    ...allSeasons.map((s) => ({ id: s.id, name: s.name, status: s.status })),
+  ];
+  const currentSeason = season || "all";
+
+  const detail = await safeQuery(() => playerService.getPlayerDetail(id, targetSeason), null);
   if (!detail) notFound();
 
   const { player, overview, maps, timeline, achievements, partners, recentMatches } = detail;
@@ -67,13 +86,16 @@ export default async function PlayerDetailPage({ params }: { params: Promise<{ i
           }
           icon={<PlayerAvatar nickname={player.nickname} avatarUrl={player.avatarUrl} size="lg" />}
           actions={
-            <div className="text-right">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
-                Perfil Watchlist
-              </span>
-              <span className="inline-flex items-center rounded-full bg-status-good/15 px-2.5 py-0.5 text-xs font-semibold text-status-good mt-1 border border-status-good/20">
-                Monitoramento Ativo
-              </span>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <SeasonSelect seasons={seasonOptions} currentSeasonId={currentSeason} />
+              <div className="text-right hidden sm:block">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                  Perfil Watchlist
+                </span>
+                <span className="inline-flex items-center rounded-full bg-status-good/15 px-2.5 py-0.5 text-xs font-semibold text-status-good mt-1 border border-status-good/20">
+                  Monitoramento Ativo
+                </span>
+              </div>
             </div>
           }
         />
@@ -115,7 +137,7 @@ export default async function PlayerDetailPage({ params }: { params: Promise<{ i
 
       {/* Relatório de Análise Avançada do Coach IA */}
       <FadeIn delay={0.09}>
-        <CoachReportCard apiUrl={`/api/coach/player/${player.id}`} />
+        <CoachReportCard apiUrl={`/api/coach/player/${player.id}?season=${currentSeason}`} />
       </FadeIn>
 
       {/* Métricas Avançadas */}

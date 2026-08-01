@@ -13,7 +13,7 @@ export async function GET(
     const season = searchParams.get("season") || undefined;
     const targetSeason = season === "current" ? undefined : season;
 
-    const detail = await getPlayerDetail(id);
+    const detail = await getPlayerDetail(id, targetSeason);
     if (!detail) {
       return NextResponse.json(
         { error: "Jogador não encontrado." },
@@ -41,7 +41,7 @@ export async function POST(
     const season = searchParams.get("season") || undefined;
     const targetSeason = season === "current" ? undefined : season;
 
-    const detail = await getPlayerDetail(id);
+    const detail = await getPlayerDetail(id, targetSeason);
     if (!detail) {
       return NextResponse.json(
         { error: "Jogador não encontrado." },

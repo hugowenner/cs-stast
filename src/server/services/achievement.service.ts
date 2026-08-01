@@ -8,8 +8,8 @@ export function listCatalog() {
   return achievementRepo.listAchievementCatalog();
 }
 
-export function listRecent(take?: number) {
-  return playerAchievementRepo.listRecentAchievements(take);
+export function listRecent(take?: number, seasonId?: string) {
+  return playerAchievementRepo.listRecentAchievements(take, seasonId);
 }
 
 export type RecentUnlock = Awaited<ReturnType<typeof playerAchievementRepo.listRecentAchievements>>[number];

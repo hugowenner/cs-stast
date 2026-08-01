@@ -205,11 +205,13 @@ model PlayerAchievement {
 /// é sempre o menor id (ordenação lexicográfica) para evitar registros duplicados
 /// invertidos — responsabilidade do RivalryEngine, não do banco.
 model Rivalry {
-  id        String @id @default(cuid())
-  playerAId String
-  playerA   Player @relation("RivalryPlayerA", fields: [playerAId], references: [id])
-  playerBId String
-  playerB   Player @relation("RivalryPlayerB", fields: [playerBId], references: [id])
+  id              String   @id @default(cuid())
+  playerAId       String
+  playerA         Player   @relation("RivalryPlayerA", fields: [playerAId], references: [id])
+  playerBId       String
+  playerB         Player   @relation("RivalryPlayerB", fields: [playerBId], references: [id])
+  seasonId        String?
+  season          Season?  @relation(fields: [seasonId], references: [id])
 
   killsAOnB       Int      @default(0)
   killsBOnA       Int      @default(0)
@@ -217,7 +219,7 @@ model Rivalry {
   matchesAgainst  Int      @default(0)
   updatedAt       DateTime @updatedAt
 
-  @@unique([playerAId, playerBId])
+  @@unique([playerAId, playerBId, seasonId])
 }
 
 enum EventType {
@@ -330,6 +332,7 @@ model Season {
 
   matches   Match[]
   snapshots SeasonSnapshot[]
+  rivalries Rivalry[]
 
   @@index([status])
   @@index([startDate, endDate])

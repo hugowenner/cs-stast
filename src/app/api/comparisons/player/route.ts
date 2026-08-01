@@ -6,6 +6,9 @@ export async function GET(request: Request) {
   const playerA = searchParams.get("playerA");
   const playerB = searchParams.get("playerB");
 
+  const season = searchParams.get("season") || undefined;
+  const targetSeason = season === "current" ? undefined : season;
+
   if (!playerA || !playerB) {
     return NextResponse.json(
       { error: "playerA e playerB são parâmetros obrigatórios." },
@@ -20,7 +23,7 @@ export async function GET(request: Request) {
     );
   }
 
-  const comparison = await getPlayerComparison(playerA, playerB);
+  const comparison = await getPlayerComparison(playerA, playerB, targetSeason);
   if (!comparison) {
     return NextResponse.json(
       { error: "Um ou ambos os jogadores não foram encontrados." },

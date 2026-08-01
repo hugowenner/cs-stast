@@ -248,32 +248,34 @@ describe("ensureCurrentSeason Operations", () => {
     vi.clearAllMocks();
   });
 
-  it("deve retornar a temporada ativa atual se ela ainda não expirou", async () => {
-    const futureDate = new Date();
-    futureDate.setHours(futureDate.getHours() + 24); // amanhã
-
+  it("deve retornar a temporada correspondente à data informada se ela existir e não expirou", async () => {
+    const targetDate = new Date("2026-08-15T12:00:00Z");
     const mockActive = {
       id: "active-id",
-      name: "Julho/2026",
-      startDate: new Date("2026-07-01T00:00:00Z"),
-      endDate: futureDate,
+      name: "Agosto/2026",
+      startDate: new Date("2026-08-01T00:00:00Z"),
+      endDate: new Date("2026-08-31T23:59:59.999Z"),
       status: "ACTIVE",
     };
 
     vi.mocked(prisma.season.findFirst as any).mockResolvedValue(mockActive);
 
-    const result = await ensureCurrentSeason();
+    const result = await ensureCurrentSeason(targetDate);
 
     expect(result).toEqual(mockActive);
     expect(prisma.season.findFirst).toHaveBeenCalledWith({
-      where: { status: "ACTIVE" },
+      where: {
+        startDate: { lte: targetDate },
+        endDate: { gte: targetDate },
+      },
     });
     // Não deve criar ou dar update em nada
     expect(prisma.season.create).not.toHaveBeenCalled();
     expect(prisma.season.update).not.toHaveBeenCalled();
   });
 
-  it("deve disparar rolloverSeason se a temporada ativa atual estiver expirada", async () => {
+  it("deve disparar rolloverSeason se a temporada contendo a data for ACTIVE mas a data atual do sistema já expirou", async () => {
+    const targetDate = new Date("2026-07-20T12:00:00Z");
     const pastDate = new Date();
     pastDate.setHours(pastDate.getHours() - 1); // 1 hora atrás
 
@@ -293,9 +295,12 @@ describe("ensureCurrentSeason Operations", () => {
       status: "ACTIVE",
     };
 
-    // Mock findFirst para retornar a expirada
     vi.mocked(prisma.season.findFirst as any).mockImplementation(async (args: any) => {
-      // No rollover, ele busca a ativa novamente
+      // Primeira chamada: busca pela data
+      if (args.where?.startDate) {
+        return mockActive;
+      }
+      // Durante o rollover, ele busca a ativa atual
       if (args.where?.status === "ACTIVE") {
         return mockActive;
       }
@@ -307,9 +312,8 @@ describe("ensureCurrentSeason Operations", () => {
     vi.mocked(prisma.season.update as any).mockResolvedValue({ ...mockActive, status: "CLOSED" } as any);
     vi.mocked(prisma.season.create as any).mockResolvedValue(mockNextActive as any);
 
-    const result = await ensureCurrentSeason();
+    const result = await ensureCurrentSeason(targetDate);
 
-    // Deve retornar a nova temporada criada pelo rollover
     expect(result).toEqual(mockNextActive);
     expect(prisma.season.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -317,33 +321,51 @@ describe("ensureCurrentSeason Operations", () => {
         data: { status: "CLOSED" },
       })
     );
+  });
+
+  it("deve criar uma nova temporada ACTIVE para o mês atual se nenhuma temporada existir", async () => {
+    const targetDate = new Date(); // hoje
+    vi.mocked(prisma.season.findFirst as any).mockResolvedValue(null);
+
+    const mockNewSeason = {
+      id: "new-id",
+      name: getSeasonNameForDate(targetDate),
+      status: "ACTIVE",
+    };
+    vi.mocked(prisma.season.create as any).mockResolvedValue(mockNewSeason as any);
+
+    const result = await ensureCurrentSeason(targetDate);
+
+    expect(result).toEqual(mockNewSeason);
     expect(prisma.season.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          name: "Agosto/2026",
+          name: getSeasonNameForDate(targetDate),
           status: "ACTIVE",
         }),
       })
     );
   });
 
-  it("deve criar uma nova temporada para o mês atual se nenhuma temporada ativa existir", async () => {
+  it("deve criar uma nova temporada CLOSED para uma data no passado se nenhuma temporada existir", async () => {
+    const targetDate = new Date("2026-03-15T12:00:00Z"); // passado distante
     vi.mocked(prisma.season.findFirst as any).mockResolvedValue(null);
 
     const mockNewSeason = {
-      id: "new-id",
-      name: "Agosto/2026",
-      status: "ACTIVE",
+      id: "past-id",
+      name: "Março/2026",
+      status: "CLOSED",
     };
     vi.mocked(prisma.season.create as any).mockResolvedValue(mockNewSeason as any);
 
-    const result = await ensureCurrentSeason();
+    const result = await ensureCurrentSeason(targetDate);
 
     expect(result).toEqual(mockNewSeason);
     expect(prisma.season.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          status: "ACTIVE",
+          name: "Março/2026",
+          status: "CLOSED",
         }),
       })
     );

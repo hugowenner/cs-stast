@@ -12,13 +12,13 @@ import { getActiveSeason, resolveSeasonId } from "@/server/services/season.servi
  * getDashboardSummary isoladamente), busca com o mesmo shape E o mesmo filtro de
  * comunidade e temporada.
  */
-function loadSummaryStats(seasonId: string, dataset?: CompetitiveDataset) {
+function loadSummaryStats(seasonId?: string, dataset?: CompetitiveDataset) {
   if (dataset) return Promise.resolve(dataset.allStats);
   return prisma.playerMatchStats.findMany({
     where: {
       player: { trackedPlayer: { active: true } },
       match: {
-        seasonId,
+        seasonId: seasonId ?? undefined,
         ...individualMatchWhere(),
       },
     },

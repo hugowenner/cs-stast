@@ -85,7 +85,7 @@ export default async function DashboardPage(props: {
   const seasonParam = searchParams.season;
   const targetSeason = seasonParam === "current" ? undefined : seasonParam;
 
-  const resolvedSeasonId = await resolveSeasonId(targetSeason);
+  const resolvedSeasonId = (await resolveSeasonId(targetSeason)) || "";
   const allSeasons = await listSeasons();
   const selectedSeason = allSeasons.find((s) => s.id === resolvedSeasonId);
 

@@ -2,9 +2,12 @@ import { prisma } from "@/server/db";
 import { trackedPlayerStatsWhere } from "./player.repository";
 import { communityMatchWhere, individualMatchWhere } from "@/server/domain/matchClassification";
 
-export function listPlayerAchievements(playerId: string) {
+export function listPlayerAchievements(playerId: string, seasonId?: string) {
   return prisma.playerAchievement.findMany({
-    where: { playerId },
+    where: {
+      playerId,
+      match: seasonId ? { seasonId } : undefined,
+    },
     include: { achievement: true, match: { include: { map: true } } },
     orderBy: { earnedAt: "desc" },
   });
@@ -13,14 +16,36 @@ export function listPlayerAchievements(playerId: string) {
 /**
  * Feed de "Conquistas Recentes" do Dashboard — métrica individual. Conquistas cumulativas
  * (matchId nulo, ex: "1000 Kills") não têm uma partida específica pra checar e sempre
- * aparecem; conquistas por partida (Ace, Clutch etc.) só aparecem se a partida em que
- * foram concedidas for individual ou comunidade (ver domain/matchClassification.ts).
+ * aparecem se destravadas no período da temporada; conquistas por partida (Ace, Clutch etc.)
+ * só aparecem se a partida em que foram concedidas for individual ou comunidade da temporada.
  */
-export function listRecentAchievements(take = 20) {
+export async function listRecentAchievements(take = 20, seasonId?: string) {
+  let dateFilter = {};
+  if (seasonId) {
+    const season = await prisma.season.findUnique({ where: { id: seasonId } });
+    if (season) {
+      dateFilter = {
+        earnedAt: {
+          gte: season.startDate,
+          lte: season.endDate,
+        },
+      };
+    }
+  }
+
   return prisma.playerAchievement.findMany({
     where: {
       ...trackedPlayerStatsWhere(),
-      OR: [{ matchId: null }, { match: individualMatchWhere() }],
+      ...dateFilter,
+      OR: [
+        { matchId: null },
+        {
+          match: {
+            ...individualMatchWhere(),
+            seasonId: seasonId ?? undefined,
+          },
+        },
+      ],
     },
     take,
     orderBy: { earnedAt: "desc" },

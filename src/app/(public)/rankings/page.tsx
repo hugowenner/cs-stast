@@ -10,6 +10,8 @@ import * as statsService from "@/server/services/stats.service";
 import * as competitiveService from "@/server/services/competitive.service";
 import { cn } from "@/lib/utils";
 import { ChevronRight, Users, Trophy, Activity, Calendar } from "lucide-react";
+import { SeasonSelect } from "@/components/dashboard/season-select";
+import { listSeasons, resolveSeasonId } from "@/server/services/season.service";
 
 const METRICS = [
   { value: "rating", label: "Rating" },
@@ -46,36 +48,60 @@ function formatMetricValue(value: number, metric: Metric): string {
   return value.toString();
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function RankingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ metric?: string }>;
+  searchParams: Promise<{ metric?: string; season?: string }>;
 }) {
-  const { metric: rawMetric } = await searchParams;
+  const query = await searchParams;
+  const { metric: rawMetric, season } = query;
   const metric = (METRICS.some((m) => m.value === rawMetric) ? rawMetric : "rating") as Metric;
+  const resolvedSeasonId = await resolveSeasonId(season);
+
+  // Carregar todas as temporadas para o seletor
+  const allSeasons = await safeQuery(() => listSeasons(), []);
+  const seasonOptions = [
+    { id: "all", name: "Carreira (Histórico)", status: "CLOSED" as const },
+    ...allSeasons.map((s) => ({ id: s.id, name: s.name, status: s.status })),
+  ];
+  const currentSeason = season || "all";
+
+  let seasonLabel = "Carreira (Histórico)";
+  if (resolvedSeasonId) {
+    const seasonRecord = await prisma.season.findUnique({
+      where: { id: resolvedSeasonId },
+    });
+    if (seasonRecord) {
+      seasonLabel = seasonRecord.name;
+    }
+  }
 
   const ranking = await safeQuery(
     () =>
       metric === "elo"
         ? statsService.getEloRanking(50)
         : metric === "kd"
-          ? statsService.getKdRanking(50)
+          ? statsService.getKdRanking(resolvedSeasonId, 50)
           : metric === "consistency"
-            ? statsService.getConsistencyRanking(50)
+            ? statsService.getConsistencyRanking(resolvedSeasonId, 50)
             : metric === "evolution"
-              ? statsService.getEvolutionRanking(50)
+              ? statsService.getEvolutionRanking(resolvedSeasonId, 50)
               : metric === "hs"
-                ? statsService.getHsRanking(50)
+                ? statsService.getHsRanking(resolvedSeasonId, 50)
                 : metric === "entry"
-                  ? statsService.getEntryKillsRanking(50)
-                  : statsService.getRanking(metric, 50),
+                  ? statsService.getEntryKillsRanking(resolvedSeasonId, 50)
+                  : statsService.getRanking(metric, resolvedSeasonId, 50),
     [],
   );
 
   const totalPlayers = await prisma.player.count({
     where: { trackedPlayer: { active: true } },
   });
-  const totalMatches = await prisma.match.count();
+  const totalMatches = await prisma.match.count({
+    where: resolvedSeasonId ? { seasonId: resolvedSeasonId } : undefined,
+  });
 
   const dataset = await competitiveService.loadCompetitiveDataset();
   const bundle = await competitiveService.getDashboardCompetitiveBundle(dataset);
@@ -89,7 +115,13 @@ export default async function RankingsPage({
   return (
     <div className="flex flex-col gap-6">
       <FadeIn>
-        <PageHeader title="🏆 Rankings" subtitle="Classificação competitiva do time na temporada atual" />
+        <PageHeader
+          title="🏆 Rankings"
+          subtitle="Classificação competitiva do time no período selecionado"
+          actions={
+            <SeasonSelect seasons={seasonOptions} currentSeasonId={currentSeason} />
+          }
+        />
       </FadeIn>
 
       {/* Indicadores de Temporada */}
@@ -112,8 +144,8 @@ export default async function RankingsPage({
           <div className="glass-panel border-white/[0.06] p-4 rounded-xl flex items-center gap-3">
             <Calendar className="size-5 text-accent-violet shrink-0" />
             <div>
-              <p className="text-[10px] uppercase tracking-widest font-black text-muted-foreground/50">Temporada Ativa</p>
-              <p className="text-lg font-black text-white mt-0.5">2026 - Season 1</p>
+              <p className="text-[10px] uppercase tracking-widest font-black text-muted-foreground/50">Visualização</p>
+              <p className="text-lg font-black text-white mt-0.5">{seasonLabel}</p>
             </div>
           </div>
         </div>
@@ -126,7 +158,7 @@ export default async function RankingsPage({
             {METRICS.map((m) => (
               <Link
                 key={m.value}
-                href={`/rankings?metric=${m.value}`}
+                href={`/rankings?metric=${m.value}${season ? `&season=${season}` : ""}`}
                 className={cn(
                   "rounded-xl px-4 py-2 text-xs font-bold transition-all border",
                   metric === m.value

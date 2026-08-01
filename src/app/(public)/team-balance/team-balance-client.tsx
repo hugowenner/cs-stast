@@ -24,9 +24,15 @@ import { getPlayerWeight } from "@/lib/team-balance/metrics";
 
 interface TeamBalanceClientProps {
   initialPlayers: PlayerData[];
+  activeSeasonName?: string;
+  activeSeasonMatches?: number;
 }
 
-export function TeamBalanceClient({ initialPlayers }: TeamBalanceClientProps) {
+export function TeamBalanceClient({
+  initialPlayers,
+  activeSeasonName = "Temporada Atual",
+  activeSeasonMatches = 0,
+}: TeamBalanceClientProps) {
   // Estado de jogadores
   const [availablePlayers] = useState<PlayerData[]>(initialPlayers);
   const [selectedPlayers, setSelectedPlayers] = useState<PlayerData[]>([]);
@@ -320,6 +326,11 @@ export function TeamBalanceClient({ initialPlayers }: TeamBalanceClientProps) {
       <PageHeader 
         title="🎯 Gerador de Times Inteligente" 
         subtitle="Monte lobbies determinísticos e balanceados utilizando estatísticas em tempo real da temporada."
+        actions={
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 font-bold text-xs text-primary shadow-sm select-none">
+            🏆 {activeSeasonName} · {activeSeasonMatches} {activeSeasonMatches === 1 ? "partida analisada" : "partidas analisadas"}
+          </div>
+        }
       />
 
       {/* Alerta Global */}

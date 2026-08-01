@@ -125,6 +125,19 @@ export async function POST(request: Request) {
       },
     });
 
+    // 6.5. Update the corresponding SyncJob to COMPLETED in the Hub database
+    await prisma.syncJob.updateMany({
+      where: {
+        sourceMatchId,
+        source,
+        status: { not: "COMPLETED" },
+      },
+      data: {
+        status: "COMPLETED",
+        completedAt: new Date(),
+      },
+    });
+
     // 7. Trigger background normalization asynchronously (fire-and-forget)
     processPayload(created.id).catch((err) => {
       console.error(`[Background Normalizer] Erro ao processar payload ${created.id}:`, err);

@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     const summary = await getDashboardSummary(resolvedSeasonId);
     const detail = {
       ...summary,
-      seasonLabel: SEASON_LABEL,
+      seasonLabel: seasonRecord?.name || SEASON_LABEL,
     };
 
     const status = peekCoachReport(detail, "dashboard:season", resolvedSeasonId);
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     const summary = await getDashboardSummary(resolvedSeasonId);
     const detail = {
       ...summary,
-      seasonLabel: SEASON_LABEL,
+      seasonLabel: seasonRecord?.name || SEASON_LABEL,
     };
 
     const report = await getCoachReport(detail, buildDashboardPrompt, "dashboard:season", resolvedSeasonId);

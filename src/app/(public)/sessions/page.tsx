@@ -10,6 +10,8 @@ import { SessionFilters, type SessionPeriod } from "@/components/sessions/sessio
 import { SessionTimeline } from "@/components/sessions/session-timeline";
 import { SessionEmptyState } from "@/components/sessions/session-empty-state";
 
+import { getActiveSeason } from "@/server/services/season.service";
+
 export const dynamic = "force-dynamic";
 
 export default async function SessionsPage({
@@ -27,8 +29,15 @@ export default async function SessionsPage({
   } else if (activePeriod === "30d") {
     whereClause = { date: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } };
   } else if (activePeriod === "season") {
-    // Temporada começou em 01/07/2026
-    whereClause = { date: { gte: new Date("2026-07-01T00:00:00Z") } };
+    const activeSeason = await getActiveSeason();
+    if (activeSeason) {
+      whereClause = {
+        date: {
+          gte: activeSeason.startDate,
+          lte: activeSeason.endDate,
+        },
+      };
+    }
   }
 
   // Buscar sessões detalhadas

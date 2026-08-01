@@ -23,7 +23,7 @@ export function SeasonHero({
         <div className="flex items-center gap-2">
           <Trophy className="size-3.5 shrink-0 text-accent-violet" />
           <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground/55">
-            Season 1 · {label}
+            Temporada {label}
           </p>
         </div>
         <p className="text-[9px] tabular-nums text-muted-foreground/40">

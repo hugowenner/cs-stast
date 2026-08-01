@@ -14,15 +14,29 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FadeIn } from "@/components/motion/fade-in";
 import { Swords, ShieldAlert, HeartHandshake, Award } from "lucide-react";
 import { safeQuery } from "@/server/safeQuery";
+import { SeasonSelect } from "@/components/dashboard/season-select";
+import { listSeasons } from "@/server/services/season.service";
+
+export const dynamic = "force-dynamic";
 
 export default async function ComparePage({
   searchParams,
 }: {
-  searchParams: Promise<{ playerA?: string; playerB?: string }>;
+  searchParams: Promise<{ playerA?: string; playerB?: string; season?: string }>;
 }) {
   const query = await searchParams;
   const playerAId = query.playerA;
   const playerBId = query.playerB;
+  const season = query.season;
+  const targetSeason = season === "all" ? undefined : season;
+
+  // Carregar todas as temporadas para o seletor
+  const allSeasons = await safeQuery(() => listSeasons(), []);
+  const seasonOptions = [
+    { id: "all", name: "Carreira (Histórico)", status: "CLOSED" as const },
+    ...allSeasons.map((s) => ({ id: s.id, name: s.name, status: s.status })),
+  ];
+  const currentSeason = season || "all";
 
   // Carregar todos os jogadores ativos monitorados com rating calculado
   const allPlayers = await safeQuery(() => listPlayersWithBasicStats(), []);
@@ -38,7 +52,7 @@ export default async function ComparePage({
   // Se os dois parâmetros foram passados, buscar a comparação
   const hasParams = !!playerAId && !!playerBId;
   const comparison = hasParams
-    ? await safeQuery(() => getPlayerComparison(playerAId, playerBId), null)
+    ? await safeQuery(() => getPlayerComparison(playerAId, playerBId, targetSeason), null)
     : null;
 
   return (
@@ -52,6 +66,9 @@ export default async function ComparePage({
             <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
               <Swords className="size-6" />
             </div>
+          }
+          actions={
+            <SeasonSelect seasons={seasonOptions} currentSeasonId={currentSeason} />
           }
         />
       </FadeIn>
@@ -209,7 +226,7 @@ export default async function ComparePage({
               {/* Coach IA Report */}
               <FadeIn delay={0.16}>
                 <CoachReportCard
-                  apiUrl={`/api/coach/compare?playerA=${comparison.players[0].id}&playerB=${comparison.players[1].id}`}
+                  apiUrl={`/api/coach/compare?playerA=${comparison.players[0].id}&playerB=${comparison.players[1].id}&season=${currentSeason}`}
                 />
               </FadeIn>
             </div>

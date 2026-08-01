@@ -2,18 +2,24 @@ import { prisma } from "@/server/db";
 import { trackedPlayerStatsWhere } from "./player.repository";
 import { communityMatchWhere, individualMatchWhere } from "@/server/domain/matchClassification";
 
-export function listStatsForPlayer(playerId: string, take = 50) {
+export function listStatsForPlayer(playerId: string, take = 50, seasonId?: string) {
   return prisma.playerMatchStats.findMany({
-    where: { playerId },
+    where: {
+      playerId,
+      match: seasonId ? { seasonId } : undefined,
+    },
     take,
     orderBy: { match: { playedAt: "desc" } },
     include: { match: { include: { map: true, session: true } } },
   });
 }
 
-export function getPlayerCareerTotals(playerId: string) {
+export function getPlayerCareerTotals(playerId: string, seasonId?: string) {
   return prisma.playerMatchStats.aggregate({
-    where: { playerId },
+    where: {
+      playerId,
+      match: seasonId ? { seasonId } : undefined,
+    },
     _sum: {
       kills: true,
       deaths: true,
@@ -77,11 +83,11 @@ export async function getEloLeaderboard(take = 20) {
 
 export type RankingMetric = "rating" | "adr" | "kast" | "impact";
 
-export async function getRankingByMetric(metric: RankingMetric, seasonId: string, take = 20) {
+export async function getRankingByMetric(metric: RankingMetric, seasonId?: string, take = 20) {
   const whereClause = {
     ...trackedPlayerStatsWhere(),
     match: {
-      seasonId,
+      seasonId: seasonId ?? undefined,
       ...individualMatchWhere(),
     },
   };
@@ -126,12 +132,12 @@ export async function getRankingByMetric(metric: RankingMetric, seasonId: string
   }
 }
 
-export function getMapWinrates(seasonId: string) {
+export function getMapWinrates(seasonId?: string) {
   return prisma.playerMatchStats.findMany({
     where: {
       ...trackedPlayerStatsWhere(),
       match: {
-        seasonId,
+        seasonId: seasonId ?? undefined,
         ...individualMatchWhere(),
       },
     },
@@ -150,9 +156,12 @@ export function getMapWinrates(seasonId: string) {
   });
 }
 
-export function getPlayerMatchOutcomes(playerId: string) {
+export function getPlayerMatchOutcomes(playerId: string, seasonId?: string) {
   return prisma.playerMatchStats.findMany({
-    where: { playerId },
+    where: {
+      playerId,
+      match: seasonId ? { seasonId } : undefined,
+    },
     select: {
       team: true,
       rating: true,
@@ -185,9 +194,15 @@ export function getPlayerMatchOutcomes(playerId: string) {
  * detalhes de H2H (K/D, último confronto, together/against) ainda poderiam incluir
  * essa partida.
  */
-export function getPlayerMatchOutcomesForPlayers(playerIds: string[]) {
+export function getPlayerMatchOutcomesForPlayers(playerIds: string[], seasonId?: string) {
   return prisma.playerMatchStats.findMany({
-    where: { playerId: { in: playerIds }, match: communityMatchWhere() },
+    where: {
+      playerId: { in: playerIds },
+      match: {
+        ...communityMatchWhere(),
+        seasonId: seasonId ?? undefined,
+      },
+    },
     select: {
       playerId: true,
       team: true,

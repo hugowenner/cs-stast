@@ -113,7 +113,7 @@ export async function ingestMatchSync(
   try {
     const map = await mapRepo.upsertMapByName(input.map);
     const session = await sessionRepo.findOrCreateSessionForDate(input.playedAt);
-    const activeSeason = await ensureCurrentSeason();
+    const activeSeason = await ensureCurrentSeason(input.playedAt);
     if (!activeSeason || !activeSeason.id) {
       throw new Error("Não foi possível determinar uma temporada ativa válida para esta partida.");
     }
@@ -347,7 +347,10 @@ export async function ingestMatchSync(
         killEvents,
       );
       for (const delta of rivalryDeltas) {
-        await rivalryRepo.applyRivalryDelta(delta.playerAId, delta.playerBId, delta);
+        // 1. Acumulador Global (Carreira)
+        await rivalryRepo.applyRivalryDelta(delta.playerAId, delta.playerBId, delta, null);
+        // 2. Acumulador da Temporada
+        await rivalryRepo.applyRivalryDelta(delta.playerAId, delta.playerBId, delta, activeSeason.id);
       }
     }
 

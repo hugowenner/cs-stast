@@ -79,15 +79,21 @@ export async function createSeason(data: { name: string; startDate: Date; endDat
 }
 
 /**
- * Garante que uma temporada ativa exista para o mês atual.
- * Se não existir, cria uma nova temporada correspondente ao mês atual.
+ * Garante que uma temporada exista para a data informada (padrão: data atual).
+ * Se não existir, cria uma nova temporada correspondente.
  */
-export async function ensureCurrentSeason() {
-  const active = await getActiveSeason();
-  if (active) {
+export async function ensureCurrentSeason(date = new Date()) {
+  const existing = await prisma.season.findFirst({
+    where: {
+      startDate: { lte: date },
+      endDate: { gte: date },
+    },
+  });
+
+  if (existing) {
     const now = new Date();
-    if (now > active.endDate) {
-      console.log(`[Season] Temporada ativa '${active.name}' expirou em ${active.endDate.toISOString()}. Iniciando rollover automático.`);
+    if (existing.status === "ACTIVE" && now > existing.endDate) {
+      console.log(`[Season] Temporada ativa '${existing.name}' expirou em ${existing.endDate.toISOString()}. Iniciando rollover automático.`);
       const result = await rolloverSeason();
       if (result.status === "success" && result.opened) {
         return result.opened;
@@ -95,19 +101,23 @@ export async function ensureCurrentSeason() {
       const reloadedActive = await getActiveSeason();
       if (reloadedActive) return reloadedActive;
     }
-    return active;
+    return existing;
   }
 
+  const name = getSeasonNameForDate(date);
+  const { startDate, endDate } = getSeasonDatesForDate(date);
+  
   const now = new Date();
-  const name = getSeasonNameForDate(now);
-  const { startDate, endDate } = getSeasonDatesForDate(now);
+  const targetMonthName = getSeasonNameForDate(date);
+  const currentMonthName = getSeasonNameForDate(now);
+  const isPastSeason = date < now && targetMonthName !== currentMonthName;
 
   return prisma.season.create({
     data: {
       name,
       startDate,
       endDate,
-      status: "ACTIVE",
+      status: isPastSeason ? "CLOSED" : "ACTIVE",
     },
   });
 }
@@ -117,7 +127,10 @@ export async function ensureCurrentSeason() {
  * Se seasonId for informado e não for "current", valida se existe no banco.
  * Se omitido ou "current", retorna o ID da temporada ativa.
  */
-export async function resolveSeasonId(seasonId?: string): Promise<string> {
+export async function resolveSeasonId(seasonId?: string): Promise<string | undefined> {
+  if (seasonId === "all") {
+    return undefined;
+  }
   if (seasonId && seasonId !== "current") {
     const season = await prisma.season.findUnique({
       where: { id: seasonId },

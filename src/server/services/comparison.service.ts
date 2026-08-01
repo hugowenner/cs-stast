@@ -11,12 +11,13 @@ import type { PlayerComparisonDTO } from "@/server/dtos/playerComparison.dto";
 
 export async function getPlayerComparison(
   playerAId: string,
-  playerBId: string
+  playerBId: string,
+  seasonId?: string
 ): Promise<PlayerComparisonDTO | null> {
+  const targetSeasonId = seasonId === "all" ? undefined : seasonId;
+
   // Obter detalhes de perfil individual e estatísticas em paralelo. outcomesA/outcomesB
-  // usam TODAS as partidas do jogador (SOLO + COMUNIDADE) — corretamente, pois
-  // alimentam timeline/insights individuais, que são dados de perfil (assim como o
-  // perfil do jogador em si, devem refletir toda a evolução do jogador).
+  // usam TODAS as partidas do jogador (SOLO + COMUNIDADE) — filtrados por temporada se definido.
   const [
     detailA,
     detailB,
@@ -29,19 +30,17 @@ export async function getPlayerComparison(
     totalsB,
     communityOutcomes,
   ] = await Promise.all([
-    getPlayerDetail(playerAId),
-    getPlayerDetail(playerBId),
-    statsRepo.getPlayerMatchOutcomes(playerAId),
-    statsRepo.getPlayerMatchOutcomes(playerBId),
-    playerAchievementRepo.listPlayerAchievements(playerAId),
-    playerAchievementRepo.listPlayerAchievements(playerBId),
+    getPlayerDetail(playerAId, targetSeasonId),
+    getPlayerDetail(playerBId, targetSeasonId),
+    statsRepo.getPlayerMatchOutcomes(playerAId, targetSeasonId),
+    statsRepo.getPlayerMatchOutcomes(playerBId, targetSeasonId),
+    playerAchievementRepo.listPlayerAchievements(playerAId, targetSeasonId),
+    playerAchievementRepo.listPlayerAchievements(playerBId, targetSeasonId),
     achievementRepo.listAchievementCatalog(),
-    statsRepo.getPlayerCareerTotals(playerAId),
-    statsRepo.getPlayerCareerTotals(playerBId),
+    statsRepo.getPlayerCareerTotals(playerAId, targetSeasonId),
+    statsRepo.getPlayerCareerTotals(playerBId, targetSeasonId),
     // Já filtrado por communityMatchWhere() — usado só para o H2H (item 1 abaixo).
-    // H2H é estatística coletiva (correlaciona 2 jogadores): não pode nascer de uma
-    // partida SOLO, mesmo que hoje ambos sejam monitorados (ver domain/matchClassification.ts).
-    statsRepo.getPlayerMatchOutcomesForPlayers([playerAId, playerBId]),
+    statsRepo.getPlayerMatchOutcomesForPlayers([playerAId, playerBId], targetSeasonId),
   ]);
 
   if (!detailA || !detailB) {

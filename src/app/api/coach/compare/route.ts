@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const comparison = await getPlayerComparison(playerA, playerB);
+    const comparison = await getPlayerComparison(playerA, playerB, targetSeason);
     if (!comparison) {
       return NextResponse.json(
         { error: "Um ou ambos os jogadores não foram encontrados." },
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const comparison = await getPlayerComparison(playerA, playerB);
+    const comparison = await getPlayerComparison(playerA, playerB, targetSeason);
     if (!comparison) {
       return NextResponse.json(
         { error: "Um ou ambos os jogadores não foram encontrados." },
