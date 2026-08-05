@@ -28,6 +28,7 @@ import { listSeasons, resolveSeasonId } from "@/server/services/season.service";
 import { prisma } from "@/server/db";
 import { RefreshCw, Crosshair, Zap, TrendingUp, Target } from "lucide-react";
 import { FORMA_STYLE } from "@/lib/forma";
+import { AnnouncementBanner } from "@/components/dashboard/AnnouncementBanner";
 
 export const dynamic = "force-dynamic";
 
@@ -174,6 +175,8 @@ export default async function DashboardPage(props: {
 
   return (
     <div className="flex flex-col gap-8 lg:gap-10">
+
+      <AnnouncementBanner />
 
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 glass-panel border border-white/[0.06] rounded-2xl px-6 py-4">
