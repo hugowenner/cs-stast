@@ -77,7 +77,6 @@ export function normalizeParserMatch(payload: any, sourceMatchId: string, create
     return {
       steamId,
       nickname: player.name || "Desconhecido",
-      levelGc: player.rank > 0 && player.rank <= 21 ? player.rank : undefined,
       team: (player.team ?? "").toUpperCase() === "TERRORIST" ? ("A" as const) : ("B" as const),
       kills: killsCount,
       deaths: deathsCount,

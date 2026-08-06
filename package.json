@@ -24,7 +24,8 @@
     "demo:snapshot": "node scripts/demo/snapshot-demo.mjs",
     "reset-demo": "node scripts/demo/reset-demo.mjs",
     "season:test-rollover": "tsx scripts/test-season-rollover.ts",
-    "season:repair": "tsx scripts/repair-seasons.ts"
+    "season:repair": "tsx scripts/repair-seasons.ts",
+    "audit:match-dates": "tsx scripts/audit-match-dates.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

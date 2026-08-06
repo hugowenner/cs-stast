@@ -223,3 +223,45 @@ export function getPlayerMatchOutcomesForPlayers(playerIds: string[], seasonId?:
     orderBy: { match: { playedAt: "asc" } },
   });
 }
+
+export async function enrichPlayerStatsFromDemo(
+  matchId: string,
+  playerId: string,
+  data: {
+    kills: number;
+    deaths: number;
+    assists: number;
+    headshots: number;
+    adr: number;
+    kast: number;
+    impact: number;
+    damage: number | null;
+    doubleKills: number | null;
+    tripleKills: number | null;
+    quadKills: number | null;
+    aces: number | null;
+    entryKills: number;
+    entryDeaths: number;
+    tradeKills: number;
+    clutchesWon: number;
+    flashAssists: number;
+    clutch1v1Attempts: number;
+    clutch1v1Wins: number;
+    clutch1v2Attempts: number;
+    clutch1v2Wins: number;
+    clutch1v3Attempts: number;
+    clutch1v3Wins: number;
+    clutch1v4Attempts: number;
+    clutch1v4Wins: number;
+    clutch1v5Attempts: number;
+    clutch1v5Wins: number;
+  }
+) {
+  return prisma.playerMatchStats.update({
+    where: {
+      matchId_playerId: { matchId, playerId },
+    },
+    data,
+  });
+}
+

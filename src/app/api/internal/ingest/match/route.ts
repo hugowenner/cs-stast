@@ -107,10 +107,46 @@ export async function POST(request: Request) {
     });
 
     if (existing) {
-      return NextResponse.json(
-        { error: "Esta partida já foi cadastrada anteriormente no sistema." },
-        { status: 409 }
-      );
+      if (existing.payloadHash === payloadHash) {
+        return NextResponse.json(
+          { accepted: true, payloadId: existing.id, status: "already-processed" },
+          { status: 200 }
+        );
+      } else {
+        // Hash é diferente: atualiza o payload e reprocessa em background
+        const updated = await prisma.matchPayload.update({
+          where: { id: existing.id },
+          data: {
+            parserVersion: parser_version,
+            schemaVersion: schema_version,
+            payload: body,
+            payloadHash,
+            status: "PENDING",
+          },
+        });
+
+        // Atualiza o job de sync correspondente
+        await prisma.syncJob.updateMany({
+          where: {
+            sourceMatchId,
+            source,
+            status: { not: "COMPLETED" },
+          },
+          data: {
+            status: "COMPLETED",
+            completedAt: new Date(),
+          },
+        });
+
+        processPayload(updated.id).catch((err) => {
+          console.error(`[Background Normalizer] Erro ao reprocessar payload ${updated.id}:`, err);
+        });
+
+        return NextResponse.json(
+          { accepted: true, payloadId: updated.id, status: "reprocessing" },
+          { status: 202 }
+        );
+      }
     }
 
     // 6. Save Payload inside MatchPayload Table

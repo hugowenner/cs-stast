@@ -1,7 +1,5 @@
-import { normalizeParserMatch } from "@/server/adapters/parser/normalize";
+import { enrichMatchWithDemo } from "@/server/services/enrichment/demo-enrichment.service";
 import * as matchPayloadRepo from "@/server/repositories/matchPayload.repository";
-import * as matchRepo from "@/server/repositories/match.repository";
-import { ingestMatchSync } from "@/server/services/match.service";
 
 export async function processPayload(id: string): Promise<{ success: boolean; error?: string }> {
   // 1. Tenta bloquear o payload para processamento
@@ -17,35 +15,24 @@ export async function processPayload(id: string): Promise<{ success: boolean; er
   }
 
   try {
-    // 2. Traduz o payload bruto utilizando o adaptador do parser
-    const normalizedInput = normalizeParserMatch(
+    // 2. Processa o enriquecimento da demo usando o serviço de enriquecimento isolado
+    const result = await enrichMatchWithDemo(
       payloadRecord.payload,
       payloadRecord.sourceMatchId,
       payloadRecord.createdAt
     );
 
-    // 3. Expurga estatísticas relacionais antigas caso a partida já exista (Reprocessamento)
-    const existingMatch = await matchRepo.findMatchByGamersClubId(payloadRecord.sourceMatchId);
-    if (existingMatch) {
-      await matchRepo.deleteMatchByGamersClubId(payloadRecord.sourceMatchId);
+    if (!result.success) {
+      throw new Error(result.error ?? "Erro desconhecido durante enriquecimento");
     }
 
-    // 4. Insere os dados normalizados via MatchImporter (ingestMatchSync)
-    // skipEnqueue=true: quem chamou este normalizador é o próprio Worker — a demo já foi
-    // processada, não faz sentido re-enfileirá-la com o demo_name do JSON como "URL".
-    await ingestMatchSync(normalizedInput, {
-      source: payloadRecord.source,
-      rawPayload: payloadRecord.payload,
-      skipEnqueue: true,
-    });
-
-    // 5. Marca o payload como processado com sucesso
+    // 3. Marca o payload como processado com sucesso
     await matchPayloadRepo.markPayloadProcessed(id);
 
     return { success: true };
   } catch (err: any) {
     const errMsg = err instanceof Error ? err.message : String(err);
-    // 6. Registra o erro no log físico da tabela MatchPayload
+    // 4. Registra o erro no log físico da tabela MatchPayload
     await matchPayloadRepo.markPayloadFailed(id, errMsg);
     return { success: false, error: errMsg };
   }

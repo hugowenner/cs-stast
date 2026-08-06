@@ -235,3 +235,14 @@ export async function deleteMatchByGamersClubId(gamersClubMatchId: string) {
   });
 }
 
+export function updateMatchMetadata(
+  id: string,
+  data: { durationSeconds?: number; demoUrl?: string | null; roundsJson?: Prisma.InputJsonValue }
+) {
+  return prisma.match.update({
+    where: { id },
+    data,
+  });
+}
+
+
