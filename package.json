@@ -27,7 +27,8 @@
     "season:repair": "tsx scripts/repair-seasons.ts",
     "audit:match-dates": "tsx scripts/audit-match-dates.ts",
     "audit:player-names": "tsx scripts/audit-player-names.ts",
-    "fix:player-names": "tsx scripts/fix-player-names.ts"
+    "fix:player-names": "tsx scripts/fix-player-names.ts",
+    "audit:season-stats": "tsx scripts/audit-season-stats.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
