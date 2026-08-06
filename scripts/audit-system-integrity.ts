@@ -66,64 +66,70 @@ async function checkMatchesHaveSeason(activeSeason: { id: string; name: string }
 }
 
 async function checkScoresConsistency() {
-  const inconsistent = await prisma.match.findMany({
+  // scoreTeamA/scoreTeamB são Int não-anuláveis no schema — filtrar por null é inválido.
+  // Verificamos integridade semântica: no CS2 é impossível uma partida terminar 0×0.
+  const gcTotal = await prisma.match.count({
+    where: { gamersClubMatchId: { not: null } },
+  });
+  const zeroed = await prisma.match.findMany({
     where: {
       gamersClubMatchId: { not: null },
-      OR: [{ scoreTeamA: null }, { scoreTeamB: null }],
+      scoreTeamA: 0,
+      scoreTeamB: 0,
     },
     select: { id: true, gamersClubMatchId: true },
   });
-  if (inconsistent.length === 0) {
-    record("Scores GC presentes", "pass", "Todas as partidas GC têm scoreTeamA e scoreTeamB");
+  if (zeroed.length === 0) {
+    record("Scores GC válidos", "pass", `${gcTotal} partidas GC — nenhuma com placar 0×0`);
   } else {
     record(
-      "Scores GC ausentes",
+      "Scores GC zerados (impossível no CS2)",
       "fail",
-      `${inconsistent.length} partida(s) GC sem score: ${inconsistent.map((m) => m.gamersClubMatchId).join(", ")}`
+      `${zeroed.length} partida(s) GC com placar 0×0: ${zeroed.map((m) => m.gamersClubMatchId).join(", ")}`
     );
   }
 }
 
 async function checkRosters() {
   console.log("\n[Rosters]");
-  const statsWithoutTeam = await prisma.playerMatchStats.count({
-    where: { team: null },
-  });
-  if (statsWithoutTeam === 0) {
-    record("Rosters com team definido", "pass", "Nenhum PlayerMatchStats sem team");
-  } else {
-    record("Rosters com team indefinido", "fail", `${statsWithoutTeam} stats sem team atribuído`);
-  }
+  // team e playerId são não-anuláveis no schema — integridade é garantida pelo banco.
+  // Verificamos integridade semântica: cada partida deve ter exatamente 2 times distintos.
+  const totalStats = await prisma.playerMatchStats.count();
+  const totalMatches = await prisma.match.count();
+  record("PlayerMatchStats cadastrados", "pass", `${totalStats} stats em ${totalMatches} partidas`);
 
-  const statsWithoutPlayer = await prisma.playerMatchStats.count({
-    where: { playerId: null },
-  });
-  if (statsWithoutPlayer === 0) {
-    record("Stats vinculados a jogador", "pass", "Todos os stats têm playerId");
+  // Partidas onde todos os stats têm o mesmo time (roster partido)
+  const matchesWithSingleSide = await prisma.$queryRaw<{ count: bigint }[]>`
+    SELECT COUNT(*)::bigint AS count
+    FROM "Match" m
+    WHERE EXISTS (SELECT 1 FROM "PlayerMatchStats" WHERE "matchId" = m.id)
+      AND (SELECT COUNT(DISTINCT team) FROM "PlayerMatchStats" WHERE "matchId" = m.id) = 1
+  `;
+  const singleSideCount = Number(matchesWithSingleSide[0]?.count ?? 0);
+  if (singleSideCount === 0) {
+    record("Rosters balanceados (2 times por partida)", "pass", "Todas as partidas têm jogadores nos dois lados");
   } else {
-    record("Stats sem playerId", "warn", `${statsWithoutPlayer} stats órfãos (possível match de não-monitorados)`);
+    record("Partidas com roster de 1 só time", "fail", `${singleSideCount} partida(s) com stats de apenas um lado`);
   }
 }
 
 async function checkRankings() {
   console.log("\n[Rankings / Rivalries]");
+  // playerAId/playerBId são String não-anuláveis — checamos integridade semântica:
+  // por convenção, playerAId < playerBId (lexicográfico). Auto-rivalidade é impossível.
   const totalRivalries = await prisma.rivalry.count();
-  const brokenRivalries = await prisma.rivalry.count({
-    where: {
-      OR: [{ playerAId: undefined }, { playerBId: undefined }],
-    },
-  });
   record("Rivalidades cadastradas", "pass", `${totalRivalries} total`);
 
-  const selfRivalries = await prisma.rivalry.count({
-    where: { playerAId: { equals: prisma.rivalry.fields?.playerBId as never } },
-  }).catch(() => 0);
-  if (selfRivalries === 0) {
-    record("Auto-rivalidades", "pass", "Nenhuma rivalidade de jogador consigo mesmo");
+  // Detectar auto-rivalidades (playerAId === playerBId) via raw query
+  const selfRivalryRows = await prisma.$queryRaw<{ count: bigint }[]>`
+    SELECT COUNT(*)::bigint AS count FROM "Rivalry" WHERE "playerAId" = "playerBId"
+  `;
+  const selfCount = Number(selfRivalryRows[0]?.count ?? 0);
+  if (selfCount === 0) {
+    record("Auto-rivalidades", "pass", "Nenhuma rivalidade onde playerA === playerB");
   } else {
-    record("Auto-rivalidades", "fail", `${selfRivalries} rivalidades onde playerA === playerB`);
+    record("Auto-rivalidades", "fail", `${selfCount} rivalidade(s) onde playerA === playerB`);
   }
-  void brokenRivalries;
 }
 
 async function checkTrackedPlayers() {
