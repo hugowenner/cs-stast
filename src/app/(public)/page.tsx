@@ -2,7 +2,6 @@ import { FadeIn } from "@/components/motion/fade-in";
 import { AnimatedNumber } from "@/components/motion/animated-number";
 import { AchievementFeedItem } from "@/components/achievements/achievement-feed-item";
 import { SeasonHero } from "@/components/dashboard/season-hero";
-import { InsightTiles } from "@/components/dashboard/insight-tiles";
 import { HallOfFame } from "@/components/dashboard/hall-of-fame";
 import { CoachReportCard } from "@/components/ui/coach-report-card";
 import { ConfrontationsCarousel } from "@/components/matches/confrontations-carousel";
@@ -178,33 +177,14 @@ export default async function DashboardPage(props: {
 
       <AnnouncementBanner />
 
-      {/* Page Header */}
-      <div className="relative z-30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 glass-panel border border-white/[0.06] rounded-2xl px-6 py-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl lg:text-2xl font-black text-white leading-none">
-            📊 Raio-X da Temporada
-          </h1>
-          <div className="flex items-center gap-2 mt-1.5">
-            {selectedSeason?.status === "ACTIVE" ? (
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-status-warning bg-status-warning/10 px-2 py-0.5 rounded-full border border-status-warning/15">
-                🏆 Temporada Atual
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-accent-cyan bg-accent-cyan/10 px-2 py-0.5 rounded-full border border-accent-cyan/15">
-                📚 Arquivo
-              </span>
-            )}
-            <span className="text-xs text-muted-foreground font-semibold">
-              {selectedSeason?.name}
-            </span>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <SeasonSelect
-            seasons={allSeasons.map((s) => ({ id: s.id, name: s.name, status: s.status }))}
-            currentSeasonId={resolvedSeasonId}
-          />
-        </div>
+      {/* Page Title */}
+      <div className="flex flex-col gap-1 px-1 mt-2">
+        <h1 className="text-xl lg:text-2xl font-black text-white uppercase tracking-tight flex items-center gap-2">
+          <span>📊</span> Raio-X da Temporada
+        </h1>
+        <p className="text-[10px] text-muted-foreground/60 font-semibold tracking-wider uppercase leading-none mt-1">
+          Competitive Performance Intelligence Overview
+        </p>
       </div>
 
       {/* ═══ 1. Resumo da Temporada ═══ */}
@@ -212,43 +192,31 @@ export default async function DashboardPage(props: {
         <FadeIn>
           <SeasonHero
             seasonLabel={selectedSeason?.name ?? SEASON_LABEL}
+            seasonStatus={selectedSeason?.status ?? "ACTIVE"}
             totalMatches={summary.totalMatches}
             bestPlayer={summary.bestPlayer}
             communityWinrate={summary.community.avgWinrate}
             dominantMap={summary.dominantMap}
+            totalPlayers={summary.totalPlayers}
+            advancedStats={{
+              totalRounds: summary.community.totalRounds,
+              totalKills: summary.community.totalKills,
+              avgAdr: summary.community.avgAdr,
+              avgKd: summary.community.avgKd,
+              avgHsPercent: summary.community.avgHsPercent,
+            }}
+            hottestPlayer={hottestPlayer}
+            coldestPlayer={coldestPlayer}
+            bestMap={bestMap}
+            worstMap={worstMap}
+            action={
+              <SeasonSelect
+                seasons={allSeasons.map((s) => ({ id: s.id, name: s.name, status: s.status }))}
+                currentSeasonId={resolvedSeasonId}
+              />
+            }
           />
         </FadeIn>
-
-        <FadeIn delay={0.03}>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { label: "Rounds", num: summary.community.totalRounds,  suffix: "",  decimals: 0, Icon: RefreshCw },
-              { label: "Kills",  num: summary.community.totalKills,    suffix: "",  decimals: 0, Icon: Crosshair },
-              { label: "ADR",    num: summary.community.avgAdr,        suffix: "",  decimals: 0, Icon: Zap       },
-              { label: "K/D",    num: summary.community.avgKd,         suffix: "",  decimals: 2, Icon: TrendingUp},
-              { label: "HS%",    num: summary.community.avgHsPercent,  suffix: "%", decimals: 0, Icon: Target    },
-            ].map(({ label, num, suffix, decimals, Icon }) => (
-              <div key={label} className="flex items-center gap-2 glass-panel rounded-xl border border-white/[0.06] px-3 py-2">
-                <Icon className="size-3 shrink-0 text-muted-foreground/40" />
-                <div>
-                  <p className="text-sm font-black text-white tabular-nums leading-none">
-                    <AnimatedNumber value={num} decimals={decimals} suffix={suffix} />
-                  </p>
-                  <p className="text-[8px] uppercase tracking-widest text-muted-foreground/50 font-bold leading-none mt-0.5">
-                    {label}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </FadeIn>
-
-        <InsightTiles
-          hottestPlayer={hottestPlayer}
-          coldestPlayer={coldestPlayer}
-          bestMap={bestMap}
-          worstMap={worstMap}
-        />
       </section>
 
       {/* ═══ 2. Últimos Confrontos ═══ */}

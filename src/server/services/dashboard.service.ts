@@ -154,6 +154,7 @@ export async function getDashboardSummary(
     ? {
         nickname: bestPlayerEntry.player.nickname,
         rating: bestPlayerEntry.value,
+        avatarUrl: bestPlayerEntry.player.avatarUrl,
       }
     : null;
 
