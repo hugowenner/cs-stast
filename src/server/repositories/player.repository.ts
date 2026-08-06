@@ -1,5 +1,6 @@
 import { prisma } from "@/server/db";
 import { sanitizeNickname } from "@/server/utils/player-name-normalizer";
+import { getActiveSeason } from "@/server/services/season.service";
 
 export function trackedPlayerWhere() {
   return {
@@ -169,26 +170,25 @@ export async function listPlayersWithBasicStats() {
     orderBy: { nickname: "asc" },
   });
 
-  const seasonStart = new Date("2026-07-01T00:00:00Z");
+  const activeSeason = await getActiveSeason();
 
-  const seasonAverages = await prisma.playerMatchStats.groupBy({
-    by: ["playerId"],
-    _avg: {
-      rating: true,
-    },
-    where: {
-      player: {
-        trackedPlayer: {
-          active: true,
+  const seasonAverages = activeSeason
+    ? await prisma.playerMatchStats.groupBy({
+        by: ["playerId"],
+        _avg: { rating: true },
+        where: {
+          player: { trackedPlayer: { active: true } },
+          match: { seasonId: activeSeason.id },
         },
-      },
-      match: {
-        playedAt: {
-          gte: seasonStart,
+      })
+    : await prisma.playerMatchStats.groupBy({
+        by: ["playerId"],
+        _avg: { rating: true },
+        where: {
+          player: { trackedPlayer: { active: true } },
+          match: { playedAt: { gte: new Date("2000-01-01") } },
         },
-      },
-    },
-  });
+      });
 
   const careerAverages = await prisma.playerMatchStats.groupBy({
     by: ["playerId"],

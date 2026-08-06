@@ -28,7 +28,8 @@
     "audit:match-dates": "tsx scripts/audit-match-dates.ts",
     "audit:player-names": "tsx scripts/audit-player-names.ts",
     "fix:player-names": "tsx scripts/fix-player-names.ts",
-    "audit:season-stats": "tsx scripts/audit-season-stats.ts"
+    "audit:season-stats": "tsx scripts/audit-season-stats.ts",
+    "audit:system-integrity": "tsx scripts/audit-system-integrity.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
