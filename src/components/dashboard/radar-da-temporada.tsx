@@ -9,6 +9,7 @@ import type {
   WeeklyCuriosity,
   SmartAlert,
 } from "@/server/services/competitive.service";
+import { performanceNarratives } from "@/lib/narrator/templates";
 
 interface RadarDaTemporadaProps {
   jogadorDaSemana: JogadorDaSemanaInfo | null;
@@ -48,6 +49,10 @@ function DestaqueDaSemana({ info }: { info: JogadorDaSemanaInfo }) {
           </span>
         </div>
       </div>
+      {/* Tagline narrativa do destaque */}
+      <p className="text-[10px] text-muted-foreground/45 italic leading-relaxed">
+        {performanceNarratives.positive[0].tagline}
+      </p>
       <div className="grid grid-cols-3 gap-2 pt-1 border-t border-white/[0.04]">
         <div className="text-center">
           <p className="text-[8px] uppercase tracking-widest font-bold text-muted-foreground/50">Rating</p>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { TrendingUp, TrendingDown, Flame, Snowflake, ArrowRight, BarChart3 } from "lucide-react";
+import { trendNarratives } from "@/lib/narrator/templates";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import { AnimatedNumber } from "@/components/motion/animated-number";
 import type { SeasonComparisonEntry, StreakEntry, MapPerformanceEntry } from "@/server/services/competitive.service";
@@ -149,8 +150,8 @@ function SequenciaCard({ hotStreaks, coldStreaks }: { hotStreaks: StreakEntry[];
   return (
     <TendenciaCard
       icon={Flame}
-      label="Sequências Ativas"
-      badge="🔥 Streaks"
+      label="🔥 Sequências em Tempo Real"
+      badge="Streaks"
       badgeColor="text-accent-gold"
       borderColor="border border-accent-gold/15"
       bgColor="bg-accent-gold/[0.01]"
@@ -164,7 +165,7 @@ function SequenciaCard({ hotStreaks, coldStreaks }: { hotStreaks: StreakEntry[];
               <Link href={`/players/${hot.player.id}`} className="text-xs font-black text-white hover:text-primary transition-colors block truncate">
                 {hot.player.nickname}
               </Link>
-              <p className="text-[10px] text-status-good font-bold">{hot.streak} vitórias seguidas</p>
+              <p className="text-[10px] text-status-good font-bold">{trendNarratives.hotStreak.headline} · {hot.streak}x</p>
             </div>
             <span className="text-xs font-black text-status-good tabular-nums shrink-0">
               <AnimatedNumber value={hot.recentRating} decimals={2} />
@@ -180,7 +181,7 @@ function SequenciaCard({ hotStreaks, coldStreaks }: { hotStreaks: StreakEntry[];
               <Link href={`/players/${cold.player.id}`} className="text-xs font-black text-white hover:text-primary transition-colors block truncate">
                 {cold.player.nickname}
               </Link>
-              <p className="text-[10px] text-status-critical font-bold">{cold.streak} derrotas seguidas</p>
+              <p className="text-[10px] text-status-critical font-bold">{trendNarratives.coldStreak.headline} · {cold.streak}x</p>
             </div>
             <span className="text-xs font-black text-status-critical tabular-nums shrink-0">
               {cold.adrChangePercent > 0 ? "+" : ""}{cold.adrChangePercent}%
@@ -211,8 +212,9 @@ function MapaTendenciaCard({ mapWinrates }: { mapWinrates: MapPerformanceEntry[]
       <div className="flex flex-col gap-3">
         <div className="bg-status-good/[0.04] border border-status-good/10 rounded-lg p-3 flex items-center justify-between">
           <div>
-            <p className="text-[8px] uppercase tracking-widest font-bold text-status-good/70">🔥 Território Dominado</p>
+            <p className="text-[8px] uppercase tracking-widest font-bold text-status-good/70">{trendNarratives.mapBest.headline}</p>
             <p className="text-sm font-black text-white mt-0.5">{best.map}</p>
+            <p className="text-[9px] text-muted-foreground/40 italic mt-0.5">{trendNarratives.mapBest.tagline}</p>
           </div>
           <div className="text-right">
             <p className="text-lg font-black text-status-good tabular-nums">
@@ -223,8 +225,9 @@ function MapaTendenciaCard({ mapWinrates }: { mapWinrates: MapPerformanceEntry[]
         </div>
         <div className="bg-status-critical/[0.04] border border-status-critical/10 rounded-lg p-3 flex items-center justify-between">
           <div>
-            <p className="text-[8px] uppercase tracking-widest font-bold text-status-critical/70">😂 Onde a bala passa longe</p>
+            <p className="text-[8px] uppercase tracking-widest font-bold text-status-critical/70">{trendNarratives.mapWorst.headline}</p>
             <p className="text-sm font-black text-white mt-0.5">{worst.map}</p>
+            <p className="text-[9px] text-muted-foreground/40 italic mt-0.5">{trendNarratives.mapWorst.tagline}</p>
           </div>
           <div className="text-right">
             <p className="text-lg font-black text-status-critical tabular-nums">

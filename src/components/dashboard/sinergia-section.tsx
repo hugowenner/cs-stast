@@ -7,6 +7,7 @@ import { PlayerAvatar } from "@/components/players/player-avatar";
 import { AnimatedNumber } from "@/components/motion/animated-number";
 import type { DuoSummary, TrioSummary, PlayerMatchupSummary } from "@/server/services/competitive.service";
 import type { RivalryH2HSummary } from "@/server/services/rivalry.service";
+import { duoNarratives, rivalryNarratives } from "@/lib/narrator/templates";
 
 interface SinergiaSectionProps {
   duos: DuoSummary[];
@@ -40,20 +41,23 @@ function DuplasTab({ duos, bestRecentDuo }: { duos: DuoSummary[]; bestRecentDuo:
     <div className="flex flex-col gap-3">
       {/* Destaque: dupla quente */}
       {bestRecentDuo && (
-        <div className="bg-status-good/[0.04] border border-status-good/15 rounded-xl p-4 flex items-center gap-3">
-          <div className="text-base shrink-0">🔥</div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[9px] uppercase tracking-widest font-bold text-status-good/70 mb-1">Dupla Quente</p>
-            <p className="text-sm font-black text-white truncate">
-              {bestRecentDuo.playerA.nickname} + {bestRecentDuo.playerB.nickname}
-            </p>
+        <div className="bg-status-good/[0.04] border border-status-good/15 rounded-xl p-4 flex flex-col gap-2">
+          <div className="flex items-center gap-3">
+            <div className="text-base shrink-0">🔥</div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[9px] uppercase tracking-widest font-bold text-status-good/70 mb-1">{duoNarratives[0].headline}</p>
+              <p className="text-sm font-black text-white truncate">
+                {bestRecentDuo.playerA.nickname} + {bestRecentDuo.playerB.nickname}
+              </p>
+            </div>
+            <div className="text-right shrink-0">
+              <p className="text-sm font-black text-status-good tabular-nums">
+                <AnimatedNumber value={bestRecentDuo.winrate} decimals={0} suffix="%" />
+              </p>
+              <p className="text-[8px] text-muted-foreground/50 font-semibold">{bestRecentDuo.total}j</p>
+            </div>
           </div>
-          <div className="text-right shrink-0">
-            <p className="text-sm font-black text-status-good tabular-nums">
-              <AnimatedNumber value={bestRecentDuo.winrate} decimals={0} suffix="%" />
-            </p>
-            <p className="text-[8px] text-muted-foreground/50 font-semibold">{bestRecentDuo.total}j</p>
-          </div>
+          <p className="text-[10px] text-muted-foreground/45 italic pl-7">{duoNarratives[0].tagline}</p>
         </div>
       )}
       {/* Lista de duplas */}
@@ -145,9 +149,12 @@ function RivaisTab({ rivalries }: { rivalries: RivalryH2HSummary[] }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-5">
-        <p className="text-[9px] uppercase tracking-widest font-bold text-muted-foreground/50 mb-4 text-center">
-          Rivalidade {page + 1} de {rivalries.length}
-        </p>
+        <div className="text-center mb-4">
+          <p className="text-[9px] uppercase tracking-widest font-bold text-muted-foreground/50">
+            Rivalidade {page + 1} de {rivalries.length}
+          </p>
+          <p className="text-[10px] text-muted-foreground/40 italic mt-1">{rivalryNarratives[page % rivalryNarratives.length].tagline}</p>
+        </div>
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-col items-center gap-2 flex-1 min-w-0">
             <PlayerAvatar nickname={rivalry.playerA.nickname} avatarUrl={rivalry.playerA.avatarUrl} size="lg" />

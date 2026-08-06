@@ -1,5 +1,6 @@
 import { Trophy, AlertTriangle, Users, Gamepad2 } from "lucide-react";
 import { TrendIndicator } from "./trend-indicator";
+import { coachNarratives } from "@/lib/narrator/templates";
 
 export interface CoachSummaryData {
   bestMap: { name: string; winrate: number } | null;
@@ -15,11 +16,14 @@ export function CoachSummaryCard({ data }: { data: CoachSummaryData }) {
 
   return (
     <div className="glass-panel glow-ring-primary flex flex-col gap-4 p-5 border border-primary/20 bg-primary/[0.02]">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold tracking-wider text-white uppercase">
-          🧠 Coach IA
-        </h3>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold tracking-wider text-white uppercase">
+            {coachNarratives.summaryTitle}
+          </h3>
+          <p className="text-[10px] text-muted-foreground/50 mt-0.5">{coachNarratives.summarySubtitle}</p>
+        </div>
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary shrink-0">
           Baseline Beta
         </span>
       </div>

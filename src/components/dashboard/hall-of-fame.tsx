@@ -7,6 +7,8 @@ import type { HallOfFameRecord, MonitoredPlayerEntry } from "@/server/services/c
 import { Trophy, Flame, Swords, Star, TrendingUp, ChevronLeft, ChevronRight, Brain, Skull, Bomb, ShieldAlert, BarChart2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { recordNarratives } from "@/lib/narrator/templates";
+import { HudBadge } from "@/components/ui/hud-badge";
 
 interface HallOfFameProps {
   records: HallOfFameRecord[];
@@ -207,7 +209,7 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
   return (
     <div className="flex flex-col gap-3">
       <div className={cn(
-        "glass-panel border rounded-3xl overflow-hidden grid grid-cols-1 lg:grid-cols-4 min-h-[280px]",
+        "card-record rounded-3xl overflow-hidden grid grid-cols-1 lg:grid-cols-4 min-h-[280px]",
         meta.borderColor,
         meta.bgColor
       )}>
@@ -241,21 +243,13 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
             >
               {/* Badges */}
               <div className="flex items-center gap-2 flex-wrap">
-                <span className={cn(
-                  "px-2.5 py-0.5 rounded-full border text-[9px] uppercase tracking-wider font-extrabold",
-                  meta.borderColor, meta.accentColor, meta.bgColor
-                )}>
-                  {meta.medal} {meta.medalLabel}
-                </span>
+                <HudBadge label="RECORDE" variant="gold" />
                 {mapName ? (
-                  <span className="px-2.5 py-0.5 rounded-full border border-accent-cyan/20 text-accent-cyan bg-accent-cyan/[0.03] text-[9px] uppercase tracking-wider font-extrabold">
-                    📍 {mapName}
-                  </span>
+                  <HudBadge label={mapName} variant="cyan" />
                 ) : (
-                  <span className="px-2.5 py-0.5 rounded-full border border-white/[0.06] text-muted-foreground/50 bg-white/[0.01] text-[9px] uppercase tracking-wider font-extrabold">
-                    🏆 Geral
-                  </span>
+                  <HudBadge label="GERAL" variant="neutral" />
                 )}
+                <HudBadge label="TEMPORADA" variant="neutral" />
               </div>
 
               {/* Player + value */}
@@ -283,13 +277,25 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
 
               {/* Big value */}
               <div className="flex items-end gap-4">
-                <p className={cn("text-5xl sm:text-6xl font-black tabular-nums leading-none", meta.accentColor)}>
+                <p className="metric-hero text-gradient-gold">
                   {record.value}
                 </p>
-                <p className="text-sm text-muted-foreground/60 font-medium leading-snug pb-1 max-w-xs">
+                <p className="text-sm text-muted-foreground/50 font-medium leading-snug pb-2 max-w-xs">
                   {meta.description}
                 </p>
               </div>
+
+              {/* Narrativa do narrador */}
+              {recordNarratives[record.category] && (
+                <div className="mt-1 border-l-2 border-white/[0.08] pl-3">
+                  <p className={cn("text-[11px] font-black", meta.accentColor)}>
+                    {recordNarratives[record.category].headline}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground/55 italic mt-0.5 leading-relaxed">
+                    "{recordNarratives[record.category].quote}"
+                  </p>
+                </div>
+              )}
             </motion.div>
           </AnimatePresence>
 
@@ -322,7 +328,7 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
         </div>
 
         {/* ── Coluna lateral: fila de recordes (25%) ── */}
-        <div className="p-4 bg-white/[0.015] flex flex-col gap-3">
+        <div className="p-4 bg-black/[0.12] flex flex-col gap-3">
           <div className="flex items-center justify-between px-1">
             <span className="text-[9px] uppercase tracking-widest font-extrabold text-muted-foreground/60">🏛️ Amassos</span>
             <span className="text-[9px] text-muted-foreground/40 font-bold">{list.length} categorias</span>

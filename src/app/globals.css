@@ -355,3 +355,496 @@
     transform: translateX(100%) scaleX(0.4);
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TACTICAL HUD — Design System v1.0
+   Identidade visual CS2 Stats Hub: Apple + Leetify + CS HUD + Riot
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Accent-gold token ────────────────────────────────────────────────────── */
+:root {
+  --accent-gold: #c9973a;
+  --accent-gold-light: #f0c060;
+  --accent-gold-dim: #8a6520;
+  --hud-line: rgba(255,255,255,0.06);
+  --hud-corner: rgba(255,255,255,0.18);
+}
+.dark {
+  --accent-gold: #d4a44c;
+  --accent-gold-light: #f5d080;
+  --accent-gold-dim: #7a5518;
+}
+
+@layer utilities {
+  /* ── Tactical HUD card tiers ─────────────────────────────────────────────── */
+
+  /* Tier 1 — card-standard: limpo, discreto */
+  .card-standard {
+    @apply bg-surface-1 rounded-2xl border border-white/[0.11] shadow-lg shadow-black/30 backdrop-blur-xl;
+  }
+
+  /* Tier 2 — card-important: gradiente sutil no topo, borda mais viva */
+  .card-important {
+    @apply bg-surface-1 rounded-2xl border border-white/[0.12] shadow-lg shadow-black/30 backdrop-blur-xl;
+    background-image: linear-gradient(
+      to bottom,
+      oklch(1 0 0 / 0.025) 0%,
+      transparent 60px
+    );
+  }
+
+  /* Tier 3 — card-highlight: glow premium, borda com cor */
+  .card-highlight {
+    @apply bg-surface-1 rounded-2xl border shadow-xl shadow-black/40 backdrop-blur-xl;
+    border-color: color-mix(in oklch, var(--primary) 22%, rgba(255,255,255,0.08));
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--primary) 15%, transparent),
+      0 16px 40px -12px rgba(0,0,0,0.5),
+      0 0 60px -20px color-mix(in oklch, var(--primary) 18%, transparent);
+    background-image: linear-gradient(
+      135deg,
+      oklch(0.62 0.19 288 / 0.04) 0%,
+      transparent 50%
+    );
+  }
+
+  /* Tier 4 — card-ai: glass + blur violeta — para Coach IA */
+  .card-ai {
+    @apply rounded-2xl border backdrop-blur-2xl shadow-xl shadow-black/40;
+    background: oklch(0.200 0.020 285 / 0.75);
+    border-color: oklch(0.62 0.19 288 / 0.25);
+    box-shadow:
+      0 0 0 1px oklch(0.62 0.19 288 / 0.12),
+      0 20px 50px -15px oklch(0.62 0.19 288 / 0.20),
+      0 8px 30px -10px rgba(0,0,0,0.6),
+      inset 0 1px 0 oklch(0.62 0.19 288 / 0.08);
+    background-image: linear-gradient(
+      135deg,
+      oklch(0.62 0.19 288 / 0.06) 0%,
+      transparent 60%
+    );
+  }
+
+  /* Tier 5 — card-record: detalhes dourados — para Hall da Fama */
+  .card-record {
+    @apply rounded-2xl border backdrop-blur-xl shadow-xl shadow-black/40;
+    background: oklch(0.215 0.010 70 / 0.70);
+    border-color: var(--accent-gold-dim);
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, #c9973a 20%, transparent),
+      0 20px 50px -15px rgba(180, 120, 30, 0.15),
+      0 8px 30px -10px rgba(0,0,0,0.55),
+      inset 0 1px 0 rgba(212,164,76,0.08);
+    background-image: linear-gradient(
+      135deg,
+      rgba(212,164,76,0.06) 0%,
+      transparent 60%
+    );
+  }
+
+  /* ── Glow variants ───────────────────────────────────────────────────────── */
+  .glow-gold {
+    box-shadow:
+      0 0 0 1px rgba(212,164,76,0.20),
+      0 8px 30px -10px rgba(180,140,40,0.25);
+  }
+  .glow-ai {
+    box-shadow:
+      0 0 0 1px oklch(0.62 0.19 288 / 0.20),
+      0 8px 30px -10px oklch(0.62 0.19 288 / 0.20);
+  }
+
+  /* ── Text gradients ──────────────────────────────────────────────────────── */
+  .text-gradient-gold {
+    background: linear-gradient(135deg, var(--accent-gold-light) 0%, var(--accent-gold) 60%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .text-gradient-ai {
+    background: linear-gradient(135deg, oklch(0.80 0.15 288), oklch(0.72 0.18 200));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* ── Tactical divider ────────────────────────────────────────────────────── */
+  .hud-divider {
+    position: relative;
+    border: none;
+    height: 1px;
+    background: var(--hud-line);
+    margin: 0;
+  }
+  .hud-divider::before,
+  .hud-divider::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    width: 4px;
+    height: 4px;
+    border-radius: 1px;
+    background: var(--hud-corner);
+  }
+  .hud-divider::before { left: 0; }
+  .hud-divider::after  { right: 0; }
+
+  /* ── Tactical corner bracket ─────────────────────────────────────────────── */
+  .hud-corner-tl {
+    position: relative;
+  }
+  .hud-corner-tl::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 10px; height: 10px;
+    border-top: 1.5px solid var(--hud-corner);
+    border-left: 1.5px solid var(--hud-corner);
+    pointer-events: none;
+  }
+
+  /* ── Section header accent bar ───────────────────────────────────────────── */
+  .section-accent-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-accent-bar::before {
+    content: '';
+    display: block;
+    width: 3px;
+    height: 14px;
+    border-radius: 2px;
+    background: linear-gradient(to bottom, var(--primary), oklch(0.62 0.19 288 / 0.3));
+    flex-shrink: 0;
+  }
+
+  /* ── Tactical badge base ─────────────────────────────────────────────────── */
+  .tactical-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-style: solid;
+    white-space: nowrap;
+  }
+
+  /* Badge variants — inherit base via CSS nesting */
+  .tactical-badge-gold,
+  .tactical-badge-green,
+  .tactical-badge-red,
+  .tactical-badge-violet,
+  .tactical-badge-cyan,
+  .tactical-badge-neutral {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-style: solid;
+    white-space: nowrap;
+  }
+  .tactical-badge-gold {
+    color: var(--accent-gold-light);
+    border-color: var(--accent-gold-dim);
+    background: rgba(212,164,76,0.08);
+  }
+  .tactical-badge-green {
+    color: var(--status-good);
+    border-color: color-mix(in srgb, var(--status-good) 40%, transparent);
+    background: color-mix(in srgb, var(--status-good) 8%, transparent);
+  }
+  .tactical-badge-red {
+    color: var(--status-critical);
+    border-color: color-mix(in srgb, var(--status-critical) 40%, transparent);
+    background: color-mix(in srgb, var(--status-critical) 8%, transparent);
+  }
+  .tactical-badge-violet {
+    color: var(--accent-violet);
+    border-color: color-mix(in srgb, var(--accent-violet) 40%, transparent);
+    background: color-mix(in srgb, var(--accent-violet) 8%, transparent);
+  }
+  .tactical-badge-cyan {
+    color: var(--accent-cyan);
+    border-color: color-mix(in srgb, var(--accent-cyan) 40%, transparent);
+    background: color-mix(in srgb, var(--accent-cyan) 8%, transparent);
+  }
+  .tactical-badge-neutral {
+    color: oklch(0.72 0.02 285);
+    border-color: rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+  }
+  .tactical-badge-orange {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-style: solid;
+    white-space: nowrap;
+    color: oklch(0.80 0.16 55);
+    border-color: oklch(0.80 0.16 55 / 0.35);
+    background: oklch(0.80 0.16 55 / 0.08);
+  }
+
+  /* ── Metric hero display ─────────────────────────────────────────────────── */
+  .metric-hero {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Scan line subtle texture ────────────────────────────────────────────── */
+  .hud-scan-lines {
+    background-image: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.015) 2px,
+      rgba(0,0,0,0.015) 4px
+    );
+  }
+
+  /* ── Card hover — upgraded for Tactical HUD ──────────────────────────────── */
+  .card-hover-tactical {
+    transition: box-shadow 200ms ease, transform 200ms ease, border-color 200ms ease;
+  }
+  .card-hover-tactical:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 16px 40px -10px rgba(0, 0, 0, 0.55),
+      0 0 0 1px rgba(255, 255, 255, 0.13);
+  }
+
+  /* ── Pulse dot indicator ─────────────────────────────────────────────────── */
+  .pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.45; transform: scale(0.75); }
+  }
+
+  /* ── Shimmer loading state ───────────────────────────────────────────────── */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(255,255,255,0.0) 0%,
+      rgba(255,255,255,0.04) 50%,
+      rgba(255,255,255,0.0) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2.2s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position:  200% 0; }
+  }
+
+  /* ── Stat tile upgrade ───────────────────────────────────────────────────── */
+  .stat-tile-metric {
+    font-size: 1.875rem;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Hero card — nível acima de card-record, ocupa toda atenção ──────────── */
+  .card-hero {
+    @apply rounded-3xl border backdrop-blur-2xl;
+    background: oklch(0.190 0.018 285 / 0.88);
+    border-color: oklch(0.62 0.19 288 / 0.20);
+    box-shadow:
+      0 0 0 1px oklch(0.62 0.19 288 / 0.10),
+      0 32px 72px -20px rgba(0, 0, 0, 0.70),
+      0 0 80px -30px oklch(0.62 0.19 288 / 0.12),
+      inset 0 1px 0 rgba(255,255,255,0.04);
+    background-image: linear-gradient(
+      160deg,
+      oklch(0.62 0.19 288 / 0.05) 0%,
+      transparent 55%
+    );
+  }
+
+  /* ── Breathing space utilities — mais respiro por seção ─────────────────── */
+  .metric-display {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .metric-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: oklch(0.72 0.02 285 / 0.6);
+    line-height: 1;
+  }
+  .metric-value {
+    font-size: 2.25rem;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    color: white;
+  }
+  .metric-context {
+    font-size: 11px;
+    font-weight: 600;
+    color: oklch(0.72 0.02 285 / 0.5);
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+
+  /* ── HUD status line — linha horizontal com label ───────────────────────── */
+  .hud-status-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+  .hud-status-line::before,
+  .hud-status-line::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--hud-line);
+  }
+  .hud-status-label {
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: oklch(0.72 0.02 285 / 0.45);
+    white-space: nowrap;
+  }
+
+  /* ── HUD full-width divider with title ───────────────────────────────────── */
+  .hud-section-separator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0;
+  }
+  .hud-section-separator::before {
+    content: '';
+    width: 16px;
+    height: 1px;
+    background: var(--hud-line);
+    flex-shrink: 0;
+  }
+  .hud-section-separator::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--hud-line);
+  }
+
+  /* ── Animated counter — número girando ao entrar ─────────────────────────── */
+  @keyframes count-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.95); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .animate-count-in {
+    animation: count-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* ── Badge appear animation ──────────────────────────────────────────────── */
+  @keyframes badge-in {
+    from { opacity: 0; transform: scale(0.8) translateY(-2px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .animate-badge-in {
+    animation: badge-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* ── Glow pulse — anel brilhante suave ───────────────────────────────────── */
+  @keyframes glow-pulse {
+    0%, 100% { box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 0 20px -8px rgba(255,255,255,0.04); }
+    50%       { box-shadow: 0 0 0 1px rgba(255,255,255,0.12), 0 0 28px -6px rgba(255,255,255,0.08); }
+  }
+  .glow-pulse {
+    animation: glow-pulse 3s ease-in-out infinite;
+  }
+
+  /* ── Map color backgrounds — 2% opacidade, quase invisível ──────────────── */
+  .map-bg-mirage  { background-color: rgba(210, 185, 140, 0.02); }
+  .map-bg-inferno { background-color: rgba(210, 100, 30, 0.02); }
+  .map-bg-nuke    { background-color: rgba(140, 150, 160, 0.02); }
+  .map-bg-ancient { background-color: rgba(80, 130, 90, 0.02); }
+  .map-bg-dust2   { background-color: rgba(200, 170, 100, 0.02); }
+  .map-bg-overpass { background-color: rgba(60, 110, 70, 0.02); }
+  .map-bg-vertigo { background-color: rgba(90, 100, 130, 0.02); }
+  .map-bg-anubis  { background-color: rgba(180, 150, 80, 0.02); }
+
+  /* ── Narrator tagline — faixa abaixo de métricas ─────────────────────────── */
+  .narrator-tagline {
+    font-size: 10px;
+    font-style: italic;
+    color: oklch(0.72 0.02 285 / 0.45);
+    line-height: 1.45;
+    border-left: 2px solid rgba(255,255,255,0.06);
+    padding-left: 8px;
+    margin-top: 6px;
+  }
+
+  /* ── Tactical AI brand stripe ────────────────────────────────────────────── */
+  .tactical-ai-brand {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px 3px 6px;
+    border-radius: 6px;
+    background: oklch(0.62 0.19 288 / 0.08);
+    border: 1px solid oklch(0.62 0.19 288 / 0.18);
+  }
+  .tactical-ai-brand-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: oklch(0.75 0.18 288);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+  .tactical-ai-brand-text {
+    font-size: 7.5px;
+    font-weight: 900;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: oklch(0.75 0.18 288);
+  }
+}
+
+/* ── Reduced motion overrides for new animations ─────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .pulse-dot,
+  .shimmer,
+  .card-hover-tactical,
+  .card-hover-tactical:hover {
+    animation: none !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
