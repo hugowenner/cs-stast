@@ -70,6 +70,21 @@ async function main() {
         }
       }
 
+      // 1.5. Corrige scores da partida se houver divergência
+      if (match.scoreTeamA !== normalized.scoreTeamA || match.scoreTeamB !== normalized.scoreTeamB) {
+        console.log(`  -> Corrigindo scores da partida: DB=${match.scoreTeamA}x${match.scoreTeamB} -> GC=${normalized.scoreTeamA}x${normalized.scoreTeamB}`);
+        await prisma.match.update({
+          where: { id: match.id },
+          data: {
+            scoreTeamA: normalized.scoreTeamA,
+            scoreTeamB: normalized.scoreTeamB,
+          },
+        });
+        match.scoreTeamA = normalized.scoreTeamA;
+        match.scoreTeamB = normalized.scoreTeamB;
+        matchUpdated = true;
+      }
+
       // 2. Resolve players
       const playerSteamIds = normalized.players.map((p) => p.steamId);
       const dbPlayers = await prisma.player.findMany({
@@ -128,15 +143,19 @@ async function main() {
         const targetEloBefore = elo?.eloBefore ?? 1000;
         const targetEloAfter = elo?.eloAfter ?? 1000;
 
-        // Verifica se há alguma divergência/corrupção (ex: campos nulos ou ELO errado devido ao parser)
+        const targetTeam = p.team as MatchTeam;
+
+        // Verifica se há alguma divergência/corrupção (ex: campos nulos ou ELO errado devido ao parser, ou time incorreto)
         if (
           currentStat.levelGc !== targetLevelGc ||
           currentStat.gcRating !== targetGcRating ||
           currentStat.eloBefore !== targetEloBefore ||
-          currentStat.eloAfter !== targetEloAfter
+          currentStat.eloAfter !== targetEloAfter ||
+          currentStat.team !== targetTeam
         ) {
           console.log(
             `  -> Atualizando PlayerStats do jogador ${player.nickname} (${player.steamId}): ` +
+              `Time: ${currentStat.team} -> ${targetTeam}, ` +
               `LevelGC: ${currentStat.levelGc} -> ${targetLevelGc}, ` +
               `gcRating: ${currentStat.gcRating} -> ${targetGcRating}, ` +
               `ELO: ${currentStat.eloBefore}/${currentStat.eloAfter} -> ${targetEloBefore}/${targetEloAfter}`
@@ -147,6 +166,7 @@ async function main() {
               matchId_playerId: { matchId: match.id, playerId: player.id },
             },
             data: {
+              team: targetTeam,
               levelGc: targetLevelGc,
               gcRating: targetGcRating,
               eloBefore: targetEloBefore,

@@ -285,6 +285,8 @@ async function enrichExistingMatchWithGC(matchId: string, input: SyncMatchInput)
       playedAt: input.playedAt,
       sessionId: session.id,
       seasonId: activeSeason.id,
+      scoreTeamA: input.scoreTeamA,
+      scoreTeamB: input.scoreTeamB,
     },
   });
 
@@ -364,6 +366,7 @@ async function enrichExistingMatchWithGC(matchId: string, input: SyncMatchInput)
         tradeKills: 0,
       },
       update: {
+        team: p.team as MatchTeam,
         gcRating: p.gcRating ?? null,
         levelGc: p.levelGc ?? null,
         eloBefore: elo.eloBefore,

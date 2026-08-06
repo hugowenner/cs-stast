@@ -1,4 +1,5 @@
 import { prisma } from "@/server/db";
+import { sanitizeNickname } from "@/server/utils/player-name-normalizer";
 
 export function trackedPlayerWhere() {
   return {
@@ -97,11 +98,15 @@ export function upsertPlayerBySteamId(data: {
   avatarUrl?: string | null;
   gamersClubId?: string | null;
 }) {
+  const cleanNickname = sanitizeNickname(data.nickname);
   return prisma.player.upsert({
     where: { steamId: data.steamId },
-    create: data,
+    create: {
+      ...data,
+      nickname: cleanNickname,
+    },
     update: {
-      nickname: data.nickname,
+      nickname: cleanNickname,
       // Só sobrescreve avatarUrl quando um valor concreto é fornecido.
       // A sincronização da GC nunca envia URL absoluta (paths relativos → undefined → null),
       // então sem esta guarda cada partida apagaria o avatar obtido da Steam.
