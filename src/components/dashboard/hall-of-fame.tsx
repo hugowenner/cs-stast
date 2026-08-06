@@ -174,6 +174,21 @@ const DEFAULT_META: RecordMeta = {
   accentColor: "text-white",
 };
 
+const MAP_IMAGES: Record<string, string> = {
+  mirage: "/maps/mirage.png",
+  dust2: "/maps/dust2.png",
+  inferno: "/maps/inferno.png",
+  ancient: "/maps/ancient.png",
+  cache: "/maps/cache.png",
+  overpass: "/maps/overpass.png",
+};
+
+function getMapImage(mapName: string | null | undefined): string | null {
+  if (!mapName) return null;
+  const norm = mapName.toLowerCase().replace(/^de_/, "").trim();
+  return MAP_IMAGES[norm] ?? null;
+}
+
 function extractMapName(detail: string): string | null {
   const match = detail.match(/mapa\s+(\w+)/i) || detail.match(/na\s+(\w+)/i);
   return match ? match[1] : null;
@@ -198,6 +213,7 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
   const meta = METADATA_BY_CATEGORY[record.category] ?? DEFAULT_META;
   const IconComponent = meta.icon;
   const mapName = extractMapName(record.detail);
+  const mapImgUrl = record.matchId ? getMapImage(record.mapName || mapName) : null;
 
   const matchedPlayer = monitoredPlayers.find(
     (mp) => mp.player.nickname.toLowerCase() === record.playerName.toLowerCase()
@@ -209,13 +225,24 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
   return (
     <div className="flex flex-col gap-3">
       <div className={cn(
-        "card-record rounded-3xl overflow-hidden grid grid-cols-1 lg:grid-cols-4 min-h-[280px]",
+        "card-record rounded-3xl overflow-hidden grid grid-cols-1 lg:grid-cols-4 min-h-[280px] relative z-0",
         meta.borderColor,
-        meta.bgColor
+        !mapImgUrl && meta.bgColor
       )}>
+        {mapImgUrl && (
+          <>
+            <img
+              src={mapImgUrl}
+              alt={record.mapName || mapName || "Map background"}
+              className="absolute inset-0 w-full h-full object-cover opacity-[0.35] blur-[1px] z-0 pointer-events-none select-none"
+            />
+            {/* Dark overlay with gradient for contrast */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/55 to-black/85 z-0 pointer-events-none select-none" />
+          </>
+        )}
 
         {/* ── Coluna principal (75%) ── */}
-        <div className="lg:col-span-3 p-6 sm:p-8 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-white/[0.05] relative">
+        <div className="lg:col-span-3 p-6 sm:p-8 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-white/[0.05] relative z-10">
 
           {/* Progress dots */}
           {list.length > 1 && (
@@ -244,8 +271,8 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
               {/* Badges */}
               <div className="flex items-center gap-2 flex-wrap">
                 <HudBadge label="RECORDE" variant="gold" />
-                {mapName ? (
-                  <HudBadge label={mapName} variant="cyan" />
+                {record.mapName || mapName ? (
+                  <HudBadge label={record.mapName || mapName || ""} variant="cyan" />
                 ) : (
                   <HudBadge label="GERAL" variant="neutral" />
                 )}
@@ -263,13 +290,18 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
                 </div>
                 <div className="space-y-0.5">
                   {matchedPlayer ? (
-                    <Link href={`/players/${matchedPlayer.id}`} className="text-2xl sm:text-3xl font-black tracking-tight text-white hover:text-primary transition-colors leading-none uppercase block">
+                    <Link
+                      href={`/players/${matchedPlayer.id}`}
+                      className="text-2xl sm:text-3xl font-black tracking-tight text-white hover:text-primary transition-colors leading-none uppercase block [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]"
+                    >
                       {matchedPlayer.nickname}
                     </Link>
                   ) : (
-                    <p className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-none uppercase">{record.playerName}</p>
+                    <p className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-none uppercase [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">
+                      {record.playerName}
+                    </p>
                   )}
-                  <p className={cn("text-sm font-semibold uppercase tracking-wider", meta.accentColor)}>
+                  <p className={cn("text-sm font-semibold uppercase tracking-wider [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]", meta.accentColor)}>
                     {meta.title}
                   </p>
                 </div>
@@ -277,10 +309,10 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
 
               {/* Big value */}
               <div className="flex items-end gap-4">
-                <p className="metric-hero text-gradient-gold">
+                <p className="metric-hero text-gradient-gold [text-shadow:0_2px_10px_rgba(0,0,0,0.95)]">
                   {record.value}
                 </p>
-                <p className="text-sm text-muted-foreground/50 font-medium leading-snug pb-2 max-w-xs">
+                <p className="text-sm text-muted-foreground/50 font-medium leading-snug pb-2 max-w-xs [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">
                   {meta.description}
                 </p>
               </div>
@@ -288,10 +320,10 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
               {/* Narrativa do narrador */}
               {recordNarratives[record.category] && (
                 <div className="mt-1 border-l-2 border-white/[0.08] pl-3">
-                  <p className={cn("text-[11px] font-black", meta.accentColor)}>
+                  <p className={cn("text-[11px] font-black [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]", meta.accentColor)}>
                     {recordNarratives[record.category].headline}
                   </p>
-                  <p className="text-[10px] text-muted-foreground/55 italic mt-0.5 leading-relaxed">
+                  <p className="text-[10px] text-muted-foreground/55 italic mt-0.5 leading-relaxed [text-shadow:0_1px_3px_rgba(0,0,0,0.85)]">
                     "{recordNarratives[record.category].quote}"
                   </p>
                 </div>
@@ -328,7 +360,7 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
         </div>
 
         {/* ── Coluna lateral: fila de recordes (25%) ── */}
-        <div className="p-4 bg-black/[0.12] flex flex-col gap-3">
+        <div className="p-4 bg-black/[0.12] flex flex-col gap-3 relative z-10">
           <div className="flex items-center justify-between px-1">
             <span className="text-[9px] uppercase tracking-widest font-extrabold text-muted-foreground/60">🏛️ Amassos</span>
             <span className="text-[9px] text-muted-foreground/40 font-bold">{list.length} categorias</span>

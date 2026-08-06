@@ -5,6 +5,21 @@ import { AnimatedNumber } from "@/components/motion/animated-number";
 import type { PlayerMomentumEntry, MapPerformanceEntry } from "@/server/services/competitive.service";
 import { cn } from "@/lib/utils";
 
+const MAP_IMAGES: Record<string, string> = {
+  mirage: "/maps/mirage.png",
+  dust2: "/maps/dust2.png",
+  inferno: "/maps/inferno.png",
+  ancient: "/maps/ancient.png",
+  cache: "/maps/cache.png",
+  overpass: "/maps/overpass.png",
+};
+
+function getMapImage(mapName: string | null | undefined): string | null {
+  if (!mapName) return null;
+  const norm = mapName.toLowerCase().replace(/^de_/, "").trim();
+  return MAP_IMAGES[norm] ?? null;
+}
+
 interface SeasonHeroProps {
   seasonLabel: string;
   seasonStatus?: string;
@@ -70,6 +85,9 @@ export function SeasonHero({
     .replace(/^\w/, (c) => c.toUpperCase());
 
   const isActive = seasonStatus === "ACTIVE";
+
+  const bestMapImg = bestMap ? getMapImage(bestMap.map) : null;
+  const worstMapImg = worstMap ? getMapImage(worstMap.map) : null;
 
   return (
     <div className="glass-panel relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.003] p-6 shadow-2xl flex flex-col gap-6">
@@ -303,26 +321,39 @@ export function SeasonHero({
 
             {/* 3. Território */}
             {bestMap && (
-              <div className="glass-panel rounded-xl border border-accent-cyan/10 bg-accent-cyan/[0.005] p-4 flex flex-col justify-between gap-3 shadow-lg">
-                <div className="flex items-center justify-between">
-                  <span className="text-[8px] font-black uppercase tracking-wider text-accent-cyan flex items-center gap-1.5">
+              <div className={cn(
+                "glass-panel rounded-xl border p-4 flex flex-col justify-between gap-3 shadow-lg relative overflow-hidden z-0",
+                bestMapImg ? "border-accent-cyan/15" : "border-accent-cyan/10 bg-accent-cyan/[0.005]"
+              )}>
+                {bestMapImg && (
+                  <>
+                    <img
+                      src={bestMapImg}
+                      alt={bestMap.map}
+                      className="absolute inset-0 w-full h-full object-cover opacity-[0.30] blur-[1px] z-0 pointer-events-none select-none"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/55 to-black/85 z-0 pointer-events-none select-none" />
+                  </>
+                )}
+                <div className="flex items-center justify-between relative z-10">
+                  <span className="text-[8px] font-black uppercase tracking-wider text-accent-cyan flex items-center gap-1.5 [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">
                     <Flame className="size-3 text-accent-cyan shrink-0" />
                     <span>🔥 Território</span>
                   </span>
                   <span className="text-[8px] font-extrabold bg-accent-cyan/10 border border-accent-cyan/15 text-accent-cyan px-1.5 py-0.5 rounded uppercase">MAPA</span>
                 </div>
-                <div>
-                  <p className="text-xs font-bold text-white uppercase tracking-tight leading-none">{bestMap.map}</p>
-                  <p className="text-[8px] text-muted-foreground/60 font-semibold mt-1 leading-tight">Forte domínio tático</p>
+                <div className="relative z-10">
+                  <p className="text-xs font-bold text-white uppercase tracking-tight leading-none [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">{bestMap.map}</p>
+                  <p className="text-[8px] text-white/70 font-semibold mt-1 leading-tight [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">Forte domínio tático</p>
                 </div>
-                <div className="space-y-1.5 text-[10px] border-t border-white/[0.03] pt-2">
+                <div className="space-y-1.5 text-[10px] border-t border-white/[0.05] pt-2 relative z-10">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground/50">Winrate:</span>
-                    <strong className="text-accent-cyan font-bold">{bestMap.winrate.toFixed(0)}% WR</strong>
+                    <span className="text-white/60 [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">Winrate:</span>
+                    <strong className="text-accent-cyan font-bold [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">{bestMap.winrate.toFixed(0)}% WR</strong>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground/50">Partidas:</span>
-                    <strong className="text-white/80 font-bold">{bestMap.matchesPlayed} partidas</strong>
+                    <span className="text-white/60 [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">Partidas:</span>
+                    <strong className="text-white font-bold [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">{bestMap.matchesPlayed} partidas</strong>
                   </div>
                 </div>
               </div>
@@ -330,26 +361,39 @@ export function SeasonHero({
 
             {/* 4. Bala longe */}
             {worstMap && (
-              <div className="glass-panel rounded-xl border border-status-warning/10 bg-status-warning/[0.005] p-4 flex flex-col justify-between gap-3 shadow-lg">
-                <div className="flex items-center justify-between">
-                  <span className="text-[8px] font-black uppercase tracking-wider text-status-warning flex items-center gap-1.5">
+              <div className={cn(
+                "glass-panel rounded-xl border p-4 flex flex-col justify-between gap-3 shadow-lg relative overflow-hidden z-0",
+                worstMapImg ? "border-status-warning/15" : "border-status-warning/10 bg-status-warning/[0.005]"
+              )}>
+                {worstMapImg && (
+                  <>
+                    <img
+                      src={worstMapImg}
+                      alt={worstMap.map}
+                      className="absolute inset-0 w-full h-full object-cover opacity-[0.30] blur-[1px] z-0 pointer-events-none select-none"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/55 to-black/85 z-0 pointer-events-none select-none" />
+                  </>
+                )}
+                <div className="flex items-center justify-between relative z-10">
+                  <span className="text-[8px] font-black uppercase tracking-wider text-status-warning flex items-center gap-1.5 [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">
                     <AlertTriangle className="size-3 text-status-warning shrink-0" />
                     <span>😂 Bala longe</span>
                   </span>
                   <span className="text-[8px] font-extrabold bg-status-warning/10 border border-status-warning/15 text-status-warning px-1.5 py-0.5 rounded uppercase">VETO</span>
                 </div>
-                <div>
-                  <p className="text-xs font-bold text-white uppercase tracking-tight leading-none">{worstMap.map}</p>
-                  <p className="text-[8px] text-muted-foreground/60 font-semibold mt-1 leading-tight">Recomendação de Veto</p>
+                <div className="relative z-10">
+                  <p className="text-xs font-bold text-white uppercase tracking-tight leading-none [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">{worstMap.map}</p>
+                  <p className="text-[8px] text-white/70 font-semibold mt-1 leading-tight [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">Recomendação de Veto</p>
                 </div>
-                <div className="space-y-1.5 text-[10px] border-t border-white/[0.03] pt-2">
+                <div className="space-y-1.5 text-[10px] border-t border-white/[0.05] pt-2 relative z-10">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground/50">Winrate:</span>
-                    <strong className="text-status-warning font-bold">{worstMap.winrate.toFixed(0)}% WR</strong>
+                    <span className="text-white/60 [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">Winrate:</span>
+                    <strong className="text-status-warning font-bold [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">{worstMap.winrate.toFixed(0)}% WR</strong>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground/50">Partidas:</span>
-                    <strong className="text-white/80 font-bold">{worstMap.matchesPlayed} partidas</strong>
+                    <span className="text-white/60 [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">Partidas:</span>
+                    <strong className="text-white font-bold [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">{worstMap.matchesPlayed} partidas</strong>
                   </div>
                 </div>
               </div>

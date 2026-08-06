@@ -117,11 +117,29 @@ export function MonitoredPlayersCarousel({ players }: Props) {
               key={entry.player.id}
               href={`/players/${entry.player.id}`}
               data-player-card
-              className={`glass-panel card-hover rounded-2xl border overflow-hidden flex-shrink-0 w-full sm:w-[calc(50%-6px)] lg:w-[calc(33.333%-8px)] xl:w-[calc(25%-9px)] flex flex-col ${rankGlow}`}
+              className={`glass-panel card-hover rounded-2xl border overflow-hidden flex-shrink-0 w-full sm:w-[calc(50%-6px)] lg:w-[calc(33.333%-8px)] xl:w-[calc(25%-9px)] flex flex-col relative z-0 group ${rankGlow}`}
               style={{ scrollSnapAlign: "start" }}
             >
+              {/* Card background Steam avatar image */}
+              {(entry.player.steamAvatarFull || entry.player.avatarUrl) && (
+                <>
+                  <img
+                    src={entry.player.steamAvatarFull || entry.player.avatarUrl || ""}
+                    alt={entry.player.nickname}
+                    className="absolute inset-0 w-full h-full object-cover opacity-[0.35] blur-[1px] z-0 pointer-events-none select-none"
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = "none";
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-black/45 to-black/85 z-0 pointer-events-none select-none" />
+                </>
+              )}
+              {!(entry.player.steamAvatarFull || entry.player.avatarUrl) && (
+                <div className="absolute inset-0 bg-black/60 z-0 pointer-events-none select-none" />
+              )}
+
               {/* Header */}
-              <div className="px-4 pt-3.5 pb-3 border-b border-white/[0.05] flex items-center gap-3">
+              <div className="px-4 pt-3.5 pb-3 border-b border-white/[0.05] flex items-center gap-3 relative z-10">
                 <div className="relative">
                   <PlayerAvatar nickname={entry.player.nickname} avatarUrl={entry.player.avatarUrl} size="md" />
                   <span className={`absolute -bottom-1 -right-1 text-[8px] font-black leading-none px-1 py-0.5 rounded-full border ${
@@ -132,9 +150,9 @@ export function MonitoredPlayersCarousel({ players }: Props) {
                   }`}>#{entry.rank}</span>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-black text-white truncate">{entry.player.nickname}</p>
+                  <p className="text-sm font-black text-white truncate [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">{entry.player.nickname}</p>
                   {entry.player.levelGc && (
-                    <p className="text-[9px] text-muted-foreground/55 font-semibold mt-0.5">GC Nível {entry.player.levelGc}</p>
+                    <p className="text-[9px] text-white/80 font-semibold mt-0.5 [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">GC Nível {entry.player.levelGc}</p>
                   )}
                 </div>
                 <div className="flex flex-col items-end gap-1">
@@ -142,7 +160,7 @@ export function MonitoredPlayersCarousel({ players }: Props) {
                     <FormaIcon className="size-2.5" />
                     {forma.text}
                   </span>
-                  <span className="inline-flex items-center gap-0.5 text-[8px] text-muted-foreground/45 font-semibold">
+                  <span className="inline-flex items-center gap-0.5 text-[8px] text-white/70 font-semibold [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">
                     <Clock className="size-2" />
                     Últimas {entry.matchCount}
                   </span>
@@ -150,35 +168,35 @@ export function MonitoredPlayersCarousel({ players }: Props) {
               </div>
 
               {/* Rating destaque */}
-              <div className="px-4 py-3 flex items-end gap-3 border-b border-white/[0.04]">
+              <div className="px-4 py-3 flex items-end gap-3 border-b border-white/[0.04] relative z-10">
                 <div>
-                  <p className="text-[8px] uppercase tracking-widest font-bold text-muted-foreground/55">Rating</p>
-                  <p className="text-2xl font-black text-white tabular-nums leading-tight">
+                  <p className="text-[8px] uppercase tracking-widest font-bold text-white/50 [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">Rating</p>
+                  <p className="text-2xl font-black text-white tabular-nums leading-tight [text-shadow:0_2px_8px_rgba(0,0,0,0.95)]">
                     <AnimatedNumber value={entry.rating} decimals={2} duration={0.8} />
                   </p>
                 </div>
                 <div className="flex gap-3 mb-0.5">
                   <div>
-                    <p className="text-[8px] uppercase tracking-widest font-bold text-muted-foreground/50">K/D</p>
-                    <p className="text-xs font-black text-white/80 tabular-nums">
+                    <p className="text-[8px] uppercase tracking-widest font-bold text-white/50 [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">K/D</p>
+                    <p className="text-xs font-black text-white tabular-nums [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">
                       <AnimatedNumber value={entry.kd} decimals={2} duration={0.7} />
                     </p>
                   </div>
                   <div>
-                    <p className="text-[8px] uppercase tracking-widest font-bold text-muted-foreground/50">ADR</p>
-                    <p className="text-xs font-black text-white/80 tabular-nums">
+                    <p className="text-[8px] uppercase tracking-widest font-bold text-white/50 [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">ADR</p>
+                    <p className="text-xs font-black text-white tabular-nums [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">
                       <AnimatedNumber value={entry.adr} decimals={0} duration={0.65} />
                     </p>
                   </div>
                   <div>
-                    <p className="text-[8px] uppercase tracking-widest font-bold text-muted-foreground/50">KAST</p>
-                    <p className="text-xs font-black text-white/80 tabular-nums">
+                    <p className="text-[8px] uppercase tracking-widest font-bold text-white/50 [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">KAST</p>
+                    <p className="text-xs font-black text-white tabular-nums [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">
                       <AnimatedNumber value={entry.kast} decimals={0} suffix="%" duration={0.6} />
                     </p>
                   </div>
                   <div>
-                    <p className="text-[8px] uppercase tracking-widest font-bold text-muted-foreground/50">WR</p>
-                    <p className="text-xs font-black text-white/80 tabular-nums">
+                    <p className="text-[8px] uppercase tracking-widest font-bold text-white/50 [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">WR</p>
+                    <p className="text-xs font-black text-white tabular-nums [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">
                       <AnimatedNumber value={entry.winrate} decimals={0} suffix="%" duration={0.6} />
                     </p>
                   </div>
@@ -186,7 +204,7 @@ export function MonitoredPlayersCarousel({ players }: Props) {
               </div>
 
               {/* Stats totais */}
-              <div className="px-4 py-2.5 grid grid-cols-4 gap-1 border-b border-white/[0.04]">
+              <div className="px-4 py-2.5 grid grid-cols-4 gap-1 border-b border-white/[0.04] relative z-10">
                 {[
                   { label: "Kills",    value: entry.totalKills,   dec: 0, dur: 0.6  },
                   { label: "Deaths",   value: entry.totalDeaths,  dec: 0, dur: 0.55 },
@@ -194,8 +212,8 @@ export function MonitoredPlayersCarousel({ players }: Props) {
                   { label: "HS%",      value: entry.hsPercent,    dec: 0, dur: 0.5, suffix: "%" },
                 ].map((s) => (
                   <div key={s.label} className="text-center">
-                    <p className="text-[7px] uppercase tracking-widest font-bold text-muted-foreground/50">{s.label}</p>
-                    <p className="text-[11px] font-black text-white/75 tabular-nums mt-0.5">
+                    <p className="text-[7px] uppercase tracking-widest font-bold text-white/50 [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">{s.label}</p>
+                    <p className="text-[11px] font-black text-white tabular-nums mt-0.5 [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">
                       <AnimatedNumber value={s.value} decimals={s.dec} suffix={s.suffix ?? ""} duration={s.dur} />
                     </p>
                   </div>
@@ -203,30 +221,30 @@ export function MonitoredPlayersCarousel({ players }: Props) {
               </div>
 
               {/* Mapas + última partida */}
-              <div className="px-4 py-2.5 flex items-start justify-between gap-2 mt-auto">
+              <div className="px-4 py-2.5 flex items-start justify-between gap-2 mt-auto relative z-10">
                 <div className="min-w-0 flex-1">
                   {entry.bestMap && (
                     <div className="flex items-center gap-1 mb-1">
                       <Map className="size-2.5 text-status-good/70 shrink-0" />
                       <span className="text-[8px] text-status-good/80 font-semibold truncate">{entry.bestMap}</span>
-                      <span className="text-[7px] text-muted-foreground/40 font-bold uppercase tracking-widest shrink-0">melhor</span>
+                      <span className="text-[7px] text-white/40 font-bold uppercase tracking-widest shrink-0 [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">melhor</span>
                     </div>
                   )}
                   {entry.worstMap && (
                     <div className="flex items-center gap-1">
                       <Map className="size-2.5 text-status-warning/60 shrink-0" />
                       <span className="text-[8px] text-status-warning/70 font-semibold truncate">{entry.worstMap}</span>
-                      <span className="text-[7px] text-muted-foreground/40 font-bold uppercase tracking-widest shrink-0">revisar</span>
+                      <span className="text-[7px] text-white/40 font-bold uppercase tracking-widest shrink-0 [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">revisar</span>
                     </div>
                   )}
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="text-[7px] uppercase tracking-widest font-bold text-muted-foreground/40">Partidas</p>
-                  <p className="text-[11px] font-black text-white/60 tabular-nums">{entry.matchCount}</p>
+                  <p className="text-[7px] uppercase tracking-widest font-bold text-white/50 [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">Partidas</p>
+                  <p className="text-[11px] font-black text-white tabular-nums [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">{entry.matchCount}</p>
                   {entry.lastMatchDate && (
                     <>
-                      <p className="text-[7px] uppercase tracking-widest font-bold text-muted-foreground/40 mt-1">Última</p>
-                      <p className="text-[9px] text-muted-foreground/55 tabular-nums">
+                      <p className="text-[7px] uppercase tracking-widest font-bold text-white/50 mt-1 [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">Última</p>
+                      <p className="text-[9px] text-white/80 tabular-nums [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">
                         {new Date(entry.lastMatchDate).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
                       </p>
                     </>

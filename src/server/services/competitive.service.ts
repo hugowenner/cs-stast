@@ -121,6 +121,7 @@ export interface HallOfFameRecord {
   value: string;
   detail: string;
   matchId?: string;
+  mapName?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -1082,6 +1083,7 @@ function getHallOfFameRecordsFromDataset(
       value: maxRating.rating.toFixed(2),
       detail: `Registrado no mapa ${maxRating.match.map.name}`,
       matchId: maxRating.match.id,
+      mapName: maxRating.match.map.name,
     });
   }
   if (maxKdStat) {
@@ -1092,6 +1094,7 @@ function getHallOfFameRecordsFromDataset(
       value: `${calculatedKd.toFixed(2)} K/D`,
       detail: `Registrado no mapa ${maxKdStat.match.map.name}`,
       matchId: maxKdStat.match.id,
+      mapName: maxKdStat.match.map.name,
     });
   }
   if (maxAdr) {
@@ -1101,6 +1104,7 @@ function getHallOfFameRecordsFromDataset(
       value: `${maxAdr.adr.toFixed(1)} ADR`,
       detail: `Dano médio por round na ${maxAdr.match.map.name}`,
       matchId: maxAdr.match.id,
+      mapName: maxAdr.match.map.name,
     });
   }
   if (maxKills) {
@@ -1110,6 +1114,7 @@ function getHallOfFameRecordsFromDataset(
       value: `${maxKills.kills} kills`,
       detail: `Partida no mapa ${maxKills.match.map.name}`,
       matchId: maxKills.match.id,
+      mapName: maxKills.match.map.name,
     });
   }
   if (maxHsStat) {
@@ -1120,6 +1125,7 @@ function getHallOfFameRecordsFromDataset(
       value: `${calculatedHs.toFixed(0)}% HS`,
       detail: `Registrado no mapa ${maxHsStat.match.map.name}`,
       matchId: maxHsStat.match.id,
+      mapName: maxHsStat.match.map.name,
     });
   }
   if (maxStreak > 0) {
@@ -1137,6 +1143,7 @@ function getHallOfFameRecordsFromDataset(
       value: `${eloLeader.eloAfter} pontos`,
       detail: "Ranking interno CS2 Stats Hub",
       matchId: eloLeader.match.id,
+      mapName: eloLeader.match.map.name,
     });
   }
   if (maxImpactStat) {
@@ -1146,6 +1153,7 @@ function getHallOfFameRecordsFromDataset(
       value: `${maxImpactStat.rating.toFixed(2)} Rating / ${maxImpactStat.adr.toFixed(1)} ADR`,
       detail: "Performance mais dominante em uma partida",
       matchId: maxImpactStat.match.id,
+      mapName: maxImpactStat.match.map.name,
     });
   }
   if (maxMultiKills > 0) {
@@ -1163,6 +1171,7 @@ function getHallOfFameRecordsFromDataset(
       value: `${maxDamageStat.damage} DMG`,
       detail: `Dano bruto causado na ${maxDamageStat.match.map.name}`,
       matchId: maxDamageStat.match.id,
+      mapName: maxDamageStat.match.map.name,
     });
   }
   if (maxClutches > 0) {
@@ -1287,7 +1296,7 @@ function getMapPerformanceFromDataset(dataset: CompetitiveDataset): {
 
 export interface MonitoredPlayerEntry {
   rank: number;
-  player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null };
+  player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null; steamAvatarFull?: string | null };
   rating: number;
   adr: number;
   kd: number;
@@ -1356,7 +1365,7 @@ function getMonitoredPlayersFromDataset(dataset: CompetitiveDataset): MonitoredP
 
     entries.push({
       rank: 0, // preenchido após ordenação
-      player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl, levelGc: player.levelGc },
+      player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl, levelGc: player.levelGc, steamAvatarFull: player.steamAvatarFull },
       rating: Number(avgRating.toFixed(2)),
       adr: Math.round(avgAdr),
       kd: Number(kd.toFixed(2)),
