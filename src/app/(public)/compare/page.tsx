@@ -61,7 +61,7 @@ export default async function ComparePage({
       <FadeIn>
         <PageHeader
           title="Scout H2H"
-          subtitle="Duelo direto entre jogadores da temporada — Compare estilo de jogo, impacto e consistência antes de montar seu time."
+          subtitle="☠️ Quem domina quem no servidor — compare, discuta, e monte seu time com dados."
           icon={
             <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
               <Swords className="size-6" />
@@ -99,9 +99,9 @@ export default async function ComparePage({
             <div className="flex size-14 items-center justify-center rounded-2xl bg-white/[0.02] border border-white/[0.06] text-muted-foreground/30 mb-5">
               <Swords className="size-6 text-primary" />
             </div>
-            <h3 className="text-base font-black text-white mb-2">⚔️ Monte seu duelo</h3>
+            <h3 className="text-base font-black text-white mb-2">⚔️ Inicie o confronto</h3>
             <p className="text-xs text-muted-foreground/60 max-w-md mb-6 leading-relaxed">
-              Escolha dois jogadores do grupo acima e inicie o confronto scout para descobrir:
+              Selecione dois jogadores e descubra quem realmente é melhor — com dados, sem papo de lobby:
             </p>
             
             {/* Grid de Bullets explicativos */}

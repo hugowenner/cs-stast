@@ -23,7 +23,7 @@ export function ReisDosMapa({ specialists, mapWinrates, bestMap, worstMap }: Rei
         <div className="lg:col-span-2 p-5 flex flex-col gap-4">
           <div className="flex items-center gap-2">
             <Crown className="size-4 text-accent-gold shrink-0" />
-            <p className="text-xs font-bold text-white uppercase tracking-wider">Especialistas por Mapa</p>
+            <p className="text-xs font-bold text-white uppercase tracking-wider">👑 Donos de Cada Mapa</p>
           </div>
           {specialists.length === 0 ? (
             <p className="text-xs text-muted-foreground/55 text-center py-6">Nenhum especialista identificado ainda.</p>
@@ -66,7 +66,7 @@ export function ReisDosMapa({ specialists, mapWinrates, bestMap, worstMap }: Rei
             {bestMap && (
               <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-status-good/5 border border-status-good/10">
                 <span className="flex items-center gap-1.5 text-status-good font-semibold text-xs">
-                  <Flame className="size-3.5" /> Melhor mapa
+                  <Flame className="size-3.5" /> 🔥 Território Dominado
                 </span>
                 <span className="text-white font-bold text-xs">{bestMap.map} · {bestMap.winrate.toFixed(0)}%</span>
               </div>
@@ -74,7 +74,7 @@ export function ReisDosMapa({ specialists, mapWinrates, bestMap, worstMap }: Rei
             {worstMap && (
               <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-status-critical/5 border border-status-critical/10">
                 <span className="flex items-center gap-1.5 text-status-critical font-semibold text-xs">
-                  <ShieldAlert className="size-3.5" /> Mapa problema
+                  <ShieldAlert className="size-3.5" /> 😂 Onde a bala passa longe
                 </span>
                 <span className="text-white font-bold text-xs">{worstMap.map} · {worstMap.winrate.toFixed(0)}%</span>
               </div>

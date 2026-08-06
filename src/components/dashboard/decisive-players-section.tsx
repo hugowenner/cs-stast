@@ -57,14 +57,14 @@ export function DecisivePlayersSection({ decisive }: Props) {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-black text-white truncate">{entry.player.nickname}</p>
-                <p className="text-[9px] text-muted-foreground/55 font-semibold mt-0.5">Jogador Decisivo</p>
+                <p className="text-[9px] text-muted-foreground/55 font-semibold mt-0.5">⚡ Decide o Round</p>
               </div>
             </div>
 
             {/* Impacto — métrica principal */}
             <div className="px-4 py-3 border-b border-white/[0.04]">
               <p className="text-[8px] uppercase tracking-widest font-bold text-muted-foreground/55">
-                Impacto nos Rounds
+                Presença no Round
               </p>
               <p className="text-2xl font-black text-white tabular-nums leading-tight mt-0.5">
                 <AnimatedNumber value={entry.impactPercent} decimals={0} suffix="%" duration={0.8} />

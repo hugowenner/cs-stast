@@ -16,7 +16,7 @@ export function PerformanceExtremesSection({ best, worst }: PerformanceExtremesS
   return (
     <section>
       <FadeIn delay={0.15}>
-        <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-muted-foreground/60 mb-4">Destaques da Temporada</p>
+        <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-muted-foreground/60 mb-4">🏆 Glórias e Vergonhas da Temporada</p>
       </FadeIn>
       <FadeIn delay={0.155}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -25,7 +25,7 @@ export function PerformanceExtremesSection({ best, worst }: PerformanceExtremesS
             <div className="glass-panel rounded-2xl border border-status-warning/25 bg-status-warning/[0.02] overflow-hidden">
               <div className="px-6 py-4 border-b border-status-warning/10 flex items-center gap-2">
                 <Flame className="size-3.5 text-status-warning shrink-0" />
-                <p className="text-[10px] uppercase tracking-widest font-bold text-status-warning/80">Melhor Atuação da Temporada</p>
+                <p className="text-[10px] uppercase tracking-widest font-bold text-status-warning/80">🔥 Atuação Absurda — O que foi isso?</p>
               </div>
               <div className="px-6 py-6 flex items-start gap-5">
                 <PlayerAvatar nickname={best.player.nickname} avatarUrl={best.player.avatarUrl} size="md" />
@@ -58,7 +58,7 @@ export function PerformanceExtremesSection({ best, worst }: PerformanceExtremesS
             <div className="glass-panel rounded-2xl border border-status-critical/20 bg-status-critical/[0.02] overflow-hidden">
               <div className="px-6 py-4 border-b border-status-critical/10 flex items-center gap-2">
                 <ShieldAlert className="size-3.5 text-status-critical shrink-0" />
-                <p className="text-[10px] uppercase tracking-widest font-bold text-status-critical/80">Pior Atuação Registrada</p>
+                <p className="text-[10px] uppercase tracking-widest font-bold text-status-critical/80">💀 O Banco Não Esquece</p>
               </div>
               <div className="px-6 py-6 flex items-start gap-5">
                 <PlayerAvatar nickname={worst.player.nickname} avatarUrl={worst.player.avatarUrl} size="md" />

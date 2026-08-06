@@ -29,10 +29,10 @@ export function SessionHero({ overview }: SessionHeroProps) {
       <div>
         <h1 className="text-2xl font-black text-white flex items-center gap-2">
           <CalendarDays className="size-6 text-accent-violet shrink-0" />
-          Sessões do Grupo
+          🎮 Noites de CS2
         </h1>
         <p className="text-xs text-muted-foreground/75 mt-1">
-          Todas as noites de CS2 analisadas pelo Hub
+          Cada noite registrada, cada derrota explicada com dados
         </p>
       </div>
 

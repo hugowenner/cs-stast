@@ -7,14 +7,14 @@ interface WeeklyCuriosityCardProps {
 }
 
 const CATEGORY_META: Record<WeeklyCuriosityCategory, { icon: any; label: string; color: string }> = {
-  "streak-hot": { icon: Flame, label: "Sequência de vitórias", color: "text-status-good" },
-  "streak-cold": { icon: Snowflake, label: "Sequência de derrotas", color: "text-status-critical" },
-  map: { icon: Map, label: "Domínio de mapa", color: "text-accent-cyan" },
-  adr: { icon: TrendingUp, label: "Evolução de dano", color: "text-status-good" },
-  "weekly-kills": { icon: Crosshair, label: "Atuação da semana", color: "text-status-warning" },
-  "headshot-king": { icon: Crosshair, label: "Rei do HS", color: "text-accent-cyan" },
-  "impact-beast": { icon: Zap, label: "Atuação de Impacto", color: "text-primary" },
-  "duo-perfect": { icon: Swords, label: "Parceria Perfeita", color: "text-accent-violet" },
+  "streak-hot": { icon: Flame, label: "🔥 Modo deus ativado", color: "text-status-good" },
+  "streak-cold": { icon: Snowflake, label: "😂 Fase de quebra de mouse", color: "text-status-critical" },
+  map: { icon: Map, label: "👑 Dono do mapa", color: "text-accent-cyan" },
+  adr: { icon: TrendingUp, label: "📈 Jogando com mais raiva", color: "text-status-good" },
+  "weekly-kills": { icon: Crosshair, label: "🎯 Distribuidor da semana", color: "text-status-warning" },
+  "headshot-king": { icon: Crosshair, label: "💀 Rei do HS", color: "text-accent-cyan" },
+  "impact-beast": { icon: Zap, label: "⚡ Atuação absurda", color: "text-primary" },
+  "duo-perfect": { icon: Swords, label: "🔥 Parceiros de crime", color: "text-accent-violet" },
 };
 
 export function WeeklyCuriosityCard({ curiosity }: WeeklyCuriosityCardProps) {
@@ -23,7 +23,7 @@ export function WeeklyCuriosityCard({ curiosity }: WeeklyCuriosityCardProps) {
       <div className="glass-panel rounded-2xl border border-accent-violet/20 bg-accent-violet/[0.03] p-5 h-full flex flex-col">
         <div className="flex items-center gap-2 mb-3">
           <Lightbulb className="size-3.5 text-accent-violet shrink-0" />
-          <p className="text-[10px] uppercase tracking-widest font-bold text-accent-violet/80">Curiosidade da Semana</p>
+          <p className="text-[10px] uppercase tracking-widest font-bold text-accent-violet/80">🧠 Estatística que ninguém pediu</p>
         </div>
         <div className="flex-1 flex items-center">
           <p className="text-xs text-muted-foreground/55">Nenhuma curiosidade relevante encontrada no momento.</p>

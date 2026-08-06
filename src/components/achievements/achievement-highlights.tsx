@@ -54,7 +54,7 @@ export function AchievementHighlights({
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       {/* Maior Colecionador */}
-      <HighlightCard icon={Crown} label="Maior Colecionador" iconClassName="text-status-warning">
+      <HighlightCard icon={Crown} label="🏆 Rei das Conquistas" iconClassName="text-status-warning">
         {topCollector ? (
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
@@ -77,7 +77,7 @@ export function AchievementHighlights({
       </HighlightCard>
 
       {/* Conquista Mais Rara */}
-      <HighlightCard icon={Gem} label="Conquista Mais Rara" iconClassName="text-accent-violet">
+      <HighlightCard icon={Gem} label="💎 Raridade do Museu" iconClassName="text-accent-violet">
         {rarestEntry ? (
           <div className="flex flex-col gap-2">
             <div className="flex items-start gap-1.5 flex-wrap">
@@ -94,7 +94,7 @@ export function AchievementHighlights({
       </HighlightCard>
 
       {/* Última Conquista */}
-      <HighlightCard icon={Clock} label="Última Conquista" iconClassName="text-accent-cyan">
+      <HighlightCard icon={Clock} label="⏱️ Amasso Mais Recente" iconClassName="text-accent-cyan">
         {lastUnlock ? (
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
@@ -120,7 +120,7 @@ export function AchievementHighlights({
       </HighlightCard>
 
       {/* Jogador Mais Ativo */}
-      <HighlightCard icon={Flame} label="Jogador Mais Ativo" iconClassName="text-status-critical">
+      <HighlightCard icon={Flame} label="🔥 Viciado em Conquistas" iconClassName="text-status-critical">
         {mostActive ? (
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">

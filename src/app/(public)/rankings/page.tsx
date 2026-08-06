@@ -117,7 +117,7 @@ export default async function RankingsPage({
       <FadeIn>
         <PageHeader
           title="🏆 Rankings"
-          subtitle="Classificação competitiva do time no período selecionado"
+          subtitle="Quem realmente está carregando o grupo nesta temporada"
           actions={
             <SeasonSelect seasons={seasonOptions} currentSeasonId={currentSeason} />
           }
@@ -182,7 +182,7 @@ export default async function RankingsPage({
 
       <SectionContainer
         title={`Classificação por ${metricLabel}`}
-        subtitle="Quadro de liderança atualizado em tempo real"
+        subtitle="Ranking calculado em tempo real com base na temporada"
         delay={0.15}
       >
         {ranking.length === 0 ? (

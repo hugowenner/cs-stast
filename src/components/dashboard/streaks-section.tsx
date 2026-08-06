@@ -87,7 +87,7 @@ export function StreaksSection({ hot, cold }: StreaksSectionProps) {
       <div className="glass-panel rounded-2xl border border-status-good/20 bg-status-good/[0.015] overflow-hidden">
         <div className="px-4 py-3.5 border-b border-status-good/10 flex items-center gap-2">
           <Flame className="size-3.5 text-status-good shrink-0" />
-          <p className="text-[10px] uppercase tracking-widest font-bold text-status-good/80">Hot Streak</p>
+          <p className="text-[10px] uppercase tracking-widest font-bold text-status-good/80">🔥 Modo Deus Ativado</p>
           {hot.length > 0 && (
             <span className="ml-auto text-[9px] text-muted-foreground/60 font-semibold">{hot.length} jogador{hot.length > 1 ? "es" : ""}</span>
           )}
@@ -97,7 +97,7 @@ export function StreaksSection({ hot, cold }: StreaksSectionProps) {
       <div className="glass-panel rounded-2xl border border-status-critical/20 bg-status-critical/[0.015] overflow-hidden">
         <div className="px-4 py-3.5 border-b border-status-critical/10 flex items-center gap-2">
           <Snowflake className="size-3.5 text-status-critical shrink-0" />
-          <p className="text-[10px] uppercase tracking-widest font-bold text-status-critical/80">Cold Streak</p>
+          <p className="text-[10px] uppercase tracking-widest font-bold text-status-critical/80">❄️ Sequência de Sofrimento</p>
           {cold.length > 0 && (
             <span className="ml-auto text-[9px] text-muted-foreground/60 font-semibold">{cold.length} jogador{cold.length > 1 ? "es" : ""}</span>
           )}

@@ -6,7 +6,7 @@ export function Footer() {
       <div className="min-w-0">
         <p className="text-xs font-bold text-white tracking-wide">CS2 Stats Hub</p>
         <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">
-          Plataforma de análise competitiva para partidas de CS2
+          Dados sérios para quem joga CS2 com ainda mais seriedade
         </p>
       </div>
       <div className="text-[11px] text-muted-foreground flex flex-col items-center sm:items-end gap-0.5">

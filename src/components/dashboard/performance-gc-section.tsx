@@ -114,7 +114,7 @@ export function PerformanceGcSection({ stats, multikillsLeaderboards }: Performa
   const [activeTab, setActiveTab] = useState<Tab>("multikills");
 
   const tabs: { id: Tab; label: string; icon: typeof Zap; disabled?: boolean }[] = [
-    { id: "performance", label: "Performance GC", icon: Zap },
+    { id: "performance", label: "🎯 GC Premium",  icon: Zap },
     { id: "multikills",  label: "Multikills",     icon: Trophy },
     { id: "clutches",    label: "Clutches",       icon: ShieldCheck, disabled: true },
   ];

@@ -289,7 +289,7 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
         {/* Forças */}
         <div className="p-4 rounded-xl border border-white/5 bg-white/[0.01] flex flex-col gap-2">
           <span className="text-[10px] font-semibold text-status-good uppercase tracking-wider flex items-center gap-1">
-            <CheckCircle className="size-3.5" /> Pontos Fortes
+            <CheckCircle className="size-3.5" /> O que Tá Funcionando
           </span>
           <ul className="flex flex-col gap-2 text-xs text-muted-foreground">
             {report.strengths.map((str, idx) => (
@@ -304,7 +304,7 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
         {/* Fraquezas */}
         <div className="p-4 rounded-xl border border-white/5 bg-white/[0.01] flex flex-col gap-2">
           <span className="text-[10px] font-semibold text-status-critical uppercase tracking-wider flex items-center gap-1">
-            <AlertTriangle className="size-3.5" /> Prioridades de Melhoria
+            <AlertTriangle className="size-3.5" /> O que Precisa Melhorar
           </span>
           <ul className="flex flex-col gap-2 text-xs text-muted-foreground">
             {report.weaknesses.map((weak, idx) => (
@@ -320,7 +320,7 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
       {/* Recomendações */}
       <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 flex flex-col gap-2">
         <span className="text-[10px] font-semibold text-primary uppercase tracking-wider flex items-center gap-1">
-          <Lightbulb className="size-3.5" /> Recomendações do Coach
+          <Lightbulb className="size-3.5" /> O que o Coach Manda Fazer
         </span>
         <ul className="flex flex-col gap-2.5 text-xs text-muted-foreground">
           {report.recommendations.map((rec, idx) => (
@@ -336,7 +336,7 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
       {report.nextGoal && (
         <div className="p-4 rounded-xl border border-accent-cyan/20 bg-accent-cyan/[0.04] flex flex-col gap-2">
           <span className="text-[10px] font-semibold text-accent-cyan uppercase tracking-wider flex items-center gap-1">
-            <Target className="size-3.5" /> Próximo Objetivo
+            <Target className="size-3.5" /> 🎯 Próxima Meta
           </span>
           <p className="text-xs text-muted-foreground leading-relaxed">{report.nextGoal}</p>
         </div>

@@ -55,8 +55,8 @@ function EvolucaoCards({ gainers }: { gainers: SeasonComparisonEntry[] }) {
   return (
     <TendenciaCard
       icon={TrendingUp}
-      label="Maior Evolução Recente"
-      badge="↑ Em alta"
+      label="📈 Subindo nos Gráficos"
+      badge="↑ Em modo deus"
       badgeColor="text-status-good"
       borderColor="border border-status-good/20"
       bgColor="bg-status-good/[0.015]"
@@ -103,8 +103,8 @@ function QuedaCards({ decliners }: { decliners: SeasonComparisonEntry[] }) {
   return (
     <TendenciaCard
       icon={TrendingDown}
-      label="Maior Queda Recente"
-      badge="↓ Atenção"
+      label="😂 Fase ruim detectada"
+      badge="↓ Reza"
       badgeColor="text-status-warning"
       borderColor="border border-status-warning/20"
       bgColor="bg-status-warning/[0.015]"
@@ -211,7 +211,7 @@ function MapaTendenciaCard({ mapWinrates }: { mapWinrates: MapPerformanceEntry[]
       <div className="flex flex-col gap-3">
         <div className="bg-status-good/[0.04] border border-status-good/10 rounded-lg p-3 flex items-center justify-between">
           <div>
-            <p className="text-[8px] uppercase tracking-widest font-bold text-status-good/70">Melhor Mapa</p>
+            <p className="text-[8px] uppercase tracking-widest font-bold text-status-good/70">🔥 Território Dominado</p>
             <p className="text-sm font-black text-white mt-0.5">{best.map}</p>
           </div>
           <div className="text-right">
@@ -223,7 +223,7 @@ function MapaTendenciaCard({ mapWinrates }: { mapWinrates: MapPerformanceEntry[]
         </div>
         <div className="bg-status-critical/[0.04] border border-status-critical/10 rounded-lg p-3 flex items-center justify-between">
           <div>
-            <p className="text-[8px] uppercase tracking-widest font-bold text-status-critical/70">Mapa Difícil</p>
+            <p className="text-[8px] uppercase tracking-widest font-bold text-status-critical/70">😂 Onde a bala passa longe</p>
             <p className="text-sm font-black text-white mt-0.5">{worst.map}</p>
           </div>
           <div className="text-right">

@@ -246,7 +246,7 @@ export function NarratorSection({ highlights }: NarratorSectionProps) {
       <div className="p-4 bg-white/[0.015] flex flex-col justify-between">
         <div className="space-y-3">
           <div className="px-2 py-1 flex items-center justify-between">
-            <span className="text-[9px] uppercase tracking-widest font-extrabold text-muted-foreground/60">Destaques do Hub</span>
+            <span className="text-[9px] uppercase tracking-widest font-extrabold text-muted-foreground/60">🎙️ Histórias do Hub</span>
             <span className="text-[9px] text-muted-foreground/40 font-bold">{highlights.length} Histórias</span>
           </div>
 

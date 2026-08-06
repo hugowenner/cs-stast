@@ -40,7 +40,7 @@ export function SeasonHero({
           </div>
           <div className="min-w-0">
             <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted-foreground/50 leading-none mb-1">
-              MVP da Temporada
+              😂 O que segura o time nas costas
             </p>
             <p className="text-xl font-black text-white leading-none truncate">
               {bestPlayer?.nickname ?? "—"}
@@ -71,7 +71,7 @@ export function SeasonHero({
             <div className="flex items-center gap-1">
               <Compass className="size-2.5 text-accent-violet shrink-0" />
               <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted-foreground/50 leading-none">
-                Mapa Favorito
+                🔥 Território Dominado
               </p>
             </div>
             <p className="text-base font-black text-white leading-none truncate">

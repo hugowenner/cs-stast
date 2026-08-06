@@ -182,7 +182,7 @@ export default async function DashboardPage(props: {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 glass-panel border border-white/[0.06] rounded-2xl px-6 py-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-xl lg:text-2xl font-black text-white leading-none">
-            Estatísticas Competitivas
+            📊 Raio-X da Temporada
           </h1>
           <div className="flex items-center gap-2 mt-1.5">
             {selectedSeason?.status === "ACTIVE" ? (
@@ -277,7 +277,7 @@ export default async function DashboardPage(props: {
 
       {/* ═══ 4. Radar da Temporada ═══ */}
       <SectionContainer
-        title="📡 Radar da Temporada"
+        title="🔎 Detector de Bagre"
         delay={0.04}
       >
         <RadarDaTemporada
@@ -289,7 +289,7 @@ export default async function DashboardPage(props: {
 
       {/* ═══ 4. Hall da Fama ═══ */}
       <SectionContainer
-        title="🏆 Hall da Fama"
+        title="🏛️ Museu dos Amassos"
         delay={0.05}
       >
         <HallOfFame records={records} monitoredPlayers={monitoredPlayers} />
@@ -297,7 +297,7 @@ export default async function DashboardPage(props: {
 
       {/* ═══ 5. Ranking Competitivo ═══ */}
       <SectionContainer
-        title="Ranking Competitivo"
+        title="Quem está carregando"
         delay={0.06}
       >
         <RankingTable
@@ -312,7 +312,7 @@ export default async function DashboardPage(props: {
       {/* ═══ 6. Tendências da Temporada ═══ */}
       {(topGainers.length > 0 || topDecliners.length > 0 || hotStreaks.length > 0 || coldStreaks.length > 0) && (
         <SectionContainer
-          title="📈 Tendências da Temporada"
+          title="📈 Quem subiu e quem afundou"
           delay={0.08}
         >
           <TendenciasDaTemporada
@@ -327,7 +327,7 @@ export default async function DashboardPage(props: {
 
       {/* ═══ 7. Mural Competitivo ═══ */}
       <SectionContainer
-        title="📊 Mural Competitivo"
+        title="📊 Painel de Domínio"
         delay={0.09}
       >
         <MuralCompetitivo
@@ -339,7 +339,7 @@ export default async function DashboardPage(props: {
 
       {/* ═══ 8. Sinergia ═══ */}
       <SectionContainer
-        title="🤝 Sinergia"
+        title="🤝 Dinâmicas do Grupo"
         delay={0.10}
       >
         <SinergiaSection
@@ -354,7 +354,7 @@ export default async function DashboardPage(props: {
       {/* ═══ 9. Reis dos Mapas ═══ */}
       {(mapSpecialists.length > 0 || mapWinrates.length > 0) && (
         <SectionContainer
-          title="🗺️ Reis dos Mapas"
+          title="👑 Donos dos Mapas"
           delay={0.11}
         >
           <ReisDosMapa
@@ -368,7 +368,7 @@ export default async function DashboardPage(props: {
 
       {/* ═══ 10. Performance GC ═══ */}
       <SectionContainer
-        title="⚡ Performance GC"
+        title="🎯 Estatísticas de Boteco Premium"
         delay={0.12}
       >
         <PerformanceGcSection
@@ -382,7 +382,7 @@ export default async function DashboardPage(props: {
       {/* ═══ 12. Coach IA ═══ */}
       <SectionContainer
         title="Coach IA"
-        subtitle="Relatório de performance gerado por Inteligência Artificial"
+        subtitle="💀 A IA que vai reclamar da sua mira"
         delay={0.14}
       >
         <div className="relative w-full">
@@ -393,12 +393,12 @@ export default async function DashboardPage(props: {
 
       {/* ═══ 13. Conquistas Recentes ═══ */}
       <SectionContainer
-        title="Conquistas Recentes"
+        title="🏆 Conquistas Recentes"
         delay={0.15}
       >
         <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
           {recentAchievements.length === 0 ? (
-            <p className="text-muted-foreground/55 py-10 text-center text-sm">Nenhuma conquista registrada recentemente.</p>
+            <p className="text-muted-foreground/55 py-10 text-center text-sm">Nenhuma conquista desbloqueada recentemente. Joguem mais.</p>
           ) : (
             <div className="divide-y divide-white/[0.04]">
               {recentAchievements.map((entry, i) => (

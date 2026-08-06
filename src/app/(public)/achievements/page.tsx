@@ -51,10 +51,10 @@ export default async function AchievementsPage() {
         <div className="flex flex-col gap-3">
           <div>
             <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-muted-foreground/60">
-              Desbloqueios Recentes
+              🔓 Conquistas Recentemente Arrancadas
             </p>
             <p className="mt-0.5 text-[11px] text-muted-foreground/45">
-              Histórico de conquistas da comunidade, ordenado por data.
+              Histórico de conquistas da comunidade — quem desbloqueou o quê.
             </p>
           </div>
           <AchievementFeed unlocks={stats.recentUnlocks} />

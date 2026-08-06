@@ -31,7 +31,7 @@ function DestaqueDaSemana({ info }: { info: JogadorDaSemanaInfo }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Star className="size-4 text-accent-gold shrink-0" />
-          <p className="text-[10px] uppercase tracking-widest font-bold text-accent-gold/80">Destaque da Semana</p>
+          <p className="text-[10px] uppercase tracking-widest font-bold text-accent-gold/80">🔥 Tá impossível parar</p>
         </div>
         <PriorityBadge label="⭐ Destaque" color="border-accent-gold/30 text-accent-gold bg-accent-gold/[0.04]" />
       </div>
@@ -81,7 +81,7 @@ function SmartAlertCard({ alert }: { alert: SmartAlert }) {
         <div className="flex items-center gap-2">
           {positive ? <Map className="size-4 text-accent-cyan shrink-0" /> : <AlertTriangle className="size-4 text-status-warning shrink-0" />}
           <p className={`text-[10px] uppercase tracking-widest font-bold ${positive ? "text-accent-cyan/80" : "text-status-warning/80"}`}>
-            {positive ? "Alerta Positivo" : "Alerta de Atenção"}
+            {positive ? "📡 Sinal Positivo" : "⚠️ Sinal de Alerta"}
           </p>
         </div>
         <PriorityBadge
@@ -104,7 +104,7 @@ function CuriosidadeCard({ curiosity }: { curiosity: WeeklyCuriosity }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sparkles className="size-4 text-accent-purple shrink-0" />
-          <p className="text-[10px] uppercase tracking-widest font-bold text-accent-purple/80">Curiosidade da Semana</p>
+          <p className="text-[10px] uppercase tracking-widest font-bold text-accent-purple/80">🧠 Estatística que ninguém pediu</p>
         </div>
         <PriorityBadge label="🟡 Tendência" color="border-accent-purple/30 text-accent-purple bg-accent-purple/[0.04]" />
       </div>

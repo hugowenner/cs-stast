@@ -84,14 +84,14 @@ export function SeasonEvolutionSection({ gainers, decliners }: SeasonEvolutionSe
       <div className="glass-panel rounded-2xl border border-status-good/20 bg-status-good/[0.015] overflow-hidden">
         <div className="px-4 py-3.5 border-b border-status-good/10 flex items-center gap-2">
           <TrendingUp className="size-3.5 text-status-good shrink-0" />
-          <p className="text-[10px] uppercase tracking-widest font-bold text-status-good/80">Maior Evolução</p>
+          <p className="text-[10px] uppercase tracking-widest font-bold text-status-good/80">📈 Subindo no Rank com Raça</p>
         </div>
         <ComparisonPanel entries={gainers} accent="good" />
       </div>
       <div className="glass-panel rounded-2xl border border-status-critical/20 bg-status-critical/[0.015] overflow-hidden">
         <div className="px-4 py-3.5 border-b border-status-critical/10 flex items-center gap-2">
           <TrendingDown className="size-3.5 text-status-critical shrink-0" />
-          <p className="text-[10px] uppercase tracking-widest font-bold text-status-critical/80">Queda de Performance</p>
+          <p className="text-[10px] uppercase tracking-widest font-bold text-status-critical/80">📉 Precisa Treinar Mais</p>
         </div>
         <ComparisonPanel entries={decliners} accent="critical" />
       </div>

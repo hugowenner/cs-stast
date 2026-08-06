@@ -19,10 +19,10 @@ interface SinergiaSectionProps {
 type Tab = "duplas" | "trios" | "rivais" | "matchups";
 
 const TABS: { id: Tab; label: string; icon: typeof Handshake }[] = [
-  { id: "duplas",   label: "Duplas",   icon: Handshake },
-  { id: "trios",    label: "Trios",    icon: Users },
-  { id: "rivais",   label: "Rivais",   icon: Swords },
-  { id: "matchups", label: "Matchups", icon: Swords },
+  { id: "duplas",   label: "🔥 Os parceiros de crime", icon: Handshake },
+  { id: "trios",    label: "Trios",                    icon: Users },
+  { id: "rivais",   label: "☠️ Rivais",                icon: Swords },
+  { id: "matchups", label: "Matchups",                 icon: Swords },
 ];
 
 // ─── Tab: Duplas ──────────────────────────────────────────────────────────────
@@ -203,12 +203,12 @@ function MatchupsTab({ matchups }: { matchups: PlayerMatchupSummary[] }) {
           <div className="flex flex-wrap gap-2">
             {m.dominates && (
               <span className="text-[10px] font-bold text-status-good bg-status-good/10 border border-status-good/20 px-2 py-0.5 rounded-full">
-                ✓ Domina {m.dominates.rivalName}
+                👑 Domina {m.dominates.rivalName}
               </span>
             )}
             {m.struggles && (
               <span className="text-[10px] font-bold text-status-critical bg-status-critical/10 border border-status-critical/20 px-2 py-0.5 rounded-full">
-                ✗ Sofre contra {m.struggles.rivalName}
+                ☠️ Sofre contra {m.struggles.rivalName}
               </span>
             )}
           </div>

@@ -148,7 +148,7 @@ function getSessionMoodMeta(mood: SimpleSessionSummary["mood"]) {
   switch (mood) {
     case "excellent":
       return {
-        label: "🔥 Sessão quente",
+        label: "🔥 Tá impossível parar",
         style: "bg-status-warning/10 text-status-warning border-status-warning/20 shadow-[0_0_10px_rgba(245,158,11,0.04)]",
       };
     case "good":
