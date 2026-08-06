@@ -120,36 +120,36 @@
      L 0.178 ≈ #1d1f27. Referência: Raycast (L≈0.18), Linear (L≈0.17).
      Cada camada de superfície sobe ~4-5 pts de lightness, criando hierarquia
      visual clara sem precisar de sombras fortes.                              */
-  --background: oklch(0.178 0.006 258);
+  --background: oklch(0.200 0.006 258);
   --foreground: oklch(0.985 0 0);
 
   /* ── Camadas de superfície ───────────────────────────────────────────────── */
-  /* L1 — glass-panel / cards: +4.7 pts sobre bg */
-  --card: oklch(0.222 0.007 260 / 0.70);
+  /* L1 — glass-panel / cards: +4.4 pts sobre bg */
+  --card: oklch(0.244 0.007 260 / 0.70);
   --card-foreground: oklch(0.985 0 0);
-  --surface-1: oklch(0.225 0.008 260 / 0.82);
+  --surface-1: oklch(0.247 0.008 260 / 0.82);
   /* L2 — cards secundários, painéis aninhados: +4.5 pts sobre surface-1 */
-  --surface-2: oklch(0.270 0.009 260 / 0.85);
+  --surface-2: oklch(0.292 0.009 260 / 0.85);
   /* L3 — highlight com toque violeta para CTAs e seleção */
-  --surface-highlight: oklch(0.255 0.030 285 / 0.60);
+  --surface-highlight: oklch(0.277 0.030 285 / 0.60);
 
   /* ── Popovers / menus (sólidos — backdrop-blur não funciona em dropdowns) ── */
-  --popover: oklch(0.220 0.018 285);
+  --popover: oklch(0.242 0.018 285);
   --popover-foreground: oklch(0.985 0 0);
 
   /* ── Primary / accent ────────────────────────────────────────────────────── */
   --primary: oklch(0.62 0.19 288);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.268 0.022 285);
+  --secondary: oklch(0.290 0.022 285);
   --secondary-foreground: oklch(0.985 0 0);
 
   /* ── Muted ───────────────────────────────────────────────────────────────── */
-  --muted: oklch(0.268 0.022 285);
+  --muted: oklch(0.290 0.022 285);
   /* muted-foreground levemente mais claro que antes (mantém ratio 4.5:1 no charcoal) */
-  --muted-foreground: oklch(0.720 0.020 285);
+  --muted-foreground: oklch(0.742 0.020 285);
 
   /* ── Accent ──────────────────────────────────────────────────────────────── */
-  --accent: oklch(0.285 0.028 285);
+  --accent: oklch(0.307 0.028 285);
   --accent-foreground: oklch(0.985 0 0);
 
   /* ── Feedback ────────────────────────────────────────────────────────────── */
@@ -169,11 +169,11 @@
   --chart-5: #d95926;
 
   /* ── Sidebar: fica ~3 pts abaixo do bg para recuar visualmente ──────────── */
-  --sidebar: oklch(0.148 0.012 285);
+  --sidebar: oklch(0.170 0.012 285);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.62 0.19 288);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.265 0.022 285);
+  --sidebar-accent: oklch(0.287 0.022 285);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.62 0.19 288);

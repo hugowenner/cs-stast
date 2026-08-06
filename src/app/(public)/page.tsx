@@ -179,7 +179,7 @@ export default async function DashboardPage(props: {
       <AnnouncementBanner />
 
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 glass-panel border border-white/[0.06] rounded-2xl px-6 py-4">
+      <div className="relative z-30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 glass-panel border border-white/[0.06] rounded-2xl px-6 py-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-xl lg:text-2xl font-black text-white leading-none">
             📊 Raio-X da Temporada
