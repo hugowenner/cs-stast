@@ -126,16 +126,16 @@ export function MonitoredPlayersCarousel({ players }: Props) {
                   <img
                     src={entry.player.steamAvatarFull || entry.player.avatarUrl || ""}
                     alt={entry.player.nickname}
-                    className="absolute inset-0 w-full h-full object-cover opacity-[0.35] blur-[1px] z-0 pointer-events-none select-none"
+                    className="bg-avatar-texture"
                     onError={(e) => {
                       (e.target as HTMLElement).style.display = "none";
                     }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-black/45 to-black/85 z-0 pointer-events-none select-none" />
+                  <div className="bg-texture-overlay" />
                 </>
               )}
               {!(entry.player.steamAvatarFull || entry.player.avatarUrl) && (
-                <div className="absolute inset-0 bg-black/60 z-0 pointer-events-none select-none" />
+                <div className="bg-texture-overlay" />
               )}
 
               {/* Header */}

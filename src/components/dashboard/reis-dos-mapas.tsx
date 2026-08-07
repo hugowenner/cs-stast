@@ -21,6 +21,8 @@ const MAP_IMAGES: Record<string, string> = {
   dust2: "/maps/dust2.png",
   inferno: "/maps/inferno.png",
   ancient: "/maps/ancient.png",
+  anubis: "/maps/anubis.png",
+  nuke: "/maps/nuke.png",
   cache: "/maps/cache.png",
   overpass: "/maps/overpass.png",
 };
@@ -59,12 +61,12 @@ export function ReisDosMapa({ specialists, mapWinrates, bestMap, worstMap }: Rei
                         <img
                           src={mapImg}
                           alt={spec.mapName}
-                          className="absolute inset-0 w-full h-full object-cover opacity-[0.35] blur-[1px] z-0 pointer-events-none select-none transition-transform duration-300 group-hover:scale-105"
+                          className="bg-map-texture transition-transform duration-300 group-hover:scale-105"
                           onError={(e) => {
                             (e.target as HTMLElement).style.display = "none";
                           }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black/85 z-0 pointer-events-none select-none" />
+                        <div className="bg-texture-overlay" />
                       </>
                     )}
                     <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent z-10" />
@@ -110,12 +112,12 @@ export function ReisDosMapa({ specialists, mapWinrates, bestMap, worstMap }: Rei
                       <img
                         src={bestMapImg}
                         alt={bestMap.map}
-                        className="absolute inset-0 w-full h-full object-cover opacity-[0.35] blur-[1px] z-0 pointer-events-none select-none transition-transform duration-300 group-hover:scale-105"
+                        className="bg-map-texture transition-transform duration-300 group-hover:scale-105"
                         onError={(e) => {
                           (e.target as HTMLElement).style.display = "none";
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/60 to-black/90 z-0 pointer-events-none select-none" />
+                      <div className="bg-texture-overlay" />
                     </>
                   )}
                   <div className="flex items-center justify-between relative z-10">
@@ -137,12 +139,12 @@ export function ReisDosMapa({ specialists, mapWinrates, bestMap, worstMap }: Rei
                       <img
                         src={worstMapImg}
                         alt={worstMap.map}
-                        className="absolute inset-0 w-full h-full object-cover opacity-[0.35] blur-[1px] z-0 pointer-events-none select-none transition-transform duration-300 group-hover:scale-105"
+                        className="bg-map-texture transition-transform duration-300 group-hover:scale-105"
                         onError={(e) => {
                           (e.target as HTMLElement).style.display = "none";
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/60 to-black/90 z-0 pointer-events-none select-none" />
+                      <div className="bg-texture-overlay" />
                     </>
                   )}
                   <div className="flex items-center justify-between relative z-10">

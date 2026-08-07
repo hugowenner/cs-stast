@@ -179,6 +179,8 @@ const MAP_IMAGES: Record<string, string> = {
   dust2: "/maps/dust2.png",
   inferno: "/maps/inferno.png",
   ancient: "/maps/ancient.png",
+  anubis: "/maps/anubis.png",
+  nuke: "/maps/nuke.png",
   cache: "/maps/cache.png",
   overpass: "/maps/overpass.png",
 };
@@ -234,10 +236,9 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
             <img
               src={mapImgUrl}
               alt={record.mapName || mapName || "Map background"}
-              className="absolute inset-0 w-full h-full object-cover opacity-[0.35] blur-[1px] z-0 pointer-events-none select-none"
+              className="bg-map-texture"
             />
-            {/* Dark overlay with gradient for contrast */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/55 to-black/85 z-0 pointer-events-none select-none" />
+            <div className="bg-texture-overlay" />
           </>
         )}
 

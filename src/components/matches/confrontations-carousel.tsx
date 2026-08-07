@@ -103,6 +103,8 @@ function ConfrontationCard({ match }: { match: RecentMatchCardData }) {
   dust2: "/maps/dust2.png",
   inferno: "/maps/inferno.png",
   ancient: "/maps/ancient.png",
+  anubis: "/maps/anubis.png",
+  nuke: "/maps/nuke.png",
   cache: "/maps/cache.png",
   overpass: "/maps/overpass.png",
 };
@@ -143,11 +145,15 @@ function getMapImage(mapName: string): string | null {
       {/* Background Map Image Overlay */}
       {mapImg && (
         <>
-          <div
-            className="absolute inset-0 bg-cover bg-center opacity-50 pointer-events-none select-none z-0 transition-opacity duration-300 group-hover:opacity-60"
-            style={{ backgroundImage: `url(${mapImg})` }}
+          <img
+            src={mapImg}
+            alt={match.map.name}
+            className="bg-map-texture"
+            onError={(e) => {
+              (e.target as HTMLElement).style.display = "none";
+            }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/85 pointer-events-none select-none z-0" />
+          <div className="bg-texture-overlay" />
         </>
       )}
 

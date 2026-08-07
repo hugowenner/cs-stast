@@ -10,6 +10,8 @@ const MAP_IMAGES: Record<string, string> = {
   dust2: "/maps/dust2.png",
   inferno: "/maps/inferno.png",
   ancient: "/maps/ancient.png",
+  anubis: "/maps/anubis.png",
+  nuke: "/maps/nuke.png",
   cache: "/maps/cache.png",
   overpass: "/maps/overpass.png",
 };
@@ -330,9 +332,9 @@ export function SeasonHero({
                     <img
                       src={bestMapImg}
                       alt={bestMap.map}
-                      className="absolute inset-0 w-full h-full object-cover opacity-[0.30] blur-[1px] z-0 pointer-events-none select-none"
+                      className="bg-map-texture"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/55 to-black/85 z-0 pointer-events-none select-none" />
+                    <div className="bg-texture-overlay" />
                   </>
                 )}
                 <div className="flex items-center justify-between relative z-10">
@@ -370,9 +372,9 @@ export function SeasonHero({
                     <img
                       src={worstMapImg}
                       alt={worstMap.map}
-                      className="absolute inset-0 w-full h-full object-cover opacity-[0.30] blur-[1px] z-0 pointer-events-none select-none"
+                      className="bg-map-texture"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/55 to-black/85 z-0 pointer-events-none select-none" />
+                    <div className="bg-texture-overlay" />
                   </>
                 )}
                 <div className="flex items-center justify-between relative z-10">
