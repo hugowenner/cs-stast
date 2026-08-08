@@ -19,6 +19,54 @@ export interface PremiumMatchupSummaryDTO {
   allConfrontos: PremiumMatchupDTO[];
 }
 
+export interface PremiumKillDistanceDTO {
+  avgKillDistance: number | null; // Weighted avg by kills, in CS2 Hammer units (game units)
+  sampleSize: number;             // Total kill count used in the calculation
+}
+
+export async function getPlayerKillDistance(
+  filter: PremiumAnalyticsFilter
+): Promise<PremiumKillDistanceDTO> {
+  const baseWhere = buildBaseWhere(filter);
+
+  // Fetch all matchup rows where this player was the killer and avgDistance is set
+  const matchups = await prisma.playerMatchup.findMany({
+    where: {
+      killerId: filter.playerId,
+      avgDistance: { not: null },
+      ...baseWhere,
+    },
+    select: {
+      kills: true,
+      avgDistance: true,
+    },
+  });
+
+  if (matchups.length === 0) {
+    return { avgKillDistance: null, sampleSize: 0 };
+  }
+
+  // Weighted average: each matchup's avgDistance is already a per-kill mean.
+  // Weight by kills to avoid distortion from low-sample matchups.
+  let totalWeightedDistance = 0;
+  let totalKills = 0;
+  for (const m of matchups) {
+    if (m.avgDistance !== null) {
+      totalWeightedDistance += m.avgDistance * m.kills;
+      totalKills += m.kills;
+    }
+  }
+
+  if (totalKills === 0) {
+    return { avgKillDistance: null, sampleSize: 0 };
+  }
+
+  return {
+    avgKillDistance: Math.round(totalWeightedDistance / totalKills),
+    sampleSize: totalKills,
+  };
+}
+
 export async function getPlayerMatchupStats(
   filter: PremiumAnalyticsFilter
 ): Promise<PremiumMatchupSummaryDTO> {

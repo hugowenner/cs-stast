@@ -15,6 +15,11 @@ import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { safeQuery } from "@/server/safeQuery";
 import * as playerService from "@/server/services/player.service";
+import { getPlayerEntryStats } from "@/server/services/analytics/premium/entry.analytics";
+import { getPlayerTradeStats } from "@/server/services/analytics/premium/trade.analytics";
+import { getPlayerClutchStats } from "@/server/services/analytics/premium/clutch.analytics";
+import { getPlayerKillDistance } from "@/server/services/analytics/premium/matchup.analytics";
+import { PremiumStatsPanel } from "@/components/players/premium-stats-panel";
 import { winrateContext, ratingContext, adrContext, kastContext, hsContext } from "@/lib/statContext";
 import { SeasonSelect } from "@/components/dashboard/season-select";
 import { listSeasons } from "@/server/services/season.service";
@@ -43,6 +48,13 @@ export default async function PlayerDetailPage({
   if (!detail) notFound();
 
   const { player, overview, maps, timeline, achievements, partners, recentMatches } = detail;
+
+  const [premiumEntry, premiumTrade, premiumClutch, premiumDistance] = await Promise.all([
+    safeQuery(() => getPlayerEntryStats({ playerId: id, seasonId: targetSeason }), null),
+    safeQuery(() => getPlayerTradeStats({ playerId: id, seasonId: targetSeason }), null),
+    safeQuery(() => getPlayerClutchStats({ playerId: id, seasonId: targetSeason }), null),
+    safeQuery(() => getPlayerKillDistance({ playerId: id, seasonId: targetSeason }), null),
+  ]);
 
   const mapProgressItems = maps.map((m) => ({
     name: m.mapName,
@@ -283,6 +295,16 @@ export default async function PlayerDetailPage({
         <ProfileChartsSection
           eloTimeline={eloTimelinePoints}
           ratingTimeline={ratingTimelinePoints}
+        />
+      </FadeIn>
+
+      {/* Premium Analytics — Opening Duels / Trades / Clutches */}
+      <FadeIn delay={0.13}>
+        <PremiumStatsPanel
+          entry={premiumEntry}
+          trade={premiumTrade}
+          clutch={premiumClutch}
+          distance={premiumDistance}
         />
       </FadeIn>
 
