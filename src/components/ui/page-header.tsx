@@ -16,7 +16,7 @@ export function PageHeader({
 }) {
   return (
     <div className={cn(
-      "card-important rounded-2xl relative overflow-hidden",
+      "card-important rounded-2xl relative",
       className
     )}>
       {/* Accent top-line */}

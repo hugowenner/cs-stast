@@ -17,7 +17,7 @@ interface HallOfFameProps {
 
 interface RecordMeta {
   title: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   medal: string;
   medalLabel: string;
   description: string;
@@ -324,8 +324,8 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
                   <p className={cn("text-[11px] font-black [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]", meta.accentColor)}>
                     {recordNarratives[record.category].headline}
                   </p>
-                  <p className="text-[10px] text-muted-foreground/55 italic mt-0.5 leading-relaxed [text-shadow:0_1px_3px_rgba(0,0,0,0.85)]">
-                    "{recordNarratives[record.category].quote}"
+                   <p className="text-[10px] text-muted-foreground/55 italic mt-0.5 leading-relaxed [text-shadow:0_1px_3px_rgba(0,0,0,0.85)]">
+                    &ldquo;{recordNarratives[record.category].quote}&rdquo;
                   </p>
                 </div>
               )}
