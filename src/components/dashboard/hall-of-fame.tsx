@@ -293,16 +293,16 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
                   {matchedPlayer ? (
                     <Link
                       href={`/players/${matchedPlayer.id}`}
-                      className="text-2xl sm:text-3xl font-black tracking-tight text-white hover:text-primary transition-colors leading-none uppercase block [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]"
+                      className="text-2xl sm:text-3xl font-black tracking-tight text-white hover:text-primary transition-colors leading-none uppercase block"
                     >
                       {matchedPlayer.nickname}
                     </Link>
                   ) : (
-                    <p className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-none uppercase [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">
+                    <p className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-none uppercase">
                       {record.playerName}
                     </p>
                   )}
-                  <p className={cn("text-sm font-semibold uppercase tracking-wider [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]", meta.accentColor)}>
+                  <p className={cn("text-sm font-semibold uppercase tracking-wider", meta.accentColor)}>
                     {meta.title}
                   </p>
                 </div>
@@ -310,10 +310,10 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
 
               {/* Big value */}
               <div className="flex items-end gap-4">
-                <p className="metric-hero text-gradient-gold [text-shadow:0_2px_10px_rgba(0,0,0,0.95)]">
+                <p className="metric-hero text-gradient-gold">
                   {record.value}
                 </p>
-                <p className="text-sm text-muted-foreground/50 font-medium leading-snug pb-2 max-w-xs [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">
+                <p className="text-sm text-muted-foreground/50 font-medium leading-snug pb-2 max-w-xs">
                   {meta.description}
                 </p>
               </div>
@@ -321,10 +321,10 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
               {/* Narrativa do narrador */}
               {recordNarratives[record.category] && (
                 <div className="mt-1 border-l-2 border-white/[0.08] pl-3">
-                  <p className={cn("text-[11px] font-black [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]", meta.accentColor)}>
+                  <p className={cn("text-[11px] font-black", meta.accentColor)}>
                     {recordNarratives[record.category].headline}
                   </p>
-                   <p className="text-[10px] text-muted-foreground/55 italic mt-0.5 leading-relaxed [text-shadow:0_1px_3px_rgba(0,0,0,0.85)]">
+                   <p className="text-[10px] text-muted-foreground/55 italic mt-0.5 leading-relaxed">
                     &ldquo;{recordNarratives[record.category].quote}&rdquo;
                   </p>
                 </div>

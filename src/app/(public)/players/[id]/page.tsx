@@ -19,6 +19,8 @@ import { getPlayerEntryStats } from "@/server/services/analytics/premium/entry.a
 import { getPlayerTradeStats } from "@/server/services/analytics/premium/trade.analytics";
 import { getPlayerClutchStats } from "@/server/services/analytics/premium/clutch.analytics";
 import { getPlayerKillDistance } from "@/server/services/analytics/premium/matchup.analytics";
+import { getPlayerCombatStats } from "@/server/services/analytics/premium/combat.analytics";
+import { getPlayerDamageStats } from "@/server/services/analytics/premium/damage.analytics";
 import { PremiumStatsPanel } from "@/components/players/premium-stats-panel";
 import { winrateContext, ratingContext, adrContext, kastContext, hsContext } from "@/lib/statContext";
 import { SeasonSelect } from "@/components/dashboard/season-select";
@@ -49,11 +51,13 @@ export default async function PlayerDetailPage({
 
   const { player, overview, maps, timeline, achievements, partners, recentMatches } = detail;
 
-  const [premiumEntry, premiumTrade, premiumClutch, premiumDistance] = await Promise.all([
+  const [premiumEntry, premiumTrade, premiumClutch, premiumDistance, premiumCombat, premiumDamage] = await Promise.all([
     safeQuery(() => getPlayerEntryStats({ playerId: id, seasonId: targetSeason }), null),
     safeQuery(() => getPlayerTradeStats({ playerId: id, seasonId: targetSeason }), null),
     safeQuery(() => getPlayerClutchStats({ playerId: id, seasonId: targetSeason }), null),
     safeQuery(() => getPlayerKillDistance({ playerId: id, seasonId: targetSeason }), null),
+    safeQuery(() => getPlayerCombatStats({ playerId: id, seasonId: targetSeason }), null),
+    safeQuery(() => getPlayerDamageStats({ playerId: id, seasonId: targetSeason }), null),
   ]);
 
   const mapProgressItems = maps.map((m) => ({
@@ -305,6 +309,8 @@ export default async function PlayerDetailPage({
           trade={premiumTrade}
           clutch={premiumClutch}
           distance={premiumDistance}
+          combat={premiumCombat}
+          damage={premiumDamage}
         />
       </FadeIn>
 

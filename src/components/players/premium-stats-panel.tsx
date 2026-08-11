@@ -6,12 +6,16 @@ import type {
   PremiumClutchTierDTO,
 } from "@/server/services/analytics/premium/clutch.analytics";
 import type { PremiumKillDistanceDTO } from "@/server/services/analytics/premium/matchup.analytics";
+import type { PremiumCombatDTO } from "@/server/services/analytics/premium/combat.analytics";
+import type { PremiumDamageDTO } from "@/server/services/analytics/premium/damage.analytics";
 
 interface Props {
   entry: PremiumEntryDTO | null;
   trade: PremiumTradeDTO | null;
   clutch: PremiumClutchSummaryDTO | null;
   distance: PremiumKillDistanceDTO | null;
+  combat: PremiumCombatDTO | null;
+  damage: PremiumDamageDTO | null;
 }
 
 function hasEntryData(e: PremiumEntryDTO) {
@@ -22,6 +26,12 @@ function hasTradeData(t: PremiumTradeDTO) {
 }
 function hasClutchData(c: PremiumClutchSummaryDTO) {
   return c.overall.some((t) => t.attempts > 0);
+}
+function hasCombatData(c: PremiumCombatDTO) {
+  return c.totalSkillKills > 0;
+}
+function hasDamageData(d: PremiumDamageDTO) {
+  return d.totalEvents > 0;
 }
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
@@ -321,11 +331,61 @@ function ClutchBlock({ clutch }: { clutch: PremiumClutchSummaryDTO }) {
   );
 }
 
+// ─── Combat / Skill Kills ────────────────────────────────────────────────────
+
+interface SkillRowProps {
+  label: string;
+  value: number;
+}
+
+function SkillRow({ label, value }: SkillRowProps) {
+  return (
+    <div className="flex items-center justify-between py-1.5 border-b border-white/[0.04] last:border-0">
+      <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wide">
+        {label}
+      </span>
+      <span className={cn("text-[11px] font-black tabular-nums", value > 0 ? "text-white" : "text-muted-foreground/35")}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function CombatBlock({ combat }: { combat: PremiumCombatDTO }) {
+  if (!hasCombatData(combat)) {
+    return <EmptyBlock label="Combat" message="Nenhuma skill kill registrada." />;
+  }
+
+  return (
+    <div className="p-5 flex flex-col gap-4">
+      <BlockHeader label="Combat" />
+
+      {/* Big stat */}
+      <div>
+        <p className="text-3xl font-black text-white tabular-nums leading-none">
+          {combat.totalSkillKills}
+        </p>
+        <p className="text-[9px] text-muted-foreground/55 font-bold uppercase tracking-wider mt-1">
+          Total Skill Kills
+        </p>
+      </div>
+
+      {/* Breakdown */}
+      <div className="flex flex-col">
+        <SkillRow label="Wallbang" value={combat.wallbangKills} />
+        <SkillRow label="Through Smoke" value={combat.throughSmokeKills} />
+        <SkillRow label="No Scope" value={combat.noScopeKills} />
+        <SkillRow label="Blinded" value={combat.blindedKills} />
+      </div>
+    </div>
+  );
+}
+
 // ─── Kill Distance ────────────────────────────────────────────────────────────
 
 function KillDistanceBlock({ distance }: { distance: PremiumKillDistanceDTO }) {
   return (
-    <div className="px-5 py-4 flex items-center gap-6 border-t border-white/[0.05]">
+    <div className="px-5 py-4 flex items-center gap-6">
       <div className="flex items-center gap-2 shrink-0">
         <div className="shrink-0 w-0.5 h-3.5 rounded-full bg-primary/60" />
         <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/65">
@@ -355,18 +415,84 @@ function KillDistanceBlock({ distance }: { distance: PremiumKillDistanceDTO }) {
   );
 }
 
+// ─── Damage Profile ──────────────────────────────────────────────────────────
+
+function DamageProfileBlock({ damage }: { damage: PremiumDamageDTO }) {
+  const groups = [
+    { label: "Head", pct: damage.headPercent, color: "bg-status-critical" },
+    { label: "Chest+Neck", pct: damage.chestNeckPercent, color: "bg-primary" },
+    { label: "Stomach", pct: damage.stomachPercent, color: "bg-status-warning" },
+    { label: "Arms", pct: damage.armsPercent, color: "bg-white/40" },
+    { label: "Legs", pct: damage.legsPercent, color: "bg-white/20" },
+    { label: "Other", pct: damage.genericPercent, color: "bg-white/10" },
+  ];
+
+  return (
+    <div className="px-5 py-4 flex items-center gap-5 flex-1">
+      <div className="flex items-center gap-2 shrink-0">
+        <div className="shrink-0 w-0.5 h-3.5 rounded-full bg-primary/60" />
+        <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/65">
+          Damage Profile
+        </p>
+      </div>
+
+      {hasDamageData(damage) ? (
+        <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+          {/* Stacked bar */}
+          <div className="flex gap-px h-1.5 rounded-full overflow-hidden bg-white/[0.04]">
+            {groups.map((g) =>
+              g.pct > 0 ? (
+                <div
+                  key={g.label}
+                  className={cn("h-full", g.color)}
+                  style={{ width: `${g.pct}%` }}
+                />
+              ) : null,
+            )}
+          </div>
+
+          {/* Key stats */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-[9px] tabular-nums">
+              <span className="font-black text-status-critical">{damage.headPercent}%</span>
+              <span className="font-bold text-muted-foreground/40 ml-0.5">head</span>
+            </span>
+            {damage.avgDamagePerRound !== null && (
+              <span className="text-[9px] tabular-nums">
+                <span className="font-black text-white">{damage.avgDamagePerRound.toFixed(1)}</span>
+                <span className="font-bold text-muted-foreground/40 ml-0.5">ADR</span>
+              </span>
+            )}
+            {damage.avgDamagePerHit !== null && (
+              <span className="text-[9px] tabular-nums">
+                <span className="font-black text-white/55">{damage.avgDamagePerHit.toFixed(1)}</span>
+                <span className="font-bold text-muted-foreground/30 ml-0.5">dmg/hit</span>
+              </span>
+            )}
+            <span className="text-[8px] text-muted-foreground/30 tabular-nums">
+              {damage.totalEvents.toLocaleString()} eventos
+            </span>
+          </div>
+        </div>
+      ) : (
+        <p className="text-[10px] text-muted-foreground/40">Sem dados de dano.</p>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Panel ──────────────────────────────────────────────────────────────
 
-export function PremiumStatsPanel({ entry, trade, clutch, distance }: Props) {
+export function PremiumStatsPanel({ entry, trade, clutch, distance, combat, damage }: Props) {
   const hasData =
     (entry && hasEntryData(entry)) ||
     (trade && hasTradeData(trade)) ||
     (clutch && hasClutchData(clutch)) ||
-    (distance && distance.avgKillDistance !== null);
+    (distance && distance.avgKillDistance !== null) ||
+    (combat && hasCombatData(combat)) ||
+    (damage && hasDamageData(damage));
 
   if (!hasData) return null;
-
-  const showDistance = distance !== null;
 
   return (
     <div className="card-important rounded-2xl overflow-hidden">
@@ -382,8 +508,8 @@ export function PremiumStatsPanel({ entry, trade, clutch, distance }: Props) {
         <div className="flex-1 h-px bg-gradient-to-r from-white/[0.06] to-transparent ml-2" />
       </div>
 
-      {/* Three blocks — Entry / Trade / Clutch */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-white/[0.05]">
+      {/* Top row — Entry / Trade / Clutch / Combat (4 columns on lg) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-x sm:divide-y-0 lg:divide-x divide-white/[0.05]">
         {entry ? (
           <OpeningDuelsBlock entry={entry} />
         ) : (
@@ -399,10 +525,20 @@ export function PremiumStatsPanel({ entry, trade, clutch, distance }: Props) {
         ) : (
           <EmptyBlock label="Clutches" message="Dado não disponível." />
         )}
+        {combat ? (
+          <CombatBlock combat={combat} />
+        ) : (
+          <EmptyBlock label="Combat" message="Dado não disponível." />
+        )}
       </div>
 
-      {/* Kill Distance strip */}
-      {showDistance && <KillDistanceBlock distance={distance} />}
+      {/* Bottom strip — Kill Distance + Damage Profile */}
+      {(distance !== null || damage !== null) && (
+        <div className="flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x divide-white/[0.05] border-t border-white/[0.05]">
+          {distance !== null && <KillDistanceBlock distance={distance} />}
+          {damage !== null && <DamageProfileBlock damage={damage} />}
+        </div>
+      )}
     </div>
   );
 }
