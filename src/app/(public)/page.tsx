@@ -75,6 +75,22 @@ const EMPTY_COMPETITIVE_BUNDLE: competitiveService.DashboardCompetitiveBundle = 
     quadKills: [],
     aces: [],
   },
+  clutchesBundle: {
+    totalAttempts: 0,
+    totalWins: 0,
+    winrate: 0,
+    tiers: [],
+    leaders: [],
+  },
+  combatBundle: {
+    wallbangKills: 0,
+    throughSmokeKills: 0,
+    noScopeKills: 0,
+    blindedKills: 0,
+    totalSkillKills: 0,
+    headDamagePercent: null,
+    avgDamagePerHit: null,
+  },
   highlightsPool: [],
 };
 
@@ -166,6 +182,8 @@ export default async function DashboardPage(props: {
     worstMap,
     advancedPerformance,
     multikillsLeaderboards,
+    clutchesBundle,
+    combatBundle,
     highlightsPool,
   } = competitive;
 
@@ -342,6 +360,8 @@ export default async function DashboardPage(props: {
         <PerformanceGcSection
           stats={advancedPerformance}
           multikillsLeaderboards={multikillsLeaderboards}
+          clutchesBundle={clutchesBundle}
+          combatBundle={combatBundle}
         />
       </SectionContainer>
 

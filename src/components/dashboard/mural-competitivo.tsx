@@ -17,7 +17,7 @@ type Tab = "lideres" | "impacto" | "perfis";
 
 const TABS: { id: Tab; label: string; icon: typeof Trophy }[] = [
   { id: "lideres", label: "👑 Líderes", icon: Trophy },
-  { id: "impacto", label: "⚡ Impacto", icon: Zap },
+  { id: "impacto", label: "⚡ Impacto & Duelos", icon: Zap },
   { id: "perfis", label: "🧬 Perfis", icon: Compass },
 ];
 
@@ -103,21 +103,23 @@ function LideresTab({ powerRanking }: { powerRanking: PowerRankingEntry[] }) {
   );
 }
 
-// ─── Tab: Impacto ─────────────────────────────────────────────────────────────
+// ─── Tab: Impacto & Duelos ───────────────────────────────────────────────────
 function ImpactoTab({ decisive }: { decisive: DecisivePlayerEntry[] }) {
   if (decisive.length === 0) {
     return <p className="text-sm text-muted-foreground/55 text-center py-8">Dados insuficientes para análise de impacto.</p>;
   }
 
   const categories: { label: string; emoji: string; extract: (d: DecisivePlayerEntry) => number; suffix: string; color: string }[] = [
-    { label: "Impact %",       emoji: "⚡", extract: (d) => d.impactPercent,  suffix: "%", color: "text-accent-purple" },
-    { label: "Entry Kills",    emoji: "🔥", extract: (d) => d.entryKills,     suffix: "",  color: "text-status-danger" },
-    { label: "Clutches",       emoji: "🧠", extract: (d) => d.clutchWins,     suffix: "",  color: "text-accent-cyan" },
-    { label: "Trades",         emoji: "🔄", extract: (d) => d.tradeKills,     suffix: "",  color: "text-status-good" },
+    { label: "Impact %",       emoji: "⚡", extract: (d) => d.impactPercent,   suffix: "%", color: "text-accent-purple" },
+    { label: "Opening WR %",   emoji: "🎯", extract: (d) => d.openingWinrate,  suffix: "%", color: "text-accent-cyan" },
+    { label: "Opening Kills",  emoji: "🔥", extract: (d) => d.entryKills,      suffix: "",  color: "text-status-danger" },
+    { label: "Trade Eficiência",emoji: "🔄", extract: (d) => d.tradeEfficiency, suffix: "%", color: "text-status-good" },
+    { label: "Clutches Ganhos", emoji: "🧠", extract: (d) => d.clutchWins,      suffix: "",  color: "text-accent-gold" },
+    { label: "Trades Dados",   emoji: "⚔️", extract: (d) => d.tradeKills,       suffix: "",  color: "text-white/80" },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
       {categories.map(({ label, emoji, extract, suffix, color }) => {
         const sorted = [...decisive].sort((a, b) => extract(b) - extract(a));
         const top = sorted.slice(0, 3);
@@ -134,7 +136,7 @@ function ImpactoTab({ decisive }: { decisive: DecisivePlayerEntry[] }) {
                   {d.player.nickname}
                 </Link>
                 <span className={`text-xs font-black tabular-nums shrink-0 ${idx === 0 ? color : "text-white/70"}`}>
-                  {extract(d).toFixed(suffix === "%" ? 1 : 0)}{suffix}
+                  {extract(d).toFixed(suffix === "%" ? 0 : 0)}{suffix}
                 </span>
               </div>
             ))}

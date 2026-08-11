@@ -88,7 +88,11 @@ export interface DecisivePlayerEntry {
   player: { id: string; nickname: string; avatarUrl: string | null };
   impactPercent: number;
   entryKills: number;
+  entryDeaths: number;
+  openingWinrate: number;
   tradeKills: number;
+  tradedDeaths: number;
+  tradeEfficiency: number;
   clutchWins: number;
   hideTradesAndClutches: boolean; // Oculta se os dados de toda a comunidade forem 0
 }
@@ -725,7 +729,14 @@ async function getDecisivePlayersFromDataset(
     if (totalRounds === 0) continue;
 
     const entryKills = stats.reduce((sum, s) => sum + s.entryKills, 0);
+    const entryDeaths = stats.reduce((sum, s) => sum + s.entryDeaths, 0);
+    const totalOpeningDuels = entryKills + entryDeaths;
+    const openingWinrate = totalOpeningDuels > 0 ? Math.round((entryKills / totalOpeningDuels) * 100) : 0;
+
     const tradeKills = stats.reduce((sum, s) => sum + s.tradeKills, 0);
+    const totalDeaths = stats.reduce((sum, s) => sum + s.deaths, 0);
+    const tradeEfficiency = totalDeaths > 0 ? Math.round((tradeKills / totalDeaths) * 100) : 0;
+
     const clutchWins = stats.reduce(
       (sum, s) =>
         sum + Math.max(s.clutchesWon, s.clutch1v1Wins + s.clutch1v2Wins + s.clutch1v3Wins + s.clutch1v4Wins + s.clutch1v5Wins),
@@ -742,7 +753,11 @@ async function getDecisivePlayersFromDataset(
       player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl },
       impactPercent: Math.round(impactPercent),
       entryKills,
+      entryDeaths,
+      openingWinrate,
       tradeKills,
+      tradedDeaths: tradeKills,
+      tradeEfficiency,
       clutchWins,
       hideTradesAndClutches,
     });
@@ -1885,7 +1900,44 @@ export interface DashboardCompetitiveBundle {
   worstMap: MapPerformanceEntry | null;
   advancedPerformance: AdvancedPerformanceStats;
   multikillsLeaderboards: MultikillsBundle;
+  clutchesBundle: ClutchesBundle;
+  combatBundle: CombatBundle;
   highlightsPool: DashboardHighlight[];
+}
+
+export interface ClutchTierSummary {
+  tier: "1v1" | "1v2" | "1v3" | "1v4" | "1v5";
+  label: string;
+  attempts: number;
+  wins: number;
+  winrate: number;
+}
+
+export interface ClutchLeaderEntry {
+  playerId: string;
+  nickname: string;
+  avatarUrl: string | null;
+  clutchWins: number;
+  clutchAttempts: number;
+  winrate: number;
+}
+
+export interface ClutchesBundle {
+  totalAttempts: number;
+  totalWins: number;
+  winrate: number;
+  tiers: ClutchTierSummary[];
+  leaders: ClutchLeaderEntry[];
+}
+
+export interface CombatBundle {
+  wallbangKills: number;
+  throughSmokeKills: number;
+  noScopeKills: number;
+  blindedKills: number;
+  totalSkillKills: number;
+  headDamagePercent: number | null;
+  avgDamagePerHit: number | null;
 }
 
 export interface MultikillLeaderboardEntry {
@@ -1962,6 +2014,8 @@ export async function getDashboardCompetitiveBundle(
     weeklyCuriosity: getWeeklyCuriosityFromDataset(ds, streaks, seasonComparison),
     advancedPerformance: getAdvancedPerformanceStatsFromDataset(ds),
     multikillsLeaderboards: getMultikillsLeaderboards(ds),
+    clutchesBundle: getClutchesBundleFromDataset(ds),
+    combatBundle: await getCombatBundleFromDataset(ds),
     highlightsPool: generateHighlights(ds),
   };
 }
@@ -2068,5 +2122,175 @@ export function getMultikillsLeaderboards(dataset: CompetitiveDataset): Multikil
     tripleKills: getTop6(tripleMap),
     quadKills: getTop6(quadMap),
     aces: getTop6(aceMap),
+  };
+}
+
+export function getClutchesBundleFromDataset(dataset: CompetitiveDataset): ClutchesBundle {
+  const { activePlayers, statsByPlayer } = dataset;
+
+  const tierMap: Record<"1v1" | "1v2" | "1v3" | "1v4" | "1v5", { attempts: number; wins: number }> = {
+    "1v1": { attempts: 0, wins: 0 },
+    "1v2": { attempts: 0, wins: 0 },
+    "1v3": { attempts: 0, wins: 0 },
+    "1v4": { attempts: 0, wins: 0 },
+    "1v5": { attempts: 0, wins: 0 },
+  };
+
+  const leaders: ClutchLeaderEntry[] = [];
+
+  let grandTotalAttempts = 0;
+  let grandTotalWins = 0;
+
+  for (const player of activePlayers) {
+    const stats = statsByPlayer.get(player.id) ?? [];
+    let pAttempts = 0;
+    let pWins = 0;
+
+    for (const s of stats) {
+      const a1 = s.clutch1v1Attempts ?? 0;
+      const w1 = s.clutch1v1Wins ?? 0;
+      const a2 = s.clutch1v2Attempts ?? 0;
+      const w2 = s.clutch1v2Wins ?? 0;
+      const a3 = s.clutch1v3Attempts ?? 0;
+      const w3 = s.clutch1v3Wins ?? 0;
+      const a4 = s.clutch1v4Attempts ?? 0;
+      const w4 = s.clutch1v4Wins ?? 0;
+      const a5 = s.clutch1v5Attempts ?? 0;
+      const w5 = s.clutch1v5Wins ?? 0;
+
+      tierMap["1v1"].attempts += a1; tierMap["1v1"].wins += w1;
+      tierMap["1v2"].attempts += a2; tierMap["1v2"].wins += w2;
+      tierMap["1v3"].attempts += a3; tierMap["1v3"].wins += w3;
+      tierMap["1v4"].attempts += a4; tierMap["1v4"].wins += w4;
+      tierMap["1v5"].attempts += a5; tierMap["1v5"].wins += w5;
+
+      const sWins = Math.max(s.clutchesWon ?? 0, w1 + w2 + w3 + w4 + w5);
+      const sAttempts = a1 + a2 + a3 + a4 + a5;
+
+      pWins += sWins;
+      pAttempts += sAttempts;
+    }
+
+    grandTotalAttempts += pAttempts;
+    grandTotalWins += pWins;
+
+    if (pWins > 0 || pAttempts > 0) {
+      leaders.push({
+        playerId: player.id,
+        nickname: player.nickname,
+        avatarUrl: player.avatarUrl,
+        clutchWins: pWins,
+        clutchAttempts: pAttempts,
+        winrate: pAttempts > 0 ? Math.round((pWins / pAttempts) * 100) : 0,
+      });
+    }
+  }
+
+  leaders.sort((a, b) => b.clutchWins - a.clutchWins || b.winrate - a.winrate);
+
+  const tiersKey: ("1v1" | "1v2" | "1v3" | "1v4" | "1v5")[] = ["1v1", "1v2", "1v3", "1v4", "1v5"];
+  const tiers: ClutchTierSummary[] = tiersKey.map((t) => {
+    const data = tierMap[t];
+    return {
+      tier: t,
+      label: t,
+      attempts: data.attempts,
+      wins: data.wins,
+      winrate: data.attempts > 0 ? Math.round((data.wins / data.attempts) * 100) : 0,
+    };
+  });
+
+  return {
+    totalAttempts: grandTotalAttempts,
+    totalWins: grandTotalWins,
+    winrate: grandTotalAttempts > 0 ? Math.round((grandTotalWins / grandTotalAttempts) * 100) : 0,
+    tiers,
+    leaders: leaders.slice(0, 5),
+  };
+}
+
+export async function getCombatBundleFromDataset(dataset: CompetitiveDataset): Promise<CombatBundle> {
+  const { allStats, activePlayers } = dataset;
+  const gcMatchIds = Array.from(
+    new Set(allStats.map((s) => s.match.gamersClubMatchId).filter((id): id is string => Boolean(id)))
+  );
+
+  if (gcMatchIds.length === 0) {
+    return {
+      wallbangKills: 0,
+      throughSmokeKills: 0,
+      noScopeKills: 0,
+      blindedKills: 0,
+      totalSkillKills: 0,
+      headDamagePercent: null,
+      avgDamagePerHit: null,
+    };
+  }
+
+  const activeSteamIds = new Set(
+    (
+      await prisma.player.findMany({
+        where: { id: { in: activePlayers.map((p) => p.id) } },
+        select: { steamId: true },
+      })
+    ).map((p) => p.steamId)
+  );
+
+  const payloads = await prisma.matchPayload.findMany({
+    where: { sourceMatchId: { in: gcMatchIds } },
+    select: { payload: true },
+  });
+
+  let wallbangKills = 0;
+  let throughSmokeKills = 0;
+  let noScopeKills = 0;
+  let blindedKills = 0;
+  let totalSkillKills = 0;
+
+  let totalDamage = 0;
+  let totalHits = 0;
+  let headDamage = 0;
+
+  for (const { payload } of payloads) {
+    const kills: any[] = (payload as any)?.kills ?? [];
+    for (const k of kills) {
+      if (!activeSteamIds.has(k.killer_steamid)) continue;
+      if (k.killer_steamid === k.victim_steamid) continue;
+      if (k.analytics?.teamkill === true) continue;
+
+      const isWallbang = k.wallbang === true;
+      const isThruSmoke = k.thrusmoke === true;
+      const isNoScope = k.noscope === true;
+      const isBlinded = k.attacker_blind === true;
+
+      if (isWallbang) wallbangKills++;
+      if (isThruSmoke) throughSmokeKills++;
+      if (isNoScope) noScopeKills++;
+      if (isBlinded) blindedKills++;
+      if (isWallbang || isThruSmoke || isNoScope || isBlinded) totalSkillKills++;
+    }
+
+    const damageEvents: any[] = (payload as any)?.damage ?? [];
+    for (const d of damageEvents) {
+      if (!activeSteamIds.has(d.attacker_steamid)) continue;
+      if (d.victim_steamid === d.attacker_steamid) continue;
+
+      const hp = d.damage_health ?? 0;
+      totalDamage += hp;
+      totalHits++;
+      if (d.hitgroup === "head") {
+        headDamage += hp;
+      }
+    }
+  }
+
+  return {
+    wallbangKills,
+    throughSmokeKills,
+    noScopeKills,
+    blindedKills,
+    totalSkillKills,
+    headDamagePercent: totalDamage > 0 ? Math.round((headDamage / totalDamage) * 100) : null,
+    avgDamagePerHit: totalHits > 0 ? Math.round((totalDamage / totalHits) * 10) / 10 : null,
   };
 }
