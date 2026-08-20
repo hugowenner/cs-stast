@@ -3,6 +3,8 @@ import { z } from "zod";
 import crypto from "crypto";
 import { prisma } from "@/server/db";
 import { processPayload } from "@/server/services/normalizer.service";
+import { handleRouteError } from "@/server/http";
+import { timingSafeEqualStrings } from "@/lib/sync-auth";
 
 // Basic schema check to validate presence of key attributes.
 // Other keys (rounds, players, etc.) are allowed via .passthrough().
@@ -25,10 +27,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const token = authHeader.substring(7);
+    const token = authHeader.substring(7).trim();
     const workerToken = process.env.SYNC_SERVICE_TOKEN || process.env.WORKER_INGEST_TOKEN || process.env.ADMIN_SYNC_TOKEN;
 
-    if (!workerToken || token !== workerToken) {
+    if (!workerToken || !timingSafeEqualStrings(token, workerToken)) {
       return NextResponse.json(
         { error: "Token de autenticação inválido ou incorreto." },
         { status: 401 }
@@ -183,11 +185,7 @@ export async function POST(request: Request) {
       { accepted: true, payloadId: created.id, status: "stored" },
       { status: 202 }
     );
-  } catch (error: any) {
-    console.error("Erro interno no endpoint de ingestão:", error);
-    return NextResponse.json(
-      { error: `Erro interno no servidor: ${error.message || error}` },
-      { status: 500 }
-    );
+  } catch (error) {
+    return handleRouteError(error);
   }
 }

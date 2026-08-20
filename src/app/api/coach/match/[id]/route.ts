@@ -27,10 +27,15 @@ export async function GET(
   }
 }
 
+import { checkRateLimit } from "@/lib/rate-limit";
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const rateLimitError = checkRateLimit(request, "coach-ai", 10, 60 * 1000);
+  if (rateLimitError) return rateLimitError;
+
   try {
     const { id } = await params;
     const detail = await getMatchDetail(id);

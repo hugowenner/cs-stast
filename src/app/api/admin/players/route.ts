@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        message: error instanceof Error ? error.message : "Erro interno ao cadastrar jogador.",
+        message: process.env.NODE_ENV === "development" && error instanceof Error ? error.message : "Erro interno ao cadastrar jogador.",
       },
       { status: 500 }
     );

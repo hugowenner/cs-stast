@@ -13,7 +13,22 @@ import { isMaintenanceMode } from "@/server/services/season.service";
  * `src/server/adapters/gamersclub/normalize.test.ts`. Mantém `/api/sync/match`
  * agnóstico de provedor — só este endpoint conhece o formato da GC.
  */
+import { requireSyncAuth } from "@/lib/sync-auth";
+
+const MAX_GC_PAYLOAD_SIZE = 10 * 1024 * 1024; // 10 MB
+
 export async function POST(request: Request) {
+  const authError = requireSyncAuth(request);
+  if (authError) return authError;
+
+  const contentLength = request.headers.get("content-length");
+  if (contentLength && parseInt(contentLength, 10) > MAX_GC_PAYLOAD_SIZE) {
+    return NextResponse.json(
+      { error: "Payload excede o limite máximo de 10MB." },
+      { status: 413 }
+    );
+  }
+
   try {
     if (await isMaintenanceMode()) {
       return NextResponse.json(

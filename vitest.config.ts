@@ -9,6 +9,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    setupFiles: ["dotenv/config"],
     include: ["src/**/*.test.ts"],
   },
 });

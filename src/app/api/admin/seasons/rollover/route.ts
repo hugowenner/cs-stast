@@ -1,16 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rolloverSeason } from "@/server/services/season.service";
+import { checkAdminAuth } from "@/lib/admin/auth";
+import { timingSafeEqualStrings } from "@/lib/sync-auth";
 
-function authenticate(request: NextRequest): boolean {
+async function authenticate(request: NextRequest): Promise<boolean> {
+  // 1. Check admin session cookie
+  const isSessionValid = await checkAdminAuth();
+  if (isSessionValid) return true;
+
+  // 2. Check Bearer token (ADMIN_SYNC_TOKEN or SYNC_SERVICE_TOKEN)
   const auth = request.headers.get("authorization") ?? "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-  const secret = process.env.ADMIN_SECRET_KEY;
-  return !!secret && token === secret;
+  const token = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
+  const validToken = process.env.ADMIN_SYNC_TOKEN || process.env.SYNC_SERVICE_TOKEN;
+
+  if (validToken && token) {
+    return timingSafeEqualStrings(token, validToken);
+  }
+
+  return false;
 }
 
 export async function POST(request: NextRequest) {
-  if (!authenticate(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await authenticate(request))) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
   try {

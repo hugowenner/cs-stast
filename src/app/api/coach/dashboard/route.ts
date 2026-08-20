@@ -52,7 +52,12 @@ export async function GET(request: NextRequest) {
   }
 }
 
+import { checkRateLimit } from "@/lib/rate-limit";
+
 export async function POST(request: NextRequest) {
+  const rateLimitError = checkRateLimit(request, "coach-ai", 10, 60 * 1000);
+  if (rateLimitError) return rateLimitError;
+
   try {
     const { searchParams } = new URL(request.url);
     const season = searchParams.get("season") || undefined;

@@ -52,13 +52,13 @@ export async function POST(request: NextRequest) {
       currentAttempts.count += 1;
       
       if (currentAttempts.count >= 5) {
-        currentAttempts.blockedUntil = Date.now() + 30000; // Block for 30 seconds
+        currentAttempts.blockedUntil = Date.now() + 15 * 60 * 1000; // Block for 15 minutes
         currentAttempts.count = 0; // Reset counter for after block expires
         loginAttempts.set(ip, currentAttempts);
         
         return NextResponse.json(
-          { error: "Senha inválida. Limite de tentativas excedido. Bloqueado por 30 segundos." },
-          { status: 401 }
+          { error: "Senha inválida. Limite de tentativas excedido. Bloqueado por 15 minutos." },
+          { status: 429 }
         );
       }
       

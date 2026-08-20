@@ -1,3 +1,5 @@
+import { timingSafeEqualStrings } from "@/lib/sync-auth";
+
 const encoder = new TextEncoder();
 
 async function getCryptoKey(secret: string): Promise<CryptoKey> {
@@ -56,7 +58,7 @@ export async function verifySession(cookieValue: string, secret: string): Promis
     const expectedHex = signatureArray.map(b => b.toString(16).padStart(2, "0")).join("");
     const expectedB64Sig = btoa(expectedHex).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
     
-    return b64Sig === expectedB64Sig;
+    return timingSafeEqualStrings(b64Sig, expectedB64Sig);
   } catch (e) {
     return false;
   }

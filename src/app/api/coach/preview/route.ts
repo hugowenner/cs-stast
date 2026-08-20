@@ -5,7 +5,12 @@ import { buildComparisonPrompt } from "@/server/coach/builders/comparison.builde
 import { buildSessionPrompt } from "@/server/coach/builders/session.builder";
 import { calculateCacheKey } from "@/server/coach/services/coach.service";
 
+import { checkRateLimit } from "@/lib/rate-limit";
+
 export async function POST(request: Request) {
+  const rateLimitError = checkRateLimit(request, "coach-ai", 10, 60 * 1000);
+  if (rateLimitError) return rateLimitError;
+
   try {
     const body = await request.json();
     const { type, dto } = body;

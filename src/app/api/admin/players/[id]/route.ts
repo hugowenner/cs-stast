@@ -49,7 +49,7 @@ export async function PUT(
     return NextResponse.json(
       {
         success: false,
-        message: error instanceof Error ? error.message : "Erro interno ao atualizar jogador.",
+        message: process.env.NODE_ENV === "development" && error instanceof Error ? error.message : "Erro interno ao atualizar jogador.",
       },
       { status: 500 }
     );
@@ -88,7 +88,7 @@ export async function DELETE(
     return NextResponse.json(
       {
         success: false,
-        message: error instanceof Error ? error.message : "Erro interno ao remover jogador.",
+        message: process.env.NODE_ENV === "development" && error instanceof Error ? error.message : "Erro interno ao remover jogador.",
       },
       { status: 500 }
     );

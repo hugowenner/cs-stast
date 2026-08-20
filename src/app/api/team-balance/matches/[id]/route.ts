@@ -15,6 +15,14 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const isAdmin = await checkAdminAuth();
+    if (!isAdmin) {
+      return NextResponse.json(
+        { success: false, error: "Acesso negado: Autenticação necessária." },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
     const { winner } = await parseJsonBody(request, patchWinnerSchema);
     

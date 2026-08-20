@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { verifySession } from "./session";
 import { ADMIN_COOKIE_NAME } from "./constants";
+import { timingSafeEqualStrings } from "@/lib/sync-auth";
 
 /**
  * Validates the admin password securely on the server side.
@@ -13,8 +14,7 @@ export function validateAdminPassword(password: string): boolean {
     return false;
   }
   
-  // Direct equality comparison is safe here as it runs exclusively on the server
-  return password === adminPassword;
+  return timingSafeEqualStrings(password, adminPassword);
 }
 
 /**
