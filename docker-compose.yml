@@ -1,12 +1,36 @@
 services:
+  traefik:
+    image: traefik:v2.11
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - "--api.dashboard=false"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=proxy"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.myresolver.acme.email=admin@cszindacriticancia.com.br"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "traefik-certificates:/letsencrypt"
+    networks:
+      - proxy
+
   app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: cs2-stats-app
     restart: unless-stopped
-    ports:
-      - "3210:3210"
     env_file:
       - .env
     environment:
@@ -14,6 +38,23 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - default
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.cs2app.rule=Host(`cszindacriticancia.com.br`) || Host(`www.cszindacriticancia.com.br`)"
+      - "traefik.http.routers.cs2app.entrypoints=websecure"
+      - "traefik.http.routers.cs2app.tls=true"
+      - "traefik.http.routers.cs2app.tls.certresolver=myresolver"
+      - "traefik.http.routers.cs2app.service=cs2app-svc"
+      - "traefik.http.routers.cs2api.rule=Host(`api.cszindacriticancia.com.br`)"
+      - "traefik.http.routers.cs2api.entrypoints=websecure"
+      - "traefik.http.routers.cs2api.tls=true"
+      - "traefik.http.routers.cs2api.tls.certresolver=myresolver"
+      - "traefik.http.routers.cs2api.service=cs2app-svc"
+      - "traefik.http.services.cs2app-svc.loadbalancer.server.port=3210"
 
   postgres:
     image: postgres:16-alpine
@@ -23,8 +64,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-cs2stats}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cs2stats}
       POSTGRES_DB: ${POSTGRES_DB:-cs2stats}
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cs2stats} -d ${POSTGRES_DB:-cs2stats}"]
       interval: 5s
@@ -32,6 +71,14 @@ services:
       retries: 5
     volumes:
       - cs2-stats-postgres-data:/var/lib/postgresql/data
+    networks:
+      - default
+
+networks:
+  proxy:
+    name: proxy
+    driver: bridge
 
 volumes:
   cs2-stats-postgres-data:
+  traefik-certificates:
