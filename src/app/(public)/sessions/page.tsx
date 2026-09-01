@@ -9,6 +9,7 @@ import { SessionHero } from "@/components/sessions/session-hero";
 import { SessionFilters, type SessionPeriod } from "@/components/sessions/session-filters";
 import { SessionTimeline } from "@/components/sessions/session-timeline";
 import { SessionEmptyState } from "@/components/sessions/session-empty-state";
+import { SessionPerformanceView } from "@/components/sessions/session-performance-view";
 
 import { getActiveSeason } from "@/server/services/season.service";
 
@@ -17,9 +18,10 @@ export const dynamic = "force-dynamic";
 export default async function SessionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ period?: string }>;
+  searchParams: Promise<{ period?: string; view?: string }>;
 }) {
-  const { period: rawPeriod } = await searchParams;
+  const { period: rawPeriod, view } = await searchParams;
+  const isPerformanceView = view === "performance";
   const activePeriod = (rawPeriod === "7d" || rawPeriod === "30d" || rawPeriod === "season" ? rawPeriod : "all") as SessionPeriod;
 
   // Montar cláusula where baseada no período
@@ -50,6 +52,22 @@ export default async function SessionsPage({
   const simpleSessions = dbSessions.map(computeSimpleSessionSummary);
   const overview = calculateSessionsOverview(simpleSessions);
 
+  // ── View: Performance ──────────────────────────────────────────────────────
+  if (isPerformanceView) {
+    return (
+      <div className="flex flex-col gap-6 max-w-4xl mx-auto w-full px-4 sm:px-6">
+        <FadeIn>
+          <SessionPerformanceView
+            sessions={simpleSessions}
+            overview={overview}
+            activePeriod={activePeriod}
+          />
+        </FadeIn>
+      </div>
+    );
+  }
+
+  // ── View: Partidas (padrão) ─────────────────────────────────────────────────
   return (
     <div className="flex flex-col gap-6 max-w-4xl mx-auto w-full px-4 sm:px-6">
       {/* Hero Header */}

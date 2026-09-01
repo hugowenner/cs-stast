@@ -1,0 +1,21 @@
+services:
+  postgres-dev:
+    image: postgres:16-alpine
+    container_name: cs2-stats-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cs2stats_dev
+      POSTGRES_PASSWORD: dev_only_cs2stats_2026
+      POSTGRES_DB: cs2_stats_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - cs2-stats-postgres-dev-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cs2stats_dev -d cs2_stats_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  cs2-stats-postgres-dev-data:
