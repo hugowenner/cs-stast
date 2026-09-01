@@ -1,5 +1,3 @@
-// Modelo de dados do CS2 Stats Hub — ver docs/DATABASE.md para o racional de cada entidade.
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -10,38 +8,34 @@ datasource db {
 }
 
 model Player {
-  id           String   @id @default(cuid())
-  steamId      String   @unique
-  nickname     String
-  avatarUrl    String?
-  gamersClubId String?  @unique
-  levelGc      Int?
-  createdAt    DateTime @default(now())
-
-  // Steam profile data — populated by SteamProfileService, not by match sync
-  steamNickname     String?
-  steamAvatarSmall  String?   // 32×32
-  steamAvatarMedium String?   // 64×64
-  steamAvatarFull   String?   // 184×184
-  steamProfileUrl   String?
-  steamLastSync     DateTime?
-
-  user               User?
-  matchStats         PlayerMatchStats[]
+  id                 String              @id @default(cuid())
+  steamId            String              @unique
+  nickname           String
+  avatarUrl          String?
+  gamersClubId       String?             @unique
+  levelGc            Int?
+  createdAt          DateTime            @default(now())
+  steamNickname      String?
+  steamAvatarSmall   String?
+  steamAvatarMedium  String?
+  steamAvatarFull    String?
+  steamProfileUrl    String?
+  steamLastSync      DateTime?
   events             Event[]             @relation("EventActor")
   eventsAsVictim     Event[]             @relation("EventVictim")
   achievements       PlayerAchievement[]
-  rivalriesAsA       Rivalry[]           @relation("RivalryPlayerA")
-  rivalriesAsB       Rivalry[]           @relation("RivalryPlayerB")
-  trackedPlayer      TrackedPlayer?
-  teamBalancePlayers TeamBalancePlayer[]
-
-  matchupsAsKiller   PlayerMatchup[]     @relation("MatchupKiller")
-  matchupsAsVictim   PlayerMatchup[]     @relation("MatchupVictim")
   clutches           PlayerClutch[]
   entryDuels         PlayerEntryDuel[]
-  tradesAsVictim     PlayerTradeEvent[]  @relation("TradeVictim")
+  matchStats         PlayerMatchStats[]
+  matchupsAsKiller   PlayerMatchup[]     @relation("MatchupKiller")
+  matchupsAsVictim   PlayerMatchup[]     @relation("MatchupVictim")
   tradesAsTrader     PlayerTradeEvent[]  @relation("TradeTrader")
+  tradesAsVictim     PlayerTradeEvent[]  @relation("TradeVictim")
+  rivalriesAsA       Rivalry[]           @relation("RivalryPlayerA")
+  rivalriesAsB       Rivalry[]           @relation("RivalryPlayerB")
+  user               User?
+  teamBalancePlayers TeamBalancePlayer[]
+  trackedPlayer      TrackedPlayer?
 }
 
 /// Reservado para autenticação na Fase 2. Sem fluxo de login no MVP.
@@ -49,8 +43,8 @@ model User {
   id        String   @id @default(cuid())
   email     String   @unique
   playerId  String?  @unique
-  player    Player?  @relation(fields: [playerId], references: [id])
   createdAt DateTime @default(now())
+  player    Player?  @relation(fields: [playerId], references: [id])
 }
 
 /// Agregado raiz de uma noite de jogo (ex: "Mix de Quinta").
@@ -59,55 +53,45 @@ model Session {
   name      String
   date      DateTime
   createdAt DateTime @default(now())
-
-  matches Match[]
+  matches   Match[]
 }
 
 model Map {
   id       String  @id @default(cuid())
   name     String  @unique
   imageUrl String?
-
-  matches Match[]
-}
-
-enum MatchTeam {
-  A
-  B
+  matches  Match[]
 }
 
 model Match {
-  id                String   @id @default(cuid())
-  sessionId         String
-  session           Session  @relation(fields: [sessionId], references: [id])
-  mapId             String
-  map               Map      @relation(fields: [mapId], references: [id])
-  gamersClubMatchId String?  @unique
-  playedAt          DateTime
-  scoreTeamA        Int
-  scoreTeamB        Int
-  durationSeconds   Int
-  demoUrl           String?
-  roundsJson        Json?
-
+  id                  String              @id @default(cuid())
+  sessionId           String
+  mapId               String
+  gamersClubMatchId   String?             @unique
+  playedAt            DateTime
+  scoreTeamA          Int
+  scoreTeamB          Int
+  durationSeconds     Int
+  demoUrl             String?
+  roundsJson          Json?
   /// Quantos jogadores monitorados (TrackedPlayer.active = true) participaram desta
   /// partida, calculado uma vez na ingestão (src/server/services/match.service.ts) e
   /// nunca recalculado depois. Fonte de verdade da classificação SOLO (< 2) vs
   /// COMUNIDADE (>= 2) — ver src/server/domain/matchClassification.ts. Guardado como
   /// contagem (não como enum) para permitir métricas futuras mais granulares (ex.:
   /// Rating Solo x Equipe) sem precisar de outra migration.
-  trackedPlayersCount Int @default(0)
-
+  trackedPlayersCount Int                 @default(0)
   seasonId            String?
-  season              Season?            @relation(fields: [seasonId], references: [id])
-
-  playerStats  PlayerMatchStats[]
-  events       Event[]
-  achievements PlayerAchievement[]
-  matchups     PlayerMatchup[]
-  clutches     PlayerClutch[]
-  entryDuels   PlayerEntryDuel[]
-  trades       PlayerTradeEvent[]
+  events              Event[]
+  map                 Map                 @relation(fields: [mapId], references: [id])
+  season              Season?             @relation(fields: [seasonId], references: [id])
+  session             Session             @relation(fields: [sessionId], references: [id])
+  achievements        PlayerAchievement[]
+  clutches            PlayerClutch[]
+  entryDuels          PlayerEntryDuel[]
+  playerStats         PlayerMatchStats[]
+  matchups            PlayerMatchup[]
+  trades              PlayerTradeEvent[]
 
   @@index([sessionId])
   @@index([playedAt])
@@ -120,50 +104,44 @@ model Match {
 /// estatísticas agregadas (winrate, performance por mapa/horário/parceiro, etc.) são
 /// sempre derivadas a partir daqui, nunca armazenadas de forma redundante.
 model PlayerMatchStats {
-  id       String    @id @default(cuid())
-  matchId  String
-  match    Match     @relation(fields: [matchId], references: [id])
-  playerId String
-  player   Player    @relation(fields: [playerId], references: [id])
-  team     MatchTeam
-
-  kills     Int
-  deaths    Int
-  assists   Int
-  headshots Int
-
-  adr    Float
-  rating Float
-  kast   Float
-  impact Float
-
-  damage       Int?
-  gcRating     Float?
-  doubleKills  Int?
-  tripleKills  Int?
-  quadKills    Int?
-  aces         Int?
-
-  entryKills  Int
-  entryDeaths Int
-  tradeKills  Int
-  clutchesWon  Int @default(0)
-  flashAssists Int @default(0)
-
-  clutch1v1Attempts Int @default(0)
-  clutch1v1Wins     Int @default(0)
-  clutch1v2Attempts Int @default(0)
-  clutch1v2Wins     Int @default(0)
-  clutch1v3Attempts Int @default(0)
-  clutch1v3Wins     Int @default(0)
-  clutch1v4Attempts Int @default(0)
-  clutch1v4Wins     Int @default(0)
-  clutch1v5Attempts Int @default(0)
-  clutch1v5Wins     Int @default(0)
-
-  levelGc   Int?
-  eloBefore Int
-  eloAfter  Int
+  id                String    @id @default(cuid())
+  matchId           String
+  playerId          String
+  team              MatchTeam
+  kills             Int
+  deaths            Int
+  assists           Int
+  headshots         Int
+  adr               Float
+  rating            Float
+  kast              Float
+  impact            Float
+  damage            Int?
+  gcRating          Float?
+  doubleKills       Int?
+  tripleKills       Int?
+  quadKills         Int?
+  aces              Int?
+  entryKills        Int
+  entryDeaths       Int
+  tradeKills        Int
+  clutchesWon       Int       @default(0)
+  flashAssists      Int       @default(0)
+  clutch1v1Attempts Int       @default(0)
+  clutch1v1Wins     Int       @default(0)
+  clutch1v2Attempts Int       @default(0)
+  clutch1v2Wins     Int       @default(0)
+  clutch1v3Attempts Int       @default(0)
+  clutch1v3Wins     Int       @default(0)
+  clutch1v4Attempts Int       @default(0)
+  clutch1v4Wins     Int       @default(0)
+  clutch1v5Attempts Int       @default(0)
+  clutch1v5Wins     Int       @default(0)
+  levelGc           Int?
+  eloBefore         Int
+  eloAfter          Int
+  match             Match     @relation(fields: [matchId], references: [id])
+  player            Player    @relation(fields: [playerId], references: [id])
 
   @@unique([matchId, playerId])
   @@index([playerId])
@@ -172,13 +150,12 @@ model PlayerMatchStats {
 
 /// Catálogo de conquistas. Definido em código/seed, não editável via UI no MVP.
 model Achievement {
-  id          String  @id @default(cuid())
-  code        String  @unique
-  name        String
-  description String
-  iconUrl     String?
-  tier        String
-
+  id                 String              @id @default(cuid())
+  code               String              @unique
+  name               String
+  description        String
+  iconUrl            String?
+  tier               String
   playerAchievements PlayerAchievement[]
 }
 
@@ -190,12 +167,12 @@ model Achievement {
 model PlayerAchievement {
   id            String      @id @default(cuid())
   playerId      String
-  player        Player      @relation(fields: [playerId], references: [id])
   achievementId String
-  achievement   Achievement @relation(fields: [achievementId], references: [id])
   matchId       String?
-  match         Match?      @relation(fields: [matchId], references: [id])
   earnedAt      DateTime    @default(now())
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  match         Match?      @relation(fields: [matchId], references: [id])
+  player        Player      @relation(fields: [playerId], references: [id])
 
   @@unique([playerId, achievementId, matchId])
   @@index([playerId])
@@ -207,32 +184,18 @@ model PlayerAchievement {
 model Rivalry {
   id              String   @id @default(cuid())
   playerAId       String
-  playerA         Player   @relation("RivalryPlayerA", fields: [playerAId], references: [id])
   playerBId       String
-  playerB         Player   @relation("RivalryPlayerB", fields: [playerBId], references: [id])
   seasonId        String?
-  season          Season?  @relation(fields: [seasonId], references: [id])
-
   killsAOnB       Int      @default(0)
   killsBOnA       Int      @default(0)
   matchesTogether Int      @default(0)
   matchesAgainst  Int      @default(0)
   updatedAt       DateTime @updatedAt
+  playerA         Player   @relation("RivalryPlayerA", fields: [playerAId], references: [id])
+  playerB         Player   @relation("RivalryPlayerB", fields: [playerBId], references: [id])
+  season          Season?  @relation(fields: [seasonId], references: [id])
 
   @@unique([playerAId, playerBId, seasonId])
-}
-
-enum EventType {
-  KILL
-  ACE
-  CLUTCH_1V1
-  CLUTCH_1V2
-  CLUTCH_1V3
-  CLUTCH_1V4
-  CLUTCH_1V5
-  MULTI_KILL_3
-  MULTI_KILL_4
-  MULTI_KILL_5
 }
 
 /// Evento de uma partida. `KILL` carrega `victimId` e alimenta o RivalryEngine
@@ -241,26 +204,19 @@ enum EventType {
 model Event {
   id          String    @id @default(cuid())
   matchId     String
-  match       Match     @relation(fields: [matchId], references: [id])
   playerId    String
-  player      Player    @relation("EventActor", fields: [playerId], references: [id])
   victimId    String?
-  victim      Player?   @relation("EventVictim", fields: [victimId], references: [id])
   type        EventType
   roundNumber Int
   metadata    Json?
   createdAt   DateTime  @default(now())
+  match       Match     @relation(fields: [matchId], references: [id])
+  player      Player    @relation("EventActor", fields: [playerId], references: [id])
+  victim      Player?   @relation("EventVictim", fields: [victimId], references: [id])
 
   @@index([matchId])
   @@index([playerId])
   @@index([victimId])
-}
-
-enum ImportStatus {
-  PENDING
-  RUNNING
-  SUCCESS
-  FAILED
 }
 
 /// Log de cada execução de sincronização. Guarda o payload bruto recebido do provedor
@@ -277,13 +233,6 @@ model Import {
   finishedAt      DateTime?
   matchesImported Int          @default(0)
   errorMessage    String?
-}
-
-enum LogLevel {
-  DEBUG
-  INFO
-  WARN
-  ERROR
 }
 
 model Log {
@@ -305,34 +254,27 @@ model Configuration {
 }
 
 model TrackedPlayer {
-  id                 String              @id @default(cuid())
-  gamersClubId       String              @unique @map("gamersclub_id")
-  active             Boolean             @default(true)
-  nickname           String?
-  createdAt          DateTime            @default(now()) @map("created_at")
-  playerId           String?             @unique @map("player_id")
-
-  player             Player?             @relation(fields: [playerId], references: [id])
+  id           String   @id @default(cuid())
+  gamersClubId String   @unique @map("gamersclub_id")
+  active       Boolean  @default(true)
+  nickname     String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  playerId     String?  @unique @map("player_id")
+  player       Player?  @relation(fields: [playerId], references: [id])
 
   @@map("tracked_players")
 }
 
-enum SeasonStatus {
-  ACTIVE
-  CLOSED
-}
-
 model Season {
-  id        String       @id @default(cuid())
+  id        String          @id @default(cuid())
   name      String
   startDate DateTime
   endDate   DateTime
-  status    SeasonStatus @default(ACTIVE)
-  createdAt DateTime     @default(now())
-
+  status    SeasonStatus    @default(ACTIVE)
+  createdAt DateTime        @default(now())
   matches   Match[]
-  snapshots SeasonSnapshot[]
   rivalries Rivalry[]
+  snapshots SeasonSnapshot?
 
   @@index([status])
   @@index([startDate, endDate])
@@ -341,48 +283,38 @@ model Season {
 model SeasonSnapshot {
   id        String   @id @default(cuid())
   seasonId  String   @unique
-  season    Season   @relation(fields: [seasonId], references: [id])
   dashboard Json
   createdAt DateTime @default(now())
+  season    Season   @relation(fields: [seasonId], references: [id])
 }
 
 model TeamBalanceMatch {
-  id          String   @id @default(cuid())
-  seed        String
-  mode        String   // "RANDOM" ou "BALANCED"
-  metric      String   // "LEVEL" | "RATING" | "ADR" | "KD" | "COMPOUND"
-  difference  Float
-  winner      String?  // "CT" | "TR" | "DRAW" | null
-  createdAt   DateTime @default(now())
-
-  players     TeamBalancePlayer[]
+  id         String              @id @default(cuid())
+  seed       String
+  mode       String
+  metric     String
+  difference Float
+  winner     String?
+  createdAt  DateTime            @default(now())
+  players    TeamBalancePlayer[]
 
   @@index([createdAt])
   @@index([seed])
 }
 
 model TeamBalancePlayer {
-  id              String   @id @default(cuid())
-  matchId         String   @map("match_id")
-  playerId        String?  @map("player_id")
-  nickname        String
-  avatar          String?
-  team            String   // "CT" ou "TR"
-  weight          Float
-  guest           Boolean  @default(false)
-
-  match           TeamBalanceMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  player          Player?          @relation(fields: [playerId], references: [id], onDelete: SetNull)
+  id       String           @id @default(cuid())
+  matchId  String           @map("match_id")
+  playerId String?          @map("player_id")
+  nickname String
+  avatar   String?
+  team     String
+  weight   Float
+  guest    Boolean          @default(false)
+  match    TeamBalanceMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player   Player?          @relation(fields: [playerId], references: [id])
 
   @@map("team_balance_players")
-}
-
-enum SyncJobStatus {
-  PENDING
-  SENT_TO_WORKER
-  PROCESSING
-  COMPLETED
-  FAILED
 }
 
 /// Fila de jobs de sincronização de demos. O Hub é o produtor (cria PENDING);
@@ -405,42 +337,39 @@ model SyncJob {
 }
 
 model MatchPayload {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   source        String
   sourceMatchId String
   parserVersion String
   schemaVersion String
   payload       Json
   payloadHash   String
-  status        String   @default("STORED")
+  status        String    @default("STORED")
   processedAt   DateTime?
   errorMessage  String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@unique([source, sourceMatchId])
   @@map("match_payloads")
 }
 
 model PlayerMatchup {
-  id             String    @id @default(cuid())
-  matchId        String
-  match          Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  
-  killerId       String
-  killer         Player    @relation("MatchupKiller", fields: [killerId], references: [id])
-  victimId       String
-  victim         Player    @relation("MatchupVictim", fields: [victimId], references: [id])
-  
-  kills          Int       @default(0)
-  headshots      Int       @default(0)
-  entryKills     Int       @default(0)
-  tradeKills     Int       @default(0)
-  weapons        Json?     // Ex: { "ak47": 3 }
-  rounds         Json?     // Ex: { "1": { "weapon": "ak47", "hs": true } }
-  avgDistance    Float?
-  
-  createdAt      DateTime  @default(now())
+  id          String   @id @default(cuid())
+  matchId     String
+  killerId    String
+  victimId    String
+  kills       Int      @default(0)
+  headshots   Int      @default(0)
+  entryKills  Int      @default(0)
+  tradeKills  Int      @default(0)
+  weapons     Json?
+  rounds      Json?
+  avgDistance Float?
+  createdAt   DateTime @default(now())
+  killer      Player   @relation("MatchupKiller", fields: [killerId], references: [id])
+  match       Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  victim      Player   @relation("MatchupVictim", fields: [victimId], references: [id])
 
   @@unique([matchId, killerId, victimId])
   @@index([killerId, victimId])
@@ -450,56 +379,96 @@ model PlayerMatchup {
 model PlayerClutch {
   id          String    @id @default(cuid())
   matchId     String
-  match       Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
   playerId    String
-  player      Player    @relation(fields: [playerId], references: [id])
-  
-  opponents   Int       // 1 to 5 (1v1 to 1v5)
+  opponents   Int
   won         Boolean
   roundNumber Int
   side        MatchTeam
   weapon      String?
   createdAt   DateTime  @default(now())
+  match       Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player      Player    @relation(fields: [playerId], references: [id])
 
   @@index([matchId])
   @@index([playerId])
 }
 
 model PlayerEntryDuel {
-  id             String    @id @default(cuid())
-  matchId        String
-  match          Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  playerId       String
-  player         Player    @relation(fields: [playerId], references: [id])
-  
-  isKiller       Boolean   // true = entry kill, false = entry death
-  side           MatchTeam
-  weapon         String?
-  roundNumber    Int
-  opponentId     String?
-  createdAt      DateTime  @default(now())
+  id          String    @id @default(cuid())
+  matchId     String
+  playerId    String
+  isKiller    Boolean
+  side        MatchTeam
+  weapon      String?
+  roundNumber Int
+  opponentId  String?
+  createdAt   DateTime  @default(now())
+  match       Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player      Player    @relation(fields: [playerId], references: [id])
 
   @@index([matchId])
   @@index([playerId])
 }
 
 model PlayerTradeEvent {
-  id             String    @id @default(cuid())
-  matchId        String
-  match          Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  
-  victimId       String
-  victim         Player    @relation("TradeVictim", fields: [victimId], references: [id])
-  traderId       String
-  trader         Player    @relation("TradeTrader", fields: [traderId], references: [id])
-  
-  roundNumber    Int
-  timeDiff       Float
-  weapon         String?
-  createdAt      DateTime  @default(now())
+  id          String   @id @default(cuid())
+  matchId     String
+  victimId    String
+  traderId    String
+  roundNumber Int
+  timeDiff    Float
+  weapon      String?
+  createdAt   DateTime @default(now())
+  match       Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  trader      Player   @relation("TradeTrader", fields: [traderId], references: [id])
+  victim      Player   @relation("TradeVictim", fields: [victimId], references: [id])
 
   @@index([matchId])
   @@index([victimId])
   @@index([traderId])
 }
 
+enum MatchTeam {
+  A
+  B
+}
+
+enum EventType {
+  KILL
+  ACE
+  CLUTCH_1V1
+  CLUTCH_1V2
+  CLUTCH_1V3
+  CLUTCH_1V4
+  CLUTCH_1V5
+  MULTI_KILL_3
+  MULTI_KILL_4
+  MULTI_KILL_5
+}
+
+enum ImportStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+}
+
+enum SeasonStatus {
+  ACTIVE
+  CLOSED
+}
+
+enum SyncJobStatus {
+  PENDING
+  SENT_TO_WORKER
+  PROCESSING
+  COMPLETED
+  FAILED
+}

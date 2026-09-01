@@ -5,6 +5,8 @@ import { ServiceStatus } from "@/components/admin/dashboard/ServiceStatus";
 import { RecentActivity } from "@/components/admin/dashboard/RecentActivity";
 import { QuickMetrics } from "@/components/admin/dashboard/QuickMetrics";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Painel Admin — CS2 Stats Hub",
   description: "Visão geral administrativa do sistema.",

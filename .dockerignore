@@ -1,0 +1,19 @@
+node_modules
+.next
+out
+build
+.git
+.env
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+README.md
+docs
+scratch
+scripts
+prisma/migrations
+# Evitar enviar o banco de dados sqlite se existir localmente
+*.db
+*.db-journal

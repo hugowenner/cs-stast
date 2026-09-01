@@ -1,6 +1,8 @@
 import { prisma } from "@/server/db";
 import { SyncManager } from "@/components/admin/sync/SyncManager";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Sincronizações — CS2 Stats Hub Admin",
   description: "Histórico e controle das rotinas de sincronização de partidas do Hub.",

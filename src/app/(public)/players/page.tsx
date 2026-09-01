@@ -10,6 +10,8 @@ import { safeQuery } from "@/server/safeQuery";
 import * as playerService from "@/server/services/player.service";
 import * as competitiveService from "@/server/services/competitive.service";
 
+export const dynamic = "force-dynamic";
+
 export default async function PlayersPage() {
   // Carrega o dataset completo do banco para manter a consistência de cálculo do Dashboard
   const dataset = await competitiveService.loadCompetitiveDataset();

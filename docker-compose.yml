@@ -1,14 +1,35 @@
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cs2-stats-app
+    restart: unless-stopped
+    ports:
+      - "3210:3210"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   postgres:
     image: postgres:16-alpine
     container_name: cs2-stats-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: cs2stats
-      POSTGRES_PASSWORD: cs2stats
-      POSTGRES_DB: cs2stats
+      POSTGRES_USER: ${POSTGRES_USER:-cs2stats}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cs2stats}
+      POSTGRES_DB: ${POSTGRES_DB:-cs2stats}
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cs2stats} -d ${POSTGRES_DB:-cs2stats}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     volumes:
       - cs2-stats-postgres-data:/var/lib/postgresql/data
 
