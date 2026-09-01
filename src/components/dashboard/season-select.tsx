@@ -128,7 +128,7 @@ export function SeasonSelect({
         aria-expanded={open}
         className="flex items-center gap-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white px-4 py-2.5 text-xs font-bold transition-all duration-200 focus:outline-none"
       >
-        <span>Temporada: {activeSeason?.name}</span>
+        <span>{activeSeason?.name}</span>
         <ChevronDown className={cn("size-3.5 text-muted-foreground transition-transform duration-200", open && "rotate-180")} />
       </button>
 

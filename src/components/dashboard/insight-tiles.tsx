@@ -23,7 +23,7 @@ export function InsightTiles({ hottestPlayer, coldestPlayer, bestMap, worstMap }
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <Zap className="size-3.5 text-status-good" />
-                  <p className="text-[8px] uppercase tracking-widest font-black text-status-good/80">📈 Em alta</p>
+                  <p className="text-[8px] uppercase tracking-widest font-black text-status-good/80">Em alta</p>
                 </div>
                 <HudBadge label="HOT" variant="green" />
               </div>
@@ -44,7 +44,7 @@ export function InsightTiles({ hottestPlayer, coldestPlayer, bestMap, worstMap }
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <TrendingDown className="size-3.5 text-status-critical" />
-                  <p className="text-[8px] uppercase tracking-widest font-black text-status-critical/80">😂 Fase ruim</p>
+                  <p className="text-[8px] uppercase tracking-widest font-black text-status-critical/80">Em queda</p>
                 </div>
                 <HudBadge label="COLD" variant="red" />
               </div>
@@ -65,7 +65,7 @@ export function InsightTiles({ hottestPlayer, coldestPlayer, bestMap, worstMap }
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <Map className="size-3.5 text-accent-cyan" />
-                  <p className="text-[8px] uppercase tracking-widest font-black text-accent-cyan/80">🔥 Território</p>
+                  <p className="text-[8px] uppercase tracking-widest font-black text-accent-cyan/80">Território</p>
                 </div>
                 <HudBadge label="MAPA" variant="cyan" />
               </div>
@@ -84,7 +84,7 @@ export function InsightTiles({ hottestPlayer, coldestPlayer, bestMap, worstMap }
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <AlertTriangle className="size-3.5 text-status-warning" />
-                  <p className="text-[8px] uppercase tracking-widest font-black text-status-warning/80">😂 Bala longe</p>
+                  <p className="text-[8px] uppercase tracking-widest font-black text-status-warning/80">Pior mapa</p>
                 </div>
                 <HudBadge label="VETO" variant="gold" />
               </div>

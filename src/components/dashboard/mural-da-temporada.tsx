@@ -129,7 +129,7 @@ export function MuralDaTemporada({ competitive }: MuralDaTemporadaProps) {
           <div className="flex items-center justify-between mb-3">
             <div>
               <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-muted-foreground/50">Top da Temporada</p>
-              <h3 className="text-sm font-black text-white">Quem está carregando</h3>
+              <h3 className="text-sm font-black text-white">Classificação</h3>
             </div>
             <Trophy className="size-4 text-status-warning/70" />
           </div>
@@ -298,7 +298,7 @@ export function MuralDaTemporada({ competitive }: MuralDaTemporadaProps) {
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-muted-foreground/50">Soberania por Mapa</p>
-              <h3 className="text-sm font-black text-white">👑 Donos dos Mapas</h3>
+              <h3 className="text-sm font-black text-white">Especialistas por Mapa</h3>
             </div>
             <Compass className="size-4 text-accent-violet/70" />
           </div>
@@ -348,7 +348,7 @@ export function MuralDaTemporada({ competitive }: MuralDaTemporadaProps) {
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-xs shrink-0" aria-hidden>🔥</span>
                 <div className="min-w-0">
-                  <p className="text-[8px] uppercase tracking-wider font-bold text-muted-foreground/50 leading-none mb-0.5">🔥 Modo Deus Ativo</p>
+                  <p className="text-[8px] uppercase tracking-wider font-bold text-muted-foreground/50 leading-none mb-0.5">Sequência ativa</p>
                   {activeHotStreak ? (
                     <Link href={`/players/${activeHotStreak.player.id}`} className="text-xs font-black text-white hover:text-primary transition-colors block truncate">
                       {activeHotStreak.player.nickname}
@@ -370,7 +370,7 @@ export function MuralDaTemporada({ competitive }: MuralDaTemporadaProps) {
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-xs shrink-0" aria-hidden>📈</span>
                 <div className="min-w-0">
-                  <p className="text-[8px] uppercase tracking-wider font-bold text-muted-foreground/50 leading-none mb-0.5">📈 Subiu nos Gráficos</p>
+                  <p className="text-[8px] uppercase tracking-wider font-bold text-muted-foreground/50 leading-none mb-0.5">Melhor evolução</p>
                   {bestEvolution ? (
                     <Link href={`/players/${bestEvolution.player.id}`} className="text-xs font-black text-white hover:text-primary transition-colors block truncate">
                       {bestEvolution.player.nickname}
@@ -392,7 +392,7 @@ export function MuralDaTemporada({ competitive }: MuralDaTemporadaProps) {
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-xs shrink-0" aria-hidden>⭐</span>
                 <div className="min-w-0">
-                  <p className="text-[8px] uppercase tracking-wider font-bold text-muted-foreground/50 leading-none mb-0.5">🔥 Tá impossível parar</p>
+                  <p className="text-[8px] uppercase tracking-wider font-bold text-muted-foreground/50 leading-none mb-0.5">Destaque da semana</p>
                   {jogadorDaSemana ? (
                     <Link href={`/players/${jogadorDaSemana.player.id}`} className="text-xs font-black text-white hover:text-primary transition-colors block truncate">
                       {jogadorDaSemana.player.nickname}
@@ -418,7 +418,7 @@ export function MuralDaTemporada({ competitive }: MuralDaTemporadaProps) {
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-muted-foreground/50">Dinâmicas do Grupo</p>
-              <h3 className="text-sm font-black text-white">🔥 Os parceiros de crime</h3>
+              <h3 className="text-sm font-black text-white">Duplas que funcionam</h3>
             </div>
             <Swords className="size-4 text-accent-violet/70" />
           </div>
@@ -429,7 +429,7 @@ export function MuralDaTemporada({ competitive }: MuralDaTemporadaProps) {
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-xs shrink-0" aria-hidden>🤝</span>
                 <div className="min-w-0">
-                  <p className="text-[8px] uppercase tracking-wider font-bold text-muted-foreground/50 leading-none mb-0.5">🔥 Os parceiros de crime</p>
+                  <p className="text-[8px] uppercase tracking-wider font-bold text-muted-foreground/50 leading-none mb-0.5">Duplas que funcionam</p>
                   {primaryDuo ? (
                     <p className="text-xs font-black text-white truncate">
                       {primaryDuo.playerA.nickname} + {primaryDuo.playerB.nickname}

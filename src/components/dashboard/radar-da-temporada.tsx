@@ -109,7 +109,7 @@ function CuriosidadeCard({ curiosity }: { curiosity: WeeklyCuriosity }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sparkles className="size-4 text-accent-purple shrink-0" />
-          <p className="text-[10px] uppercase tracking-widest font-bold text-accent-purple/80">🧠 Estatística que ninguém pediu</p>
+          <p className="text-[10px] uppercase tracking-widest font-bold text-accent-purple/80">Curiosidade da Semana</p>
         </div>
         <PriorityBadge label="🟡 Tendência" color="border-accent-purple/30 text-accent-purple bg-accent-purple/[0.04]" />
       </div>

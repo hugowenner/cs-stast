@@ -116,8 +116,8 @@ export default async function RankingsPage({
     <div className="flex flex-col gap-6">
       <FadeIn>
         <PageHeader
-          title="🏆 Rankings"
-          subtitle="Quem realmente está carregando o grupo nesta temporada"
+          title="Rankings"
+          subtitle="Classificação competitiva da temporada. Amizade não entra no cálculo."
           actions={
             <SeasonSelect seasons={seasonOptions} currentSeasonId={currentSeason} />
           }

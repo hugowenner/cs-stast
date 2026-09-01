@@ -25,8 +25,8 @@ export function AchievementHero({
           <Trophy className="size-4 text-status-warning" />
         </div>
         <div>
-          <h1 className="text-[13px] font-black text-white leading-tight">🏛️ Museu dos Amassos</h1>
-          <p className="text-[9px] text-muted-foreground/50">Conquistas do grupo no CS2 Stats Hub</p>
+          <h1 className="text-[13px] font-black text-white leading-tight">Conquistas</h1>
+          <p className="text-[9px] text-muted-foreground/50">O que o grupo já fez que vale registro.</p>
         </div>
       </div>
 

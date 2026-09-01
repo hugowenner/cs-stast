@@ -324,8 +324,8 @@ export function TeamBalanceClient({
   return (
     <div className="flex flex-col gap-6">
       <PageHeader 
-        title="🎯 Gerador de Times Inteligente" 
-        subtitle="Monte lobbies determinísticos e balanceados utilizando estatísticas em tempo real da temporada."
+        title="Gerador de Times"
+        subtitle="Balanceamento baseado em dados da temporada. Para quando o lobby precisa de justiça, não de sorte."
         actions={
           <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 font-bold text-xs text-primary shadow-sm select-none">
             🏆 {activeSeasonName} · {activeSeasonMatches} {activeSeasonMatches === 1 ? "partida analisada" : "partidas analisadas"}

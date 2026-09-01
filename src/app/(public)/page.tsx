@@ -197,11 +197,11 @@ export default async function DashboardPage(props: {
 
       {/* Page Title */}
       <div className="flex flex-col gap-1 px-1 mt-2">
-        <h1 className="text-xl lg:text-2xl font-black text-white uppercase tracking-tight flex items-center gap-2">
-          <span>📊</span> Raio-X da Temporada
+        <h1 className="text-xl lg:text-2xl font-black text-white uppercase tracking-tight">
+          Raio-X da Temporada
         </h1>
         <p className="text-[10px] text-muted-foreground/60 font-semibold tracking-wider uppercase leading-none mt-1">
-          Competitive Performance Intelligence Overview
+          Seus números não sabem mentir.
         </p>
       </div>
 
@@ -263,7 +263,7 @@ export default async function DashboardPage(props: {
 
       {/* ═══ 4. Radar da Temporada ═══ */}
       <SectionContainer
-        title="🔎 Detector de Bagre"
+        title="Destaques da Semana"
         delay={0.04}
       >
         <RadarDaTemporada
@@ -275,7 +275,7 @@ export default async function DashboardPage(props: {
 
       {/* ═══ 4. Hall da Fama ═══ */}
       <SectionContainer
-        title="🏛️ Museu dos Amassos"
+        title="Recordes"
         delay={0.05}
       >
         <HallOfFame records={records} monitoredPlayers={monitoredPlayers} />
@@ -283,7 +283,7 @@ export default async function DashboardPage(props: {
 
       {/* ═══ 5. Ranking Competitivo ═══ */}
       <SectionContainer
-        title="Quem está carregando"
+        title="Classificação da Temporada"
         delay={0.06}
       >
         <RankingTable
@@ -298,7 +298,7 @@ export default async function DashboardPage(props: {
       {/* ═══ 6. Tendências da Temporada ═══ */}
       {(topGainers.length > 0 || topDecliners.length > 0 || hotStreaks.length > 0 || coldStreaks.length > 0) && (
         <SectionContainer
-          title="📈 Quem subiu e quem afundou"
+          title="Tendências"
           delay={0.08}
         >
           <TendenciasDaTemporada
@@ -313,7 +313,7 @@ export default async function DashboardPage(props: {
 
       {/* ═══ 7. Mural Competitivo ═══ */}
       <SectionContainer
-        title="📊 Painel de Domínio"
+        title="Painel de Performance"
         delay={0.09}
       >
         <MuralCompetitivo
@@ -325,7 +325,7 @@ export default async function DashboardPage(props: {
 
       {/* ═══ 8. Sinergia ═══ */}
       <SectionContainer
-        title="🤝 Dinâmicas do Grupo"
+        title="Duplas e Rivalidades"
         delay={0.10}
       >
         <SinergiaSection
@@ -340,7 +340,7 @@ export default async function DashboardPage(props: {
       {/* ═══ 9. Reis dos Mapas ═══ */}
       {(mapSpecialists.length > 0 || mapWinrates.length > 0) && (
         <SectionContainer
-          title="👑 Donos dos Mapas"
+          title="Especialistas por Mapa"
           delay={0.11}
         >
           <ReisDosMapa
@@ -354,7 +354,7 @@ export default async function DashboardPage(props: {
 
       {/* ═══ 10. Performance GC ═══ */}
       <SectionContainer
-        title="🎯 Estatísticas de Boteco Premium"
+        title="Estatísticas Avançadas"
         delay={0.12}
       >
         <PerformanceGcSection
@@ -370,7 +370,7 @@ export default async function DashboardPage(props: {
       {/* ═══ 12. Coach IA ═══ */}
       <SectionContainer
         title="Coach IA"
-        subtitle="💀 A IA que vai reclamar da sua mira"
+        subtitle="A análise que você provavelmente não vai gostar de ler."
         delay={0.14}
       >
         <div className="relative w-full">
@@ -381,12 +381,12 @@ export default async function DashboardPage(props: {
 
       {/* ═══ 13. Conquistas Recentes ═══ */}
       <SectionContainer
-        title="🏆 Conquistas Recentes"
+        title="Conquistas Recentes"
         delay={0.15}
       >
         <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
           {recentAchievements.length === 0 ? (
-            <p className="text-muted-foreground/55 py-10 text-center text-sm">Nenhuma conquista desbloqueada recentemente. Joguem mais.</p>
+            <p className="text-muted-foreground/55 py-10 text-center text-sm">Nenhuma conquista registrada por enquanto. Joguem mais.</p>
           ) : (
             <div className="divide-y divide-white/[0.04]">
               {recentAchievements.map((entry, i) => (

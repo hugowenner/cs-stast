@@ -61,7 +61,7 @@ export default async function ComparePage({
       <FadeIn>
         <PageHeader
           title="Scout H2H"
-          subtitle="☠️ Quem domina quem no servidor — compare, discuta, e monte seu time com dados."
+          subtitle="Compare dois jogadores. Depois decida quem realmente é melhor — com dados, não com papo de lobby."
           icon={
             <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
               <Swords className="size-6" />
@@ -99,7 +99,7 @@ export default async function ComparePage({
             <div className="flex size-14 items-center justify-center rounded-2xl bg-white/[0.02] border border-white/[0.06] text-muted-foreground/30 mb-5">
               <Swords className="size-6 text-primary" />
             </div>
-            <h3 className="text-base font-black text-white mb-2">⚔️ Inicie o confronto</h3>
+            <h3 className="text-base font-black text-white mb-2">Inicie o confronto</h3>
             <p className="text-xs text-muted-foreground/60 max-w-md mb-6 leading-relaxed">
               Selecione dois jogadores e descubra quem realmente é melhor — com dados, sem papo de lobby:
             </p>
@@ -107,31 +107,27 @@ export default async function ComparePage({
             {/* Grid de Bullets explicativos */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left max-w-md w-full border-t border-white/[0.04] pt-5">
               <div className="flex items-start gap-2.5">
-                <span className="text-xs">📊</span>
                 <div>
-                  <p className="text-xs font-bold text-white/90 leading-none">Maior Impacto</p>
+                  <p className="text-xs font-bold text-white/90 leading-none">Impacto</p>
                   <p className="text-[10px] text-muted-foreground/65 mt-1 leading-tight">Quem causa mais dano e abre mais rounds</p>
                 </div>
               </div>
               <div className="flex items-start gap-2.5">
-                <span className="text-xs">🏆</span>
                 <div>
                   <p className="text-xs font-bold text-white/90 leading-none">Retrospecto H2H</p>
-                  <p className="text-[10px] text-muted-foreground/65 mt-1 leading-tight">Quem tem a maior taxa de vitória direta no servidor</p>
+                  <p className="text-[10px] text-muted-foreground/65 mt-1 leading-tight">Histórico direto entre os dois no servidor</p>
                 </div>
               </div>
               <div className="flex items-start gap-2.5">
-                <span className="text-xs">🔥</span>
                 <div>
-                  <p className="text-xs font-bold text-white/90 leading-none">Clutches Decisivos</p>
-                  <p className="text-[10px] text-muted-foreground/65 mt-1 leading-tight">Quem garante a vitória sob extrema pressão</p>
+                  <p className="text-xs font-bold text-white/90 leading-none">Clutches</p>
+                  <p className="text-[10px] text-muted-foreground/65 mt-1 leading-tight">Quem entrega quando o round está perdido</p>
                 </div>
               </div>
               <div className="flex items-start gap-2.5">
-                <span className="text-xs">🗺️</span>
                 <div>
-                  <p className="text-xs font-bold text-white/90 leading-none">Domínio de Mapas</p>
-                  <p className="text-[10px] text-muted-foreground/65 mt-1 leading-tight">Quem é o rei em cada local de combate</p>
+                  <p className="text-xs font-bold text-white/90 leading-none">Mapas</p>
+                  <p className="text-[10px] text-muted-foreground/65 mt-1 leading-tight">Desempenho comparado por mapa</p>
                 </div>
               </div>
             </div>

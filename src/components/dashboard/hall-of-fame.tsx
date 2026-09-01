@@ -363,7 +363,7 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
         {/* ── Coluna lateral: fila de recordes (25%) ── */}
         <div className="p-4 bg-black/[0.12] flex flex-col gap-3 relative z-10">
           <div className="flex items-center justify-between px-1">
-            <span className="text-[9px] uppercase tracking-widest font-extrabold text-muted-foreground/60">🏛️ Amassos</span>
+            <span className="text-[9px] uppercase tracking-widest font-extrabold text-muted-foreground/60">Recordes</span>
             <span className="text-[9px] text-muted-foreground/40 font-bold">{list.length} categorias</span>
           </div>
 

@@ -148,24 +148,24 @@ function getSessionMoodMeta(mood: SimpleSessionSummary["mood"]) {
   switch (mood) {
     case "excellent":
       return {
-        label: "🔥 Tá impossível parar",
+        label: "Sessão excelente",
         style: "bg-status-warning/10 text-status-warning border-status-warning/20 shadow-[0_0_10px_rgba(245,158,11,0.04)]",
       };
     case "good":
       return {
-        label: "📈 Evolução",
+        label: "Em evolução",
         style: "bg-status-good/10 text-status-good border-status-good/20",
       };
     case "stable":
       return {
-        label: "📊 Estável",
+        label: "Estável",
         style: "bg-white/[0.03] text-muted-foreground/75 border-white/[0.06]",
       };
     case "difficult":
     case "disaster":
     default:
       return {
-        label: "💀 Dia difícil",
+        label: "Dia difícil",
         style: "bg-status-critical/10 text-status-critical border-status-critical/20",
       };
   }

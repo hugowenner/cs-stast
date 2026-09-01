@@ -4,9 +4,9 @@ export function Footer() {
   return (
     <footer className="glass-panel border border-white/10 bg-white/[0.02] rounded-2xl px-5 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
       <div className="min-w-0">
-        <p className="text-xs font-bold text-white tracking-wide">CS2 Stats Hub</p>
+        <p className="text-xs font-bold text-white tracking-wide">CSZin da Criticância</p>
         <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">
-          Dados sérios para quem joga CS2 com ainda mais seriedade
+          Estatística competitiva séria. Sem narrativa.
         </p>
       </div>
       <div className="text-[11px] text-muted-foreground flex flex-col items-center sm:items-end gap-0.5">

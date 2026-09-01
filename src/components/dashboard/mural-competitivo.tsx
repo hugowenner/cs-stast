@@ -16,9 +16,9 @@ interface MuralCompetitivoProps {
 type Tab = "lideres" | "impacto" | "perfis";
 
 const TABS: { id: Tab; label: string; icon: typeof Trophy }[] = [
-  { id: "lideres", label: "👑 Líderes", icon: Trophy },
-  { id: "impacto", label: "⚡ Impacto & Duelos", icon: Zap },
-  { id: "perfis", label: "🧬 Perfis", icon: Compass },
+  { id: "lideres", label: "Líderes", icon: Trophy },
+  { id: "impacto", label: "Impacto & Duelos", icon: Zap },
+  { id: "perfis", label: "Perfis", icon: Compass },
 ];
 
 const PODIUM_COLORS = ["text-yellow-400", "text-slate-300", "text-amber-600"];

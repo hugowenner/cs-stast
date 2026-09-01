@@ -104,7 +104,7 @@ export function SeasonHero({
             <div className="flex items-center gap-1.5">
               <Trophy className="size-3.5 text-status-warning shrink-0" />
               <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">
-                {isActive ? "Temporada Ativa" : "Temporada Concluída"}
+                {isActive ? "Temporada" : "Temporada encerrada"}
               </span>
             </div>
             <h2 className="text-xl lg:text-2xl font-black text-white uppercase tracking-tight leading-none mt-1">
@@ -117,12 +117,12 @@ export function SeasonHero({
           {isActive ? (
             <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold text-emerald-400 shadow-[0_0_15px_-3px_rgba(16,185,129,0.2)] select-none">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-              <span>🟢 Em andamento</span>
+              <span>Em andamento</span>
             </div>
           ) : (
             <div className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] font-bold text-muted-foreground select-none">
               <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
-              <span>🔴 Finalizada</span>
+              <span>Finalizada</span>
             </div>
           )}
         </div>
@@ -185,7 +185,7 @@ export function SeasonHero({
           {/* Card 4: Líder da Temporada */}
           <div className="glass-panel rounded-xl border border-white/[0.04] bg-white/[0.01] p-4 flex flex-col justify-between min-h-[88px]">
             <div className="flex items-center justify-between">
-              <span className="text-[9px] font-bold text-muted-foreground/45 uppercase tracking-widest">👑 Líder da Temporada</span>
+              <span className="text-[9px] font-bold text-muted-foreground/45 uppercase tracking-widest">Líder da Temporada</span>
               <Users2 className="size-3.5 text-primary/80 shrink-0" />
             </div>
             <div className="flex items-center gap-2">
@@ -194,7 +194,7 @@ export function SeasonHero({
                 <p className="text-lg font-black text-white leading-none truncate uppercase tracking-tight">
                   {bestPlayer ? bestPlayer.nickname : "—"}
                 </p>
-                <p className="text-[8px] text-muted-foreground/35 mt-1 uppercase font-semibold">Destaque da Season</p>
+                <p className="text-[8px] text-muted-foreground/35 mt-1 uppercase font-semibold">Melhor da temporada</p>
               </div>
             </div>
           </div>
@@ -263,7 +263,7 @@ export function SeasonHero({
                 <div className="flex items-center justify-between">
                   <span className="text-[8px] font-black uppercase tracking-wider text-status-good/80 flex items-center gap-1.5">
                     <Zap className="size-3 text-status-good shrink-0" />
-                    <span>📈 Em Alta</span>
+                    <span>Em alta</span>
                   </span>
                   <span className="text-[8px] font-extrabold bg-status-good/10 border border-status-good/15 text-status-good px-1.5 py-0.5 rounded uppercase">HOT</span>
                 </div>
@@ -295,7 +295,7 @@ export function SeasonHero({
                 <div className="flex items-center justify-between">
                   <span className="text-[8px] font-black uppercase tracking-wider text-status-critical/80 flex items-center gap-1.5">
                     <TrendingDown className="size-3 text-status-critical shrink-0" />
-                    <span>😂 Fase Ruim</span>
+                    <span>Em queda</span>
                   </span>
                   <span className="text-[8px] font-extrabold bg-status-critical/10 border border-status-critical/15 text-status-critical px-1.5 py-0.5 rounded uppercase">COLD</span>
                 </div>

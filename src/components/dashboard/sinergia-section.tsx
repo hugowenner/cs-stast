@@ -20,16 +20,16 @@ interface SinergiaSectionProps {
 type Tab = "duplas" | "trios" | "rivais" | "matchups";
 
 const TABS: { id: Tab; label: string; icon: typeof Handshake }[] = [
-  { id: "duplas",   label: "🔥 Os parceiros de crime", icon: Handshake },
-  { id: "trios",    label: "Trios",                    icon: Users },
-  { id: "rivais",   label: "☠️ Rivais",                icon: Swords },
-  { id: "matchups", label: "Matchups",                 icon: Swords },
+  { id: "duplas",   label: "Duplas que funcionam", icon: Handshake },
+  { id: "trios",    label: "Trios",                icon: Users },
+  { id: "rivais",   label: "Rivais",               icon: Swords },
+  { id: "matchups", label: "Confrontos",           icon: Swords },
 ];
 
 // ─── Tab: Duplas ──────────────────────────────────────────────────────────────
 function DuplasTab({ duos, bestRecentDuo }: { duos: DuoSummary[]; bestRecentDuo: DuoSummary | null }) {
   if (duos.length === 0 && !bestRecentDuo) {
-    return <p className="text-sm text-muted-foreground/55 text-center py-8">Nenhuma dupla registrada ainda.</p>;
+    return <p className="text-sm text-muted-foreground/55 text-center py-8">Nenhuma dupla registrada. Jogue mais partidas em grupo para gerar dados.</p>;
   }
 
   const isRecentDuo = (d: DuoSummary) =>
@@ -96,7 +96,7 @@ function DuplasTab({ duos, bestRecentDuo }: { duos: DuoSummary[]; bestRecentDuo:
 // ─── Tab: Trios ───────────────────────────────────────────────────────────────
 function TriosTab({ trio }: { trio: TrioSummary | null }) {
   if (!trio) {
-    return <p className="text-sm text-muted-foreground/55 text-center py-8">Nenhum trio com dados suficientes ainda.</p>;
+    return <p className="text-sm text-muted-foreground/55 text-center py-8">Nenhum trio com dados suficientes. Precisamos de mais partidas para identificar combinações que funcionam.</p>;
   }
 
   return (
@@ -141,7 +141,7 @@ function TriosTab({ trio }: { trio: TrioSummary | null }) {
 function RivaisTab({ rivalries }: { rivalries: RivalryH2HSummary[] }) {
   const [page, setPage] = useState(0);
   if (rivalries.length === 0) {
-    return <p className="text-sm text-muted-foreground/55 text-center py-8">Nenhuma rivalidade registrada ainda.</p>;
+    return <p className="text-sm text-muted-foreground/55 text-center py-8">Nenhuma rivalidade identificada. Quem você convenientemente chama de rival ainda não tem dados suficientes aqui.</p>;
   }
 
   const rivalry = rivalries[page];
@@ -196,7 +196,7 @@ function RivaisTab({ rivalries }: { rivalries: RivalryH2HSummary[] }) {
 function MatchupsTab({ matchups }: { matchups: PlayerMatchupSummary[] }) {
   const relevant = matchups.filter((m) => m.dominates || m.struggles);
   if (relevant.length === 0) {
-    return <p className="text-sm text-muted-foreground/55 text-center py-8">Nenhuma soberania H2H clara ainda.</p>;
+    return <p className="text-sm text-muted-foreground/55 text-center py-8">Sem confrontos diretos suficientes ainda. Joguem mais e os dados decidem quem domina quem.</p>;
   }
 
   return (

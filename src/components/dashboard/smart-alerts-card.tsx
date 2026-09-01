@@ -18,7 +18,7 @@ export function SmartAlertsCard({ alerts }: SmartAlertsCardProps) {
     <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden h-full flex flex-col">
       <div className="px-4 py-3.5 border-b border-white/[0.05] flex items-center gap-2">
         <AlertTriangle className="size-3.5 text-status-warning shrink-0" />
-        <p className="text-[10px] uppercase tracking-widest font-bold text-status-warning/80">⚠️ Radar do Grupo</p>
+        <p className="text-[10px] uppercase tracking-widest font-bold text-status-warning/80">Alertas</p>
         {alerts.length > 0 && (
           <span className="ml-auto text-[9px] text-muted-foreground/60 font-semibold">{alerts.length}</span>
         )}

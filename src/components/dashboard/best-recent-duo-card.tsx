@@ -23,7 +23,7 @@ export function BestRecentDuoCard({ duo }: BestRecentDuoCardProps) {
     <div className="glass-panel rounded-2xl border border-accent-cyan/15 bg-accent-cyan/[0.02] overflow-hidden h-full flex flex-col">
       <div className="px-4 pt-3.5 pb-2.5 border-b border-white/[0.05] flex items-center gap-2">
         <Handshake className="size-3 text-accent-cyan shrink-0" />
-        <span className="text-[9px] uppercase tracking-widest font-bold text-accent-cyan/80">🤝 Parceria que Não Tem Explicação</span>
+        <span className="text-[9px] uppercase tracking-widest font-bold text-accent-cyan/80">Dupla em destaque</span>
         <span className="ml-auto text-[9px] text-muted-foreground/60 font-semibold">{duo.total} partidas</span>
       </div>
 

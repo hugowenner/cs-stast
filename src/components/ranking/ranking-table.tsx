@@ -34,8 +34,8 @@ export function RankingTable({ entries, formaStyle, seasonComparison = [], delay
       <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
         <div className="px-5 py-4 border-b border-white/[0.05] flex items-center justify-between">
           <div>
-            <p className="text-sm font-bold text-white">Quem está carregando</p>
-            <p className="text-[10px] text-muted-foreground/65 mt-0.5">Classificação competitiva da temporada</p>
+            <p className="text-sm font-bold text-white">Classificação da Temporada</p>
+            <p className="text-[10px] text-muted-foreground/65 mt-0.5">Aqui não existe amizade. Os números decidem.</p>
           </div>
           <Trophy className="size-4 text-status-warning/60" />
         </div>

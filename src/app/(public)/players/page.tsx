@@ -52,12 +52,12 @@ export default async function PlayersPage() {
   return (
     <div className="flex flex-col gap-6">
       <FadeIn>
-        <PageHeader title="👥 Jogadores" subtitle="O roster completo — veja quem está carregando e quem precisa treinar" />
+        <PageHeader title="Jogadores" subtitle="Roster completo. Os números dizem quem está jogando bem." />
       </FadeIn>
 
       <SectionContainer
-        title="🔎 Detector de Bagre"
-        subtitle={`${players.length} jogadores monitorados ativos`}
+        title="Jogadores Monitorados"
+        subtitle={`${players.length} jogadores ativos nesta temporada`}
         delay={0.05}
       >
         {sortedPlayers.length === 0 ? (

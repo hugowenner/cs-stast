@@ -85,7 +85,7 @@ function MultikillsTab({ leaderboards }: { leaderboards: MultikillsLeaderboards 
   const hasData = categories.some((c) => leaderboards[c.key].length > 0);
 
   if (!hasData) {
-    return <p className="text-sm text-muted-foreground/55 text-center py-8">Nenhuma multikill registrada ainda.</p>;
+    return <p className="text-sm text-muted-foreground/55 text-center py-8">Nenhuma multikill registrada. Talvez seja mira. Talvez seja azar. Mais partidas vão esclarecer.</p>;
   }
 
   return (
@@ -118,7 +118,7 @@ function MultikillsTab({ leaderboards }: { leaderboards: MultikillsLeaderboards 
 // ─── Tab: Clutches ────────────────────────────────────────────────────────────
 function ClutchesTab({ clutches }: { clutches?: ClutchesBundle }) {
   if (!clutches || clutches.totalAttempts === 0) {
-    return <p className="text-sm text-muted-foreground/55 text-center py-8">Nenhum clutch registrado na temporada ainda.</p>;
+    return <p className="text-sm text-muted-foreground/55 text-center py-8">Nenhum clutch registrado. O round ainda não foi uma questão de um contra muitos por aqui.</p>;
   }
 
   return (
@@ -138,7 +138,7 @@ function ClutchesTab({ clutches }: { clutches?: ClutchesBundle }) {
       {clutches.leaders.length > 0 && (
         <div className="bg-white/[0.015] border border-white/[0.04] rounded-xl p-4 flex flex-col gap-3">
           <p className="text-[9px] uppercase tracking-widest font-bold text-muted-foreground/50 flex items-center gap-1.5">
-            <span>🧠</span> Mestres do Clutch na Temporada
+            Clutchers da Temporada
           </p>
           <div className="flex flex-col gap-2">
             {clutches.leaders.map((p, idx) => (
@@ -204,7 +204,7 @@ export function PerformanceGcSection({
   const [activeTab, setActiveTab] = useState<Tab>("multikills");
 
   const tabs: { id: Tab; label: string; icon: typeof Zap }[] = [
-    { id: "performance", label: "🎯 GC Premium",  icon: Zap },
+    { id: "performance", label: "Gamers Club",    icon: Zap },
     { id: "multikills",  label: "Multikills",     icon: Trophy },
     { id: "clutches",    label: "Clutches",       icon: ShieldCheck },
     { id: "combate",     label: "Combate",        icon: Crosshair },
