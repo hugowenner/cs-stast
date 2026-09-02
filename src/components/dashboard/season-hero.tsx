@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Trophy, Swords, TrendingUp, Award, Clock, Flame, Users2, RefreshCw, Crosshair, Zap, Target, TrendingDown, AlertTriangle } from "lucide-react";
 import { AnimatedNumber } from "@/components/motion/animated-number";
 import type { PlayerMomentumEntry, MapPerformanceEntry } from "@/server/services/competitive.service";
@@ -81,6 +82,15 @@ export function SeasonHero({
   worstMap,
   action,
 }: SeasonHeroProps) {
+  const [showVideo, setShowVideo] = useState(false);
+
+  useEffect(() => {
+    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!prefersReduced && window.innerWidth >= 768) {
+      setShowVideo(true);
+    }
+  }, []);
+
   // Format season label: "julho de 2026" -> "Julho/2026"
   const formattedLabel = seasonLabel
     .replace(" de ", "/")
@@ -93,6 +103,24 @@ export function SeasonHero({
 
   return (
     <div className="glass-panel relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.003] p-6 shadow-2xl flex flex-col gap-6">
+      {/* Gameplay video background — desktop/tablet only, respects prefers-reduced-motion */}
+      {showVideo && (
+        <video
+          className="absolute inset-0 w-full h-full object-cover object-center opacity-[0.15] pointer-events-none select-none"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="none"
+        >
+          <source src="/video/videocapa.mp4" type="video/mp4" />
+        </video>
+      )}
+      {/* Overlay: preserves readability over the video */}
+      {showVideo && (
+        <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/45 to-black/75 pointer-events-none select-none" />
+      )}
+
       {/* Background ambient light overlay for esports premium feel */}
       <div className="absolute -right-20 -top-20 size-80 rounded-full bg-primary/10 blur-[120px] pointer-events-none select-none" />
       <div className="absolute -left-20 -bottom-20 size-80 rounded-full bg-accent-cyan/5 blur-[120px] pointer-events-none select-none" />

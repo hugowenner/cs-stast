@@ -202,13 +202,45 @@
   }
   body {
     @apply bg-background text-foreground;
-    /* Alpha reduzido (0.35→0.22, 0.25→0.16): fundo charcoal amplifica
-       as cores do gradiente mais que o preto anterior. */
+    /*
+      Background stack (top → bottom):
+      1. Violet radial — ambient glow top-left       (fixed)
+      2. Cyan radial   — ambient glow top-right      (fixed)
+      3. Dark overlay  — dims the map image to ~10%  (scroll)
+      4. Map image     — global background texture   (scroll, cover)
+    */
     background-image:
       radial-gradient(ellipse 80% 50% at 20% -10%, oklch(0.42 0.10 288 / 0.22), transparent),
-      radial-gradient(ellipse 60% 40% at 100% 0%, oklch(0.37 0.08 200 / 0.16), transparent);
-    background-attachment: fixed;
+      radial-gradient(ellipse 60% 40% at 100% 0%, oklch(0.37 0.08 200 / 0.16), transparent),
+      linear-gradient(rgba(12, 13, 21, 0.91) 0%, rgba(12, 13, 21, 0.88) 100%),
+      url('/maps/backgroud.jpg');
+    background-size:
+      auto,
+      auto,
+      100% 100%,
+      cover;
+    background-position:
+      top left,
+      top right,
+      0 0,
+      center center;
+    background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
+    /* All layers fixed: image stays as a true viewport-covering backdrop at
+       all scroll positions — the "infinite background" effect without cutoff.
+       Touch devices revert image to scroll (see media query below) to avoid
+       the iOS Safari fixed-background rendering bug. */
+    background-attachment: fixed, fixed, fixed, fixed;
   }
+
+  /* Touch devices (mobile + tablet): revert image layer to scroll to avoid the
+     iOS Safari bug where fixed backgrounds paint only within the initial viewport
+     height and leave a blank strip on long pages. */
+  @media (hover: none) {
+    body {
+      background-attachment: fixed, fixed, fixed, scroll;
+    }
+  }
+
   html {
     @apply font-sans;
   }
@@ -844,7 +876,9 @@
     height: 100%;
     object-fit: cover;
     object-position: center;
-    opacity: 0.20;
+    /* Reduced to 0: global backgroud.jpg already supplies a CS2 map scene.
+       Per-card map textures at 0.20 competed visually ("second image" effect). */
+    opacity: 0;
     z-index: 0;
     pointer-events: none;
     user-select: none;
@@ -867,6 +901,8 @@
   .bg-texture-overlay {
     position: absolute;
     inset: 0;
+    /* Darkening overlay no longer needed — map image is hidden (opacity 0). */
+    opacity: 0;
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0.40) 0%, rgba(0, 0, 0, 0.65) 50%, rgba(0, 0, 0, 0.90) 100%);
     z-index: 0;
     pointer-events: none;
