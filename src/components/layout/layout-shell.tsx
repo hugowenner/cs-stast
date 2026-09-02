@@ -135,7 +135,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Linha superior: logo + status + hamburger */}
-        <div className="relative z-10 flex items-center justify-between px-5 py-5 lg:py-15">
+        <div className="relative z-10 flex items-center justify-between px-5 py-5 lg:py-6">
           <div className="flex items-center gap-6">
             <Link href="/" className="flex flex-col gap-0.5 group shrink-0">
               <span className="text-gradient text-base font-black tracking-tight group-hover:text-primary transition-colors uppercase whitespace-nowrap">

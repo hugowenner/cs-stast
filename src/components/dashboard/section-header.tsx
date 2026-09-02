@@ -15,11 +15,11 @@ export function SectionHeader({ title, subtitle, href, linkLabel, className = "m
     <div className={cn("flex items-center justify-between", className)}>
       <div className="section-accent-bar">
         <div>
-          <p className="text-[9px] uppercase tracking-[0.14em] font-black text-muted-foreground/65 leading-none">
+          <p className="text-xs uppercase tracking-[0.12em] font-black text-white/80 leading-none">
             {title}
           </p>
           {subtitle && (
-            <p className="text-[10px] text-muted-foreground/40 mt-1 leading-snug">{subtitle}</p>
+            <p className="text-[10px] text-muted-foreground/55 mt-1 leading-snug">{subtitle}</p>
           )}
         </div>
       </div>

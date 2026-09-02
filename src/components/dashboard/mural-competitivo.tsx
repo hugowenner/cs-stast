@@ -91,7 +91,7 @@ function LideresTab({ powerRanking }: { powerRanking: PowerRankingEntry[] }) {
               <Link href={`/players/${entry.player.id}`} className="text-sm font-bold text-white/90 hover:text-primary transition-colors truncate flex-1 min-w-0">
                 {entry.player.nickname}
               </Link>
-              <span className="text-[10px] text-muted-foreground/50 font-semibold shrink-0">{entry.matchCount}j</span>
+              <span className="text-[10px] text-muted-foreground/50 font-semibold shrink-0">{entry.matchCount}p</span>
               <span className="text-sm font-black text-white tabular-nums shrink-0 min-w-[52px] text-right">
                 <AnimatedNumber value={val} decimals={meta.decimals} suffix={meta.suffix} />
               </span>
@@ -109,25 +109,28 @@ function ImpactoTab({ decisive }: { decisive: DecisivePlayerEntry[] }) {
     return <p className="text-sm text-muted-foreground/55 text-center py-8">Dados insuficientes para análise de impacto.</p>;
   }
 
-  const categories: { label: string; emoji: string; extract: (d: DecisivePlayerEntry) => number; suffix: string; color: string }[] = [
-    { label: "Impact %",       emoji: "⚡", extract: (d) => d.impactPercent,   suffix: "%", color: "text-accent-purple" },
-    { label: "Opening WR %",   emoji: "🎯", extract: (d) => d.openingWinrate,  suffix: "%", color: "text-accent-cyan" },
-    { label: "Opening Kills",  emoji: "🔥", extract: (d) => d.entryKills,      suffix: "",  color: "text-status-danger" },
-    { label: "Trade Eficiência",emoji: "🔄", extract: (d) => d.tradeEfficiency, suffix: "%", color: "text-status-good" },
-    { label: "Clutches Ganhos", emoji: "🧠", extract: (d) => d.clutchWins,      suffix: "",  color: "text-accent-gold" },
-    { label: "Trades Dados",   emoji: "⚔️", extract: (d) => d.tradeKills,       suffix: "",  color: "text-white/80" },
+  const categories: { label: string; emoji: string; description: string; extract: (d: DecisivePlayerEntry) => number; suffix: string; color: string }[] = [
+    { label: "Impact %",        emoji: "⚡", description: "Aberturas + trades + clutches por round", extract: (d) => d.impactPercent,   suffix: "%", color: "text-accent-purple" },
+    { label: "Opening WR %",    emoji: "🎯", description: "Vitórias no primeiro duelo do round",     extract: (d) => d.openingWinrate,  suffix: "%", color: "text-accent-cyan" },
+    { label: "Opening Kills",   emoji: "🔥", description: "Total de abates na abertura do round",    extract: (d) => d.entryKills,      suffix: "",  color: "text-status-danger" },
+    { label: "Trade Eficiência", emoji: "🔄", description: "Mortes de aliados revertidas em kill",   extract: (d) => d.tradeEfficiency, suffix: "%", color: "text-status-good" },
+    { label: "Clutches Ganhos", emoji: "🧠", description: "Rounds 1vX ganhos na temporada",          extract: (d) => d.clutchWins,      suffix: "",  color: "text-accent-gold" },
+    { label: "Trades Dados",    emoji: "⚔️", description: "Kills em resposta a mortes de aliados",   extract: (d) => d.tradeKills,      suffix: "",  color: "text-white/80" },
   ];
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-      {categories.map(({ label, emoji, extract, suffix, color }) => {
+      {categories.map(({ label, emoji, description, extract, suffix, color }) => {
         const sorted = [...decisive].sort((a, b) => extract(b) - extract(a));
         const top = sorted.slice(0, 3);
         return (
           <div key={label} className="bg-white/[0.015] border border-white/[0.04] rounded-xl p-3.5 flex flex-col gap-2.5">
-            <p className="text-[9px] uppercase tracking-widest font-bold text-muted-foreground/50 flex items-center gap-1.5">
-              <span>{emoji}</span> {label}
-            </p>
+            <div>
+              <p className="text-[9px] uppercase tracking-widest font-bold text-muted-foreground/50 flex items-center gap-1.5">
+                <span>{emoji}</span> {label}
+              </p>
+              <p className="text-[8px] text-muted-foreground/35 mt-0.5 leading-snug">{description}</p>
+            </div>
             {top.map((d, idx) => (
               <div key={d.player.id} className="flex items-center gap-2">
                 <span className={`text-[10px] font-black w-3.5 ${idx === 0 ? color : "text-muted-foreground/35"}`}>{idx + 1}</span>

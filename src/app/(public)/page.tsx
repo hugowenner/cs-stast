@@ -241,6 +241,7 @@ export default async function DashboardPage(props: {
       {recentMatches.length > 0 && (
         <SectionContainer
           title="Últimos Confrontos"
+          subtitle="As partidas mais recentes do grupo."
           href="/sessions"
           linkLabel="Ver todas"
           delay={0.03}
@@ -253,6 +254,7 @@ export default async function DashboardPage(props: {
       {monitoredPlayers.length > 0 && (
         <SectionContainer
           title="Jogadores Monitorados"
+          subtitle="Membros com partidas rastreadas nesta temporada."
           href="/players"
           linkLabel="Ver todos"
           delay={0.035}
@@ -264,6 +266,7 @@ export default async function DashboardPage(props: {
       {/* ═══ 4. Radar da Temporada ═══ */}
       <SectionContainer
         title="Destaques da Semana"
+        subtitle="Destaque, alertas automáticos e curiosidade da temporada."
         delay={0.04}
       >
         <RadarDaTemporada
@@ -276,6 +279,7 @@ export default async function DashboardPage(props: {
       {/* ═══ 4. Hall da Fama ═══ */}
       <SectionContainer
         title="Recordes"
+        subtitle="Marcas extremas — boas e ruins — registradas na temporada."
         delay={0.05}
       >
         <HallOfFame records={records} monitoredPlayers={monitoredPlayers} />
@@ -284,6 +288,7 @@ export default async function DashboardPage(props: {
       {/* ═══ 5. Ranking Competitivo ═══ */}
       <SectionContainer
         title="Classificação da Temporada"
+        subtitle="Ranking por rating, winrate e volume de partidas."
         delay={0.06}
       >
         <RankingTable
@@ -299,6 +304,7 @@ export default async function DashboardPage(props: {
       {(topGainers.length > 0 || topDecliners.length > 0 || hotStreaks.length > 0 || coldStreaks.length > 0) && (
         <SectionContainer
           title="Tendências"
+          subtitle="Últimas 10 partidas vs. média da temporada."
           delay={0.08}
         >
           <TendenciasDaTemporada
@@ -314,6 +320,7 @@ export default async function DashboardPage(props: {
       {/* ═══ 7. Mural Competitivo ═══ */}
       <SectionContainer
         title="Painel de Performance"
+        subtitle="Líderes por métrica, impacto e perfis de jogo."
         delay={0.09}
       >
         <MuralCompetitivo
@@ -326,6 +333,7 @@ export default async function DashboardPage(props: {
       {/* ═══ 8. Sinergia ═══ */}
       <SectionContainer
         title="Duplas e Rivalidades"
+        subtitle="Combos que funcionam, rivalidades e confrontos diretos."
         delay={0.10}
       >
         <SinergiaSection
@@ -341,6 +349,7 @@ export default async function DashboardPage(props: {
       {(mapSpecialists.length > 0 || mapWinrates.length > 0) && (
         <SectionContainer
           title="Especialistas por Mapa"
+          subtitle="Maior rating médio por mapa (mín. 3 partidas)."
           delay={0.11}
         >
           <ReisDosMapa
@@ -355,6 +364,7 @@ export default async function DashboardPage(props: {
       {/* ═══ 10. Performance GC ═══ */}
       <SectionContainer
         title="Estatísticas Avançadas"
+        subtitle="Multikills, clutches e métricas de combate da temporada."
         delay={0.12}
       >
         <PerformanceGcSection
@@ -382,6 +392,7 @@ export default async function DashboardPage(props: {
       {/* ═══ 13. Conquistas Recentes ═══ */}
       <SectionContainer
         title="Conquistas Recentes"
+        subtitle="Feitos desbloqueados nas últimas partidas do grupo."
         delay={0.15}
       >
         <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">

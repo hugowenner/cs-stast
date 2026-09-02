@@ -69,7 +69,7 @@ function PlayerRow({ ps, position, isMvp }: { ps: PS; position: number; isMvp: b
           {ps.rating.toFixed(2)}
         </p>
         <p className="text-[7px] text-white/40 leading-none mt-0.5 uppercase tracking-wider [text-shadow:0_1px_4px_rgba(0,0,0,0.9)]">
-          rtg
+          rating
         </p>
       </div>
     </div>

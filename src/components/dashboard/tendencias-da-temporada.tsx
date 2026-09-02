@@ -21,6 +21,7 @@ function TendenciaCard({
   badgeColor,
   borderColor,
   bgColor,
+  description,
   children,
 }: {
   icon: typeof TrendingUp;
@@ -29,6 +30,7 @@ function TendenciaCard({
   badgeColor: string;
   borderColor: string;
   bgColor: string;
+  description?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -42,6 +44,9 @@ function TendenciaCard({
           {badge}
         </span>
       </div>
+      {description && (
+        <p className="text-[9px] text-muted-foreground/40 -mt-1 font-semibold">{description}</p>
+      )}
       {children}
     </div>
   );
@@ -61,6 +66,7 @@ function EvolucaoCards({ gainers }: { gainers: SeasonComparisonEntry[] }) {
       badgeColor="text-status-good"
       borderColor="border border-status-good/20"
       bgColor="bg-status-good/[0.015]"
+      description="Últimas 10 partidas vs. média da temporada"
     >
       {/* Featured */}
       <div className="flex items-center gap-3">
@@ -109,6 +115,7 @@ function QuedaCards({ decliners }: { decliners: SeasonComparisonEntry[] }) {
       badgeColor="text-status-warning"
       borderColor="border border-status-warning/20"
       bgColor="bg-status-warning/[0.015]"
+      description="Últimas 10 partidas vs. média da temporada"
     >
       <div className="flex items-center gap-3">
         <PlayerAvatar nickname={featured.player.nickname} avatarUrl={featured.player.avatarUrl} size="md" />

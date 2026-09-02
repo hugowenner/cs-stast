@@ -165,22 +165,23 @@ function CombatTab({ combat }: { combat?: CombatBundle }) {
     return <p className="text-sm text-muted-foreground/55 text-center py-8">Dados de combate ainda não disponíveis.</p>;
   }
 
-  const tiles = [
-    { label: "Skill Kills",     value: combat.totalSkillKills,             icon: Flame,     color: "text-accent-purple" },
-    { label: "Wallbangs",       value: combat.wallbangKills,               icon: Crosshair, color: "text-status-warning" },
-    { label: "Through Smoke",   value: combat.throughSmokeKills,           icon: Target,    color: "text-accent-cyan" },
-    { label: "No Scope",        value: combat.noScopeKills,                icon: Zap,       color: "text-status-good" },
-    { label: "Cego (Attacker)",  value: combat.blindedKills,                icon: EyeOff,    color: "text-accent-gold" },
-    { label: "Dano na Cabeça",  value: combat.headDamagePercent != null ? `${combat.headDamagePercent}%` : "—", icon: Star, color: "text-yellow-400" },
+  const tiles: { label: string; description?: string; value: number | string; icon: typeof Flame; color: string }[] = [
+    { label: "Skill Kills",    description: "Wallbang + smoke + no scope + cego", value: combat.totalSkillKills,  icon: Flame,     color: "text-accent-purple" },
+    { label: "Wallbangs",      value: combat.wallbangKills,               icon: Crosshair, color: "text-status-warning" },
+    { label: "Through Smoke",  value: combat.throughSmokeKills,           icon: Target,    color: "text-accent-cyan" },
+    { label: "No Scope",       value: combat.noScopeKills,                icon: Zap,       color: "text-status-good" },
+    { label: "Kill Cego",      description: "Você estava sob efeito de flash", value: combat.blindedKills, icon: EyeOff, color: "text-accent-gold" },
+    { label: "Dano na Cabeça", value: combat.headDamagePercent != null ? `${combat.headDamagePercent}%` : "—", icon: Star, color: "text-yellow-400" },
   ];
 
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {tiles.map(({ label, value, icon: Icon, color }) => (
+        {tiles.map(({ label, description, value, icon: Icon, color }) => (
           <div key={label} className="bg-white/[0.015] border border-white/[0.04] rounded-xl p-4 text-center">
             <Icon className={`size-4 mx-auto mb-2 ${color}`} />
             <p className="text-[8px] uppercase tracking-widest font-bold text-muted-foreground/50">{label}</p>
+            {description && <p className="text-[7px] text-muted-foreground/35 mt-0.5 leading-snug">{description}</p>}
             <p className="text-xl font-black text-white mt-1 tabular-nums">{value}</p>
           </div>
         ))}
