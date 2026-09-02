@@ -4,15 +4,16 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import type { HallOfFameRecord, MonitoredPlayerEntry } from "@/server/services/competitive.service";
-import { Trophy, Flame, Swords, Star, TrendingUp, ChevronLeft, ChevronRight, Brain, Skull, Bomb, ShieldAlert, BarChart2 } from "lucide-react";
+import { Trophy, Flame, Swords, Star, TrendingUp, TrendingDown, ChevronLeft, ChevronRight, Brain, Skull, Bomb, ShieldAlert, BarChart2, AlertTriangle, Ghost, Activity } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { recordNarratives } from "@/lib/narrator/templates";
+import { recordNarratives, worstRecordNarratives } from "@/lib/narrator/templates";
 import { HudBadge } from "@/components/ui/hud-badge";
 
 interface HallOfFameProps {
   records: HallOfFameRecord[];
   monitoredPlayers: MonitoredPlayerEntry[];
+  variant?: "best" | "worst";
 }
 
 interface RecordMeta {
@@ -28,7 +29,7 @@ interface RecordMeta {
   accentColor: string;
 }
 
-const METADATA_BY_CATEGORY: Record<string, RecordMeta> = {
+const BEST_METADATA_BY_CATEGORY: Record<string, RecordMeta> = {
   "Recorde de Rating": {
     title: "Maior Rating",
     shortLabel: "Rating",
@@ -175,6 +176,117 @@ const METADATA_BY_CATEGORY: Record<string, RecordMeta> = {
   },
 };
 
+const WORST_METADATA_BY_CATEGORY: Record<string, RecordMeta> = {
+  "Pior Rating em Jogo": {
+    title: "Pior Rating",
+    shortLabel: "Rating",
+    icon: TrendingDown,
+    medal: "💀",
+    medalLabel: "😬 Antirecorde da Temporada",
+    description: "O jogo que o Hub preferia ter esquecido — mas não esqueceu",
+    borderColor: "border-red-500/25",
+    bgColor: "bg-red-500/[0.02]",
+    iconColor: "text-red-400",
+    accentColor: "text-red-400",
+  },
+  "Pior K/D em Jogo": {
+    title: "Pior K/D",
+    shortLabel: "K/D",
+    icon: Swords,
+    medal: "💀",
+    medalLabel: "😬 Antirecorde da Temporada",
+    description: "Mais mortes do que kills — a matemática não tem como ajudar",
+    borderColor: "border-rose-500/25",
+    bgColor: "bg-rose-500/[0.02]",
+    iconColor: "text-rose-400",
+    accentColor: "text-rose-400",
+  },
+  "Menor ADR em Jogo": {
+    title: "Menor ADR",
+    shortLabel: "ADR",
+    icon: Flame,
+    medal: "🥶",
+    medalLabel: "😬 Antirecorde da Temporada",
+    description: "Dano médio por round historicamente baixo",
+    borderColor: "border-orange-500/25",
+    bgColor: "bg-orange-500/[0.02]",
+    iconColor: "text-orange-400",
+    accentColor: "text-orange-400",
+  },
+  "Mais Mortes em Jogo": {
+    title: "Mais Mortes",
+    shortLabel: "Mortes",
+    icon: Skull,
+    medal: "💀",
+    medalLabel: "😬 Antirecorde da Temporada",
+    description: "Recorde de mortes em uma única partida",
+    borderColor: "border-red-500/25",
+    bgColor: "bg-red-500/[0.015]",
+    iconColor: "text-red-300",
+    accentColor: "text-red-300",
+  },
+  "Menor HS% em Jogo": {
+    title: "Menor HS%",
+    shortLabel: "HS%",
+    icon: Star,
+    medal: "🥶",
+    medalLabel: "😬 Antirecorde da Temporada",
+    description: "A mira optou por uma abordagem mais corporal",
+    borderColor: "border-amber-500/25",
+    bgColor: "bg-amber-500/[0.02]",
+    iconColor: "text-amber-400",
+    accentColor: "text-amber-400",
+  },
+  "Maior Sequência de Derrotas": {
+    title: "Sequência de Derrotas",
+    shortLabel: "Derrotas",
+    icon: AlertTriangle,
+    medal: "😬",
+    medalLabel: "😬 Antirecorde da Temporada",
+    description: "Sequência consecutiva de derrotas que ninguém conseguiu parar",
+    borderColor: "border-rose-500/25",
+    bgColor: "bg-rose-500/[0.015]",
+    iconColor: "text-rose-400",
+    accentColor: "text-rose-400",
+  },
+  "Pior Momento no Ranking": {
+    title: "Pior Momento no Ranking",
+    shortLabel: "Ranking",
+    icon: TrendingDown,
+    medal: "📉",
+    medalLabel: "😬 Antirecorde da Temporada",
+    description: "Menor pontuação registrada no ranking interno da temporada",
+    borderColor: "border-orange-500/25",
+    bgColor: "bg-orange-500/[0.015]",
+    iconColor: "text-orange-400",
+    accentColor: "text-orange-400",
+  },
+  "Partida Fantasma": {
+    title: "Partida Fantasma",
+    shortLabel: "Fantasma",
+    icon: Ghost,
+    medal: "👻",
+    medalLabel: "😬 Antirecorde da Temporada",
+    description: "Pior combinação de Rating + ADR em uma única partida",
+    borderColor: "border-slate-500/25",
+    bgColor: "bg-slate-500/[0.02]",
+    iconColor: "text-slate-400",
+    accentColor: "text-slate-400",
+  },
+  "Maior Inconsistência na Temporada": {
+    title: "Maior Inconsistência",
+    shortLabel: "Consist.",
+    icon: Activity,
+    medal: "📊",
+    medalLabel: "😬 Antirecorde da Temporada",
+    description: "Mais partidas abaixo de 1.0 de rating na temporada",
+    borderColor: "border-yellow-500/25",
+    bgColor: "bg-yellow-500/[0.015]",
+    iconColor: "text-yellow-400",
+    accentColor: "text-yellow-400",
+  },
+};
+
 const DEFAULT_META: RecordMeta = {
   title: "Recorde",
   shortLabel: "Recorde",
@@ -186,6 +298,19 @@ const DEFAULT_META: RecordMeta = {
   bgColor: "bg-white/[0.01]",
   iconColor: "text-white",
   accentColor: "text-white",
+};
+
+const DEFAULT_WORST_META: RecordMeta = {
+  title: "Antirecorde",
+  shortLabel: "Pior",
+  icon: TrendingDown,
+  medal: "💀",
+  medalLabel: "Antirecorde",
+  description: "Antirecorde da temporada",
+  borderColor: "border-red-500/[0.07]",
+  bgColor: "bg-red-500/[0.01]",
+  iconColor: "text-red-400",
+  accentColor: "text-red-400",
 };
 
 const MAP_IMAGES: Record<string, string> = {
@@ -210,8 +335,13 @@ function extractMapName(detail: string): string | null {
   return match ? match[1] : null;
 }
 
-export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
+export function HallOfFame({ records, monitoredPlayers, variant = "best" }: HallOfFameProps) {
   const [activeIndex, setActiveIndex] = useState(0);
+
+  const isWorst = variant === "worst";
+  const categoryMetadata = isWorst ? WORST_METADATA_BY_CATEGORY : BEST_METADATA_BY_CATEGORY;
+  const defaultMeta = isWorst ? DEFAULT_WORST_META : DEFAULT_META;
+  const allNarratives = isWorst ? worstRecordNarratives : recordNarratives;
 
   const list = records;
 
@@ -226,7 +356,7 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
   const record = list[activeIndex];
   if (!record) return null;
 
-  const meta = METADATA_BY_CATEGORY[record.category] ?? DEFAULT_META;
+  const meta = categoryMetadata[record.category] ?? defaultMeta;
   const IconComponent = meta.icon;
   const mapName = extractMapName(record.detail);
   const mapImgUrl = record.matchId ? getMapImage(record.mapName || mapName) : null;
@@ -285,7 +415,7 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
             >
               {/* Badges */}
               <div className="flex items-center gap-2 flex-wrap">
-                <HudBadge label="RECORDE" variant="gold" />
+                <HudBadge label={isWorst ? "ANTIRECORDE" : "RECORDE"} variant={isWorst ? "red" : "gold"} />
                 {record.mapName || mapName ? (
                   <HudBadge label={record.mapName || mapName || ""} variant="cyan" />
                 ) : (
@@ -333,13 +463,13 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
               </div>
 
               {/* Narrativa do narrador */}
-              {recordNarratives[record.category] && (
+              {allNarratives[record.category] && (
                 <div className="mt-1 border-l-2 border-white/[0.08] pl-3">
                   <p className={cn("text-[11px] font-black", meta.accentColor)}>
-                    {recordNarratives[record.category].headline}
+                    {allNarratives[record.category].headline}
                   </p>
                    <p className="text-[10px] text-muted-foreground/55 italic mt-0.5 leading-relaxed">
-                    &ldquo;{recordNarratives[record.category].quote}&rdquo;
+                    &ldquo;{allNarratives[record.category].quote}&rdquo;
                   </p>
                 </div>
               )}
@@ -383,7 +513,7 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
 
           <div className="grid grid-cols-2 gap-1.5">
             {list.map((r, idx) => {
-              const m = METADATA_BY_CATEGORY[r.category] ?? DEFAULT_META;
+              const m = categoryMetadata[r.category] ?? defaultMeta;
               const Icon = m.icon;
               const isActive = idx === activeIndex;
               return (

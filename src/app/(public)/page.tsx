@@ -46,6 +46,7 @@ const EMPTY_COMPETITIVE_BUNDLE: competitiveService.DashboardCompetitiveBundle = 
   dominantTrio: null,
   mapSpecialists: [],
   records: [],
+  worstRecords: [],
   bestPerformance: null,
   worstPerformance: null,
   smartAlerts: [],
@@ -170,6 +171,7 @@ export default async function DashboardPage(props: {
     monitoredPlayers,
     hotStreaks,
     records,
+    worstRecords,
     coldStreaks,
     seasonComparison,
     topGainers,
@@ -284,6 +286,17 @@ export default async function DashboardPage(props: {
       >
         <HallOfFame records={records} monitoredPlayers={monitoredPlayers} />
       </SectionContainer>
+
+      {/* ═══ 4b. Piores da Temporada ═══ */}
+      {worstRecords.length > 0 && (
+        <SectionContainer
+          title="Piores da Temporada"
+          subtitle="Antirecordes: os momentos que o grupo preferia ter esquecido."
+          delay={0.055}
+        >
+          <HallOfFame records={worstRecords} monitoredPlayers={monitoredPlayers} variant="worst" />
+        </SectionContainer>
+      )}
 
       {/* ═══ 5. Ranking Competitivo ═══ */}
       <SectionContainer

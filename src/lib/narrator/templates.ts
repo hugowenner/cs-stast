@@ -52,6 +52,45 @@ export const recordNarratives: Record<string, { headline: string; quote: string 
   },
 };
 
+export const worstRecordNarratives: Record<string, { headline: string; quote: string }> = {
+  "Pior Rating em Jogo": {
+    headline: "O servidor preferiu não registrar",
+    quote: "Mas registrou. E vai continuar registrando.",
+  },
+  "Pior K/D em Jogo": {
+    headline: "A conta não fechou",
+    quote: "Mais mortes do que kills — a matemática não tem como mentir.",
+  },
+  "Menor ADR em Jogo": {
+    headline: "Presente na partida. Ausente no impacto",
+    quote: "Menos dano por round do que o esperado de qualquer jogador.",
+  },
+  "Mais Mortes em Jogo": {
+    headline: "O adversário encontrou o favorito",
+    quote: "Não foi falta de coragem. Foi excesso de aparições.",
+  },
+  "Menor HS% em Jogo": {
+    headline: "O pescoço sobreviveu bem",
+    quote: "Distribuiu o dano democraticamente pelo corpo todo.",
+  },
+  "Maior Sequência de Derrotas": {
+    headline: "Modo aprendizado ativado",
+    quote: "O grupo inteiro torcia para parar — e demorou.",
+  },
+  "Pior Momento no Ranking": {
+    headline: "O fundo do servidor",
+    quote: "O Hub registrou o piso. Felizmente, existe só uma direção a partir daqui.",
+  },
+  "Partida Fantasma": {
+    headline: "Estava lá. O placar não percebeu",
+    quote: "Números que fazem o time adversário achar que jogaram contra quatro.",
+  },
+  "Maior Inconsistência na Temporada": {
+    headline: "Altos e baixos — com ênfase nos baixos",
+    quote: "A média não mente quando a variação faz o trabalho por ela.",
+  },
+};
+
 export const performanceNarratives = {
   positive: [
     { headline: "O servidor percebeu", tagline: "Os números confirmam o que o lobby já sabia." },

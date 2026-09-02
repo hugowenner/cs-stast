@@ -1209,6 +1209,208 @@ function getHallOfFameRecordsFromDataset(
   return records;
 }
 
+function getWorstRecordsFromDataset(dataset: CompetitiveDataset): HallOfFameRecord[] {
+  const MIN_KILLS = 5;
+  const statsToUse = dataset.allStats;
+
+  const playerName = (s: (typeof dataset.allStats)[number] | null) =>
+    dataset.activePlayers.find((p) => p.id === s?.playerId)?.nickname ?? "N/A";
+
+  // 1. Pior Rating em Jogo
+  let minRatingStat: (typeof dataset.allStats)[number] | null = null;
+  for (const s of statsToUse) {
+    if (s.kills < MIN_KILLS) continue;
+    if (!minRatingStat || s.rating < minRatingStat.rating) minRatingStat = s;
+  }
+
+  // 2. Pior K/D em Jogo
+  let minKdStat: (typeof dataset.allStats)[number] | null = null;
+  let minKdVal = Infinity;
+  for (const s of statsToUse) {
+    if (s.kills < MIN_KILLS) continue;
+    const kd = s.deaths > 0 ? s.kills / s.deaths : s.kills;
+    if (kd < minKdVal) { minKdStat = s; minKdVal = kd; }
+  }
+
+  // 3. Menor ADR em Jogo
+  let minAdrStat: (typeof dataset.allStats)[number] | null = null;
+  for (const s of statsToUse) {
+    if (s.kills < MIN_KILLS) continue;
+    if (!minAdrStat || s.adr < minAdrStat.adr) minAdrStat = s;
+  }
+
+  // 4. Mais Mortes em Jogo
+  let maxDeathsStat: (typeof dataset.allStats)[number] | null = null;
+  for (const s of statsToUse) {
+    if (s.kills < MIN_KILLS) continue;
+    if (!maxDeathsStat || s.deaths > maxDeathsStat.deaths) maxDeathsStat = s;
+  }
+
+  // 5. Menor HS% em Jogo (mínimo 10 kills)
+  let minHsStat: (typeof dataset.allStats)[number] | null = null;
+  let minHsVal = Infinity;
+  for (const s of statsToUse) {
+    if (s.kills < 10) continue;
+    const hs = (s.headshots / s.kills) * 100;
+    if (hs < minHsVal) { minHsStat = s; minHsVal = hs; }
+  }
+
+  // 6. Maior Sequência de Derrotas
+  let maxLossStreak = 0;
+  let maxLossStreakPlayer = "N/A";
+  for (const player of dataset.activePlayers) {
+    const playerStats = dataset.statsByPlayer.get(player.id) ?? [];
+    const stats = [...playerStats].reverse();
+    let currentStreak = 0;
+    let playerMaxStreak = 0;
+    for (const stat of stats) {
+      if (!isWin(stat)) {
+        currentStreak++;
+        if (currentStreak > playerMaxStreak) playerMaxStreak = currentStreak;
+      } else {
+        currentStreak = 0;
+      }
+    }
+    if (playerMaxStreak > maxLossStreak) {
+      maxLossStreak = playerMaxStreak;
+      maxLossStreakPlayer = player.nickname;
+    }
+  }
+
+  // 7. Pior Momento no Ranking (min eloAfter)
+  let minEloStat: (typeof dataset.allStats)[number] | null = null;
+  for (const s of statsToUse) {
+    if (!minEloStat || s.eloAfter < minEloStat.eloAfter) minEloStat = s;
+  }
+
+  // 8. Partida Fantasma (min rating*100 + adr — mesma fórmula do impacto)
+  let minImpactStat: (typeof dataset.allStats)[number] | null = null;
+  let minImpactScore = Infinity;
+  for (const s of statsToUse) {
+    if (s.kills < MIN_KILLS) continue;
+    const score = s.rating * 100 + s.adr;
+    if (score < minImpactScore) { minImpactStat = s; minImpactScore = score; }
+  }
+
+  // 9. Maior Inconsistência na Temporada (inverso do score de consistência)
+  let worstConsistencyPlayer = "N/A";
+  let minConsistencyScore = Infinity;
+  let inconsistencyValue = "0.00 Rating";
+  let inconsistencyDetail = "Variação alta durante a temporada";
+
+  const candidatePlayers = dataset.activePlayers.filter((p) => {
+    const stats = dataset.statsByPlayer.get(p.id) ?? [];
+    return stats.length >= 3;
+  });
+
+  for (const player of candidatePlayers) {
+    const playerStats = dataset.statsByPlayer.get(player.id) ?? [];
+    if (playerStats.length === 0) continue;
+    const avgRating = playerStats.reduce((sum, s) => sum + s.rating, 0) / playerStats.length;
+    const aboveBaselineCount = playerStats.filter((s) => s.rating >= 1.0).length;
+    const aboveBaselinePct = aboveBaselineCount / playerStats.length;
+    const belowCount = playerStats.length - aboveBaselineCount;
+    const score = avgRating * (1 + aboveBaselinePct);
+    if (score < minConsistencyScore) {
+      minConsistencyScore = score;
+      worstConsistencyPlayer = player.nickname;
+      inconsistencyValue = `${avgRating.toFixed(2)} Rating`;
+      inconsistencyDetail = `${belowCount} de ${playerStats.length} partidas com rating < 1.0`;
+    }
+  }
+
+  const records: HallOfFameRecord[] = [];
+
+  if (minRatingStat) {
+    records.push({
+      category: "Pior Rating em Jogo",
+      playerName: playerName(minRatingStat),
+      value: minRatingStat.rating.toFixed(2),
+      detail: `Registrado no mapa ${minRatingStat.match.map.name}`,
+      matchId: minRatingStat.match.id,
+      mapName: minRatingStat.match.map.name,
+    });
+  }
+  if (minKdStat) {
+    records.push({
+      category: "Pior K/D em Jogo",
+      playerName: playerName(minKdStat),
+      value: `${minKdVal.toFixed(2)} K/D`,
+      detail: `Registrado no mapa ${minKdStat.match.map.name}`,
+      matchId: minKdStat.match.id,
+      mapName: minKdStat.match.map.name,
+    });
+  }
+  if (minAdrStat) {
+    records.push({
+      category: "Menor ADR em Jogo",
+      playerName: playerName(minAdrStat),
+      value: `${minAdrStat.adr.toFixed(1)} ADR`,
+      detail: `Dano médio por round na ${minAdrStat.match.map.name}`,
+      matchId: minAdrStat.match.id,
+      mapName: minAdrStat.match.map.name,
+    });
+  }
+  if (maxDeathsStat) {
+    records.push({
+      category: "Mais Mortes em Jogo",
+      playerName: playerName(maxDeathsStat),
+      value: `${maxDeathsStat.deaths} mortes`,
+      detail: `Partida no mapa ${maxDeathsStat.match.map.name}`,
+      matchId: maxDeathsStat.match.id,
+      mapName: maxDeathsStat.match.map.name,
+    });
+  }
+  if (minHsStat) {
+    records.push({
+      category: "Menor HS% em Jogo",
+      playerName: playerName(minHsStat),
+      value: `${minHsVal.toFixed(0)}% HS`,
+      detail: `Registrado no mapa ${minHsStat.match.map.name}`,
+      matchId: minHsStat.match.id,
+      mapName: minHsStat.match.map.name,
+    });
+  }
+  if (maxLossStreak > 0) {
+    records.push({
+      category: "Maior Sequência de Derrotas",
+      playerName: maxLossStreakPlayer,
+      value: `${maxLossStreak} derrotas`,
+      detail: "Sequência consecutiva de derrotas na temporada",
+    });
+  }
+  if (minEloStat) {
+    records.push({
+      category: "Pior Momento no Ranking",
+      playerName: playerName(minEloStat),
+      value: `${minEloStat.eloAfter} pontos`,
+      detail: "Menor pontuação registrada no ranking interno",
+      matchId: minEloStat.match.id,
+      mapName: minEloStat.match.map.name,
+    });
+  }
+  if (minImpactStat) {
+    records.push({
+      category: "Partida Fantasma",
+      playerName: playerName(minImpactStat),
+      value: `${minImpactStat.rating.toFixed(2)} Rating / ${minImpactStat.adr.toFixed(1)} ADR`,
+      detail: "Performance mais apagada registrada em uma partida",
+      matchId: minImpactStat.match.id,
+      mapName: minImpactStat.match.map.name,
+    });
+  }
+  if (minConsistencyScore < Infinity) {
+    records.push({
+      category: "Maior Inconsistência na Temporada",
+      playerName: worstConsistencyPlayer,
+      value: inconsistencyValue,
+      detail: inconsistencyDetail,
+    });
+  }
+
+  return records;
+}
+
 function getPerformanceExtremesFromDataset(dataset: CompetitiveDataset): {
   best: PerformanceExtreme | null;
   worst: PerformanceExtreme | null;
@@ -1883,6 +2085,7 @@ export interface DashboardCompetitiveBundle {
   dominantTrio: TrioSummary | null;
   mapSpecialists: MapSpecialist[];
   records: HallOfFameRecord[];
+  worstRecords: HallOfFameRecord[];
   bestPerformance: PerformanceExtreme | null;
   worstPerformance: PerformanceExtreme | null;
   smartAlerts: SmartAlert[];
@@ -1998,6 +2201,7 @@ export async function getDashboardCompetitiveBundle(
     dominantTrio: getDominantTrioFromDataset(ds),
     mapSpecialists: getMapSpecialistsFromDataset(ds),
     records: getHallOfFameRecordsFromDataset(ds),
+    worstRecords: getWorstRecordsFromDataset(ds),
     bestPerformance: extremes.best,
     worstPerformance: extremes.worst,
     smartAlerts: getSmartAlerts(seasonComparison, mapPerformance.bestMap, mapPerformance.worstMap),
