@@ -813,15 +813,6 @@
     animation: badge-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
-  /* ── Glow pulse — anel brilhante suave ───────────────────────────────────── */
-  @keyframes glow-pulse {
-    0%, 100% { box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 0 20px -8px rgba(255,255,255,0.04); }
-    50%       { box-shadow: 0 0 0 1px rgba(255,255,255,0.12), 0 0 28px -6px rgba(255,255,255,0.08); }
-  }
-  .glow-pulse {
-    animation: glow-pulse 3s ease-in-out infinite;
-  }
-
   /* ── Map color backgrounds — 2% opacidade, quase invisível ──────────────── */
   .map-bg-mirage  { background-color: rgba(210, 185, 140, 0.02); }
   .map-bg-inferno { background-color: rgba(210, 100, 30, 0.02); }

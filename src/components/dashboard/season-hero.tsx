@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Trophy, Clock, Flame } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 import { AnimatedNumber } from "@/components/motion/animated-number";
 import type { PlayerMomentumEntry, MapPerformanceEntry } from "@/server/services/competitive.service";
 import { cn } from "@/lib/utils";
@@ -79,6 +80,7 @@ export function SeasonHero({
     .replace(/^\w/, (c) => c.toUpperCase());
 
   const isActive = seasonStatus === "ACTIVE";
+  const prefersReduced = useReducedMotion();
 
   return (
     <div className="glass-panel relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.003] p-6 shadow-2xl flex flex-col gap-8">
@@ -137,37 +139,57 @@ export function SeasonHero({
       {/* ── MÉTRICAS PRINCIPAIS ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-8 z-10">
         {/* Partidas */}
-        <div className="flex flex-col gap-2">
+        <motion.div
+          className="flex flex-col gap-2"
+          initial={{ opacity: 0, y: prefersReduced ? 0 : 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: prefersReduced ? 0.01 : 0.22, delay: prefersReduced ? 0 : 0.2, ease: [0.25, 0, 0, 1] }}
+        >
           <p className="text-5xl lg:text-6xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_2px_12px_rgba(0,0,0,0.7)]">
             {totalMatches}
           </p>
           <p className="text-[9px] font-bold text-muted-foreground/55 uppercase tracking-widest select-none">
             Partidas
           </p>
-        </div>
+        </motion.div>
 
         {/* Winrate */}
-        <div className="flex flex-col gap-2">
+        <motion.div
+          className="flex flex-col gap-2"
+          initial={{ opacity: 0, y: prefersReduced ? 0 : 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: prefersReduced ? 0.01 : 0.22, delay: prefersReduced ? 0 : 0.26, ease: [0.25, 0, 0, 1] }}
+        >
           <p className="text-5xl lg:text-6xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_2px_12px_rgba(0,0,0,0.7)]">
             {communityWinrate}%
           </p>
           <p className="text-[9px] font-bold text-muted-foreground/55 uppercase tracking-widest select-none">
             Winrate
           </p>
-        </div>
+        </motion.div>
 
         {/* Melhor Rating */}
-        <div className="flex flex-col gap-2">
+        <motion.div
+          className="flex flex-col gap-2"
+          initial={{ opacity: 0, y: prefersReduced ? 0 : 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: prefersReduced ? 0.01 : 0.22, delay: prefersReduced ? 0 : 0.32, ease: [0.25, 0, 0, 1] }}
+        >
           <p className="text-5xl lg:text-6xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_2px_12px_rgba(0,0,0,0.7)]">
             {bestPlayer ? bestPlayer.rating.toFixed(2) : "—"}
           </p>
           <p className="text-[9px] font-bold text-muted-foreground/55 uppercase tracking-widest select-none">
             Melhor Rating
           </p>
-        </div>
+        </motion.div>
 
         {/* Líder */}
-        <div className="flex flex-col gap-2">
+        <motion.div
+          className="flex flex-col gap-2"
+          initial={{ opacity: 0, y: prefersReduced ? 0 : 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: prefersReduced ? 0.01 : 0.22, delay: prefersReduced ? 0 : 0.38, ease: [0.25, 0, 0, 1] }}
+        >
           <div className="flex items-center gap-2.5">
             {bestPlayer && (
               <PlayerAvatar avatarUrl={bestPlayer.avatarUrl} nickname={bestPlayer.nickname} size="size-9" />
@@ -179,7 +201,7 @@ export function SeasonHero({
           <p className="text-[9px] font-bold text-muted-foreground/55 uppercase tracking-widest select-none">
             Líder da Temporada
           </p>
-        </div>
+        </motion.div>
       </div>
 
       {/* ── MÉTRICAS DE COMBATE ── */}

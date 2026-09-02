@@ -26,7 +26,6 @@ import * as rivalryService from "@/server/services/rivalry.service";
 import { listSeasons, resolveSeasonId } from "@/server/services/season.service";
 import { prisma } from "@/server/db";
 import { RefreshCw, Crosshair, Zap, TrendingUp, Target } from "lucide-react";
-import { FORMA_STYLE } from "@/lib/forma";
 import { AnnouncementBanner } from "@/components/dashboard/AnnouncementBanner";
 
 export const dynamic = "force-dynamic";
@@ -306,7 +305,6 @@ export default async function DashboardPage(props: {
       >
         <RankingTable
           entries={powerRanking.slice(0, 5)}
-          formaStyle={FORMA_STYLE}
           seasonComparison={seasonComparison}
           delay={0.07}
           className="w-full"

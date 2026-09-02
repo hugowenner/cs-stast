@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Trophy, Zap, Compass, ChevronRight } from "lucide-react";
+import { Trophy, Zap, Compass } from "lucide-react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import { AnimatedNumber } from "@/components/motion/animated-number";
 import type { PowerRankingEntry, DecisivePlayerEntry, PlayerArchetype } from "@/server/services/competitive.service";
@@ -180,6 +181,8 @@ function PerfisTab({ archetypes }: { archetypes: PlayerArchetype[] }) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export function MuralCompetitivo({ powerRanking, decisive, archetypes }: MuralCompetitivoProps) {
   const [activeTab, setActiveTab] = useState<Tab>("lideres");
+  const prefersReduced = useReducedMotion();
+  const xOffset = prefersReduced ? 0 : 10;
 
   return (
     <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
@@ -200,11 +203,21 @@ export function MuralCompetitivo({ powerRanking, decisive, archetypes }: MuralCo
           </button>
         ))}
       </div>
-      {/* Tab body */}
-      <div className="p-5">
-        {activeTab === "lideres" && <LideresTab powerRanking={powerRanking} />}
-        {activeTab === "impacto" && <ImpactoTab decisive={decisive} />}
-        {activeTab === "perfis"  && <PerfisTab archetypes={archetypes} />}
+      {/* Tab body with crossfade transition */}
+      <div className="p-5 overflow-hidden">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, x: xOffset }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -xOffset }}
+            transition={{ duration: prefersReduced ? 0.01 : 0.2, ease: "easeOut" }}
+          >
+            {activeTab === "lideres" && <LideresTab powerRanking={powerRanking} />}
+            {activeTab === "impacto" && <ImpactoTab decisive={decisive} />}
+            {activeTab === "perfis"  && <PerfisTab archetypes={archetypes} />}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );

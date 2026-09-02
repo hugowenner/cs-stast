@@ -132,7 +132,7 @@ export function RivalryCarousel({ rivalries }: Props) {
 
               {/* Jogadores */}
               <div className="px-4 py-4 flex items-center gap-3">
-                <div className={`flex flex-col items-center gap-1.5 flex-1 min-w-0 transition-all duration-200 ${!aLeads && !isTied ? "opacity-40 group-hover/card:opacity-50" : "group-hover/card:scale-[1.02]"}`}>
+                <div className={`flex flex-col items-center gap-1.5 flex-1 min-w-0 transition-all duration-200 ${!aLeads && !isTied ? "opacity-40 group-hover/card:opacity-50" : ""}`}>
                   <PlayerAvatar nickname={rivalry.playerA.nickname} avatarUrl={rivalry.playerA.avatarUrl} size="md" />
                   <p className="text-xs font-bold text-white truncate max-w-full text-center">{rivalry.playerA.nickname}</p>
                   <span className={`text-xl font-black tabular-nums ${aLeads ? "text-white" : "text-muted-foreground/45"}`}>
@@ -147,7 +147,7 @@ export function RivalryCarousel({ rivalries }: Props) {
                   <span className="text-[10px] text-muted-foreground/40 font-bold uppercase tracking-widest">vs</span>
                 </div>
 
-                <div className={`flex flex-col items-center gap-1.5 flex-1 min-w-0 transition-all duration-200 ${!bLeads && !isTied ? "opacity-40 group-hover/card:opacity-50" : "group-hover/card:scale-[1.02]"}`}>
+                <div className={`flex flex-col items-center gap-1.5 flex-1 min-w-0 transition-all duration-200 ${!bLeads && !isTied ? "opacity-40 group-hover/card:opacity-50" : ""}`}>
                   <PlayerAvatar nickname={rivalry.playerB.nickname} avatarUrl={rivalry.playerB.avatarUrl} size="md" />
                   <p className="text-xs font-bold text-white truncate max-w-full text-center">{rivalry.playerB.nickname}</p>
                   <span className={`text-xl font-black tabular-nums ${bLeads ? "text-white" : "text-muted-foreground/45"}`}>

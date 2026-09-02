@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { animate, useReducedMotion } from "framer-motion";
 
 export function AnimatedNumber({
@@ -17,19 +17,29 @@ export function AnimatedNumber({
   locale?: string;
 }) {
   const prefersReduced = useReducedMotion();
-  // Sempre inicia em 0 para que SSR e hidratação coincidam.
-  // useEffect ajusta o valor (instantâneo ou animado) após montar no cliente.
   const [display, setDisplay] = useState(0);
+  // Tracks the last rendered value so updates animate from current → new, not 0 → new
+  const displayRef = useRef(0);
+  const isFirstMount = useRef(true);
 
   useEffect(() => {
     if (prefersReduced) {
       setDisplay(value);
+      displayRef.current = value;
       return;
     }
-    const controls = animate(0, value, {
+
+    const from = isFirstMount.current ? 0 : displayRef.current;
+    isFirstMount.current = false;
+
+    const controls = animate(from, value, {
       duration,
       ease: "easeOut",
-      onUpdate: (v) => setDisplay(decimals > 0 ? v : Math.round(v)),
+      onUpdate: (v) => {
+        const rounded = decimals > 0 ? v : Math.round(v);
+        displayRef.current = rounded;
+        setDisplay(rounded);
+      },
     });
     return () => controls.stop();
   }, [value, duration, decimals, prefersReduced]);

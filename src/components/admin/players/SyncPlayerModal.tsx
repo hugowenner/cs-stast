@@ -141,7 +141,7 @@ export function SyncPlayerModal({ isOpen, player, onClose, onSuccess }: SyncPlay
                   <Loader2 className="size-8 text-primary animate-spin" />
                 )}
                 {step === "success" && (
-                  <CheckCircle className="size-8 text-emerald-500 animate-bounce" />
+                  <CheckCircle className="size-8 text-emerald-500 achievement-pop" />
                 )}
                 {step === "error" && (
                   <AlertTriangle className="size-8 text-destructive animate-pulse" />

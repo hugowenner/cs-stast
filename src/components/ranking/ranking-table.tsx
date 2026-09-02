@@ -1,14 +1,15 @@
-import { FadeIn } from "@/components/motion/fade-in";
+"use client";
+
 import { AnimatedNumber } from "@/components/motion/animated-number";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import Link from "next/link";
 import { Trophy, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import type { PowerRankingEntry, SeasonComparisonEntry } from "@/server/services/competitive.service";
-import type { FormaStyleMap } from "@/lib/forma";
+import { FORMA_STYLE } from "@/lib/forma";
+import { motion, useReducedMotion } from "framer-motion";
 
 interface RankingTableProps {
   entries: PowerRankingEntry[];
-  formaStyle: FormaStyleMap;
   seasonComparison?: SeasonComparisonEntry[];
   delay?: number;
   className?: string;
@@ -26,11 +27,12 @@ function TrendIcon({ forma }: { forma: string }) {
   return <Minus className="size-3 text-muted-foreground/40 shrink-0" />;
 }
 
-export function RankingTable({ entries, formaStyle, seasonComparison = [], delay = 0.13, className = "lg:col-span-2" }: RankingTableProps) {
+export function RankingTable({ entries, seasonComparison = [], delay = 0.13, className = "lg:col-span-2" }: RankingTableProps) {
   const diffByPlayer = new Map(seasonComparison.map((e) => [e.player.id, e.diff.rating]));
+  const prefersReduced = useReducedMotion();
 
   return (
-    <FadeIn delay={delay} className={className}>
+    <div className={className}>
       <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
         <div className="px-5 py-4 border-b border-white/[0.05] flex items-center justify-between">
           <div>
@@ -46,7 +48,17 @@ export function RankingTable({ entries, formaStyle, seasonComparison = [], delay
             const diffPositive = diff !== undefined && diff > 0;
             const diffNegative = diff !== undefined && diff < 0;
             return (
-              <div key={entry.player.id} className="px-5 py-3.5 flex items-center gap-3 hover:bg-white/[0.012] transition-colors group/row">
+              <motion.div
+                key={entry.player.id}
+                initial={{ opacity: 0, y: prefersReduced ? 0 : 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: prefersReduced ? 0.01 : 0.2,
+                  delay: prefersReduced ? 0 : 0.18 + index * 0.055,
+                  ease: "easeOut",
+                }}
+                className="px-5 py-3.5 flex items-center gap-3 hover:bg-white/[0.012] transition-colors group/row"
+              >
                 {/* Rank */}
                 <span className={`text-xs font-black w-5 shrink-0 text-center tabular-nums ${isTop3 ? PODIUM_COLORS[index] : "text-muted-foreground/40"}`}>
                   {index + 1}
@@ -62,7 +74,7 @@ export function RankingTable({ entries, formaStyle, seasonComparison = [], delay
                     <p className="text-sm font-bold text-white group-hover:text-primary transition-colors truncate">{entry.player.nickname}</p>
                     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                       {(() => {
-                        const f = formaStyle[entry.forma] ?? formaStyle["Oscilando"];
+                        const f = FORMA_STYLE[entry.forma] ?? FORMA_STYLE["Oscilando"];
                         return (
                           <span className={`badge-hover inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${f.color} ${f.bg} ${f.border}`}>
                             {f.prefix} {f.text}
@@ -101,11 +113,11 @@ export function RankingTable({ entries, formaStyle, seasonComparison = [], delay
                   </p>
                   <p className="text-[9px] text-muted-foreground/60 font-bold">Rating</p>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>
       </div>
-    </FadeIn>
+    </div>
   );
 }
