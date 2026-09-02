@@ -59,7 +59,7 @@ export function AdminStatsCards({
       <MetricCard
         title="Banco de Dados"
         value={dbSize}
-        description={`PostgreSQL no Neon. Latência: ${dbLatency}ms`}
+        description={`PostgreSQL. Latência: ${dbLatency}ms`}
         icon={Database}
       />
     </div>

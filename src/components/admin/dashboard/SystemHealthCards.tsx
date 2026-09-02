@@ -87,7 +87,7 @@ export function SystemHealthCards({ dbLatency, isDbConnected, nodeEnv }: SystemH
           <div className="space-y-4">
             <div className="space-y-1">
               <div className="flex justify-between text-xs font-medium">
-                <span className="text-muted-foreground">Latência DB (Neon)</span>
+                <span className="text-muted-foreground">DB Latency</span>
                 <span className="text-foreground">{dbLatency}ms</span>
               </div>
               <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
