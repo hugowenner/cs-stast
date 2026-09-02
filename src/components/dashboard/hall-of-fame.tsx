@@ -17,6 +17,7 @@ interface HallOfFameProps {
 
 interface RecordMeta {
   title: string;
+  shortLabel: string;
   icon: React.ComponentType<{ className?: string }>;
   medal: string;
   medalLabel: string;
@@ -30,6 +31,7 @@ interface RecordMeta {
 const METADATA_BY_CATEGORY: Record<string, RecordMeta> = {
   "Recorde de Rating": {
     title: "Maior Rating",
+    shortLabel: "Rating",
     icon: Trophy,
     medal: "🥇",
     medalLabel: "🔥 Recorde da Temporada",
@@ -41,6 +43,7 @@ const METADATA_BY_CATEGORY: Record<string, RecordMeta> = {
   },
   "Maior K/D em Jogo": {
     title: "Maior K/D",
+    shortLabel: "K/D",
     icon: Swords,
     medal: "🥇",
     medalLabel: "🔥 Recorde da Temporada",
@@ -52,6 +55,7 @@ const METADATA_BY_CATEGORY: Record<string, RecordMeta> = {
   },
   "Maior ADR em Jogo": {
     title: "Maior ADR",
+    shortLabel: "ADR",
     icon: Flame,
     medal: "🥇",
     medalLabel: "🔥 Recorde da Temporada",
@@ -63,6 +67,7 @@ const METADATA_BY_CATEGORY: Record<string, RecordMeta> = {
   },
   "Recorde de Kills": {
     title: "Mais Kills",
+    shortLabel: "Kills",
     icon: Swords,
     medal: "🥈",
     medalLabel: "🔥 Recorde da Temporada",
@@ -74,6 +79,7 @@ const METADATA_BY_CATEGORY: Record<string, RecordMeta> = {
   },
   "Maior HS% em Jogo": {
     title: "Maior HS%",
+    shortLabel: "HS%",
     icon: Star,
     medal: "🥈",
     medalLabel: "🔥 Recorde da Temporada",
@@ -85,6 +91,7 @@ const METADATA_BY_CATEGORY: Record<string, RecordMeta> = {
   },
   "Maior Sequência de Vitórias": {
     title: "Maior Sequência",
+    shortLabel: "Sequência",
     icon: Star,
     medal: "🔥",
     medalLabel: "🔥 Recorde da Temporada",
@@ -96,6 +103,7 @@ const METADATA_BY_CATEGORY: Record<string, RecordMeta> = {
   },
   "Pico de Rating do Hub": {
     title: "Pico de Rating",
+    shortLabel: "Pico Rtg",
     icon: TrendingUp,
     medal: "🏆",
     medalLabel: "🔥 Recorde da Temporada",
@@ -107,6 +115,7 @@ const METADATA_BY_CATEGORY: Record<string, RecordMeta> = {
   },
   "Maior Impacto em Jogo": {
     title: "Maior Impacto",
+    shortLabel: "Impacto",
     icon: Brain,
     medal: "🧠",
     medalLabel: "🔥 Recorde da Temporada",
@@ -118,6 +127,7 @@ const METADATA_BY_CATEGORY: Record<string, RecordMeta> = {
   },
   "Mais MultiKills na Temporada": {
     title: "Mais MultiKills",
+    shortLabel: "MultiKills",
     icon: Skull,
     medal: "💀",
     medalLabel: "🔥 Recorde da Temporada",
@@ -129,6 +139,7 @@ const METADATA_BY_CATEGORY: Record<string, RecordMeta> = {
   },
   "Maior Dano em Jogo": {
     title: "Maior Dano Total",
+    shortLabel: "Dano",
     icon: Bomb,
     medal: "💣",
     medalLabel: "🔥 Recorde da Temporada",
@@ -140,6 +151,7 @@ const METADATA_BY_CATEGORY: Record<string, RecordMeta> = {
   },
   "Maior Clutch na Temporada": {
     title: "Maior Clutch",
+    shortLabel: "Clutch",
     icon: ShieldAlert,
     medal: "🧊",
     medalLabel: "🔥 Recorde da Temporada",
@@ -151,6 +163,7 @@ const METADATA_BY_CATEGORY: Record<string, RecordMeta> = {
   },
   "Maior Consistência na Temporada": {
     title: "Maior Consistência",
+    shortLabel: "Consist.",
     icon: BarChart2,
     medal: "📊",
     medalLabel: "🔥 Recorde da Temporada",
@@ -164,6 +177,7 @@ const METADATA_BY_CATEGORY: Record<string, RecordMeta> = {
 
 const DEFAULT_META: RecordMeta = {
   title: "Recorde",
+  shortLabel: "Recorde",
   icon: Trophy,
   medal: "🥇",
   medalLabel: "Destaque",
@@ -360,14 +374,14 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
           </div>
         </div>
 
-        {/* ── Coluna lateral: fila de recordes (25%) ── */}
-        <div className="p-4 bg-black/[0.12] flex flex-col gap-3 relative z-10">
-          <div className="flex items-center justify-between px-1">
-            <span className="text-[9px] uppercase tracking-widest font-extrabold text-muted-foreground/60">Recordes</span>
-            <span className="text-[9px] text-muted-foreground/40 font-bold">{list.length} categorias</span>
+        {/* ── Coluna lateral: seletor compacto de categorias ── */}
+        <div className="p-3 bg-black/[0.12] flex flex-col gap-2.5 relative z-10">
+          <div className="flex items-center justify-between px-0.5">
+            <span className="text-[9px] uppercase tracking-widest font-extrabold text-muted-foreground/60">Categorias</span>
+            <span className="text-[9px] text-muted-foreground/40 font-bold">{list.length}</span>
           </div>
 
-          <div className="flex flex-col gap-1.5 overflow-y-auto flex-1">
+          <div className="grid grid-cols-2 gap-1.5">
             {list.map((r, idx) => {
               const m = METADATA_BY_CATEGORY[r.category] ?? DEFAULT_META;
               const Icon = m.icon;
@@ -377,26 +391,24 @@ export function HallOfFame({ records, monitoredPlayers }: HallOfFameProps) {
                   key={r.category}
                   onClick={() => setActiveIndex(idx)}
                   className={cn(
-                    "w-full text-left p-2.5 rounded-xl border flex items-center gap-3 transition-all cursor-pointer",
+                    "flex flex-col items-center gap-1 p-2 rounded-xl border transition-all cursor-pointer",
                     isActive
-                      ? "bg-white/[0.05] border-white/10 shadow-sm"
-                      : "bg-transparent border-transparent hover:bg-white/[0.025]"
+                      ? "bg-white/[0.06] border-white/[0.10] shadow-sm"
+                      : "bg-transparent border-transparent hover:bg-white/[0.025] hover:border-white/[0.04]"
                   )}
                 >
                   <div className={cn(
-                    "size-8 rounded-lg flex items-center justify-center shrink-0",
-                    isActive ? "bg-white/[0.06]" : "bg-white/[0.02]"
+                    "size-6 rounded-lg flex items-center justify-center shrink-0",
+                    isActive ? "bg-white/[0.10]" : "bg-white/[0.03]"
                   )}>
-                    <Icon className={cn("size-4", m.iconColor)} />
+                    <Icon className={cn("size-3.5", isActive ? m.iconColor : "text-white/40")} />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className={cn("text-xs font-black truncate", isActive ? "text-white" : "text-white/60")}>
-                      {r.playerName}
-                    </p>
-                    <p className="text-[9px] text-muted-foreground/45 truncate font-semibold">
-                      {m.title} · {r.value}
-                    </p>
-                  </div>
+                  <p className={cn(
+                    "text-[8px] font-bold text-center leading-tight w-full",
+                    isActive ? "text-white/90" : "text-white/40"
+                  )}>
+                    {m.shortLabel}
+                  </p>
                 </button>
               );
             })}
