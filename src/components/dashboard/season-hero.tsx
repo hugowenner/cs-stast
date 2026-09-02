@@ -106,7 +106,7 @@ export function SeasonHero({
       {/* Gameplay video background — desktop/tablet only, respects prefers-reduced-motion */}
       {showVideo && (
         <video
-          className="absolute inset-0 w-full h-full object-cover object-center opacity-[0.15] pointer-events-none select-none"
+          className="absolute inset-0 w-full h-full object-cover object-center opacity-[0.30] pointer-events-none select-none"
           autoPlay
           muted
           loop
@@ -118,7 +118,7 @@ export function SeasonHero({
       )}
       {/* Overlay: preserves readability over the video */}
       {showVideo && (
-        <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/45 to-black/75 pointer-events-none select-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60 pointer-events-none select-none" />
       )}
 
       {/* Background ambient light overlay for esports premium feel */}
