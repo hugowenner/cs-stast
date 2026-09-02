@@ -118,17 +118,30 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   const prefersReduced = useReducedMotion();
 
   return (
-    <div className="mx-auto flex max-w-[1440px] flex-col gap-6 p-4 sm:p-6 lg:px-10 lg:py-6 min-h-screen">
-      {/* Header + Nav */}
-      <header className="glass-panel border border-white/10 bg-white/[0.02] rounded-2xl overflow-hidden shadow-2xl">
+    <div className="mx-auto flex max-w-[1440px] flex-col gap-6 p-4 sm:p-6 lg:px-8 lg:py-6 min-h-screen">
+      {/* Header + Nav — extends slightly beyond the content column on large screens */}
+      <header className="glass-panel relative border border-white/10 bg-white/[0.02] rounded-2xl overflow-hidden shadow-2xl lg:-mx-6 xl:-mx-10 min-h-[80px] lg:min-h-[96px]">
+        {/* Background image */}
+        <div className="pointer-events-none absolute inset-0 z-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/maps/primeirocard.jpg"
+            alt=""
+            className="h-full w-full object-cover object-center"
+            style={{ opacity: 0.28 }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-black/40" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/40" />
+        </div>
+
         {/* Linha superior: logo + status + hamburger */}
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="relative z-10 flex items-center justify-between px-5 py-5 lg:py-15">
           <div className="flex items-center gap-6">
             <Link href="/" className="flex flex-col gap-0.5 group shrink-0">
-              <span className="text-gradient text-lg font-black tracking-tight group-hover:text-primary transition-colors uppercase">
-                CS2 Stats Hub
+              <span className="text-gradient text-base font-black tracking-tight group-hover:text-primary transition-colors uppercase whitespace-nowrap">
+                CSzin da Criticância Performance
               </span>
-              <span className="text-[8px] text-muted-foreground/50 font-bold tracking-wider uppercase leading-none">
+              <span className="text-[8px] text-muted-foreground/60 font-bold tracking-wider uppercase leading-none">
                 Counter-Strike Performance Intelligence
               </span>
             </Link>
@@ -159,9 +172,11 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
         {/* Nav mobile */}
         {mobileOpen && (
-          <Suspense fallback={<div className="h-16 bg-white/5 animate-pulse" />}>
-            <MobileNav pathname={pathname} onClose={() => setMobileOpen(false)} />
-          </Suspense>
+          <div className="relative z-10">
+            <Suspense fallback={<div className="h-16 bg-white/5 animate-pulse" />}>
+              <MobileNav pathname={pathname} onClose={() => setMobileOpen(false)} />
+            </Suspense>
+          </div>
         )}
       </header>
 

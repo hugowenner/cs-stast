@@ -106,7 +106,7 @@ export function SeasonHero({
       {/* Gameplay video background — desktop/tablet only, respects prefers-reduced-motion */}
       {showVideo && (
         <video
-          className="absolute inset-0 w-full h-full object-cover object-center opacity-[0.30] pointer-events-none select-none"
+          className="absolute inset-0 w-full h-full object-cover object-center opacity-[0.20] pointer-events-none select-none"
           autoPlay
           muted
           loop

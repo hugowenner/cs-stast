@@ -876,9 +876,7 @@
     height: 100%;
     object-fit: cover;
     object-position: center;
-    /* Reduced to 0: global backgroud.jpg already supplies a CS2 map scene.
-       Per-card map textures at 0.20 competed visually ("second image" effect). */
-    opacity: 0;
+    opacity: 0.28;
     z-index: 0;
     pointer-events: none;
     user-select: none;
@@ -901,8 +899,6 @@
   .bg-texture-overlay {
     position: absolute;
     inset: 0;
-    /* Darkening overlay no longer needed — map image is hidden (opacity 0). */
-    opacity: 0;
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0.40) 0%, rgba(0, 0, 0, 0.65) 50%, rgba(0, 0, 0, 0.90) 100%);
     z-index: 0;
     pointer-events: none;
