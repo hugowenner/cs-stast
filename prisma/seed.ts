@@ -3,7 +3,6 @@
 import "dotenv/config";
 import { prisma } from "@/server/db";
 import { ACHIEVEMENT_CATALOG } from "@/server/domain/achievementCatalog";
-import { getSeasonNameForDate, getSeasonDatesForDate } from "@/server/services/season.service";
 
 const ACTIVE_DUTY_MAPS = [
   "Mirage",
@@ -18,26 +17,8 @@ const ACTIVE_DUTY_MAPS = [
 ];
 
 async function main() {
-  const now = new Date();
-  const monthName = getSeasonNameForDate(now);
-  const { startDate, endDate } = getSeasonDatesForDate(now);
-
-  const defaultSeason = await prisma.season.upsert({
-    where: { id: "default-season" },
-    create: {
-      id: "default-season",
-      name: monthName,
-      startDate,
-      endDate,
-      status: "ACTIVE",
-    },
-    update: {
-      name: monthName,
-      startDate,
-      endDate,
-    },
-  });
-  console.log(`Seed: Temporada ativa '${defaultSeason.name}' semeada.`);
+  // Season NÃO é criada pelo seed — é dado de negócio que deve vir da produção
+  // via db:sync-from-vps. O seed cria apenas dados de catálogo estáticos.
 
   for (const entry of ACHIEVEMENT_CATALOG) {
     await prisma.achievement.upsert({

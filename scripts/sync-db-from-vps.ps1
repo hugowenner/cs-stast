@@ -1,22 +1,26 @@
 # scripts/sync-db-from-vps.ps1
-# Sincroniza o banco DEV local com os dados reais da VPS via SSH tunnel.
-# A VPS é acessada em somente leitura. O prisma/dev.db local é substituído.
+# Sincroniza o PostgreSQL DEV local (Docker, localhost:5432) com os dados reais
+# da VPS via SSH tunnel (localhost:5433). A VPS e acessada em somente leitura.
+# O DEV e truncado e reconstruido com os dados da VPS.
 #
-# Pré-requisito (uma única vez):
+# Pre-requisito (uma unica vez):
 #   Copie .env.vps-sync.example -> .env.vps-sync e preencha VPS_PG_PASSWORD.
+#   DATABASE_URL no .env local deve apontar para o PostgreSQL DEV Docker.
+#   O container cs2-stats-postgres-dev deve estar rodando
+#   (docker compose -f docker-compose.dev.yml up -d).
 #
 # Uso:
 #   npm run db:sync-from-vps
 
 $ErrorActionPreference = "Stop"
 
-# ─── Configuração ────────────────────────────────────────────────────────────
+# --- Configuracao -----------------------------------------------------------
 
 $ROOT        = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $ENV_FILE    = Join-Path $ROOT ".env.vps-sync"
 $LOCAL_PORT  = 5433
 
-# ─── Verificar arquivo de configuração ───────────────────────────────────────
+# --- Verificar arquivo de configuracao --------------------------------------
 
 if (-not (Test-Path $ENV_FILE)) {
     Write-Host ""
@@ -32,7 +36,7 @@ if (-not (Test-Path $ENV_FILE)) {
     exit 1
 }
 
-# Lê variáveis do .env.vps-sync (ignora comentários e linhas vazias)
+# Le variaveis do .env.vps-sync (ignora comentarios e linhas vazias)
 $config = @{}
 Get-Content $ENV_FILE | Where-Object { $_ -match "^\s*[^#].*=.*" } | ForEach-Object {
     $parts = $_ -split "=", 2
@@ -54,15 +58,16 @@ if (-not $VPS_PG_PASSWORD) {
     exit 1
 }
 
-# ─── Banner e confirmação ─────────────────────────────────────────────────────
+# --- Banner e confirmacao ---------------------------------------------------
 
 Write-Host ""
-Write-Host "  CS2 Stats Hub — Atualizar banco DEV" -ForegroundColor Cyan
-Write-Host "  ════════════════════════════════════" -ForegroundColor DarkGray
+Write-Host "  CS2 Stats Hub - Atualizar banco DEV" -ForegroundColor Cyan
+Write-Host "  ====================================" -ForegroundColor DarkGray
 Write-Host ""
 Write-Host "  ATENCAO:" -ForegroundColor Yellow
-Write-Host "  Isso ira substituir o banco DEV local pelos dados atuais da VPS."
-Write-Host "  A VPS sera somente leitura."
+Write-Host "  Isso ira truncar o PostgreSQL DEV em localhost:5432 e"
+Write-Host "  reconstrui-lo com os dados da VPS. Operacao destrutiva e irreversivel."
+Write-Host "  A VPS sera somente leitura. Pare o servidor DEV antes de continuar."
 Write-Host ""
 $confirm = Read-Host "  Continuar? [S/N]"
 if ($confirm -notin @("S", "s")) {
@@ -74,14 +79,14 @@ if ($confirm -notin @("S", "s")) {
 
 Write-Host ""
 
-# ─── Variável de controle do tunnel ──────────────────────────────────────────
+# --- Variavel de controle do tunnel -----------------------------------------
 
 $sshProcess = $null
 $success    = $false
 
 try {
 
-    # ── [1/4] Abrir SSH tunnel ────────────────────────────────────────────────
+    # -- [1/4] Abrir SSH tunnel ----------------------------------------------
 
     Write-Host "  [1/4] Conectando a VPS..." -ForegroundColor White
 
@@ -111,7 +116,7 @@ try {
         exit 1
     }
 
-    # ── [2/4] Validar conectividade ───────────────────────────────────────────
+    # -- [2/4] Validar conectividade -----------------------------------------
 
     Write-Host "  [2/4] Criando acesso temporario ao PostgreSQL..." -ForegroundColor White
 
@@ -124,28 +129,29 @@ try {
         exit 1
     }
 
-    # ── [3/4] Executar demo:snapshot ─────────────────────────────────────────
+    # -- [3/4] Sincronizar VPS PostgreSQL -> DEV PostgreSQL ------------------
 
-    Write-Host "  [3/4] Importando dados da producao para o DEV..." -ForegroundColor White
+    Write-Host "  [3/4] Importando dados da producao para o DEV PostgreSQL..." -ForegroundColor White
     Write-Host ""
 
-    $dbUrl = "postgresql://${VPS_PG_USER}:${VPS_PG_PASSWORD}@localhost:${LOCAL_PORT}/${VPS_PG_DB}"
+    $vpsUrl = "postgresql://${VPS_PG_USER}:${VPS_PG_PASSWORD}@localhost:${LOCAL_PORT}/${VPS_PG_DB}"
 
-    # Define DATABASE_URL apenas no escopo deste processo — .env local nunca é tocado
-    $env:DATABASE_URL = $dbUrl
+    # VPS_DATABASE_URL = source via tunnel; DATABASE_URL = target DEV Docker local.
+    # Definidas apenas no escopo deste processo -- .env local nunca e tocado.
+    $env:VPS_DATABASE_URL = $vpsUrl
 
-    # & resolve npm.cmd pelo PATH e herda stdin/stdout/stderr; $LASTEXITCODE captura o resultado.
-    # Start-Process "npm" falha no Windows porque npm é um .cmd, não um .exe Win32.
+    # & resolve npm.cmd pelo PATH e herda stdin/stdout/stderr.
+    # Start-Process "npm" falha no Windows porque npm e um .cmd, nao um .exe Win32.
     Push-Location $ROOT
-    & npm.cmd run demo:snapshot
+    & npm.cmd run db:sync-pg
     $snapshotExitCode = $LASTEXITCODE
     Pop-Location
 
-    $env:DATABASE_URL = $null   # limpa imediatamente após uso
+    $env:VPS_DATABASE_URL = $null   # limpa imediatamente apos uso
 
     if ($snapshotExitCode -ne 0) {
         Write-Host ""
-        Write-Host "  X demo:snapshot falhou (exit $snapshotExitCode)." -ForegroundColor Red
+        Write-Host "  X db:sync-pg falhou (exit $snapshotExitCode)." -ForegroundColor Red
         exit 1
     }
 
@@ -153,7 +159,7 @@ try {
 
 } finally {
 
-    # ── [4/4] Encerrar tunnel (sempre — mesmo em erro ou Ctrl+C) ─────────────
+    # -- [4/4] Encerrar tunnel (sempre -- mesmo em erro ou Ctrl+C) -----------
 
     Write-Host ""
     Write-Host "  [4/4] Encerrando conexao..." -ForegroundColor White
@@ -162,7 +168,7 @@ try {
         Stop-Process -Id $sshProcess.Id -Force -ErrorAction SilentlyContinue
     }
 
-    # Remove arquivo de erro temporário do tunnel
+    # Remove arquivo de erro temporario do tunnel
     $errFile = "$ROOT\tmp\ssh-tunnel.err"
     if (Test-Path $errFile) { Remove-Item $errFile -Force -ErrorAction SilentlyContinue }
 
