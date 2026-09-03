@@ -156,7 +156,7 @@ UPDATE "Season" SET status = 'CLOSED' WHERE id = '<id-antigo>';
 ADMIN_SECRET_KEY=<token-seguro>
 ```
 
-Defina no painel da Vercel ou no `.env.local` para desenvolvimento.
+Defina no `.env` do servidor (produção) ou no `.env.local` para desenvolvimento.
 
 ### Teste de integração
 

@@ -71,14 +71,10 @@ run(
   "gerando Prisma Client (SQLite)",
 );
 
-// Passo 6 — copiar dados reais do Neon. Env SEM override: precisa da DATABASE_URL
-// real (Postgres) para ler a origem, não do caminho do SQLite.
-run(
-  "npx",
-  ["tsx", "scripts/demo/snapshot-from-neon.ts"],
-  "copiando snapshot real do Neon para o SQLite local",
-  { env: process.env },
-);
+// Passo 6 — snapshot-from-neon.ts removido (Neon encerrado).
+// O snapshot do SQLite deve ser gerado a partir do PostgreSQL VPS via seed manual.
+console.log("[snapshot] ATENCAO: snapshot-from-neon.ts foi removido (Neon encerrado).");
+console.log("[snapshot] Popule o SQLite manualmente ou adapte este script para o PostgreSQL VPS.");
 
 console.log("\n[snapshot] pronto.");
 console.log(
