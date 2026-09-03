@@ -17,6 +17,7 @@
     "db:backfill-seasons": "tsx src/server/admin/backfill-match-seasons.ts",
     "db:studio": "prisma studio",
     "db:migrate-to-postgres": "tsx scripts/migrate-to-postgres.ts",
+    "db:sync-from-vps": "powershell -ExecutionPolicy Bypass -File scripts/sync-db-from-vps.ps1",
     "test": "vitest run",
     "test:watch": "vitest",
     "demo": "node scripts/demo/run-demo.mjs",

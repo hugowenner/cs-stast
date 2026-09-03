@@ -55,3 +55,6 @@ next-env.d.ts
 
 # cache local (ex.: respostas do Coach AI) — dados gerados, nunca versionado
 /tmp
+
+# credenciais locais para sync VPS → DEV — .env.vps-sync nunca commitado (.env.* já o cobre)
+!.env.vps-sync.example
