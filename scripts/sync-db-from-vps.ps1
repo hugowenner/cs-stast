@@ -134,14 +134,18 @@ try {
     # Define DATABASE_URL apenas no escopo deste processo — .env local nunca é tocado
     $env:DATABASE_URL = $dbUrl
 
-    $snapshotResult = Start-Process -FilePath "npm" -ArgumentList @("run", "demo:snapshot") `
-        -NoNewWindow -Wait -PassThru -WorkingDirectory $ROOT
+    # & resolve npm.cmd pelo PATH e herda stdin/stdout/stderr; $LASTEXITCODE captura o resultado.
+    # Start-Process "npm" falha no Windows porque npm é um .cmd, não um .exe Win32.
+    Push-Location $ROOT
+    & npm.cmd run demo:snapshot
+    $snapshotExitCode = $LASTEXITCODE
+    Pop-Location
 
     $env:DATABASE_URL = $null   # limpa imediatamente após uso
 
-    if ($snapshotResult.ExitCode -ne 0) {
+    if ($snapshotExitCode -ne 0) {
         Write-Host ""
-        Write-Host "  X demo:snapshot falhou (exit $($snapshotResult.ExitCode))." -ForegroundColor Red
+        Write-Host "  X demo:snapshot falhou (exit $snapshotExitCode)." -ForegroundColor Red
         exit 1
     }
 

@@ -11,7 +11,7 @@
  * TrackedPlayer.active real com a lista hardcoded do seed. Não é um dump SQL: tudo passa
  * pelo Prisma Client (objetos TypeScript), sem sql bruto.
  *
- * Modelos copiados (ordem de FK): Map, Player, TrackedPlayer, Session, Match,
+ * Modelos copiados (ordem de FK): Map, Player, TrackedPlayer, Season, Session, Match,
  * PlayerMatchStats, Achievement, PlayerAchievement, Rivalry.
  * TrackedPlayer foi adicionado à lista original — sem ele o Dashboard não teria
  * nenhum "jogador monitorado" (toda a leitura do Dashboard filtra por
@@ -34,10 +34,13 @@ const SQLITE_PATH = path.join(process.cwd(), "prisma", "dev.db");
 const BATCH_SIZE = 500;
 
 // Ordem respeita todas as foreign keys do schema — pai sempre antes do filho.
+// Season precisa vir antes de Match (Match.seasonId → Season.id) e antes de
+// Rivalry (Rivalry.seasonId → Season.id, opcional mas validado pelo SQLite).
 const MODELS_IN_ORDER = [
   "map",
   "player",
   "trackedPlayer",
+  "season",
   "session",
   "match",
   "playerMatchStats",
@@ -143,7 +146,7 @@ async function main() {
     console.log(`  PlayerMatchStats: ${imported.playerMatchStats}`);
     console.log(`  Rivalries: ${imported.rivalry}`);
     console.log(`  Achievements: ${imported.achievement}`);
-    console.log(`  (extra) Maps: ${imported.map}, Sessions: ${imported.session}, ` +
+    console.log(`  (extra) Maps: ${imported.map}, Seasons: ${imported.season}, Sessions: ${imported.session}, ` +
       `TrackedPlayers: ${imported.trackedPlayer}, PlayerAchievements: ${imported.playerAchievement}`);
 
     if (mismatches.length > 0) {
