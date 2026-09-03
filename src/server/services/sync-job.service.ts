@@ -30,11 +30,6 @@ export async function maybeEnqueueDemoAnalysis({
     downloadUrl = `${GC_DEMO_CDN}${downloadUrl}`;
   }
 
-  if (!isWorkerConfigured()) {
-    console.log("[ENQUEUE] skip — SYNC_WORKER_URL não configurada");
-    return;
-  }
-
   // Idempotência: bloqueia se já existe job ativo ou concluído
   const existingJob = await prisma.syncJob.findFirst({
     where: {
@@ -53,6 +48,11 @@ export async function maybeEnqueueDemoAnalysis({
     data: { sourceMatchId, source: "gamersclub", downloadUrl, status: "PENDING" },
   });
   console.log("[ENQUEUE] job criado:", job.id, "→", downloadUrl);
+
+  if (!isWorkerConfigured()) {
+    console.log("[ENQUEUE] SYNC_WORKER_URL não configurada — job ficará PENDING para o Worker puxar via polling");
+    return;
+  }
 
   try {
     await requestWorkerSync({ sourceMatchId, downloadUrl });
