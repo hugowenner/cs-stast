@@ -1,8 +1,0 @@
-* [33m1215b5d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m feat: add dedicated performance view
-* [33m1e97294[m style: refine dashboard editorial language (CSZin da Criticância)
-* [33md65198f[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m feat(deploy): add Docker setup for VPS self-hosted deployment
-* [33md4dd666[m[33m ([m[1;32mclaude/magical-bhaskara-6ffc03[m[33m)[m security: harden API authentication and rate limits
-* [33mbd2ea2b[m[33m ([m[1;32mclaude/deepseek-coach-410-error-85a123[m[33m, [m[1;32mclaude/cs2-sync-404-investigation-acede8[m[33m)[m feat(dashboard): add advanced player analytics
-* [33m896ae8e[m fix(ui): remove text shadow from hall of fame typography
-* [33ma115990[m feat: add premium trade time and kill distance analytics
-* [33mb0d880d[m fix: corrigir dropdown de temporada atrás dos cards
