@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CS2 Stats Hub",
+  title: "CSZin da Criticância",
   description:
-    "Plataforma de estatísticas de CS2 para o grupo — rankings, ELO, conquistas e rivalidades.",
+    "CSZin da Criticância — plataforma de estatísticas de CS2 com rankings, ELO, conquistas, rivalidades e performance.",
 };
 
 export default function RootLayout({
