@@ -146,17 +146,7 @@ export default async function PlayerDetailPage({
         />
       </FadeIn>
 
-      {/* Análise Técnica (Coach IA) */}
-      <FadeIn delay={0.08}>
-        <CoachSummaryCard data={overview.summaryCoach} />
-      </FadeIn>
-
-      {/* Relatório de Análise Avançada do Coach IA */}
-      <FadeIn delay={0.09}>
-        <CoachReportCard apiUrl={`/api/coach/player/${player.id}?season=${currentSeason}`} />
-      </FadeIn>
-
-      {/* Métricas Avançadas */}
+      {/* Desempenho — Rating, ADR, KAST, HS% */}
       <FadeIn delay={0.1} className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
         <StatTile
           label="Rating"
@@ -188,10 +178,10 @@ export default async function PlayerDetailPage({
         />
       </FadeIn>
 
-      {/* Estatísticas de Impacto */}
+      {/* Impacto */}
       <FadeIn delay={0.11}>
         <div className="mb-3 mt-1">
-          <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-muted-foreground/60">Estatísticas de Impacto</p>
+          <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-muted-foreground/60">Impacto</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatTile
@@ -209,7 +199,7 @@ export default async function PlayerDetailPage({
             context="Dano e agressividade"
           />
           <StatTile
-            label="Entry"
+            label="Entry Kills"
             value={overview.entryKills.toString()}
             icon={Swords}
             accent="violet"
@@ -218,14 +208,14 @@ export default async function PlayerDetailPage({
         </div>
       </FadeIn>
 
-      {/* Métricas Nativas Gamers Club */}
+      {/* Métricas Gamers Club */}
       <FadeIn delay={0.115}>
         <div className="mb-3 mt-1">
-          <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-muted-foreground/60">Métricas Nativas Gamers Club</p>
+          <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-muted-foreground/60">Métricas Gamers Club</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
           <StatTile
-            label="GC Rating Médio"
+            label="GC Rating"
             value={overview.gcRatingAvg !== null ? overview.gcRatingAvg.toFixed(2) : "N/A"}
             icon={Trophy}
             accent="violet"
@@ -246,7 +236,7 @@ export default async function PlayerDetailPage({
             context={`${overview.totalMatches > 0 ? (overview.tradeKills / overview.totalMatches).toFixed(1) : 0} média por partida`}
           />
           <StatTile
-            label="Assistências de Flash"
+            label="Flash Assists"
             value={overview.flashAssists.toString()}
             icon={Handshake}
             accent="cyan"
@@ -264,7 +254,7 @@ export default async function PlayerDetailPage({
             accent="violet"
             context="Situações de clutch vencidas"
           />
-          
+
           <div className="rounded-2xl border border-white/5 bg-zinc-950 p-4 flex flex-col justify-between hover:bg-white/[0.02] transition-colors min-h-[96px]">
             <div className="flex justify-between items-start">
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
@@ -294,6 +284,11 @@ export default async function PlayerDetailPage({
         </div>
       </FadeIn>
 
+      {/* Análise Técnica (Coach IA) */}
+      <FadeIn delay={0.12}>
+        <CoachSummaryCard data={overview.summaryCoach} />
+      </FadeIn>
+
       {/* Gráficos de Evolução */}
       <FadeIn delay={0.125}>
         <ProfileChartsSection
@@ -302,8 +297,13 @@ export default async function PlayerDetailPage({
         />
       </FadeIn>
 
-      {/* Premium Analytics — Opening Duels / Trades / Clutches */}
+      {/* Relatório do Coach IA */}
       <FadeIn delay={0.13}>
+        <CoachReportCard apiUrl={`/api/coach/player/${player.id}?season=${currentSeason}`} />
+      </FadeIn>
+
+      {/* Premium Analytics */}
+      <FadeIn delay={0.14}>
         <PremiumStatsPanel
           entry={premiumEntry}
           trade={premiumTrade}
