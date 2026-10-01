@@ -1,12 +1,14 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import {
   getSeasonDatesForDate,
   getSeasonNameForDate,
   rolloverSeason,
   validateSnapshot,
   ensureCurrentSeason,
+  assertSeasonContainsDate,
 } from "./season.service";
 import { prisma } from "@/server/db";
+import type { Prisma, Season } from "@/generated/prisma";
 
 // Mock do banco de dados
 vi.mock("@/server/db", () => {
@@ -48,6 +50,12 @@ vi.mock("@/server/coach/services/coach.service", () => ({
   getCoachReport: vi.fn(async () => ({ summary: "Mocked coach" })),
   invalidateCoachCache: vi.fn(),
 }));
+
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-08-15T12:00:00Z"));
+});
+afterEach(() => vi.useRealTimers());
 
 describe("Season Dates and Calendar Utilities", () => {
   it("deve calcular corretamente para mês de 31 dias (Janeiro)", () => {
@@ -314,7 +322,7 @@ describe("ensureCurrentSeason Operations", () => {
 
     const result = await ensureCurrentSeason(targetDate);
 
-    expect(result).toEqual(mockNextActive);
+    expect(result).toEqual(mockActive);
     expect(prisma.season.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: "expired-id" },
@@ -369,5 +377,96 @@ describe("ensureCurrentSeason Operations", () => {
         }),
       })
     );
+  });
+});
+
+describe("Match season regression at September/October rollover", () => {
+  const findSeason = vi.mocked(
+    prisma.season.findFirst as (args?: Prisma.SeasonFindFirstArgs) => Promise<Season | null>,
+  );
+  const september = {
+    id: "sep-id",
+    name: "Setembro/2026",
+    startDate: new Date("2026-09-01T00:00:00Z"),
+    endDate: new Date("2026-09-30T23:59:59.999Z"),
+    status: "ACTIVE" as const,
+    createdAt: new Date("2026-09-01T00:00:00Z"),
+  };
+  const october = {
+    ...september,
+    id: "oct-id",
+    name: "Outubro/2026",
+    startDate: new Date("2026-10-01T00:00:00Z"),
+    endDate: new Date("2026-10-31T23:59:59.999Z"),
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.setSystemTime(new Date("2026-10-01T02:00:00Z"));
+  });
+
+  it("returns September while the automatic rollover opens October", async () => {
+    const closedSeptember = { ...september, status: "CLOSED" as const };
+    findSeason.mockImplementation(async (args) => {
+      if (args?.where?.startDate || args?.where?.status === "ACTIVE") return september;
+      return null;
+    });
+    vi.mocked(prisma.season.findUnique).mockResolvedValue(september);
+    vi.mocked(prisma.season.update).mockResolvedValue(closedSeptember);
+    vi.mocked(prisma.season.create).mockResolvedValue(october);
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
+      if (typeof callback !== "function") throw new Error("Expected transaction callback");
+      return callback(prisma);
+    });
+
+    const playedAt = new Date("2026-09-30T22:24:00Z");
+    const result = await ensureCurrentSeason(playedAt);
+
+    expect(result.id).toBe(september.id);
+    expect(() => assertSeasonContainsDate(result, playedAt)).not.toThrow();
+    expect(prisma.season.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ name: "Outubro/2026" }) }),
+    );
+    expect(prisma.season.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: september.id }, data: { status: "CLOSED" } }),
+    );
+  });
+
+  it.each([
+    ["2026-09-30T22:24:00Z", "sep-id"],
+    ["2026-09-30T23:59:00Z", "sep-id"],
+    ["2026-09-30T23:59:59.999Z", "sep-id"],
+    ["2026-10-01T00:00:00Z", "oct-id"],
+  ])("resolves %s by match date after rollover", async (timestamp, expectedId) => {
+    const closedSeptember = { ...september, status: "CLOSED" as const };
+    findSeason.mockImplementation(async (args) => {
+      const date = args?.where?.startDate;
+      if (!date || typeof date !== "object" || !("lte" in date)) return october;
+      const candidate = date.lte;
+      if (!(candidate instanceof Date)) throw new Error("Expected match date");
+      return candidate < october.startDate ? closedSeptember : october;
+    });
+
+    const playedAt = new Date(timestamp);
+    const result = await ensureCurrentSeason(playedAt);
+
+    expect(result.id).toBe(expectedId);
+    expect(() => assertSeasonContainsDate(result, playedAt)).not.toThrow();
+    expect(prisma.season.update).not.toHaveBeenCalled();
+    expect(prisma.season.create).not.toHaveBeenCalled();
+  });
+
+  it("does not replace September with the active season when rollover is skipped", async () => {
+    findSeason.mockImplementation(async (args) =>
+      args?.where?.startDate ? september : null,
+    );
+    const result = await ensureCurrentSeason(new Date("2026-09-30T22:24:00Z"));
+    expect(result.id).toBe(september.id);
+    expect(prisma.season.findFirst).toHaveBeenCalledTimes(2);
+  });
+
+  it("rejects a season outside the match date with diagnostic context", () => {
+    expect(() => assertSeasonContainsDate(october, new Date("2026-09-30T22:24:00Z")))
+      .toThrow("Season mismatch: playedAt=2026-09-30T22:24:00.000Z seasonId=oct-id");
   });
 });

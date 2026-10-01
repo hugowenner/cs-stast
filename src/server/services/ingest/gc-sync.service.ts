@@ -11,7 +11,7 @@ import { calculateEloForMatch } from "@/server/services/elo/elo.service";
 import { evaluateMatchAchievements, type PlayerMatchAchievementInput } from "@/server/domain/achievements";
 import { grantAchievements } from "@/server/services/achievement.service";
 import { maybeEnqueueDemoAnalysis } from "@/server/services/sync-job.service";
-import { ensureCurrentSeason } from "@/server/services/season.service";
+import { assertSeasonContainsDate, ensureCurrentSeason } from "@/server/services/season.service";
 import { rebuildRivalriesForPlayers } from "@/server/services/rivalry/rivalry.service";
 import type { MatchTeam, Prisma } from "@/generated/prisma";
 import type { CreateMatchEventInput, CreateMatchPlayerStatInput } from "@/server/repositories/match.repository";
@@ -57,6 +57,7 @@ export async function gcSyncMatch(
     if (!activeSeason || !activeSeason.id) {
       throw new Error("Não foi possível determinar uma temporada ativa válida para esta partida.");
     }
+    assertSeasonContainsDate(activeSeason, input.playedAt);
 
     // Upsert dos jogadores
     const players = await Promise.all(
@@ -278,6 +279,7 @@ async function enrichExistingMatchWithGC(matchId: string, input: SyncMatchInput)
   if (!activeSeason || !activeSeason.id) {
     throw new Error("Não foi possível determinar uma temporada ativa válida para esta partida.");
   }
+  assertSeasonContainsDate(activeSeason, input.playedAt);
 
   await prisma.match.update({
     where: { id: matchId },

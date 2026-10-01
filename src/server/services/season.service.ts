@@ -94,12 +94,8 @@ export async function ensureCurrentSeason(date = new Date()) {
     const now = new Date();
     if (existing.status === "ACTIVE" && now > existing.endDate) {
       console.log(`[Season] Temporada ativa '${existing.name}' expirou em ${existing.endDate.toISOString()}. Iniciando rollover automático.`);
-      const result = await rolloverSeason();
-      if (result.status === "success" && result.opened) {
-        return result.opened;
-      }
-      const reloadedActive = await getActiveSeason();
-      if (reloadedActive) return reloadedActive;
+      // Atualiza a temporada corrente sem substituir a temporada da data consultada.
+      await rolloverSeason();
     }
     return existing;
   }
@@ -120,6 +116,22 @@ export async function ensureCurrentSeason(date = new Date()) {
       status: isPastSeason ? "CLOSED" : "ACTIVE",
     },
   });
+}
+
+/**
+ * Impede a persistência de um vínculo que não corresponde à data da partida.
+ */
+export function assertSeasonContainsDate(
+  season: { id: string; startDate: Date; endDate: Date },
+  playedAt: Date,
+): void {
+  if (!(playedAt >= season.startDate && playedAt <= season.endDate)) {
+    const formatDate = (date: Date) =>
+      Number.isNaN(date.getTime()) ? "Invalid Date" : date.toISOString();
+    throw new Error(
+      `Season mismatch: playedAt=${formatDate(playedAt)} seasonId=${season.id} seasonStart=${formatDate(season.startDate)} seasonEnd=${formatDate(season.endDate)}`,
+    );
+  }
 }
 
 /**
