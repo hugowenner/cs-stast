@@ -14,6 +14,7 @@ import { SeasonSelect } from "@/components/dashboard/season-select";
 import { listSeasons, resolveSeasonId } from "@/server/services/season.service";
 
 const METRICS = [
+  { value: "seasonScore", label: "Score Oficial" },
   { value: "rating", label: "Rating" },
   { value: "adr", label: "ADR" },
   { value: "kd", label: "K/D" },
@@ -29,6 +30,7 @@ const METRICS = [
 type Metric = (typeof METRICS)[number]["value"];
 
 const METRIC_INFOS: Record<Metric, { explanation: string; icon: string }> = {
+  seasonScore: { explanation: "Score oficial da temporada combinando performance individual, resultado coletivo e ajuste Bayesiano de amostra (mín. 10 partidas).", icon: "🏆" },
   rating: { explanation: "Indicador geral de performance considerando impacto individual e resultado de rounds.", icon: "📈" },
   adr: { explanation: "Dano médio causado por round (Average Damage per Round).", icon: "💥" },
   kd: { explanation: "Relação acumulada entre eliminações e mortes (Kills/Deaths).", icon: "🎯" },
@@ -44,6 +46,7 @@ const METRIC_INFOS: Record<Metric, { explanation: string; icon: string }> = {
 function formatMetricValue(value: number, metric: Metric): string {
   if (metric === "consistency" || metric === "hs") return `${value}%`;
   if (metric === "evolution") return `${value > 0 ? "+" : ""}${value}%`;
+  if (metric === "seasonScore") return value.toFixed(3);
   if (metric === "rating" || metric === "kd") return value.toFixed(2);
   return value.toString();
 }
@@ -57,7 +60,7 @@ export default async function RankingsPage({
 }) {
   const query = await searchParams;
   const { metric: rawMetric, season } = query;
-  const metric = (METRICS.some((m) => m.value === rawMetric) ? rawMetric : "rating") as Metric;
+  const metric = (METRICS.some((m) => m.value === rawMetric) ? rawMetric : "seasonScore") as Metric;
   const resolvedSeasonId = await resolveSeasonId(season);
 
   // Carregar todas as temporadas para o seletor
@@ -80,19 +83,21 @@ export default async function RankingsPage({
 
   const ranking = await safeQuery(
     () =>
-      metric === "elo"
-        ? statsService.getEloRanking(50)
-        : metric === "kd"
-          ? statsService.getKdRanking(resolvedSeasonId, 50)
-          : metric === "consistency"
-            ? statsService.getConsistencyRanking(resolvedSeasonId, 50)
-            : metric === "evolution"
-              ? statsService.getEvolutionRanking(resolvedSeasonId, 50)
-              : metric === "hs"
-                ? statsService.getHsRanking(resolvedSeasonId, 50)
-                : metric === "entry"
-                  ? statsService.getEntryKillsRanking(resolvedSeasonId, 50)
-                  : statsService.getRanking(metric, resolvedSeasonId, 50),
+      metric === "seasonScore"
+        ? statsService.getSeasonScoreRanking(resolvedSeasonId, 50)
+        : metric === "elo"
+          ? statsService.getEloRanking(50)
+          : metric === "kd"
+            ? statsService.getKdRanking(resolvedSeasonId, 50)
+            : metric === "consistency"
+              ? statsService.getConsistencyRanking(resolvedSeasonId, 50)
+              : metric === "evolution"
+                ? statsService.getEvolutionRanking(resolvedSeasonId, 50)
+                : metric === "hs"
+                  ? statsService.getHsRanking(resolvedSeasonId, 50)
+                  : metric === "entry"
+                    ? statsService.getEntryKillsRanking(resolvedSeasonId, 50)
+                    : statsService.getRanking(metric, resolvedSeasonId, 50),
     [],
   );
 

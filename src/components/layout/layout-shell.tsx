@@ -135,13 +135,13 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Linha superior: logo + status + hamburger */}
-        <div className="relative z-10 flex items-center justify-between px-5 py-5 lg:py-6">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="flex flex-col gap-0.5 group shrink-0">
-              <span className="text-gradient text-base font-black tracking-tight group-hover:text-primary transition-colors uppercase whitespace-nowrap">
+        <div className="relative z-10 flex items-center justify-between px-3.5 sm:px-5 py-4 sm:py-5 lg:py-6 gap-2 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-6 min-w-0">
+            <Link href="/" className="flex flex-col gap-0.5 group min-w-0 shrink">
+              <span className="text-gradient text-xs min-[360px]:text-sm sm:text-base font-black tracking-tight group-hover:text-primary transition-colors uppercase truncate sm:whitespace-nowrap">
                 CSzin da Criticância Performance
               </span>
-              <span className="text-[8px] text-muted-foreground/60 font-bold tracking-wider uppercase leading-none">
+              <span className="text-[8px] text-muted-foreground/60 font-bold tracking-wider uppercase leading-none truncate">
                 Counter-Strike Performance Intelligence
               </span>
             </Link>
@@ -154,15 +154,15 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Direita: GC status + hamburger mobile */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 select-none">
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="hidden min-[380px]:flex items-center gap-1.5 text-[10px] text-muted-foreground rounded-lg border border-white/10 bg-white/5 px-2 py-0.5 sm:px-2.5 sm:py-1 select-none">
               <span className="bg-status-critical size-1.5 rounded-full shrink-0 animate-pulse" />
               <Link2 className="size-3 text-muted-foreground/60 shrink-0" />
               <span>GC Companion</span>
             </div>
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden p-1.5 rounded-xl border border-white/10 hover:bg-white/5 text-white transition-colors"
+              className="md:hidden p-1.5 rounded-xl border border-white/10 hover:bg-white/5 text-white transition-colors shrink-0"
               aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"}
             >
               {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}

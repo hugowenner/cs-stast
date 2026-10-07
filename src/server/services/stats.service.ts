@@ -4,6 +4,7 @@ import type { RankingMetric } from "@/server/repositories/playerMatchStats.repos
 import { prisma } from "@/server/db";
 import { communityMatchWhere, individualMatchWhere } from "@/server/domain/matchClassification";
 import { getActiveSeason, resolveSeasonId } from "@/server/services/season.service";
+import { calculatePlayerScore, isEligibleForOfficialRanking } from "@/server/domain/seasonScore";
 
 const MIN_MATCHES_FOR_EXTRA_RANKINGS = 3;
 
@@ -51,6 +52,183 @@ export async function getRanking(
       value: Math.round(avgValue * 100) / 100,
     };
   });
+}
+
+// Season Score Ranking — Modelo Bayesiano com Shrinkage e Suavização de WR (Etapa 3.5 & Etapa 6)
+// Ranking Oficial: Filtra apenas jogadores elegíveis (N >= 10).
+export async function getSeasonScoreRanking(
+  seasonIdOrTake?: string | number,
+  take?: number,
+  options?: { includeProvisional?: boolean }
+) {
+  const { targetSeasonId, targetTake } = parseOverloadedArgs(seasonIdOrTake, take, 20);
+  const resolvedSeasonId = await resolveSeasonId(targetSeasonId);
+
+  const rows = await prisma.playerMatchStats.findMany({
+    where: {
+      player: { trackedPlayer: { active: true } },
+      match: {
+        seasonId: resolvedSeasonId,
+        ...individualMatchWhere(),
+      },
+    },
+    select: {
+      playerId: true,
+      rating: true,
+      team: true,
+      match: {
+        select: {
+          scoreTeamA: true,
+          scoreTeamB: true,
+        },
+      },
+    },
+  });
+
+  const byPlayer = new Map<string, { ratings: number[]; wins: number }>();
+  for (const s of rows) {
+    const cur = byPlayer.get(s.playerId) ?? { ratings: [], wins: 0 };
+    cur.ratings.push(s.rating);
+
+    const scoreA = s.match.scoreTeamA;
+    const scoreB = s.match.scoreTeamB;
+    let outcome = 0.0;
+    if (scoreA === scoreB) {
+      outcome = 0.5;
+    } else if (s.team === "A" && scoreA > scoreB) {
+      outcome = 1.0;
+    } else if (s.team === "B" && scoreB > scoreA) {
+      outcome = 1.0;
+    }
+    cur.wins += outcome;
+    byPlayer.set(s.playerId, cur);
+  }
+
+  const playerIds = Array.from(byPlayer.keys());
+  const players = await playerRepo.findPlayersByIds(playerIds);
+  const playerById = new Map(players.map((p) => [p.id, p]));
+
+  const allCandidates = Array.from(byPlayer.entries()).map(([playerId, s]) => {
+    const n = s.ratings.length;
+    const w = s.wins;
+    const r = n > 0 ? s.ratings.reduce((a, b) => a + b, 0) / n : 0;
+    const scoreResult = calculatePlayerScore(n, w, r);
+    return {
+      player: playerById.get(playerId) ?? null,
+      matchesPlayed: n,
+      value: scoreResult.score,
+      rHat: scoreResult.rHat,
+      pHat: scoreResult.pHat,
+      confidenceStatus: scoreResult.confidenceStatus,
+      isEligible: isEligibleForOfficialRanking(n),
+      rawRating: Math.round(r * 1000) / 1000,
+      rawScore: scoreResult.score,
+    };
+  });
+
+  // Filtra por N >= 10 para o Ranking Oficial (a menos que includeProvisional = true)
+  const candidatesToRank = options?.includeProvisional
+    ? allCandidates
+    : allCandidates.filter((p) => p.isEligible);
+
+  return candidatesToRank
+    .sort((a, b) => {
+      if (b.rawScore !== a.rawScore) return b.rawScore - a.rawScore;
+      if (b.rawRating !== a.rawRating) return b.rawRating - a.rawRating;
+      return b.matchesPlayed - a.matchesPlayed;
+    })
+    .slice(0, targetTake);
+}
+
+// Retorna tanto o ranking oficial (N >= 10) quanto a lista de jogadores provisórios (N < 10)
+export async function getSeasonScoreOverview(
+  seasonIdOrTake?: string | number,
+  take?: number
+) {
+  const { targetSeasonId, targetTake } = parseOverloadedArgs(seasonIdOrTake, take, 20);
+  const resolvedSeasonId = await resolveSeasonId(targetSeasonId);
+
+  const rows = await prisma.playerMatchStats.findMany({
+    where: {
+      player: { trackedPlayer: { active: true } },
+      match: {
+        seasonId: resolvedSeasonId,
+        ...individualMatchWhere(),
+      },
+    },
+    select: {
+      playerId: true,
+      rating: true,
+      team: true,
+      match: {
+        select: {
+          scoreTeamA: true,
+          scoreTeamB: true,
+        },
+      },
+    },
+  });
+
+  const byPlayer = new Map<string, { ratings: number[]; wins: number }>();
+  for (const s of rows) {
+    const cur = byPlayer.get(s.playerId) ?? { ratings: [], wins: 0 };
+    cur.ratings.push(s.rating);
+
+    const scoreA = s.match.scoreTeamA;
+    const scoreB = s.match.scoreTeamB;
+    let outcome = 0.0;
+    if (scoreA === scoreB) {
+      outcome = 0.5;
+    } else if (s.team === "A" && scoreA > scoreB) {
+      outcome = 1.0;
+    } else if (s.team === "B" && scoreB > scoreA) {
+      outcome = 1.0;
+    }
+    cur.wins += outcome;
+    byPlayer.set(s.playerId, cur);
+  }
+
+  const playerIds = Array.from(byPlayer.keys());
+  const players = await playerRepo.findPlayersByIds(playerIds);
+  const playerById = new Map(players.map((p) => [p.id, p]));
+
+  const allCandidates = Array.from(byPlayer.entries()).map(([playerId, s]) => {
+    const n = s.ratings.length;
+    const w = s.wins;
+    const r = n > 0 ? s.ratings.reduce((a, b) => a + b, 0) / n : 0;
+    const scoreResult = calculatePlayerScore(n, w, r);
+    return {
+      player: playerById.get(playerId) ?? null,
+      matchesPlayed: n,
+      value: scoreResult.score,
+      rHat: scoreResult.rHat,
+      pHat: scoreResult.pHat,
+      confidenceStatus: scoreResult.confidenceStatus,
+      isEligible: isEligibleForOfficialRanking(n),
+      rawRating: Math.round(r * 1000) / 1000,
+      rawScore: scoreResult.score,
+    };
+  });
+
+  const official = allCandidates
+    .filter((p) => p.isEligible)
+    .sort((a, b) => {
+      if (b.rawScore !== a.rawScore) return b.rawScore - a.rawScore;
+      if (b.rawRating !== a.rawRating) return b.rawRating - a.rawRating;
+      return b.matchesPlayed - a.matchesPlayed;
+    })
+    .slice(0, targetTake);
+
+  const provisional = allCandidates
+    .filter((p) => !p.isEligible)
+    .sort((a, b) => {
+      if (b.rawScore !== a.rawScore) return b.rawScore - a.rawScore;
+      if (b.rawRating !== a.rawRating) return b.rawRating - a.rawRating;
+      return b.matchesPlayed - a.matchesPlayed;
+    })
+    .slice(0, targetTake);
+
+  return { official, provisional, allCandidates };
 }
 
 // K/D ranking — kills/deaths não é um campo diretamente agregável, calcula em memória.

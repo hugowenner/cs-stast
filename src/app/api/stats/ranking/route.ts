@@ -13,6 +13,8 @@ export async function GET(request: NextRequest) {
     const ranking =
       metric === "elo"
         ? await statsService.getEloRanking(take)
+        : metric === "seasonScore"
+        ? await statsService.getSeasonScoreRanking(targetSeason, take)
         : await statsService.getRanking(metric, targetSeason, take);
     return NextResponse.json({ metric, ranking });
   } catch (error) {

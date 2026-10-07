@@ -18,6 +18,7 @@ import { ReisDosMapa } from "@/components/dashboard/reis-dos-mapas";
 import { PerformanceGcSection } from "@/components/dashboard/performance-gc-section";
 import { TendenciasDaTemporada } from "@/components/dashboard/tendencias-da-temporada";
 import { safeQuery } from "@/server/safeQuery";
+import * as statsService from "@/server/services/stats.service";
 import * as dashboardService from "@/server/services/dashboard.service";
 import * as matchService from "@/server/services/match.service";
 import * as competitiveService from "@/server/services/competitive.service";
@@ -156,6 +157,11 @@ export default async function DashboardPage(props: {
     recentAchievements = calcAchievements;
     topRivalries = calcRivalries;
   }
+
+  const officialRanking = await safeQuery(
+    () => statsService.getSeasonScoreRanking(resolvedSeasonId, 5),
+    [],
+  );
 
   const {
     powerRanking,
@@ -297,13 +303,14 @@ export default async function DashboardPage(props: {
         </SectionContainer>
       )}
 
-      {/* ═══ 5. Ranking Competitivo ═══ */}
+      {/* ═══ 5. Ranking Competitivo Oficial ═══ */}
       <SectionContainer
         title="Classificação da Temporada"
-        subtitle="Ranking por rating, winrate e volume de partidas."
+        subtitle="Score Oficial da Temporada (Score 3.5 — mínimo de 10 partidas)."
         delay={0.06}
       >
         <RankingTable
+          officialEntries={officialRanking}
           entries={powerRanking.slice(0, 5)}
           seasonComparison={seasonComparison}
           delay={0.07}

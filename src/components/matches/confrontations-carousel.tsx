@@ -295,7 +295,7 @@ function getMapImage(mapName: string): string | null {
 
         {/* 5v5 confrontation layout */}
         {hasConfrontation && !is1v1 && (
-          <div className="grid grid-cols-2 gap-x-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-x-1">
             {/* Side A */}
             <div className="flex flex-col gap-0.5">
               <p
@@ -311,7 +311,7 @@ function getMapImage(mapName: string): string | null {
               ))}
             </div>
             {/* Side B */}
-            <div className="flex flex-col gap-0.5 border-l border-white/[0.04] pl-1">
+            <div className="flex flex-col gap-0.5 border-t sm:border-t-0 sm:border-l border-white/[0.06] pt-2 sm:pt-0 pl-0 sm:pl-1">
               <p
                 className={cn(
                   "text-[7px] uppercase tracking-widest font-black px-2 pb-1 leading-none [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]",

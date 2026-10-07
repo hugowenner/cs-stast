@@ -83,7 +83,7 @@ export function SeasonHero({
   const prefersReduced = useReducedMotion();
 
   return (
-    <div className="glass-panel relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.003] p-6 shadow-2xl flex flex-col gap-8">
+    <div className="glass-panel relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.003] p-4 sm:p-6 shadow-2xl flex flex-col gap-6 sm:gap-8">
       {/* Video background */}
       {showVideo && (
         <video
@@ -137,7 +137,7 @@ export function SeasonHero({
       </div>
 
       {/* ── MÉTRICAS PRINCIPAIS ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-8 z-10">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-6 sm:gap-y-8 z-10">
         {/* Partidas */}
         <motion.div
           className="flex flex-col gap-2"
@@ -145,7 +145,7 @@ export function SeasonHero({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: prefersReduced ? 0.01 : 0.22, delay: prefersReduced ? 0 : 0.2, ease: [0.25, 0, 0, 1] }}
         >
-          <p className="text-5xl lg:text-6xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_2px_12px_rgba(0,0,0,0.7)]">
+          <p className="text-3xl min-[360px]:text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_2px_12px_rgba(0,0,0,0.7)]">
             {totalMatches}
           </p>
           <p className="text-[9px] font-bold text-muted-foreground/55 uppercase tracking-widest select-none">
@@ -160,7 +160,7 @@ export function SeasonHero({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: prefersReduced ? 0.01 : 0.22, delay: prefersReduced ? 0 : 0.26, ease: [0.25, 0, 0, 1] }}
         >
-          <p className="text-5xl lg:text-6xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_2px_12px_rgba(0,0,0,0.7)]">
+          <p className="text-3xl min-[360px]:text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_2px_12px_rgba(0,0,0,0.7)]">
             {communityWinrate}%
           </p>
           <p className="text-[9px] font-bold text-muted-foreground/55 uppercase tracking-widest select-none">
@@ -175,7 +175,7 @@ export function SeasonHero({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: prefersReduced ? 0.01 : 0.22, delay: prefersReduced ? 0 : 0.32, ease: [0.25, 0, 0, 1] }}
         >
-          <p className="text-5xl lg:text-6xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_2px_12px_rgba(0,0,0,0.7)]">
+          <p className="text-3xl min-[360px]:text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_2px_12px_rgba(0,0,0,0.7)]">
             {bestPlayer ? bestPlayer.rating.toFixed(2) : "—"}
           </p>
           <p className="text-[9px] font-bold text-muted-foreground/55 uppercase tracking-widest select-none">
@@ -190,11 +190,11 @@ export function SeasonHero({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: prefersReduced ? 0.01 : 0.22, delay: prefersReduced ? 0 : 0.38, ease: [0.25, 0, 0, 1] }}
         >
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
             {bestPlayer && (
-              <PlayerAvatar avatarUrl={bestPlayer.avatarUrl} nickname={bestPlayer.nickname} size="size-9" />
+              <PlayerAvatar avatarUrl={bestPlayer.avatarUrl} nickname={bestPlayer.nickname} size="size-7 sm:size-9" />
             )}
-            <p className="text-2xl lg:text-3xl font-black text-white leading-none uppercase tracking-tight truncate [text-shadow:0_2px_12px_rgba(0,0,0,0.7)]">
+            <p className="text-lg min-[360px]:text-xl sm:text-2xl lg:text-3xl font-black text-white leading-none uppercase tracking-tight truncate [text-shadow:0_2px_12px_rgba(0,0,0,0.7)]">
               {bestPlayer ? bestPlayer.nickname : "—"}
             </p>
           </div>
@@ -205,34 +205,34 @@ export function SeasonHero({
       </div>
 
       {/* ── MÉTRICAS DE COMBATE ── */}
-      <div className="z-10 border-t border-white/[0.05] pt-5">
-        <div className="grid grid-cols-5 divide-x divide-white/[0.04] text-center">
-          <div className="flex flex-col gap-1.5 px-2">
-            <p className="text-lg sm:text-xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]">
+      <div className="z-10 border-t border-white/[0.05] pt-4 sm:pt-5">
+        <div className="grid grid-cols-2 min-[480px]:grid-cols-3 lg:grid-cols-5 gap-y-4 gap-x-2 text-center">
+          <div className="flex flex-col gap-1.5 px-2 border-r border-white/[0.04]">
+            <p className="text-base min-[360px]:text-lg sm:text-xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]">
               <AnimatedNumber value={advancedStats.totalRounds} decimals={0} />
             </p>
             <p className="text-[8px] uppercase tracking-wider text-muted-foreground/50 font-bold leading-none select-none">Rounds</p>
           </div>
-          <div className="flex flex-col gap-1.5 px-2">
-            <p className="text-lg sm:text-xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]">
+          <div className="flex flex-col gap-1.5 px-2 min-[480px]:border-r border-white/[0.04]">
+            <p className="text-base min-[360px]:text-lg sm:text-xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]">
               <AnimatedNumber value={advancedStats.totalKills} decimals={0} />
             </p>
             <p className="text-[8px] uppercase tracking-wider text-muted-foreground/50 font-bold leading-none select-none">Kills</p>
           </div>
-          <div className="flex flex-col gap-1.5 px-2">
-            <p className="text-lg sm:text-xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]">
+          <div className="flex flex-col gap-1.5 px-2 border-r min-[480px]:border-r-0 lg:border-r border-white/[0.04]">
+            <p className="text-base min-[360px]:text-lg sm:text-xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]">
               <AnimatedNumber value={advancedStats.avgAdr} decimals={0} />
             </p>
             <p className="text-[8px] uppercase tracking-wider text-muted-foreground/50 font-bold leading-none select-none">ADR</p>
           </div>
-          <div className="flex flex-col gap-1.5 px-2">
-            <p className="text-lg sm:text-xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]">
+          <div className="flex flex-col gap-1.5 px-2 min-[480px]:border-r lg:border-r border-white/[0.04]">
+            <p className="text-base min-[360px]:text-lg sm:text-xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]">
               <AnimatedNumber value={advancedStats.avgKd} decimals={2} />
             </p>
             <p className="text-[8px] uppercase tracking-wider text-muted-foreground/50 font-bold leading-none select-none">K/D</p>
           </div>
-          <div className="flex flex-col gap-1.5 px-2">
-            <p className="text-lg sm:text-xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]">
+          <div className="flex flex-col gap-1.5 px-2 col-span-2 min-[480px]:col-span-1 lg:col-span-1">
+            <p className="text-base min-[360px]:text-lg sm:text-xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]">
               <AnimatedNumber value={advancedStats.avgHsPercent} decimals={0} suffix="%" />
             </p>
             <p className="text-[8px] uppercase tracking-wider text-muted-foreground/50 font-bold leading-none select-none">HS%</p>

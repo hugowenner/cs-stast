@@ -15,8 +15,12 @@ export function PlayerRow({ player }: { player: PlayerMatchDTO }) {
   return (
     <tr className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${player.isTracked ? "bg-primary/5" : ""}`}>
       {/* Jogador avatar e nickname */}
-      <td className="px-4 py-3 text-left">
-        <Link href={`/players/${player.id}`} className="flex items-center gap-3 group">
+      <td
+        className={`sticky left-0 z-20 px-4 py-3 text-left shadow-[2px_0_8px_-2px_rgba(0,0,0,0.8)] border-r border-white/10 min-w-[130px] sm:min-w-[160px] ${
+          player.isTracked ? "bg-[#13112a]" : "bg-zinc-950"
+        }`}
+      >
+        <Link href={`/players/${player.id}`} className="flex items-center gap-2.5 sm:gap-3 group">
           <PlayerAvatar nickname={player.nickname} avatarUrl={player.avatarUrl} size="sm" />
           <div className="min-w-0">
             <p className={`font-semibold text-sm truncate group-hover:text-primary transition-colors ${player.isTracked ? "text-accent-cyan" : "text-white"}`}>

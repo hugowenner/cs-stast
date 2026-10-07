@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const rankingQuerySchema = z.object({
-  metric: z.enum(["rating", "adr", "kast", "impact", "elo"]).default("rating"),
+  metric: z.enum(["rating", "adr", "kast", "impact", "elo", "seasonScore"]).default("rating"),
   take: z.coerce.number().int().min(1).max(100).optional(),
 });
 
