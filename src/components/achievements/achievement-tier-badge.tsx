@@ -3,10 +3,22 @@ import { cn } from "@/lib/utils";
 export type AchievementTier = "bronze" | "silver" | "gold" | "legendary";
 
 const TIER_CONFIG: Record<AchievementTier, { label: string; className: string }> = {
-  bronze:    { label: "Comum",    className: "text-[#c97a48] bg-[#c97a48]/12 border-[#c97a48]/25" },
-  silver:    { label: "Raro",     className: "text-slate-300 bg-slate-400/12 border-slate-400/25" },
-  gold:      { label: "Épico",    className: "text-status-warning bg-status-warning/12 border-status-warning/25" },
-  legendary: { label: "Lendário", className: "text-accent-violet bg-accent-violet/12 border-accent-violet/25" },
+  bronze: {
+    label: "COMUM",
+    className: "text-[#c97a48] bg-[#c97a48]/10 border-[#c97a48]/30",
+  },
+  silver: {
+    label: "RARO",
+    className: "text-slate-300 bg-slate-400/10 border-slate-400/30",
+  },
+  gold: {
+    label: "ÉPICO",
+    className: "text-accent-gold bg-accent-gold/10 border-accent-gold/30",
+  },
+  legendary: {
+    label: "LENDÁRIO",
+    className: "text-accent-violet bg-accent-violet/10 border-accent-violet/30",
+  },
 };
 
 export function AchievementTierBadge({
@@ -20,9 +32,9 @@ export function AchievementTierBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider leading-none",
+        "inline-flex items-center rounded-xs border px-1.5 py-0.5 text-[8px] font-mono font-black uppercase tracking-wider leading-none",
         config.className,
-        className,
+        className
       )}
     >
       {config.label}

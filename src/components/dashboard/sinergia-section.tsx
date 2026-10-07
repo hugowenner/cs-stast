@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Handshake, Users, Swords, ChevronLeft, ChevronRight } from "lucide-react";
+import { Handshake, Users, Swords, ChevronLeft, ChevronRight, Flame, ShieldAlert, Target } from "lucide-react";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import { AnimatedNumber } from "@/components/motion/animated-number";
+import { TacticalTabs } from "@/components/ui/tactical-tabs";
+import { TacticalBadge } from "@/components/ui/tactical-badge";
 import type { DuoSummary, TrioSummary, PlayerMatchupSummary } from "@/server/services/competitive.service";
 import type { RivalryH2HSummary } from "@/server/services/rivalry.service";
 import { duoNarratives, rivalryNarratives } from "@/lib/narrator/templates";
+import { cn } from "@/lib/utils";
 
 interface SinergiaSectionProps {
   duos: DuoSummary[];
@@ -20,16 +23,20 @@ interface SinergiaSectionProps {
 type Tab = "duplas" | "trios" | "rivais" | "matchups";
 
 const TABS: { id: Tab; label: string; icon: typeof Handshake }[] = [
-  { id: "duplas",   label: "Duplas que funcionam", icon: Handshake },
-  { id: "trios",    label: "Trios",                icon: Users },
-  { id: "rivais",   label: "Rivais",               icon: Swords },
-  { id: "matchups", label: "Confrontos",           icon: Swords },
+  { id: "duplas",   label: "Duplas de Destaque", icon: Handshake },
+  { id: "trios",    label: "Trio Dominante",     icon: Users },
+  { id: "rivais",   label: "Rivalidades",        icon: Swords },
+  { id: "matchups", label: "Confrontos Diretos", icon: Swords },
 ];
 
 // ─── Tab: Duplas ──────────────────────────────────────────────────────────────
 function DuplasTab({ duos, bestRecentDuo }: { duos: DuoSummary[]; bestRecentDuo: DuoSummary | null }) {
   if (duos.length === 0 && !bestRecentDuo) {
-    return <p className="text-sm text-muted-foreground/55 text-center py-8">Nenhuma dupla registrada. Jogue mais partidas em grupo para gerar dados.</p>;
+    return (
+      <p className="text-xs font-mono text-muted-foreground/60 text-center py-8">
+        Nenhuma dupla registrada com volume suficiente nesta temporada.
+      </p>
+    );
   }
 
   const isRecentDuo = (d: DuoSummary) =>
@@ -38,52 +45,79 @@ function DuplasTab({ duos, bestRecentDuo }: { duos: DuoSummary[]; bestRecentDuo:
      (d.playerA.id === bestRecentDuo.playerB.id && d.playerB.id === bestRecentDuo.playerA.id));
 
   return (
-    <div className="flex flex-col gap-3">
-      {/* Destaque: dupla quente */}
+    <div className="flex flex-col gap-3.5">
+      {/* Destaque: dupla em alta */}
       {bestRecentDuo && (
-        <div className="bg-status-good/[0.04] border border-status-good/15 rounded-xl p-4 flex flex-col gap-2">
-          <div className="flex items-center gap-3">
-            <div className="text-base shrink-0">🔥</div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[9px] uppercase tracking-widest font-bold text-status-good/70 mb-1">{duoNarratives[0].headline}</p>
-              <p className="text-sm font-black text-white truncate">
-                {bestRecentDuo.playerA.nickname} + {bestRecentDuo.playerB.nickname}
-              </p>
+        <div className="bg-surface-deck border border-status-good/30 rounded-sm p-4 flex flex-col gap-2.5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex size-7 items-center justify-center rounded-xs bg-status-good/15 text-status-good border border-status-good/25 shrink-0">
+                <Flame className="size-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <TacticalBadge label="SINERGIA RECENTE" variant="good" size="xs" />
+                  <span className="text-[10px] font-mono text-status-good font-bold uppercase tracking-wider">
+                    {duoNarratives[0].headline}
+                  </span>
+                </div>
+                <p className="text-sm font-black text-foreground uppercase tracking-tight truncate mt-0.5">
+                  {bestRecentDuo.playerA.nickname} + {bestRecentDuo.playerB.nickname}
+                </p>
+              </div>
             </div>
             <div className="text-right shrink-0">
-              <p className="text-sm font-black text-status-good tabular-nums">
+              <div className="text-sm font-mono font-black text-status-good tabular-nums">
                 <AnimatedNumber value={bestRecentDuo.winrate} decimals={0} suffix="%" />
-              </p>
-              <p className="text-[8px] text-muted-foreground/50 font-semibold">{bestRecentDuo.total}j</p>
+              </div>
+              <p className="text-[10px] font-mono text-muted-foreground/60 font-semibold">{bestRecentDuo.total} jogos juntos</p>
             </div>
           </div>
-          <p className="text-[10px] text-muted-foreground/45 italic pl-7">{duoNarratives[0].tagline}</p>
+          <p className="text-[11px] font-mono text-muted-foreground/70 italic border-t border-border/30 pt-2">
+            &ldquo;{duoNarratives[0].tagline}&rdquo;
+          </p>
         </div>
       )}
+
       {/* Lista de duplas */}
-      <div className="divide-y divide-white/[0.04]">
+      <div className="flex flex-col divide-y divide-border/30 border border-border/40 rounded-sm overflow-hidden bg-surface-deck/40">
         {duos.slice(0, 6).map((duo, idx) => (
-          <div key={`${duo.playerA.id}-${duo.playerB.id}`} className={`py-3 flex items-center gap-3 ${isRecentDuo(duo) ? "opacity-70" : ""}`}>
-            <span className="text-[11px] font-black text-muted-foreground/35 w-4 shrink-0">{idx + 1}</span>
-            <div className="flex -space-x-2 shrink-0">
-              <div className="size-7 rounded-lg border border-slate-800 overflow-hidden">
+          <div
+            key={`${duo.playerA.id}-${duo.playerB.id}`}
+            className={cn(
+              "px-3.5 py-2.5 flex items-center justify-between gap-3 hover:bg-surface-elevated/30 transition-micro group",
+              isRecentDuo(duo) ? "bg-status-good/[0.03]" : ""
+            )}
+          >
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <span className="font-mono text-xs font-black w-5 text-center text-muted-foreground/50 shrink-0 tabular-nums">
+                {idx + 1}
+              </span>
+              <div className="flex -space-x-1.5 shrink-0">
                 <PlayerAvatar nickname={duo.playerA.nickname} avatarUrl={duo.playerA.avatarUrl} size="sm" />
-              </div>
-              <div className="size-7 rounded-lg border border-slate-800 overflow-hidden">
                 <PlayerAvatar nickname={duo.playerB.nickname} avatarUrl={duo.playerB.avatarUrl} size="sm" />
               </div>
-            </div>
-            <p className="text-xs font-bold text-white/90 truncate flex-1 min-w-0">
-              {duo.playerA.nickname} + {duo.playerB.nickname}
-            </p>
-            <div className="text-right shrink-0 grid grid-cols-2 gap-3">
-              <div className="text-center">
-                <p className="text-[8px] uppercase tracking-widest text-muted-foreground/45 font-bold">WR</p>
-                <p className="text-xs font-black text-white tabular-nums"><AnimatedNumber value={duo.winrate} decimals={0} suffix="%" /></p>
+              <div className="flex items-center gap-1.5 min-w-0 truncate">
+                <span className="text-xs font-bold text-foreground group-hover:text-primary transition-colors truncate">
+                  {duo.playerA.nickname}
+                </span>
+                <span className="text-xs text-muted-foreground/40 font-mono">+</span>
+                <span className="text-xs font-bold text-foreground group-hover:text-primary transition-colors truncate">
+                  {duo.playerB.nickname}
+                </span>
               </div>
-              <div className="text-center">
-                <p className="text-[8px] uppercase tracking-widest text-muted-foreground/45 font-bold">Jogos</p>
-                <p className="text-xs font-black text-white tabular-nums">{duo.total}</p>
+            </div>
+
+            <div className="flex items-center gap-4 shrink-0 font-mono text-xs tabular-nums">
+              <div className="text-right">
+                <span className="text-[9px] uppercase tracking-wider text-muted-foreground/60 block font-semibold">WR</span>
+                <span className="font-bold text-foreground">
+                  <AnimatedNumber value={duo.winrate} decimals={0} suffix="%" />
+                </span>
+              </div>
+              <div className="text-right min-w-[40px]">
+                <span className="text-[9px] uppercase tracking-wider text-muted-foreground/60 block font-semibold">JOGOS</span>
+                <span className="text-muted-foreground/80">{duo.total}</span>
               </div>
             </div>
           </div>
@@ -96,39 +130,44 @@ function DuplasTab({ duos, bestRecentDuo }: { duos: DuoSummary[]; bestRecentDuo:
 // ─── Tab: Trios ───────────────────────────────────────────────────────────────
 function TriosTab({ trio }: { trio: TrioSummary | null }) {
   if (!trio) {
-    return <p className="text-sm text-muted-foreground/55 text-center py-8">Nenhum trio com dados suficientes. Precisamos de mais partidas para identificar combinações que funcionam.</p>;
+    return (
+      <p className="text-xs font-mono text-muted-foreground/60 text-center py-8">
+        Nenhum trio com volume estatístico consolidado na temporada.
+      </p>
+    );
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="bg-accent-purple/[0.03] border border-accent-purple/15 rounded-xl p-5 flex flex-col gap-4">
-        <div>
-          <p className="text-[9px] uppercase tracking-widest font-bold text-accent-purple/70 mb-2">Trio Dominante da Temporada</p>
-          <div className="flex items-center gap-3">
-            <div className="flex -space-x-3">
+    <div className="flex flex-col gap-3.5">
+      <div className="bg-surface-deck border border-primary/30 rounded-sm p-4 sm:p-5 flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/30 pb-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex -space-x-2 shrink-0">
               {trio.players.map((p) => (
-                <div key={p.id} className="size-10 rounded-xl border-2 border-slate-900 overflow-hidden">
+                <div key={p.id} className="rounded-sm border border-border/80 overflow-hidden">
                   <PlayerAvatar nickname={p.nickname} avatarUrl={p.avatarUrl} size="md" />
                 </div>
               ))}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-black text-white truncate">
+              <TacticalBadge label="TRIO DOMINANTE" variant="primary" size="xs" />
+              <p className="text-sm font-black text-foreground uppercase tracking-tight truncate mt-1">
                 {trio.players.map((p) => p.nickname).join(" + ")}
               </p>
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-4 gap-3 border-t border-white/[0.04] pt-4">
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: "Winrate",  val: `${trio.winrate.toFixed(0)}%` },
-            { label: "Vitórias", val: trio.wins },
-            { label: "Partidas", val: trio.total },
-            { label: "Rating",   val: trio.avgRating.toFixed(2) },
-          ].map(({ label, val }) => (
-            <div key={label} className="text-center">
-              <p className="text-[8px] uppercase tracking-widest text-muted-foreground/50 font-bold">{label}</p>
-              <p className="text-sm font-black text-white mt-0.5">{val}</p>
+            { label: "WINRATE",  val: `${trio.winrate.toFixed(0)}%`, accent: "text-status-good" },
+            { label: "VITÓRIAS", val: trio.wins, accent: "text-foreground" },
+            { label: "PARTIDAS", val: trio.total, accent: "text-foreground" },
+            { label: "RATING MÉDIO", val: trio.avgRating.toFixed(2), accent: "text-primary" },
+          ].map(({ label, val, accent }) => (
+            <div key={label} className="p-2.5 bg-surface-panel border border-border/40 rounded-xs text-center">
+              <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60 block">{label}</span>
+              <span className={cn("text-base font-mono font-black mt-0.5 tabular-nums block", accent)}>{val}</span>
             </div>
           ))}
         </div>
@@ -141,50 +180,70 @@ function TriosTab({ trio }: { trio: TrioSummary | null }) {
 function RivaisTab({ rivalries }: { rivalries: RivalryH2HSummary[] }) {
   const [page, setPage] = useState(0);
   if (rivalries.length === 0) {
-    return <p className="text-sm text-muted-foreground/55 text-center py-8">Nenhuma rivalidade identificada. Quem você convenientemente chama de rival ainda não tem dados suficientes aqui.</p>;
+    return (
+      <p className="text-xs font-mono text-muted-foreground/60 text-center py-8">
+        Nenhuma rivalidade consolidada ainda nesta temporada.
+      </p>
+    );
   }
 
   const rivalry = rivalries[page];
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-5">
-        <div className="text-center mb-4">
-          <p className="text-[9px] uppercase tracking-widest font-bold text-muted-foreground/50">
-            Rivalidade {page + 1} de {rivalries.length}
+    <div className="flex flex-col gap-3.5">
+      <div className="bg-surface-deck border border-border/60 rounded-sm p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-2 border-b border-border/30 pb-3 mb-4">
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/70">
+            RIVALIDADE {page + 1} DE {rivalries.length}
+          </span>
+          <p className="text-[11px] font-mono text-muted-foreground/60 italic truncate max-w-xs">
+            {rivalryNarratives[page % rivalryNarratives.length].tagline}
           </p>
-          <p className="text-[10px] text-muted-foreground/40 italic mt-1">{rivalryNarratives[page % rivalryNarratives.length].tagline}</p>
         </div>
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex flex-col items-center gap-2 flex-1 min-w-0">
+
+        <div className="flex items-center justify-between gap-4 py-2">
+          <div className="flex flex-col items-center gap-2 flex-1 min-w-0 text-center">
             <PlayerAvatar nickname={rivalry.playerA.nickname} avatarUrl={rivalry.playerA.avatarUrl} size="lg" />
-            <Link href={`/players/${rivalry.playerA.id}`} className="text-sm font-black text-white hover:text-primary transition-colors truncate">
+            <Link href={`/players/${rivalry.playerA.id}`} className="text-xs sm:text-sm font-bold text-foreground hover:text-primary transition-colors truncate block w-full">
               {rivalry.playerA.nickname}
             </Link>
-            <p className="text-lg font-black text-status-good tabular-nums">{rivalry.winsA}V</p>
+            <span className="text-base sm:text-lg font-mono font-black text-status-good tabular-nums">{rivalry.winsA}V</span>
           </div>
-          <div className="flex flex-col items-center gap-1">
-            <Swords className="size-5 text-muted-foreground/40" />
-            <p className="text-[10px] font-bold text-muted-foreground/50 text-center">{rivalry.matchesAgainst} confrontos</p>
+
+          <div className="flex flex-col items-center gap-1 shrink-0 px-2">
+            <div className="size-8 rounded-xs bg-surface-panel border border-border/60 flex items-center justify-center text-muted-foreground">
+              <Swords className="size-4" />
+            </div>
+            <span className="text-[10px] font-mono font-bold text-muted-foreground/70 mt-1">{rivalry.matchesAgainst} jogos</span>
           </div>
-          <div className="flex flex-col items-center gap-2 flex-1 min-w-0">
+
+          <div className="flex flex-col items-center gap-2 flex-1 min-w-0 text-center">
             <PlayerAvatar nickname={rivalry.playerB.nickname} avatarUrl={rivalry.playerB.avatarUrl} size="lg" />
-            <Link href={`/players/${rivalry.playerB.id}`} className="text-sm font-black text-white hover:text-primary transition-colors truncate">
+            <Link href={`/players/${rivalry.playerB.id}`} className="text-xs sm:text-sm font-bold text-foreground hover:text-primary transition-colors truncate block w-full">
               {rivalry.playerB.nickname}
             </Link>
-            <p className="text-lg font-black text-status-good tabular-nums">{rivalry.winsB}V</p>
+            <span className="text-base sm:text-lg font-mono font-black text-status-good tabular-nums">{rivalry.winsB}V</span>
           </div>
         </div>
       </div>
+
       {rivalries.length > 1 && (
-        <div className="flex gap-2">
-          <button onClick={() => setPage((p) => (p - 1 + rivalries.length) % rivalries.length)}
-            className="flex-1 py-2 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.05] flex items-center justify-center text-white/60 hover:text-white transition-all cursor-pointer">
-            <ChevronLeft className="size-4" />
+        <div className="flex items-center justify-between gap-2">
+          <button
+            onClick={() => setPage((p) => (p - 1 + rivalries.length) % rivalries.length)}
+            className="flex-1 py-1.5 rounded-xs bg-surface-deck border border-border/50 hover:bg-surface-elevated flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors font-mono text-xs gap-1 cursor-pointer"
+            aria-label="Rivalidade anterior"
+          >
+            <ChevronLeft className="size-3.5" />
+            <span className="text-[10px] font-bold uppercase">Anterior</span>
           </button>
-          <button onClick={() => setPage((p) => (p + 1) % rivalries.length)}
-            className="flex-1 py-2 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.05] flex items-center justify-center text-white/60 hover:text-white transition-all cursor-pointer">
-            <ChevronRight className="size-4" />
+          <button
+            onClick={() => setPage((p) => (p + 1) % rivalries.length)}
+            className="flex-1 py-1.5 rounded-xs bg-surface-deck border border-border/50 hover:bg-surface-elevated flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors font-mono text-xs gap-1 cursor-pointer"
+            aria-label="Próxima rivalidade"
+          >
+            <span className="text-[10px] font-bold uppercase">Próxima</span>
+            <ChevronRight className="size-3.5" />
           </button>
         </div>
       )}
@@ -196,27 +255,33 @@ function RivaisTab({ rivalries }: { rivalries: RivalryH2HSummary[] }) {
 function MatchupsTab({ matchups }: { matchups: PlayerMatchupSummary[] }) {
   const relevant = matchups.filter((m) => m.dominates || m.struggles);
   if (relevant.length === 0) {
-    return <p className="text-sm text-muted-foreground/55 text-center py-8">Sem confrontos diretos suficientes ainda. Joguem mais e os dados decidem quem domina quem.</p>;
+    return (
+      <p className="text-xs font-mono text-muted-foreground/60 text-center py-8">
+        Sem confrontos diretos suficientes registrados.
+      </p>
+    );
   }
 
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
       {relevant.slice(0, 6).map((m) => (
-        <div key={m.player.id} className="bg-white/[0.015] border border-white/[0.04] rounded-xl p-3.5">
-          <div className="flex items-center gap-2 mb-2">
+        <div key={m.player.id} className="bg-surface-deck border border-border/50 rounded-sm p-3 flex flex-col justify-between gap-2.5">
+          <div className="flex items-center gap-2.5">
             <PlayerAvatar nickname={m.player.nickname} avatarUrl={m.player.avatarUrl} size="sm" />
-            <p className="text-sm font-black text-white">{m.player.nickname}</p>
+            <span className="text-xs font-bold text-foreground truncate">{m.player.nickname}</span>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-1.5">
             {m.dominates && (
-              <span className="text-[10px] font-bold text-status-good bg-status-good/10 border border-status-good/20 px-2 py-0.5 rounded-full">
-                👑 Domina {m.dominates.rivalName}
-              </span>
+              <div className="flex items-center gap-1.5 text-[10px] font-mono text-status-good">
+                <Target className="size-3 shrink-0" />
+                <span className="truncate">Vantagem sobre <strong>{m.dominates.rivalName}</strong></span>
+              </div>
             )}
             {m.struggles && (
-              <span className="text-[10px] font-bold text-status-critical bg-status-critical/10 border border-status-critical/20 px-2 py-0.5 rounded-full">
-                ☠️ Sofre contra {m.struggles.rivalName}
-              </span>
+              <div className="flex items-center gap-1.5 text-[10px] font-mono text-status-warning">
+                <ShieldAlert className="size-3 shrink-0" />
+                <span className="truncate">Dificuldade contra <strong>{m.struggles.rivalName}</strong></span>
+              </div>
             )}
           </div>
         </div>
@@ -225,29 +290,22 @@ function MatchupsTab({ matchups }: { matchups: PlayerMatchupSummary[] }) {
   );
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// ─── Main Component ───────────────────────────────────────────────────────────
 export function SinergiaSection({ duos, dominantTrio, topRivalries, matchups, bestRecentDuo }: SinergiaSectionProps) {
   const [activeTab, setActiveTab] = useState<Tab>("duplas");
 
   return (
-    <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
-      <div className="flex border-b border-white/[0.05]">
-        {TABS.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            onClick={() => setActiveTab(id)}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-3.5 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer border-b-2 ${
-              activeTab === id
-                ? "border-primary text-white bg-primary/[0.04]"
-                : "border-transparent text-muted-foreground/55 hover:text-white/70 hover:bg-white/[0.02]"
-            }`}
-          >
-            <Icon className="size-3.5 shrink-0" />
-            <span className="hidden sm:inline">{label}</span>
-          </button>
-        ))}
+    <div className="bg-surface-panel border border-border/70 rounded-sm overflow-hidden flex flex-col">
+      {/* Header com Tactical Tabs */}
+      <div className="p-3 sm:p-4 border-b border-border/40 bg-surface-deck/40">
+        <TacticalTabs
+          tabs={TABS.map((t) => ({ id: t.id, label: t.label, icon: t.icon }))}
+          activeTab={activeTab}
+          onChange={(id) => setActiveTab(id as Tab)}
+        />
       </div>
-      <div className="p-5">
+
+      <div className="p-4 sm:p-5">
         {activeTab === "duplas"   && <DuplasTab duos={duos} bestRecentDuo={bestRecentDuo} />}
         {activeTab === "trios"    && <TriosTab trio={dominantTrio} />}
         {activeTab === "rivais"   && <RivaisTab rivalries={topRivalries} />}

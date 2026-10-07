@@ -18,7 +18,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
   const { match, teams, highlights, timeline } = details;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6 max-w-6xl mx-auto w-full px-4 sm:px-6">
       {/* Cabeçalho de Partida */}
       <FadeIn>
         <MatchHeader match={match} />
@@ -35,7 +35,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
       </FadeIn>
 
       {/* Tabelas de Time A e B */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 items-start">
         {teams.map((team) => (
           <FadeIn key={team.side} delay={0.12}>
             <PlayerMatchTable
@@ -48,7 +48,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
       </div>
 
       {/* Timeline de Eventos */}
-      <FadeIn delay={0.18}>
+      <FadeIn delay={0.16}>
         <MatchTimeline events={timeline} />
       </FadeIn>
 

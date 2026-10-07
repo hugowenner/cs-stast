@@ -1,4 +1,4 @@
-import { TrendingDown, TrendingUp } from "lucide-react";
+import { DeltaIndicator } from "./delta-indicator";
 import { cn } from "@/lib/utils";
 
 export function TrendIndicator({
@@ -10,15 +10,21 @@ export function TrendIndicator({
   isPositive?: boolean;
   className?: string;
 }) {
-  const positive = isPositive !== undefined ? isPositive : !String(value).startsWith("-");
-  const TrendIcon = positive ? TrendingUp : TrendingDown;
-  const colorClass = positive ? "text-status-good" : "text-status-critical";
+  const direction =
+    isPositive !== undefined
+      ? isPositive
+        ? "up"
+        : "down"
+      : undefined;
 
   return (
-    <span className={cn("inline-flex items-center gap-1 font-bold text-xs tabular-nums", colorClass, className)}>
-      <TrendIcon className="size-3.5 shrink-0" />
-      {positive && !String(value).startsWith("+") && typeof value === "number" ? "+" : ""}
-      {value}
-    </span>
+    <DeltaIndicator
+      value={value}
+      direction={direction}
+      className={className}
+    />
   );
 }
+
+export { DeltaIndicator };
+

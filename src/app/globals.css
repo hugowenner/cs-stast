@@ -5,6 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* ── Legacy compatibility tokens ── */
   --color-accent-violet: var(--accent-violet);
   --color-accent-cyan: var(--accent-cyan);
   --color-series-1: var(--series-1);
@@ -55,13 +56,37 @@
   --color-surface-1: var(--surface-1);
   --color-surface-2: var(--surface-2);
   --color-surface-highlight: var(--surface-highlight);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* ── Tactical Competitive Data Foundation Tokens ── */
+  --color-bg-base: var(--bg-base);
+  --color-surface-deck: var(--surface-deck);
+  --color-surface-panel: var(--surface-panel);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-terminal: var(--surface-terminal);
+
+  --color-border-subtle: var(--border-subtle);
+  --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
+  --color-border-accent: var(--border-accent);
+  --color-border-gold: var(--border-gold);
+
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-gold-dim: var(--gold-dim);
+
+  --color-status-info: var(--status-info);
+  --color-status-neutral: var(--status-neutral);
+
+  /* ── Geometry & Radius Scale ── */
+  --radius-none: 0px;
+  --radius-xs: 0.125rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.5rem;
+  --radius-4xl: 2rem;
 }
 
 :root {
@@ -91,7 +116,7 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
+  --radius: 0.375rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -113,87 +138,118 @@
   --status-good: #0ca30c;
   --status-warning: #fab219;
   --status-critical: #d03b3b;
+
+  /* Tactical foundation root aliases */
+  --bg-base: #f8fafc;
+  --surface-deck: #f1f5f9;
+  --surface-panel: #ffffff;
+  --surface-elevated: #ffffff;
+  --surface-terminal: #f8fafc;
+  --border-subtle: rgba(0, 0, 0, 0.05);
+  --border-default: rgba(0, 0, 0, 0.09);
+  --border-strong: rgba(0, 0, 0, 0.16);
+  --border-accent: rgba(234, 88, 12, 0.35);
+  --border-gold: rgba(201, 151, 58, 0.35);
+  --gold: #c9973a;
+  --gold-light: #f0c060;
+  --gold-dim: #8a6520;
+  --status-info: #0284c7;
+  --status-neutral: #64748b;
 }
 
 .dark {
-  /* ── Page background: charcoal blue-gray, não preto ─────────────────────────
-     L 0.178 ≈ #1d1f27. Referência: Raycast (L≈0.18), Linear (L≈0.17).
-     Cada camada de superfície sobe ~4-5 pts de lightness, criando hierarquia
-     visual clara sem precisar de sombras fortes.                              */
-  --background: oklch(0.200 0.006 258);
+  /* ── Tactical Competitive Data — Dark Base Spectrum ──────────────────────
+     Base L≈0.145 (Carbon), Deck L≈0.175 (Dark Titanium), Panel L≈0.205 (Steel),
+     Elevated L≈0.245. Hierarquia visual sólida e legível sem depender de blur. */
+  --background: oklch(0.145 0.008 260);
   --foreground: oklch(0.985 0 0);
 
-  /* ── Camadas de superfície ───────────────────────────────────────────────── */
-  /* L1 — glass-panel / cards: +4.4 pts sobre bg */
-  --card: oklch(0.244 0.007 260 / 0.70);
-  --card-foreground: oklch(0.985 0 0);
-  --surface-1: oklch(0.247 0.008 260 / 0.82);
-  /* L2 — cards secundários, painéis aninhados: +4.5 pts sobre surface-1 */
-  --surface-2: oklch(0.292 0.009 260 / 0.85);
-  /* L3 — highlight com toque violeta para CTAs e seleção */
-  --surface-highlight: oklch(0.277 0.030 285 / 0.60);
+  /* ── Camadas de superfície semântica ───────────────────────────────────── */
+  --bg-base: oklch(0.145 0.008 260);
+  --surface-deck: oklch(0.175 0.010 260);
+  --surface-panel: oklch(0.205 0.012 260);
+  --surface-elevated: oklch(0.245 0.014 260);
+  --surface-terminal: oklch(0.165 0.018 255);
 
-  /* ── Popovers / menus (sólidos — backdrop-blur não funciona em dropdowns) ── */
-  --popover: oklch(0.242 0.018 285);
+  /* ── Compatibilidade de superfície legada ──────────────────────────────── */
+  --card: oklch(0.205 0.012 260);
+  --card-foreground: oklch(0.985 0 0);
+  --surface-1: oklch(0.205 0.012 260);
+  --surface-2: oklch(0.245 0.014 260);
+  --surface-highlight: oklch(0.235 0.025 45 / 0.70);
+
+  /* ── Popovers / menus ─────────────────────────────────────────────────── */
+  --popover: oklch(0.205 0.012 260);
   --popover-foreground: oklch(0.985 0 0);
 
-  /* ── Primary / accent ────────────────────────────────────────────────────── */
-  --primary: oklch(0.62 0.19 288);
+  /* ── Primary: Operational CS Tactical Orange (#FF5E1E) ─────────────────── */
+  --primary: oklch(0.68 0.19 45);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.290 0.022 285);
+  --secondary: oklch(0.245 0.014 260);
   --secondary-foreground: oklch(0.985 0 0);
 
-  /* ── Muted ───────────────────────────────────────────────────────────────── */
-  --muted: oklch(0.290 0.022 285);
-  /* muted-foreground levemente mais claro que antes (mantém ratio 4.5:1 no charcoal) */
-  --muted-foreground: oklch(0.742 0.020 285);
+  /* ── Muted & Neutral ───────────────────────────────────────────────────── */
+  --muted: oklch(0.220 0.010 260);
+  --muted-foreground: oklch(0.720 0.012 260);
 
-  /* ── Accent ──────────────────────────────────────────────────────────────── */
-  --accent: oklch(0.307 0.028 285);
+  /* ── Accent ────────────────────────────────────────────────────────────── */
+  --accent: oklch(0.245 0.014 260);
   --accent-foreground: oklch(0.985 0 0);
 
-  /* ── Feedback ────────────────────────────────────────────────────────────── */
-  --destructive: oklch(0.704 0.191 22.216);
+  /* ── Feedback & Status ─────────────────────────────────────────────────── */
+  --destructive: oklch(0.63 0.22 25);
+  --status-good: #10b981;
+  --status-warning: #f59e0b;
+  --status-critical: #ef4444;
+  --status-info: #38bdf8;
+  --status-neutral: #94a3b8;
 
-  /* ── Bordas / inputs ─────────────────────────────────────────────────────── */
-  /* Bordas 11% em vez de 10%: fundo mais claro pede definição ligeiramente maior */
-  --border: oklch(1 0 0 / 11%);
-  --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.62 0.19 288);
+  /* ── Bordas Táticas ────────────────────────────────────────────────────── */
+  --border: oklch(1 0 0 / 10%);
+  --border-subtle: oklch(1 0 0 / 6%);
+  --border-default: oklch(1 0 0 / 11%);
+  --border-strong: oklch(1 0 0 / 18%);
+  --border-accent: oklch(0.68 0.19 45 / 35%);
+  --border-gold: oklch(0.78 0.16 75 / 35%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.68 0.19 45);
 
-  /* ── Charts ──────────────────────────────────────────────────────────────── */
-  --chart-1: #3987e5;
-  --chart-2: #199e70;
-  --chart-3: #c98500;
-  --chart-4: #9085e9;
-  --chart-5: #d95926;
+  /* ── Gold / Conquistas / Ranking ───────────────────────────────────────── */
+  --gold: #d4a44c;
+  --gold-light: #f5d080;
+  --gold-dim: #7a5518;
+  --accent-gold: #d4a44c;
+  --accent-gold-light: #f5d080;
+  --accent-gold-dim: #7a5518;
 
-  /* ── Sidebar: fica ~3 pts abaixo do bg para recuar visualmente ──────────── */
-  --sidebar: oklch(0.170 0.012 285);
+  /* ── Charts & Telemetria ───────────────────────────────────────────────── */
+  --chart-1: #ff5e1e;
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #38bdf8;
+  --chart-5: #d4a44c;
+
+  /* ── Sidebar ───────────────────────────────────────────────────────────── */
+  --sidebar: oklch(0.135 0.008 260);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.62 0.19 288);
+  --sidebar-primary: oklch(0.68 0.19 45);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.287 0.022 285);
+  --sidebar-accent: oklch(0.205 0.012 260);
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.62 0.19 288);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.68 0.19 45);
 
-  /* ── Brand / série / status ──────────────────────────────────────────────── */
+  /* ── Brand / Séries legadas ────────────────────────────────────────────── */
   --accent-violet: #9085e9;
-  --accent-cyan: #22c3e6;
-  --series-1: #3987e5;
-  --series-2: #199e70;
-  --series-3: #c98500;
+  --accent-cyan: #38bdf8;
+  --series-1: #38bdf8;
+  --series-2: #10b981;
+  --series-3: #f59e0b;
   --series-4: #008300;
-  --series-5: #9085e9;
-  --series-6: #e66767;
+  --series-5: #ff5e1e;
+  --series-6: #ef4444;
   --series-7: #d55181;
-  --series-8: #d95926;
-  /* Status ligeiramente mais saturados: fundo charcoal é mais neutro que preto,
-     cores puras destacam melhor contra cinza do que contra quase-preto */
-  --status-good: #16a716;
-  --status-warning: #fab219;
-  --status-critical: #d44040;
+  --series-8: #ea580c;
 }
 
 @layer base {
@@ -895,14 +951,235 @@
     pointer-events: none;
     user-select: none;
   }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     TACTICAL COMPETITIVE DATA SYSTEM — FOUNDATION UTILITIES (ETAPA 1)
+     ═══════════════════════════════════════════════════════════════════════════ */
+
+  /* ── 1. Chamfers (Angular Technical Corners) ─────────────────────────────── */
+  .chamfer-tl {
+    clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
+  }
+  .chamfer-tr {
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+  }
+  .chamfer-bl {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  }
+  .chamfer-br {
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+  }
+  .chamfer-card {
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  }
+  .chamfer-pill {
+    clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px);
+  }
+
+  /* ── 2. Tactical Solid Surfaces (Blur-free Elevation Layers) ─────────────── */
+  .surface-deck {
+    background-color: var(--surface-deck);
+    border: 1px solid var(--border-subtle);
+  }
+  .surface-panel {
+    background-color: var(--surface-panel);
+    border: 1px solid var(--border-default);
+  }
+  .surface-elevated {
+    background-color: var(--surface-elevated);
+    border: 1px solid var(--border-strong);
+    box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.6);
+  }
+  .surface-terminal {
+    background-color: var(--surface-terminal);
+    border: 1px solid color-mix(in srgb, var(--status-info) 20%, transparent);
+  }
+
+  /* ── 3. Typography Scale & Semantics ─────────────────────────────────────── */
+  .font-data {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .text-display-hero {
+    font-size: clamp(2.25rem, 6vw, 4.25rem);
+    font-weight: 900;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  .text-display-title {
+    font-size: clamp(1.125rem, 2.5vw, 1.75rem);
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+  }
+  .text-label-tactical {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--status-neutral);
+  }
+  .text-value-stat {
+    font-family: var(--font-mono);
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+  .text-delta-pos {
+    color: var(--status-good);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+  .text-delta-neg {
+    color: var(--status-critical);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── 4. Tactical Status Badges ───────────────────────────────────────────── */
+  .badge-tactical-neutral {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 8.5px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 2.5px 7px;
+    border-radius: var(--radius-xs);
+    color: var(--status-neutral);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+    white-space: nowrap;
+  }
+  .badge-tactical-good {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 8.5px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 2.5px 7px;
+    border-radius: var(--radius-xs);
+    color: var(--status-good);
+    background: color-mix(in srgb, var(--status-good) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--status-good) 25%, transparent);
+    white-space: nowrap;
+  }
+  .badge-tactical-warning {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 8.5px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 2.5px 7px;
+    border-radius: var(--radius-xs);
+    color: var(--status-warning);
+    background: color-mix(in srgb, var(--status-warning) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--status-warning) 25%, transparent);
+    white-space: nowrap;
+  }
+  .badge-tactical-critical {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 8.5px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 2.5px 7px;
+    border-radius: var(--radius-xs);
+    color: var(--status-critical);
+    background: color-mix(in srgb, var(--status-critical) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--status-critical) 25%, transparent);
+    white-space: nowrap;
+  }
+  .badge-tactical-gold {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 8.5px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 2.5px 7px;
+    border-radius: var(--radius-xs);
+    color: var(--gold-light);
+    background: rgba(212, 164, 76, 0.08);
+    border: 1px solid var(--gold-dim);
+    white-space: nowrap;
+  }
+  .badge-tactical-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 8.5px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 2.5px 7px;
+    border-radius: var(--radius-xs);
+    color: var(--status-info);
+    background: color-mix(in srgb, var(--status-info) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--status-info) 25%, transparent);
+    white-space: nowrap;
+  }
+  .badge-tactical-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 8.5px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 2.5px 7px;
+    border-radius: var(--radius-xs);
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
+    white-space: nowrap;
+  }
+
+  /* ── 5. Tactical Gradients ───────────────────────────────────────────────── */
+  .text-gradient-orange {
+    background: linear-gradient(135deg, oklch(0.78 0.19 45) 0%, oklch(0.65 0.20 35) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .text-gradient-steel {
+    background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* ── 6. Motion Tokens ────────────────────────────────────────────────────── */
+  .transition-micro {
+    transition: all 100ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .transition-standard {
+    transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .transition-emphasis {
+    transition: all 350ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
 }
 
-/* ── Reduced motion overrides for new animations ─────────────────────────── */
+/* ── Reduced motion overrides for all animations ─────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .pulse-dot,
   .shimmer,
   .card-hover-tactical,
-  .card-hover-tactical:hover {
+  .card-hover-tactical:hover,
+  .transition-micro,
+  .transition-standard,
+  .transition-emphasis {
     animation: none !important;
     transform: none !important;
     transition: none !important;

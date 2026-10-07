@@ -1,7 +1,24 @@
+import * as React from "react";
 import { notFound } from "next/navigation";
-import { Crosshair, Skull, Target, Trophy, Percent, Gamepad2, Award, Handshake, Flame, Swords } from "lucide-react";
-import { SectionCard } from "@/components/ui/section-card";
-import { StatTile } from "@/components/ui/stat-tile";
+import Link from "next/link";
+import {
+  Crosshair,
+  Skull,
+  Target,
+  Trophy,
+  Percent,
+  Gamepad2,
+  Award,
+  Handshake,
+  Flame,
+  Swords,
+  Shield,
+  Activity,
+  Zap,
+  Calendar,
+  ChevronRight,
+  TrendingUp,
+} from "lucide-react";
 import { FadeIn } from "@/components/motion/fade-in";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import { RatingBadge } from "@/components/players/rating-badge";
@@ -11,8 +28,14 @@ import { CoachReportCard } from "@/components/ui/coach-report-card";
 import { ProfileChartsSection } from "@/components/players/profile-charts-section";
 import { ItemProgressList } from "@/components/ui/item-progress-list";
 import { RelationshipList } from "@/components/ui/relationship-list";
-import { PageHeader } from "@/components/ui/page-header";
+import { SectionHeader } from "@/components/ui/section-header";
+import { SectionContainer } from "@/components/dashboard/section-container";
+import { MetricDisplay } from "@/components/ui/metric-display";
+import { TacticalBadge } from "@/components/ui/tactical-badge";
+import { SampleIndicator } from "@/components/ui/sample-indicator";
 import { EmptyState } from "@/components/ui/empty-state";
+import { SeasonSelect } from "@/components/dashboard/season-select";
+import { PremiumStatsPanel } from "@/components/players/premium-stats-panel";
 import { safeQuery } from "@/server/safeQuery";
 import * as playerService from "@/server/services/player.service";
 import { getPlayerEntryStats } from "@/server/services/analytics/premium/entry.analytics";
@@ -21,10 +44,9 @@ import { getPlayerClutchStats } from "@/server/services/analytics/premium/clutch
 import { getPlayerKillDistance } from "@/server/services/analytics/premium/matchup.analytics";
 import { getPlayerCombatStats } from "@/server/services/analytics/premium/combat.analytics";
 import { getPlayerDamageStats } from "@/server/services/analytics/premium/damage.analytics";
-import { PremiumStatsPanel } from "@/components/players/premium-stats-panel";
 import { winrateContext, ratingContext, adrContext, kastContext, hsContext } from "@/lib/statContext";
-import { SeasonSelect } from "@/components/dashboard/season-select";
 import { listSeasons } from "@/server/services/season.service";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -51,14 +73,15 @@ export default async function PlayerDetailPage({
 
   const { player, overview, maps, timeline, achievements, partners, recentMatches } = detail;
 
-  const [premiumEntry, premiumTrade, premiumClutch, premiumDistance, premiumCombat, premiumDamage] = await Promise.all([
-    safeQuery(() => getPlayerEntryStats({ playerId: id, seasonId: targetSeason }), null),
-    safeQuery(() => getPlayerTradeStats({ playerId: id, seasonId: targetSeason }), null),
-    safeQuery(() => getPlayerClutchStats({ playerId: id, seasonId: targetSeason }), null),
-    safeQuery(() => getPlayerKillDistance({ playerId: id, seasonId: targetSeason }), null),
-    safeQuery(() => getPlayerCombatStats({ playerId: id, seasonId: targetSeason }), null),
-    safeQuery(() => getPlayerDamageStats({ playerId: id, seasonId: targetSeason }), null),
-  ]);
+  const [premiumEntry, premiumTrade, premiumClutch, premiumDistance, premiumCombat, premiumDamage] =
+    await Promise.all([
+      safeQuery(() => getPlayerEntryStats({ playerId: id, seasonId: targetSeason }), null),
+      safeQuery(() => getPlayerTradeStats({ playerId: id, seasonId: targetSeason }), null),
+      safeQuery(() => getPlayerClutchStats({ playerId: id, seasonId: targetSeason }), null),
+      safeQuery(() => getPlayerKillDistance({ playerId: id, seasonId: targetSeason }), null),
+      safeQuery(() => getPlayerCombatStats({ playerId: id, seasonId: targetSeason }), null),
+      safeQuery(() => getPlayerDamageStats({ playerId: id, seasonId: targetSeason }), null),
+    ]);
 
   const mapProgressItems = maps.map((m) => ({
     name: m.mapName,
@@ -84,268 +107,392 @@ export default async function PlayerDetailPage({
     value: t.rating,
   }));
 
+  const isElite = overview.ratingAvg >= 1.25;
+  const isPositive = overview.ratingAvg >= 1.05;
+
   return (
-    <div className="flex flex-col gap-4">
-      {/* Cabeçalho */}
+    <div className="flex flex-col gap-10 lg:gap-12 pb-16">
+      
+      {/* ═══ 01. PLAYER COMMAND HEADER ═══ */}
       <FadeIn>
-        <PageHeader
-          title={player.nickname}
-          subtitle={
-            <>
-              <span>Gamers Club ID: {player.gamersClubId ?? "Não associado"}</span>
-              {player.levelGc !== null && player.levelGc !== undefined && (
-                <span className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 rounded-md px-2 py-0.5 font-bold text-xs text-primary">
-                  Gamers Club LVL {player.levelGc}
-                </span>
-              )}
-            </>
-          }
-          icon={<PlayerAvatar nickname={player.nickname} avatarUrl={player.avatarUrl} size="lg" />}
-          actions={
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        <div className="bg-surface-panel border border-border/70 rounded-sm overflow-hidden flex flex-col shadow-lg">
+          <div className="h-[2px] w-full bg-gradient-to-r from-primary via-gold to-transparent" />
+
+          {/* Profile Identity Deck */}
+          <div className="p-5 sm:p-6 flex flex-wrap items-center justify-between gap-4 border-b border-border/40 bg-surface-deck/40">
+            <div className="flex items-center gap-4 min-w-0">
+              <PlayerAvatar
+                nickname={player.nickname}
+                avatarUrl={player.avatarUrl}
+                size="lg"
+              />
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-xl sm:text-2xl font-black text-foreground uppercase tracking-tight truncate">
+                    {player.nickname}
+                  </h1>
+                  {player.levelGc !== null && player.levelGc !== undefined && (
+                    <TacticalBadge
+                      label={`GC LVL ${player.levelGc}`}
+                      variant="primary"
+                      size="xs"
+                    />
+                  )}
+                  {isElite ? (
+                    <TacticalBadge label="ALTA PERFORMANCE" variant="gold" size="xs" />
+                  ) : isPositive ? (
+                    <TacticalBadge label="REGULAR" variant="good" size="xs" />
+                  ) : null}
+                </div>
+                <div className="flex items-center gap-2 text-[10px] font-mono text-muted-foreground/70 mt-1">
+                  <span>GC ID: {player.gamersClubId ?? "Não associado"}</span>
+                  <span>·</span>
+                  <span className="text-status-good font-bold">Monitoramento Ativo</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
+              <Link
+                href={`/compare?playerA=${player.id}`}
+                className="btn-press hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xs bg-surface-deck text-xs font-mono font-bold uppercase tracking-wider text-foreground border border-border/60 hover:border-primary/50 hover:text-primary transition-micro"
+              >
+                <Swords className="size-3.5" />
+                <span>Desafiar no H2H</span>
+              </Link>
               <SeasonSelect seasons={seasonOptions} currentSeasonId={currentSeason} />
-              <div className="text-right hidden sm:block">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
-                  Perfil Watchlist
-                </span>
-                <span className="inline-flex items-center rounded-full bg-status-good/15 px-2.5 py-0.5 text-xs font-semibold text-status-good mt-1 border border-status-good/20">
-                  Monitoramento Ativo
-                </span>
-              </div>
             </div>
-          }
-        />
-      </FadeIn>
+          </div>
 
-      {/* Grid de Métricas Principais */}
-      <FadeIn delay={0.05} className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatTile
-          label="Partidas Disputadas"
-          value={overview.totalMatches}
-          icon={Gamepad2}
-          accent="violet"
-        />
-        <StatTile
-          label="Vitórias / Derrotas"
-          value={`${overview.wins}V - ${overview.losses}D`}
-          icon={Trophy}
-          accent="cyan"
-        />
-        <StatTile
-          label="Winrate Geral"
-          value={`${overview.winrate}%`}
-          icon={Percent}
-          accent="violet"
-          context={winrateContext(overview.winrate)}
-        />
-        <StatTile
-          label="K/D Ratio"
-          value={overview.kd.toFixed(2)}
-          icon={Crosshair}
-          accent="cyan"
-        />
-      </FadeIn>
-
-      {/* Desempenho — Rating, ADR, KAST, HS% */}
-      <FadeIn delay={0.1} className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatTile
-          label="Rating"
-          value={overview.ratingAvg.toFixed(2)}
-          icon={Trophy}
-          accent="violet"
-          context={ratingContext(overview.ratingAvg)}
-        />
-        <StatTile
-          label="ADR"
-          value={overview.adrAvg.toFixed(1)}
-          icon={Target}
-          accent="cyan"
-          context={adrContext(overview.adrAvg)}
-        />
-        <StatTile
-          label="KAST"
-          value={`${overview.kastAvg.toFixed(1)}%`}
-          icon={Percent}
-          accent="violet"
-          context={kastContext(overview.kastAvg)}
-        />
-        <StatTile
-          label="HS%"
-          value={`${overview.hsPercentage.toFixed(1)}%`}
-          icon={Skull}
-          accent="cyan"
-          context={hsContext(overview.hsPercentage)}
-        />
-      </FadeIn>
-
-      {/* Impacto */}
-      <FadeIn delay={0.11}>
-        <div className="mb-3 mt-1">
-          <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-muted-foreground/60">Impacto</p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <StatTile
-            label="Assistências"
-            value={`${overview.assistsAvg.toFixed(1)} média`}
-            icon={Handshake}
-            accent="violet"
-            context="Colaboração por partida"
-          />
-          <StatTile
-            label="Impacto"
-            value={overview.impactAvg.toFixed(2)}
-            icon={Flame}
-            accent="cyan"
-            context="Dano e agressividade"
-          />
-          <StatTile
-            label="Entry Kills"
-            value={overview.entryKills.toString()}
-            icon={Swords}
-            accent="violet"
-            context="Primeiras eliminações"
-          />
-        </div>
-      </FadeIn>
-
-      {/* Métricas Gamers Club */}
-      <FadeIn delay={0.115}>
-        <div className="mb-3 mt-1">
-          <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-muted-foreground/60">Métricas Gamers Club</p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
-          <StatTile
-            label="GC Rating"
-            value={overview.gcRatingAvg !== null ? overview.gcRatingAvg.toFixed(2) : "N/A"}
-            icon={Trophy}
-            accent="violet"
-            context="Rating da plataforma"
-          />
-          <StatTile
-            label="Dano Total"
-            value={overview.totalDamage.toLocaleString()}
-            icon={Target}
-            accent="cyan"
-            context={`${overview.totalMatches > 0 ? (overview.totalDamage / overview.totalMatches).toFixed(0) : 0} média por partida`}
-          />
-          <StatTile
-            label="Trade Kills"
-            value={overview.tradeKills.toString()}
-            icon={Swords}
-            accent="violet"
-            context={`${overview.totalMatches > 0 ? (overview.tradeKills / overview.totalMatches).toFixed(1) : 0} média por partida`}
-          />
-          <StatTile
-            label="Flash Assists"
-            value={overview.flashAssists.toString()}
-            icon={Handshake}
-            accent="cyan"
-            context={`${overview.totalMatches > 0 ? (overview.flashAssists / overview.totalMatches).toFixed(1) : 0} média por partida`}
-          />
-        </div>
-      </FadeIn>
-
-      <FadeIn delay={0.118}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <StatTile
-            label="Clutches Vencidos"
-            value={overview.clutchesWon.toString()}
-            icon={Trophy}
-            accent="violet"
-            context="Situações de clutch vencidas"
-          />
-
-          <div className="rounded-2xl border border-white/5 bg-zinc-950 p-4 flex flex-col justify-between hover:bg-white/[0.02] transition-colors min-h-[96px]">
-            <div className="flex justify-between items-start">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                Multikills
+          {/* Core Profile Metrics Bar */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-border/30 bg-surface-deck/20">
+            <div className="p-4 sm:p-5 flex flex-col justify-between gap-1">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60">
+                RATING 2.0 MÉDIO
               </span>
-              <Gamepad2 className="size-4 text-primary" />
+              <div className="flex items-baseline gap-2">
+                <span
+                  className={cn(
+                    "font-mono text-2xl sm:text-3xl font-black tabular-nums",
+                    isElite ? "text-gold" : isPositive ? "text-status-good" : "text-foreground"
+                  )}
+                >
+                  {overview.ratingAvg.toFixed(2)}
+                </span>
+                <span className="text-[10px] font-mono text-muted-foreground/60">
+                  {ratingContext(overview.ratingAvg)}
+                </span>
+              </div>
             </div>
-            <div className="grid grid-cols-4 gap-2 text-center mt-2">
-              <div>
-                <span className="text-sm font-black text-foreground block">{overview.doubleKills}</span>
-                <span className="text-[8px] text-muted-foreground uppercase font-bold">2K</span>
+
+            <div className="p-4 sm:p-5 flex flex-col justify-between gap-1">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60">
+                WINRATE GERAL
+              </span>
+              <div className="flex items-baseline gap-2">
+                <span
+                  className={cn(
+                    "font-mono text-2xl sm:text-3xl font-black tabular-nums",
+                    overview.winrate >= 55 ? "text-status-good" : overview.winrate < 45 ? "text-status-critical" : "text-foreground"
+                  )}
+                >
+                  {overview.winrate}%
+                </span>
+                <span className="text-[10px] font-mono text-muted-foreground/60">
+                  {overview.wins}V - {overview.losses}D
+                </span>
               </div>
-              <div>
-                <span className="text-sm font-black text-foreground block">{overview.tripleKills}</span>
-                <span className="text-[8px] text-muted-foreground uppercase font-bold">3K</span>
+            </div>
+
+            <div className="p-4 sm:p-5 flex flex-col justify-between gap-1">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60">
+                K/D RATIO
+              </span>
+              <div className="flex items-baseline gap-2">
+                <span
+                  className={cn(
+                    "font-mono text-2xl sm:text-3xl font-black tabular-nums",
+                    overview.kd >= 1.15 ? "text-status-good" : overview.kd < 0.95 ? "text-status-critical" : "text-foreground"
+                  )}
+                >
+                  {overview.kd.toFixed(2)}
+                </span>
+                <span className="text-[10px] font-mono text-muted-foreground/60">
+                  Relação K/D
+                </span>
               </div>
-              <div>
-                <span className="text-sm font-black text-foreground block">{overview.quadKills}</span>
-                <span className="text-[8px] text-muted-foreground uppercase font-bold">4K</span>
-              </div>
-              <div>
-                <span className="text-sm font-black text-foreground block">{overview.aces}</span>
-                <span className="text-[8px] text-muted-foreground uppercase font-bold">Aces</span>
+            </div>
+
+            <div className="p-4 sm:p-5 flex flex-col justify-between gap-1">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60">
+                TOTAL DE PARTIDAS
+              </span>
+              <div className="flex items-baseline gap-2">
+                <span className="font-mono text-2xl sm:text-3xl font-black text-foreground tabular-nums">
+                  {overview.totalMatches}
+                </span>
+                <SampleIndicator count={overview.totalMatches} variant="subtle" />
               </div>
             </div>
           </div>
         </div>
       </FadeIn>
 
-      {/* Análise Técnica (Coach IA) */}
-      <FadeIn delay={0.12}>
-        <CoachSummaryCard data={overview.summaryCoach} />
-      </FadeIn>
+      {/* ═══ 02. DESEMPENHO TÁTICO & MÉTRICAS PRINCIPAIS ═══ */}
+      <SectionContainer
+        index={1}
+        tag="TELEMETRIA DE COMBATE"
+        title="Desempenho Principal"
+        subtitle="Métricas fundamentais de pontaria, dano e sobrevivência."
+        delay={0.05}
+      >
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+          <div className="p-4 bg-surface-panel border border-border/60 rounded-xs flex flex-col justify-between gap-2">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60">
+              ADR (DANO/ROUND)
+            </span>
+            <span className="font-mono text-2xl font-black text-foreground tabular-nums">
+              {overview.adrAvg.toFixed(1)}
+            </span>
+            <span className="text-[10px] font-sans text-muted-foreground/60 leading-tight">
+              {adrContext(overview.adrAvg)}
+            </span>
+          </div>
 
-      {/* Gráficos de Evolução */}
-      <FadeIn delay={0.125}>
+          <div className="p-4 bg-surface-panel border border-border/60 rounded-xs flex flex-col justify-between gap-2">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60">
+              KAST% (REGULARIDADE)
+            </span>
+            <span className="font-mono text-2xl font-black text-foreground tabular-nums">
+              {overview.kastAvg.toFixed(1)}%
+            </span>
+            <span className="text-[10px] font-sans text-muted-foreground/60 leading-tight">
+              {kastContext(overview.kastAvg)}
+            </span>
+          </div>
+
+          <div className="p-4 bg-surface-panel border border-border/60 rounded-xs flex flex-col justify-between gap-2">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60">
+              HEADSHOT %
+            </span>
+            <span className="font-mono text-2xl font-black text-foreground tabular-nums">
+              {overview.hsPercentage.toFixed(1)}%
+            </span>
+            <span className="text-[10px] font-sans text-muted-foreground/60 leading-tight">
+              {hsContext(overview.hsPercentage)}
+            </span>
+          </div>
+
+          <div className="p-4 bg-surface-panel border border-border/60 rounded-xs flex flex-col justify-between gap-2">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60">
+              IMPACTO
+            </span>
+            <span className="font-mono text-2xl font-black text-primary tabular-nums">
+              {overview.impactAvg.toFixed(2)}
+            </span>
+            <span className="text-[10px] font-sans text-muted-foreground/60 leading-tight">
+              Influência em rounds
+            </span>
+          </div>
+        </div>
+      </SectionContainer>
+
+      {/* ═══ 03. IMPACTO & MULTIKILLS MATRIX ═══ */}
+      <SectionContainer
+        index={2}
+        tag="IMPACTO & EXECUÇÃO"
+        title="Duelos, Aberturas e Multikills"
+        subtitle="Telemetria de eliminações decisivas, trades e clutches."
+        delay={0.08}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+          
+          {/* Métricas de Impacto (7 cols) */}
+          <div className="md:col-span-7 p-4 bg-surface-panel border border-border/60 rounded-xs flex flex-col justify-between gap-4">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-foreground">
+              Aberturas e Assistências
+            </span>
+
+            <div className="grid grid-cols-3 gap-3 text-center border-y border-border/30 py-3">
+              <div>
+                <span className="text-[9px] font-mono text-muted-foreground/60 uppercase tracking-wider block">
+                  ENTRY KILLS
+                </span>
+                <span className="font-mono text-lg font-black text-foreground tabular-nums block mt-0.5">
+                  {overview.entryKills}
+                </span>
+                <span className="text-[9px] font-mono text-muted-foreground/50">Primeiros abates</span>
+              </div>
+
+              <div className="border-x border-border/30">
+                <span className="text-[9px] font-mono text-muted-foreground/60 uppercase tracking-wider block">
+                  TRADE KILLS
+                </span>
+                <span className="font-mono text-lg font-black text-foreground tabular-nums block mt-0.5">
+                  {overview.tradeKills}
+                </span>
+                <span className="text-[9px] font-mono text-muted-foreground/50">Vinganças</span>
+              </div>
+
+              <div>
+                <span className="text-[9px] font-mono text-muted-foreground/60 uppercase tracking-wider block">
+                  FLASH ASSISTS
+                </span>
+                <span className="font-mono text-lg font-black text-foreground tabular-nums block mt-0.5">
+                  {overview.flashAssists}
+                </span>
+                <span className="text-[9px] font-mono text-muted-foreground/50">Cegueiras</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] font-mono text-muted-foreground/60">
+              <span>Clutches Vencidos: <strong className="text-gold font-bold">{overview.clutchesWon}</strong></span>
+              <span>Dano Total: <strong className="text-foreground">{overview.totalDamage.toLocaleString()} HP</strong></span>
+            </div>
+          </div>
+
+          {/* Multikills Matrix (5 cols) */}
+          <div className="md:col-span-5 p-4 bg-surface-panel border border-border/60 rounded-xs flex flex-col justify-between gap-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-foreground">
+                Matriz de Multikills
+              </span>
+              <TacticalBadge label="MULTIKILLS" variant="neutral" size="xs" />
+            </div>
+
+            <div className="grid grid-cols-4 gap-2 text-center py-2">
+              <div className="p-2 bg-surface-deck rounded-xs border border-border/40">
+                <span className="font-mono text-base font-black text-foreground block tabular-nums">
+                  {overview.doubleKills}
+                </span>
+                <span className="text-[8px] font-mono font-bold uppercase text-muted-foreground/60">2K</span>
+              </div>
+              <div className="p-2 bg-surface-deck rounded-xs border border-border/40">
+                <span className="font-mono text-base font-black text-status-good block tabular-nums">
+                  {overview.tripleKills}
+                </span>
+                <span className="text-[8px] font-mono font-bold uppercase text-status-good">3K</span>
+              </div>
+              <div className="p-2 bg-surface-deck rounded-xs border border-border/40">
+                <span className="font-mono text-base font-black text-status-warning block tabular-nums">
+                  {overview.quadKills}
+                </span>
+                <span className="text-[8px] font-mono font-bold uppercase text-status-warning">4K</span>
+              </div>
+              <div className="p-2 bg-surface-deck rounded-xs border border-gold/30">
+                <span className="font-mono text-base font-black text-gold block tabular-nums">
+                  {overview.aces}
+                </span>
+                <span className="text-[8px] font-mono font-bold uppercase text-gold">ACES</span>
+              </div>
+            </div>
+
+            <span className="text-[10px] font-mono text-muted-foreground/50 text-center">
+              Total de rounds com 2+ eliminações
+            </span>
+          </div>
+
+        </div>
+      </SectionContainer>
+
+      {/* ═══ 04. ANÁLISE DO COACH IA ═══ */}
+      <SectionContainer
+        index={3}
+        tag="DIAGNÓSTICO IA"
+        title="Análise Técnica do Coach"
+        subtitle="Avaliação algorítmica de pontos fortes e vulnerabilidades do jogador."
+        delay={0.1}
+      >
+        <div className="flex flex-col gap-4">
+          <CoachSummaryCard data={overview.summaryCoach} />
+          <CoachReportCard apiUrl={`/api/coach/player/${player.id}?season=${currentSeason}`} />
+        </div>
+      </SectionContainer>
+
+      {/* ═══ 05. GRÁFICOS DE EVOLUÇÃO TEMPORAL ═══ */}
+      <SectionContainer
+        index={4}
+        tag="HISTÓRICO TEMPORAL"
+        title="Evolução de ELO e Rating"
+        subtitle="Trajetória de pontuação ao longo das partidas disputadas."
+        delay={0.12}
+      >
         <ProfileChartsSection
           eloTimeline={eloTimelinePoints}
           ratingTimeline={ratingTimelinePoints}
         />
-      </FadeIn>
+      </SectionContainer>
 
-      {/* Relatório do Coach IA */}
-      <FadeIn delay={0.13}>
-        <CoachReportCard apiUrl={`/api/coach/player/${player.id}?season=${currentSeason}`} />
-      </FadeIn>
+      {/* ═══ 06. ANALYTICS AVANÇADO (PREMIUM) ═══ */}
+      {(premiumEntry || premiumTrade || premiumClutch || premiumDistance || premiumCombat || premiumDamage) && (
+        <SectionContainer
+          index={5}
+          tag="ANALYTICS AVANÇADO"
+          title="Telemetria Profunda"
+          subtitle="Taxa de sucesso em duelos 1v1, trades e distribuição de dano."
+          delay={0.14}
+        >
+          <PremiumStatsPanel
+            entry={premiumEntry}
+            trade={premiumTrade}
+            clutch={premiumClutch}
+            distance={premiumDistance}
+            combat={premiumCombat}
+            damage={premiumDamage}
+          />
+        </SectionContainer>
+      )}
 
-      {/* Premium Analytics */}
-      <FadeIn delay={0.14}>
-        <PremiumStatsPanel
-          entry={premiumEntry}
-          trade={premiumTrade}
-          clutch={premiumClutch}
-          distance={premiumDistance}
-          combat={premiumCombat}
-          damage={premiumDamage}
-        />
-      </FadeIn>
-
-      {/* Mapas e Conquistas */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <FadeIn delay={0.15}>
-          <SectionCard title="Performance por Mapa">
+      {/* ═══ 07. PERFORMANCE POR MAPA & CONQUISTAS ═══ */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <SectionContainer
+          index={6}
+          tag="MAPAS"
+          title="Performance por Mapa"
+          subtitle="Aproveitamento e frequência em cada cenário do pool."
+          delay={0.16}
+        >
+          <div className="bg-surface-panel border border-border/60 rounded-sm p-4">
             {mapProgressItems.length === 0 ? (
-              <EmptyState message="Sem estatísticas de mapa ainda." />
+              <EmptyState message="Sem estatísticas de mapa registradas para este jogador." />
             ) : (
               <ItemProgressList items={mapProgressItems} emptyMessage="Sem estatísticas de mapa ainda." />
             )}
-          </SectionCard>
-        </FadeIn>
+          </div>
+        </SectionContainer>
 
-        <FadeIn delay={0.18}>
-          <SectionCard title="Conquistas Recentes">
+        <SectionContainer
+          index={7}
+          tag="FEITOS"
+          title="Conquistas Recentes"
+          subtitle="Medalhas e marcos alcançados pelo jogador."
+          delay={0.18}
+        >
+          <div className="bg-surface-panel border border-border/60 rounded-sm overflow-hidden p-4">
             {achievements.length === 0 ? (
-              <EmptyState message="Nenhuma conquista ainda." icon={Award} />
+              <EmptyState message="Nenhuma conquista desbloqueada por enquanto." icon={Award} />
             ) : (
-              <div className="flex flex-col divide-y divide-white/5">
+              <div className="flex flex-col divide-y divide-border/30">
                 {achievements.slice(0, 5).map((entry) => (
                   <AchievementFeedItem key={entry.id} entry={{ ...entry, player }} />
                 ))}
               </div>
             )}
-          </SectionCard>
-        </FadeIn>
+          </div>
+        </SectionContainer>
       </div>
 
-      {/* Parceiros Frequentes */}
-      <FadeIn delay={0.2}>
-        <SectionCard title="Parceiros mais Frequentes (Watchlist)">
+      {/* ═══ 08. PARCEIROS FREQUENTES (SINERGIA) ═══ */}
+      <SectionContainer
+        index={8}
+        tag="SINERGIA"
+        title="Parceiros mais Frequentes"
+        subtitle="Membros do grupo com quem o jogador mais divide o servidor."
+        delay={0.2}
+      >
+        <div className="bg-surface-panel border border-border/60 rounded-sm p-4">
           {relationshipItems.length === 0 ? (
-            <EmptyState message="Nenhuma parceria registrada ainda." />
+            <EmptyState message="Nenhuma parceria de equipe registrada ainda." />
           ) : (
             <RelationshipList
               items={relationshipItems}
@@ -353,36 +500,51 @@ export default async function PlayerDetailPage({
               emptyMessage="Nenhuma partida com outros membros do grupo registrada ainda."
             />
           )}
-        </SectionCard>
-      </FadeIn>
+        </div>
+      </SectionContainer>
 
-      {/* Últimas Partidas */}
-      <FadeIn delay={0.22}>
-        <SectionCard title="Últimos 10 Jogos">
+      {/* ═══ 09. ÚLTIMAS 10 PARTIDAS (MATCH FEED) ═══ */}
+      <SectionContainer
+        index={9}
+        tag="HISTÓRICO RECENTE"
+        title="Últimos Confrontos"
+        subtitle="Resumo operacional das partidas mais recentes disputadas."
+        delay={0.22}
+      >
+        <div className="bg-surface-panel border border-border/60 rounded-sm overflow-hidden flex flex-col">
           {recentMatches.length === 0 ? (
-            <EmptyState message="Nenhuma partida disputada ainda." />
+            <EmptyState message="Nenhuma partida disputada por este jogador ainda." />
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="divide-y divide-border/30">
               {recentMatches.map((match) => (
                 <div
                   key={match.id}
-                  className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.01] px-4 py-3 text-sm hover:bg-white/5 transition-colors"
+                  className="flex items-center justify-between p-3.5 sm:p-4 hover:bg-surface-elevated/30 transition-micro gap-3"
                 >
-                  <div className="min-w-0">
-                    <p className="font-semibold text-sm">
-                      {match.mapName} · {match.playedAt.toLocaleDateString("pt-BR")}
-                    </p>
-                    <p className="text-muted-foreground text-xs mt-0.5">
-                      Desempenho: {match.kills} kills / {match.deaths} mortes / {match.assists} assistências · {match.hsPercentage.toFixed(0)}% HS
-                    </p>
+                  <div className="min-w-0 flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs sm:text-sm font-bold text-foreground">
+                        {match.mapName.replace(/^de_/i, "").toUpperCase()}
+                      </span>
+                      <span className="text-[10px] font-mono text-muted-foreground/60">
+                        · {match.playedAt.toLocaleDateString("pt-BR")}
+                      </span>
+                    </div>
+                    <span className="text-[11px] font-mono text-muted-foreground/75 truncate">
+                      {match.kills}K / {match.deaths}D / {match.assists}A · {match.hsPercentage.toFixed(0)}% HS
+                    </span>
                   </div>
-                  <RatingBadge rating={match.rating} />
+                  
+                  <div className="shrink-0 flex items-center gap-2">
+                    <RatingBadge rating={match.rating} />
+                  </div>
                 </div>
               ))}
             </div>
           )}
-        </SectionCard>
-      </FadeIn>
+        </div>
+      </SectionContainer>
+
     </div>
   );
 }

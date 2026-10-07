@@ -6,8 +6,11 @@ import type { AchievementCategory } from "@/server/domain/achievementCatalog";
 import { AchievementHero } from "@/components/achievements/achievement-hero";
 import { AchievementCatalog } from "@/components/achievements/achievement-catalog";
 import { AchievementFeed } from "@/components/achievements/achievement-feed";
+import { SectionHeader } from "@/components/ui/section-header";
 
 const CATEGORY_ORDER: AchievementCategory[] = ["combate", "clutch", "carreira"];
+
+export const dynamic = "force-dynamic";
 
 export default async function AchievementsPage() {
   const stats = await safeQuery(
@@ -30,8 +33,8 @@ export default async function AchievementsPage() {
   }));
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Hero compacto */}
+    <div className="flex flex-col gap-8 max-w-6xl mx-auto w-full px-4 sm:px-6">
+      {/* 01 / Header & Telemetria Geral */}
       <FadeIn>
         <AchievementHero
           totalInCatalog={stats.totalInCatalog}
@@ -41,22 +44,28 @@ export default async function AchievementsPage() {
         />
       </FadeIn>
 
-      {/* Catálogo com accordion + filtros + busca */}
+      {/* 02 / Catálogo com Accordions, Filtros e Busca */}
       <FadeIn delay={0.04}>
-        <AchievementCatalog categories={categories} />
+        <div className="flex flex-col gap-3">
+          <SectionHeader
+            index="02"
+            tag="DISTINÇÕES TÁTICAS"
+            title="CATÁLOGO OPERACIONAL"
+            subtitle="Critérios de combate, domínio de clutches e marcos cumulativos de carreira."
+          />
+          <AchievementCatalog categories={categories} />
+        </div>
       </FadeIn>
 
-      {/* Feed de desbloqueios recentes */}
+      {/* 03 / Feed de Auditoria e Desbloqueios Recentes */}
       <FadeIn delay={0.08}>
         <div className="flex flex-col gap-3">
-          <div>
-            <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-muted-foreground/60">
-              🔓 Conquistas Recentemente Arrancadas
-            </p>
-            <p className="mt-0.5 text-[11px] text-muted-foreground/45">
-              Histórico de conquistas da comunidade — quem desbloqueou o quê.
-            </p>
-          </div>
+          <SectionHeader
+            index="03"
+            tag="HISTÓRICO"
+            title="ACHIEVEMENT LOG"
+            subtitle="Registro cronológico de distinções conquistadas pelos atletas nas partidas disputadas."
+          />
           <AchievementFeed unlocks={stats.recentUnlocks} />
         </div>
       </FadeIn>

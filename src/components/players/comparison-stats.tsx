@@ -1,4 +1,6 @@
+import * as React from "react";
 import type { ComparisonPlayerDTO } from "@/server/dtos/playerComparison.dto";
+import { DeltaIndicator } from "@/components/ui/delta-indicator";
 import { cn } from "@/lib/utils";
 
 interface MetricConfig {
@@ -8,13 +10,13 @@ interface MetricConfig {
 }
 
 const METRICS_LIST: MetricConfig[] = [
-  { key: "rating", label: "Rating Médio", format: (v) => v.toFixed(2) },
-  { key: "kd", label: "K/D Ratio", format: (v) => v.toFixed(2) },
-  { key: "adr", label: "ADR", format: (v) => v.toFixed(1) },
-  { key: "kast", label: "KAST", format: (v) => `${v.toFixed(1)}%` },
-  { key: "hsPercentage", label: "HS%", format: (v) => `${v.toFixed(1)}%` },
-  { key: "impact", label: "Impacto", format: (v) => v.toFixed(2) },
-  { key: "winrate", label: "Winrate Geral", format: (v) => `${v.toFixed(1)}%` },
+  { key: "rating",       label: "RATING 2.0 MÉDIO", format: (v) => v.toFixed(2) },
+  { key: "kd",           label: "K/D RATIO",        format: (v) => v.toFixed(2) },
+  { key: "adr",          label: "ADR (DANO/ROUND)", format: (v) => v.toFixed(1) },
+  { key: "kast",         label: "KAST% REGULAR",    format: (v) => `${v.toFixed(1)}%` },
+  { key: "hsPercentage", label: "PRECISÃO HS%",     format: (v) => `${v.toFixed(1)}%` },
+  { key: "impact",       label: "IMPACTO",          format: (v) => v.toFixed(2) },
+  { key: "winrate",      label: "TAXA DE VITÓRIA",  format: (v) => `${v.toFixed(1)}%` },
 ];
 
 export function ComparisonStats({ players }: { players: ComparisonPlayerDTO[] }) {
@@ -23,7 +25,7 @@ export function ComparisonStats({ players }: { players: ComparisonPlayerDTO[] })
   const [pA, pB] = players;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
       {METRICS_LIST.map(({ key, label, format }) => {
         const valA = pA.metrics[key];
         const valB = pB.metrics[key];
@@ -32,81 +34,80 @@ export function ComparisonStats({ players }: { players: ComparisonPlayerDTO[] })
         const isBBetter = valB > valA;
         const isTie = valA === valB;
 
-        // Calcular diferença absoluta e percentual
         const diff = Math.abs(valA - valB);
         const minVal = Math.min(valA, valB);
         const pctDiff = minVal > 0 ? (diff / minVal) * 100 : 0;
 
-        // Texto formatado de vantagem
         let advantageText = "";
         if (!isTie) {
           const winnerNick = isABetter ? pA.nickname : pB.nickname;
           const formattedDiff = format(diff).replace(/-/, "");
-          const pctSuffix = pctDiff > 0 && key !== "winrate" && key !== "hsPercentage" && key !== "kast"
-            ? ` (+${pctDiff.toFixed(0)}%)`
-            : "";
-          advantageText = `🔥 +${formattedDiff}${pctSuffix} para ${winnerNick}`;
+          const pctSuffix =
+            pctDiff > 0 && key !== "winrate" && key !== "hsPercentage" && key !== "kast"
+              ? ` (+${pctDiff.toFixed(0)}%)`
+              : "";
+          advantageText = `+${formattedDiff}${pctSuffix} para ${winnerNick}`;
         }
 
         return (
           <div
             key={key}
-            className="glass-panel p-4 border border-white/5 bg-white/[0.01] rounded-2xl flex flex-col justify-between hover:border-white/10 transition-colors group relative overflow-hidden"
+            className="p-4 bg-surface-panel border border-border/60 rounded-xs flex flex-col justify-between gap-3 hover:border-border/90 transition-micro group"
           >
-            {/* Header de Categoria */}
-            <span className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest block mb-3">
+            {/* Metric Category Label */}
+            <span className="text-[10px] font-mono font-bold text-muted-foreground/70 uppercase tracking-wider block">
               {label}
             </span>
 
-            {/* Comparativo de Números */}
+            {/* Direct Side-by-Side Comparison */}
             <div className="grid grid-cols-3 items-center gap-2">
-              {/* Jogador A */}
+              {/* Player A */}
               <div className="text-left min-w-0">
-                <span className="text-[9px] block text-muted-foreground/50 truncate font-bold leading-none">
+                <span className="text-[10px] font-bold block text-muted-foreground/70 truncate leading-none">
                   {pA.nickname}
                 </span>
                 <span
                   className={cn(
-                    "text-base font-black block mt-1 tabular-nums",
-                    isABetter ? "text-primary" : "text-white/60"
+                    "font-mono text-base font-black block mt-1 tabular-nums",
+                    isABetter ? "text-primary" : "text-foreground/70"
                   )}
                 >
                   {format(valA)}
                 </span>
               </div>
 
-              {/* Barra de Progresso Central */}
-              <div className="flex flex-col items-center justify-center gap-1.5">
-                <div className="flex w-full h-1.5 rounded-full bg-white/5 overflow-hidden border border-white/[0.04]">
+              {/* Symmetric Comparison Bar */}
+              <div className="flex flex-col items-center justify-center gap-1">
+                <div className="flex w-full h-1.5 rounded-full bg-surface-deck overflow-hidden border border-border/40">
                   <div
                     style={{ width: `${isTie ? 50 : isABetter ? 70 : 30}%` }}
                     className={cn(
                       "h-full transition-all duration-300",
-                      isABetter ? "bg-primary" : "bg-white/10"
+                      isABetter ? "bg-primary" : "bg-border/60"
                     )}
                   />
                   <div
                     style={{ width: `${isTie ? 50 : isBBetter ? 70 : 30}%` }}
                     className={cn(
                       "h-full transition-all duration-300",
-                      isBBetter ? "bg-accent-cyan" : "bg-white/10"
+                      isBBetter ? "bg-cyan-400" : "bg-border/60"
                     )}
                   />
                 </div>
-                <span className="text-[9px] text-muted-foreground/55 font-black uppercase tracking-wider leading-none">
-                  {isTie ? "Empate" : isABetter ? "A" : "B"}
+                <span className="text-[9px] font-mono font-bold text-muted-foreground/60 uppercase">
+                  {isTie ? "=" : isABetter ? "A" : "B"}
                 </span>
               </div>
 
-              {/* Jogador B */}
+              {/* Player B */}
               <div className="text-right min-w-0">
-                <span className="text-[9px] block text-muted-foreground/50 truncate font-bold leading-none">
+                <span className="text-[10px] font-bold block text-muted-foreground/70 truncate leading-none">
                   {pB.nickname}
                 </span>
                 <span
                   className={cn(
-                    "text-base font-black block mt-1 tabular-nums",
-                    isBBetter ? "text-accent-cyan" : "text-white/60"
+                    "font-mono text-base font-black block mt-1 tabular-nums",
+                    isBBetter ? "text-cyan-400" : "text-foreground/70"
                   )}
                 >
                   {format(valB)}
@@ -114,10 +115,10 @@ export function ComparisonStats({ players }: { players: ComparisonPlayerDTO[] })
               </div>
             </div>
 
-            {/* Vantagem Estatística Footer */}
+            {/* Advantage Footer */}
             {!isTie && (
-              <div className="mt-3 pt-2 border-t border-white/[0.03] text-center">
-                <span className="text-[9.5px] font-black text-status-good uppercase tracking-wider">
+              <div className="pt-2 border-t border-border/30 text-center">
+                <span className="text-[10px] font-mono font-bold text-status-good uppercase tracking-wider">
                   {advantageText}
                 </span>
               </div>

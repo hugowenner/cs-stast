@@ -3,8 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { CheckCircle, AlertTriangle, Lightbulb, RefreshCw, Cpu, Brain, Clock, Target } from "lucide-react";
 import { Skeleton } from "@/components/ui/loading-skeleton";
+import { TacticalBadge } from "@/components/ui/tactical-badge";
 import type { CoachReportDTO } from "@/server/dtos/coachReport.dto";
 import { coachNarratives } from "@/lib/narrator/templates";
+import { cn } from "@/lib/utils";
 
 type ReportStatus = "none" | "stale" | "fresh";
 
@@ -34,22 +36,18 @@ function formatRelativeTime(iso: string): string {
 
 function TacticalAIHeader({ subtitle, pulse = false }: { subtitle?: string; pulse?: boolean }) {
   return (
-    <div className="flex items-center gap-3">
-      <div className="shrink-0 size-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
-        <Brain className={`size-4 text-primary ${pulse ? "animate-pulse" : ""}`} />
+    <div className="flex items-center gap-2.5">
+      <div className="shrink-0 size-7 rounded-xs bg-primary/10 border border-primary/25 flex items-center justify-center">
+        <Brain className={`size-3.5 text-primary ${pulse ? "animate-pulse" : ""}`} />
       </div>
       <div>
-        <div className="flex items-center gap-2">
-          <span className="text-[9px] font-black tracking-[0.2em] uppercase text-gradient-ai">
-            TACTICAL AI
-          </span>
-          <span className="text-[8px] text-muted-foreground/30 font-bold tracking-widest">·</span>
-          <span className="text-[8px] font-bold tracking-[0.12em] uppercase text-muted-foreground/40">
-            CS2 STATS HUB
+        <div className="flex items-center gap-1.5 leading-none">
+          <span className="text-xs font-mono font-bold tracking-wider uppercase text-foreground">
+            TACTICAL AI // INTELLIGENCE
           </span>
         </div>
         {subtitle && (
-          <p className="text-[10px] text-muted-foreground/50 font-medium tracking-wide mt-0.5">
+          <p className="text-[10px] font-mono text-muted-foreground/70 tracking-wide mt-0.5">
             {subtitle}
           </p>
         )}
@@ -157,7 +155,7 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
 
   if (checking) {
     return (
-      <div className="card-ai p-5 rounded-2xl flex flex-col gap-4">
+      <div className="bg-surface-panel border border-border/70 rounded-sm p-4 sm:p-5 flex flex-col gap-4">
         <TacticalAIHeader />
         <Skeleton className="h-4 w-1/2" />
       </div>
@@ -166,20 +164,17 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
 
   if (generating) {
     return (
-      <div className="card-ai p-5 rounded-2xl flex flex-col gap-5">
-        <TacticalAIHeader subtitle="ANALYZING DATA..." pulse />
+      <div className="bg-surface-panel border border-border/70 rounded-sm p-4 sm:p-5 flex flex-col gap-4">
+        <TacticalAIHeader subtitle="PROCESSANDO TELEMETRIA COLETIVA..." pulse />
         <div className="flex flex-col gap-3">
-          <div className="hud-status-line">
-            <span className="hud-status-label">PROCESSING</span>
+          <div className="h-1 w-full overflow-hidden rounded-none bg-surface-deck">
+            <div className="progress-bar-indeterminate h-full w-1/2 bg-primary" />
           </div>
-          <div className="relative h-1 w-full overflow-hidden rounded-full bg-primary/10">
-            <div className="progress-bar-indeterminate absolute inset-y-0 w-1/2 rounded-full bg-primary" />
-          </div>
-          <p className="text-[11px] text-primary/65 font-medium tracking-wide">{progressMessage}</p>
+          <p className="text-xs font-mono text-primary font-medium">{progressMessage}</p>
           <Skeleton className="h-4 w-2/3 mb-1" />
           <Skeleton className="h-3 w-full" />
           <Skeleton className="h-3 w-5/6" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
             <Skeleton className="h-16 w-full" />
             <Skeleton className="h-16 w-full" />
           </div>
@@ -190,17 +185,17 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
 
   if (error && !report) {
     return (
-      <div className="card-ai p-5 rounded-2xl flex flex-col gap-4">
-        <TacticalAIHeader subtitle="ERROR" />
-        <div className="flex flex-col gap-3 items-center text-center py-4">
-          <AlertTriangle className="size-7 text-status-critical" />
+      <div className="bg-surface-panel border border-border/70 rounded-sm p-4 sm:p-5 flex flex-col gap-4">
+        <TacticalAIHeader subtitle="DIAGNÓSTICO INDISPONÍVEL" />
+        <div className="flex flex-col gap-3 items-center text-center py-4 bg-surface-deck/40 rounded-xs border border-border/40">
+          <AlertTriangle className="size-6 text-status-critical" />
           <div>
-            <h4 className="text-sm font-bold text-white">Falha na análise</h4>
-            <p className="text-xs text-muted-foreground mt-1 max-w-md">{error}</p>
+            <h4 className="text-xs font-mono font-bold text-foreground uppercase">Falha na análise</h4>
+            <p className="text-xs font-mono text-muted-foreground mt-1 max-w-md">{error}</p>
           </div>
           <button
             onClick={handleGenerate}
-            className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-white/5 border border-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/10 transition-colors"
+            className="mt-2 inline-flex items-center gap-1.5 rounded-xs bg-surface-deck border border-border/60 hover:bg-surface-elevated px-3 py-1.5 text-xs font-mono font-bold text-foreground transition-colors cursor-pointer"
           >
             <RefreshCw className="size-3.5" /> Tentar Novamente
           </button>
@@ -211,22 +206,22 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
 
   if (!report) {
     return (
-      <div className="card-ai rounded-2xl overflow-hidden">
-        <div className="p-5 pb-4">
+      <div className="bg-surface-panel border border-border/70 rounded-sm overflow-hidden flex flex-col shadow-sm">
+        <div className="p-4 sm:p-5 pb-3 border-b border-border/40 bg-surface-deck/40">
           <TacticalAIHeader />
         </div>
-        <div className="px-5 pb-6 border-t border-white/[0.06] pt-4 flex flex-col sm:flex-row items-start sm:items-center gap-5">
+        <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <div className="hud-status-line mb-3">
-              <span className="hud-status-label">ANALYSIS READY</span>
+            <div className="flex items-center gap-2 mb-1.5">
+              <TacticalBadge label="DIAGNÓSTICO PRONTO" variant="primary" size="xs" />
             </div>
-            <p className="text-xs text-muted-foreground/65 leading-relaxed max-w-md">
-              Rating, ADR, K/D, mapas, tendências e duplas. Tempo médio: 10–15 segundos.
+            <p className="text-xs font-mono text-muted-foreground leading-relaxed max-w-md">
+              Avaliação de Rating, ADR, K/D, aproveitamento em mapas e tendências de combate.
             </p>
           </div>
           <button
             onClick={handleGenerate}
-            className="btn-press shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
+            className="shrink-0 inline-flex items-center gap-1.5 rounded-xs bg-primary px-3.5 py-2 text-xs font-mono font-bold text-primary-foreground hover:bg-primary/90 transition-opacity cursor-pointer uppercase"
           >
             <Brain className="size-3.5" /> Gerar análise
           </button>
@@ -238,18 +233,19 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
   return (
     <div
       ref={containerRef}
-      className={`card-ai p-5 rounded-2xl flex flex-col gap-5 ${flash ? "report-flash" : ""}`}
+      className={cn(
+        "bg-surface-panel border border-border/70 rounded-sm p-4 sm:p-5 flex flex-col gap-4 shadow-sm",
+        flash ? "report-flash" : ""
+      )}
     >
       {/* Header TACTICAL AI + controles */}
-      <div className="flex items-start justify-between flex-wrap gap-3 border-b border-white/[0.06] pb-4">
+      <div className="flex items-start justify-between flex-wrap gap-3 border-b border-border/40 pb-3.5">
         <TacticalAIHeader subtitle={coachNarratives.summaryTitle} />
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="inline-flex items-center rounded-full bg-status-good/12 px-2.5 py-0.5 text-[10px] font-bold text-status-good border border-status-good/18">
-            {report.confidence}% confiança
-          </span>
+          <TacticalBadge label={`${report.confidence}% CONFIANÇA`} variant="good" size="xs" />
           <button
             onClick={handleGenerate}
-            className="btn-press inline-flex items-center gap-1 rounded-lg bg-white/5 border border-white/10 px-2 py-1 text-[10px] font-semibold text-white hover:bg-white/10 transition-colors"
+            className="inline-flex items-center gap-1 rounded-xs bg-surface-deck border border-border/50 hover:bg-surface-elevated px-2.5 py-1 text-[10px] font-mono font-bold text-foreground transition-colors cursor-pointer uppercase"
           >
             <RefreshCw className="size-3" /> Atualizar
           </button>
@@ -257,101 +253,93 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
       </div>
 
       {/* Status da análise */}
-      <div className="flex items-center gap-3 text-[10px] -mt-2 flex-wrap">
+      <div className="flex items-center gap-3 text-[10px] font-mono -mt-1 flex-wrap">
         {status === "fresh" ? (
-          <span className="inline-flex items-center gap-1.5 text-status-good font-semibold">
-            <span className="pulse-dot bg-status-good" /> ANALYSIS UP TO DATE
+          <span className="inline-flex items-center gap-1.5 text-status-good font-bold">
+            <span className="size-1.5 rounded-full bg-status-good" /> RELATÓRIO ATUALIZADO
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1.5 text-status-warning font-semibold">
-            <span className="pulse-dot bg-status-warning" /> NEW MATCH AVAILABLE
+          <span className="inline-flex items-center gap-1.5 text-status-warning font-bold">
+            <span className="size-1.5 rounded-full bg-status-warning" /> NOVAS PARTIDAS REGISTRADAS
           </span>
         )}
         {generatedAt && (
-          <span className="flex items-center gap-1 text-muted-foreground/50">
+          <span className="flex items-center gap-1 text-muted-foreground/60">
             <Clock className="size-3" /> {formatRelativeTime(generatedAt)}
           </span>
         )}
       </div>
 
       {error && (
-        <p className="text-xs text-status-critical -mt-2">{error}</p>
+        <p className="text-xs font-mono text-status-critical">{error}</p>
       )}
 
       {/* Resumo */}
-      <div className="text-sm text-muted-foreground leading-relaxed">
+      <div className="text-xs sm:text-sm font-sans text-muted-foreground leading-relaxed bg-surface-deck/40 p-3.5 rounded-xs border border-border/40">
         {report.summary}
       </div>
 
       {/* Forças e Fraquezas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-4 rounded-xl border border-white/[0.05] bg-white/[0.01] flex flex-col gap-3">
-          <div className="hud-section-separator">
-            <span className="text-[8px] font-black tracking-[0.14em] uppercase text-status-good/80 flex items-center gap-1.5">
-              <CheckCircle className="size-3" /> STRENGTHS
-            </span>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+        <div className="p-3.5 rounded-xs border border-status-good/25 bg-surface-deck/60 flex flex-col gap-2.5">
+          <div className="flex items-center gap-1.5 text-[9px] font-mono font-bold uppercase tracking-wider text-status-good border-b border-border/30 pb-1.5">
+            <CheckCircle className="size-3" /> PONTOS FORTES
           </div>
-          <ul className="flex flex-col gap-2 text-xs text-muted-foreground">
+          <ul className="flex flex-col gap-1.5 text-xs font-sans text-muted-foreground">
             {report.strengths.map((str, idx) => (
               <li key={idx} className="leading-relaxed flex gap-2">
-                <span className="text-status-good/60 shrink-0">›</span>
+                <span className="text-status-good font-mono font-bold shrink-0">›</span>
                 {str}
               </li>
             ))}
-            {report.strengths.length === 0 && <li className="text-muted-foreground/40">Nenhum ponto forte listado.</li>}
+            {report.strengths.length === 0 && <li className="text-muted-foreground/50 font-mono text-xs">Nenhum ponto forte registrado.</li>}
           </ul>
         </div>
 
-        <div className="p-4 rounded-xl border border-white/[0.05] bg-white/[0.01] flex flex-col gap-3">
-          <div className="hud-section-separator">
-            <span className="text-[8px] font-black tracking-[0.14em] uppercase text-status-critical/80 flex items-center gap-1.5">
-              <AlertTriangle className="size-3" /> WEAKNESSES
-            </span>
+        <div className="p-3.5 rounded-xs border border-status-critical/25 bg-surface-deck/60 flex flex-col gap-2.5">
+          <div className="flex items-center gap-1.5 text-[9px] font-mono font-bold uppercase tracking-wider text-status-critical border-b border-border/30 pb-1.5">
+            <AlertTriangle className="size-3" /> PONTOS DE ATENÇÃO
           </div>
-          <ul className="flex flex-col gap-2 text-xs text-muted-foreground">
+          <ul className="flex flex-col gap-1.5 text-xs font-sans text-muted-foreground">
             {report.weaknesses.map((weak, idx) => (
               <li key={idx} className="leading-relaxed flex gap-2">
-                <span className="text-status-critical/60 shrink-0">›</span>
+                <span className="text-status-critical font-mono font-bold shrink-0">›</span>
                 {weak}
               </li>
             ))}
-            {report.weaknesses.length === 0 && <li className="text-muted-foreground/40">Nenhum ponto de atenção.</li>}
+            {report.weaknesses.length === 0 && <li className="text-muted-foreground/50 font-mono text-xs">Nenhum ponto de atenção crítico.</li>}
           </ul>
         </div>
       </div>
 
       {/* Recomendações */}
-      <div className="p-4 rounded-xl border border-primary/15 bg-primary/[0.04] flex flex-col gap-3">
-        <div className="hud-section-separator">
-          <span className="text-[8px] font-black tracking-[0.14em] uppercase text-primary/70 flex items-center gap-1.5">
-            <Lightbulb className="size-3" /> TACTICAL RECOMMENDATIONS
-          </span>
+      <div className="p-3.5 rounded-xs border border-primary/25 bg-primary/[0.03] flex flex-col gap-2.5">
+        <div className="flex items-center gap-1.5 text-[9px] font-mono font-bold uppercase tracking-wider text-primary border-b border-border/30 pb-1.5">
+          <Lightbulb className="size-3" /> RECOMENDAÇÕES TÁTICAS
         </div>
-        <ul className="flex flex-col gap-2.5 text-xs text-muted-foreground">
+        <ul className="flex flex-col gap-2 text-xs font-sans text-muted-foreground">
           {report.recommendations.map((rec, idx) => (
             <li key={idx} className="leading-relaxed flex gap-2">
-              <span className="text-primary/50 shrink-0">›</span>
+              <span className="text-primary font-mono font-bold shrink-0">›</span>
               {rec}
             </li>
           ))}
-          {report.recommendations.length === 0 && <li className="text-muted-foreground/40">Nenhuma recomendação listada.</li>}
+          {report.recommendations.length === 0 && <li className="text-muted-foreground/50 font-mono text-xs">Nenhuma recomendação listada.</li>}
         </ul>
       </div>
 
       {/* Próximo Objetivo */}
       {report.nextGoal && (
-        <div className="p-4 rounded-xl border border-accent-cyan/15 bg-accent-cyan/[0.03] flex flex-col gap-3">
-          <div className="hud-section-separator">
-            <span className="text-[8px] font-black tracking-[0.14em] uppercase text-accent-cyan/70 flex items-center gap-1.5">
-              <Target className="size-3" /> NEXT OBJECTIVE
-            </span>
+        <div className="p-3.5 rounded-xs border border-cyan-500/25 bg-cyan-500/[0.02] flex flex-col gap-2">
+          <div className="flex items-center gap-1.5 text-[9px] font-mono font-bold uppercase tracking-wider text-cyan-400 border-b border-border/30 pb-1.5">
+            <Target className="size-3" /> DIRETRIZ COLETIVA
           </div>
-          <p className="text-xs text-muted-foreground leading-relaxed">{report.nextGoal}</p>
+          <p className="text-xs font-sans text-muted-foreground leading-relaxed">{report.nextGoal}</p>
         </div>
       )}
 
       {/* Footer Metadata */}
-      <div className="flex flex-wrap items-center justify-between text-[9px] text-muted-foreground/40 border-t border-white/[0.04] pt-3 font-mono tracking-wide">
+      <div className="flex flex-wrap items-center justify-between text-[9px] text-muted-foreground/50 border-t border-border/30 pt-2.5 font-mono tracking-wide">
         <span className="flex items-center gap-1.5">
           <Cpu className="size-3" />
           {report.model} · {report.provider}
@@ -359,7 +347,7 @@ export function CoachReportCard({ apiUrl }: { apiUrl: string }) {
         {report.processingTimeMs > 0 ? (
           <span>{(report.processingTimeMs / 1000).toFixed(2)}s</span>
         ) : (
-          <span className="text-status-good">CACHED</span>
+          <span className="text-status-good font-bold">CACHED</span>
         )}
       </div>
     </div>

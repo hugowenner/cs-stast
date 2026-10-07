@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import { RatingBadge } from "@/components/players/rating-badge";
 import { StatCell } from "./stat-cell";
+import { cn } from "@/lib/utils";
 import type { PlayerMatchDTO } from "@/server/dtos/matchDetails.dto";
 
 export function PlayerRow({ player }: { player: PlayerMatchDTO }) {
@@ -13,22 +14,33 @@ export function PlayerRow({ player }: { player: PlayerMatchDTO }) {
       : "text-muted-foreground";
 
   return (
-    <tr className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${player.isTracked ? "bg-primary/5" : ""}`}>
+    <tr
+      className={cn(
+        "hover:bg-surface-elevated/40 transition-colors",
+        player.isTracked ? "bg-primary/[0.03]" : ""
+      )}
+    >
       {/* Jogador avatar e nickname */}
       <td
-        className={`sticky left-0 z-20 px-4 py-3 text-left shadow-[2px_0_8px_-2px_rgba(0,0,0,0.8)] border-r border-white/10 min-w-[130px] sm:min-w-[160px] ${
-          player.isTracked ? "bg-[#13112a]" : "bg-zinc-950"
-        }`}
+        className={cn(
+          "sticky left-0 z-20 px-3.5 py-2.5 text-left border-r border-border/40 min-w-[130px] sm:min-w-[160px]",
+          player.isTracked ? "bg-surface-elevated" : "bg-surface-panel"
+        )}
       >
-        <Link href={`/players/${player.id}`} className="flex items-center gap-2.5 sm:gap-3 group">
+        <Link href={`/players/${player.id}`} className="flex items-center gap-2.5 group">
           <PlayerAvatar nickname={player.nickname} avatarUrl={player.avatarUrl} size="sm" />
           <div className="min-w-0">
-            <p className={`font-semibold text-sm truncate group-hover:text-primary transition-colors ${player.isTracked ? "text-accent-cyan" : "text-white"}`}>
+            <p
+              className={cn(
+                "font-bold text-xs truncate group-hover:text-primary transition-colors",
+                player.isTracked ? "text-primary" : "text-foreground"
+              )}
+            >
               {player.nickname}
             </p>
             {player.isTracked && (
-              <span className="text-[9px] font-bold text-accent-cyan bg-accent-cyan/15 rounded px-1.5 py-0.5 uppercase tracking-wider block w-max mt-0.5">
-                Watchlist
+              <span className="text-[9px] font-mono font-bold text-primary bg-primary/10 rounded-xs px-1 py-0.2 uppercase tracking-wider block w-max">
+                WATCHLIST
               </span>
             )}
           </div>
@@ -38,12 +50,12 @@ export function PlayerRow({ player }: { player: PlayerMatchDTO }) {
       {/* ELO */}
       <StatCell className={eloColorClass}>
         {player.isTracked ? (
-          <span className="font-bold">
+          <span className="font-mono font-black tabular-nums">
             {player.eloChange >= 0 ? "+" : ""}
             {player.eloChange}
           </span>
         ) : (
-          <span className="opacity-40 font-normal">—</span>
+          <span className="opacity-30 font-normal font-mono">—</span>
         )}
       </StatCell>
 
@@ -53,21 +65,21 @@ export function PlayerRow({ player }: { player: PlayerMatchDTO }) {
       </StatCell>
 
       {/* ADR */}
-      <StatCell>{player.adr.toFixed(1)}</StatCell>
+      <StatCell className="font-mono tabular-nums">{player.adr.toFixed(1)}</StatCell>
 
       {/* KAST */}
-      <StatCell>{player.kast.toFixed(1)}%</StatCell>
+      <StatCell className="font-mono tabular-nums">{player.kast.toFixed(1)}%</StatCell>
 
       {/* Impact */}
-      <StatCell>{player.impact.toFixed(2)}</StatCell>
+      <StatCell className="font-mono tabular-nums">{player.impact.toFixed(2)}</StatCell>
 
       {/* K / D / A */}
-      <StatCell className="text-white font-bold">{player.kills}</StatCell>
-      <StatCell className="text-muted-foreground">{player.deaths}</StatCell>
-      <StatCell className="text-muted-foreground">{player.assists}</StatCell>
+      <StatCell className="text-foreground font-mono font-bold tabular-nums">{player.kills}</StatCell>
+      <StatCell className="text-muted-foreground font-mono tabular-nums">{player.deaths}</StatCell>
+      <StatCell className="text-muted-foreground font-mono tabular-nums">{player.assists}</StatCell>
 
       {/* HS % */}
-      <StatCell>{player.hsPercentage.toFixed(1)}%</StatCell>
+      <StatCell className="font-mono tabular-nums text-muted-foreground">{player.hsPercentage.toFixed(1)}%</StatCell>
     </tr>
   );
 }

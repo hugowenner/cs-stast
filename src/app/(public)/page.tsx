@@ -1,5 +1,4 @@
 import { FadeIn } from "@/components/motion/fade-in";
-import { AnimatedNumber } from "@/components/motion/animated-number";
 import { AchievementFeedItem } from "@/components/achievements/achievement-feed-item";
 import { SeasonHero } from "@/components/dashboard/season-hero";
 import { HallOfFame } from "@/components/dashboard/hall-of-fame";
@@ -9,7 +8,6 @@ import { MonitoredPlayersCarousel } from "@/components/players/monitored-players
 import { RankingTable } from "@/components/ranking/ranking-table";
 import type { RecentMatchCardData } from "@/components/matches/recent-matches-carousel";
 import { SectionContainer } from "@/components/dashboard/section-container";
-import { NarratorSection } from "@/components/dashboard/narrator-section";
 import { SeasonSelect } from "@/components/dashboard/season-select";
 import { RadarDaTemporada } from "@/components/dashboard/radar-da-temporada";
 import { MuralCompetitivo } from "@/components/dashboard/mural-competitivo";
@@ -26,8 +24,6 @@ import * as achievementService from "@/server/services/achievement.service";
 import * as rivalryService from "@/server/services/rivalry.service";
 import { listSeasons, resolveSeasonId } from "@/server/services/season.service";
 import { prisma } from "@/server/db";
-import { RefreshCw, Crosshair, Zap, TrendingUp, Target } from "lucide-react";
-import { AnnouncementBanner } from "@/components/dashboard/AnnouncementBanner";
 
 export const dynamic = "force-dynamic";
 
@@ -191,29 +187,15 @@ export default async function DashboardPage(props: {
     multikillsLeaderboards,
     clutchesBundle,
     combatBundle,
-    highlightsPool,
   } = competitive;
 
   const hottestPlayer = momentum.find((m) => m.status === "up") ?? null;
   const coldestPlayer = momentum.find((m) => m.status === "down") ?? null;
 
   return (
-    <div className="flex flex-col gap-8 lg:gap-10">
-
-      <AnnouncementBanner />
-
-      {/* Page Title */}
-      <div className="flex flex-col gap-1 px-1 mt-2">
-        <h1 className="text-xl lg:text-2xl font-black text-white uppercase tracking-tight">
-          Raio-X da Temporada
-        </h1>
-        <p className="text-[10px] text-muted-foreground/60 font-semibold tracking-wider uppercase leading-none mt-1">
-          Seus números não sabem mentir.
-        </p>
-      </div>
-
-      {/* ═══ 1. Resumo da Temporada ═══ */}
-      <section className="flex flex-col gap-4">
+    <div className="flex flex-col gap-10 lg:gap-12 pb-16">
+      {/* ═══ 01. TACTICAL HERO COMMAND CENTER ═══ */}
+      <section className="flex flex-col gap-3">
         <FadeIn>
           <SeasonHero
             seasonLabel={selectedSeason?.name ?? SEASON_LABEL}
@@ -244,86 +226,63 @@ export default async function DashboardPage(props: {
         </FadeIn>
       </section>
 
-      {/* ═══ 2. Últimos Confrontos ═══ */}
+      {/* ═══ 02. ÚLTIMOS CONFRONTOS ═══ */}
       {recentMatches.length > 0 && (
         <SectionContainer
+          index={2}
+          tag="CONFRONTOS RECENTES"
           title="Últimos Confrontos"
-          subtitle="As partidas mais recentes do grupo."
+          subtitle="Partidas mais recentes registradas pelo grupo."
           href="/sessions"
-          linkLabel="Ver todas"
+          linkLabel="Ver histórico completo"
           delay={0.03}
         >
           <ConfrontationsCarousel matches={recentMatches as RecentMatchCardData[]} />
         </SectionContainer>
       )}
 
-      {/* ═══ 3. Jogadores Monitorados ═══ */}
+      {/* ═══ 03. JOGADORES MONITORADOS ═══ */}
       {monitoredPlayers.length > 0 && (
         <SectionContainer
+          index={3}
+          tag="ROSTER ATIVO"
           title="Jogadores Monitorados"
-          subtitle="Membros com partidas rastreadas nesta temporada."
+          subtitle="Membros com partidas e estatísticas ativas na temporada."
           href="/players"
-          linkLabel="Ver todos"
+          linkLabel="Ver todos os jogadores"
           delay={0.035}
         >
           <MonitoredPlayersCarousel players={monitoredPlayers} />
         </SectionContainer>
       )}
 
-      {/* ═══ 4. Radar da Temporada ═══ */}
+      {/* ═══ 04. CLASSIFICAÇÃO OFICIAL (SCORE 3.5) ═══ */}
       <SectionContainer
-        title="Destaques da Semana"
-        subtitle="Destaque, alertas automáticos e curiosidade da temporada."
-        delay={0.04}
-      >
-        <RadarDaTemporada
-          jogadorDaSemana={jogadorDaSemana}
-          weeklyCuriosity={weeklyCuriosity}
-          smartAlerts={smartAlerts}
-        />
-      </SectionContainer>
-
-      {/* ═══ 4. Hall da Fama ═══ */}
-      <SectionContainer
-        title="Recordes"
-        subtitle="Marcas extremas — boas e ruins — registradas na temporada."
-        delay={0.05}
-      >
-        <HallOfFame records={records} monitoredPlayers={monitoredPlayers} />
-      </SectionContainer>
-
-      {/* ═══ 4b. Piores da Temporada ═══ */}
-      {worstRecords.length > 0 && (
-        <SectionContainer
-          title="Piores da Temporada"
-          subtitle="Antirecordes: os momentos que o grupo preferia ter esquecido."
-          delay={0.055}
-        >
-          <HallOfFame records={worstRecords} monitoredPlayers={monitoredPlayers} variant="worst" />
-        </SectionContainer>
-      )}
-
-      {/* ═══ 5. Ranking Competitivo Oficial ═══ */}
-      <SectionContainer
+        index={4}
+        tag="SCORE OFICIAL 3.5"
         title="Classificação da Temporada"
-        subtitle="Score Oficial da Temporada (Score 3.5 — mínimo de 10 partidas)."
-        delay={0.06}
+        subtitle="Score Oficial 3.5 do CS2 Stats — cálculo balanceado com mínimo de 10 partidas."
+        href="/rankings"
+        linkLabel="Ver tabela completa de ranking"
+        delay={0.04}
       >
         <RankingTable
           officialEntries={officialRanking}
           entries={powerRanking.slice(0, 5)}
           seasonComparison={seasonComparison}
-          delay={0.07}
+          delay={0.05}
           className="w-full"
         />
       </SectionContainer>
 
-      {/* ═══ 6. Tendências da Temporada ═══ */}
+      {/* ═══ 05. TENDÊNCIAS & FORMA ═══ */}
       {(topGainers.length > 0 || topDecliners.length > 0 || hotStreaks.length > 0 || coldStreaks.length > 0) && (
         <SectionContainer
-          title="Tendências"
-          subtitle="Últimas 10 partidas vs. média da temporada."
-          delay={0.08}
+          index={5}
+          tag="TRAJETÓRIA & FORMA"
+          title="Tendências Recentes"
+          subtitle="Comparativo das últimas 10 partidas vs. média histórica da temporada."
+          delay={0.06}
         >
           <TendenciasDaTemporada
             topGainers={topGainers}
@@ -335,40 +294,14 @@ export default async function DashboardPage(props: {
         </SectionContainer>
       )}
 
-      {/* ═══ 7. Mural Competitivo ═══ */}
-      <SectionContainer
-        title="Painel de Performance"
-        subtitle="Líderes por métrica, impacto e perfis de jogo."
-        delay={0.09}
-      >
-        <MuralCompetitivo
-          powerRanking={powerRanking}
-          decisive={decisive}
-          archetypes={archetypes}
-        />
-      </SectionContainer>
-
-      {/* ═══ 8. Sinergia ═══ */}
-      <SectionContainer
-        title="Duplas e Rivalidades"
-        subtitle="Combos que funcionam, rivalidades e confrontos diretos."
-        delay={0.10}
-      >
-        <SinergiaSection
-          duos={duos}
-          dominantTrio={dominantTrio}
-          topRivalries={topRivalries}
-          matchups={matchups}
-          bestRecentDuo={bestRecentDuo}
-        />
-      </SectionContainer>
-
-      {/* ═══ 9. Reis dos Mapas ═══ */}
+      {/* ═══ 06. INTELIGÊNCIA DE MAPAS ═══ */}
       {(mapSpecialists.length > 0 || mapWinrates.length > 0) && (
         <SectionContainer
-          title="Especialistas por Mapa"
-          subtitle="Maior rating médio por mapa (mín. 3 partidas)."
-          delay={0.11}
+          index={6}
+          tag="INTELIGÊNCIA DE MAPAS"
+          title="Controle de Território"
+          subtitle="Especialistas por mapa, aproveitamento coletivo e pontos de vulnerabilidade."
+          delay={0.07}
         >
           <ReisDosMapa
             specialists={mapSpecialists}
@@ -379,11 +312,47 @@ export default async function DashboardPage(props: {
         </SectionContainer>
       )}
 
-      {/* ═══ 10. Performance GC ═══ */}
+      {/* ═══ 07. PAINEL DE PERFORMANCE & DUELOS ═══ */}
       <SectionContainer
-        title="Estatísticas Avançadas"
-        subtitle="Multikills, clutches e métricas de combate da temporada."
-        delay={0.12}
+        index={7}
+        tag="LÍDERES & IMPACTO"
+        title="Painel de Performance"
+        subtitle="Líderes por métrica, estatísticas decisivas de duelo e perfis táticos."
+        delay={0.08}
+      >
+        <MuralCompetitivo
+          powerRanking={powerRanking}
+          decisive={decisive}
+          archetypes={archetypes}
+        />
+      </SectionContainer>
+
+      {/* ═══ 08. DUPLAS & SINERGIA COLETIVA ═══ */}
+      <SectionContainer
+        index={8}
+        tag="SINERGIA & DUPLAS"
+        title="Duplas e Sinergia Coletiva"
+        subtitle="Combinações com maior winrate, trio dominante e histórico de confrontos diretos."
+        href="/compare"
+        linkLabel="Comparar jogadores (H2H)"
+        delay={0.09}
+      >
+        <SinergiaSection
+          duos={duos}
+          dominantTrio={dominantTrio}
+          topRivalries={topRivalries}
+          matchups={matchups}
+          bestRecentDuo={bestRecentDuo}
+        />
+      </SectionContainer>
+
+      {/* ═══ 09. TELEMETRIA AVANÇADA DE COMBATE ═══ */}
+      <SectionContainer
+        index={9}
+        tag="TELEMETRIA GC"
+        title="Estatísticas Avançadas de Combate"
+        subtitle="Multikills, clutches 1vX e telemetria de dano por disparo da temporada."
+        delay={0.10}
       >
         <PerformanceGcSection
           stats={advancedPerformance}
@@ -393,31 +362,70 @@ export default async function DashboardPage(props: {
         />
       </SectionContainer>
 
+      {/* ═══ 10. DESTAQUES & RADAR TÁTICO ═══ */}
+      {(jogadorDaSemana || weeklyCuriosity || smartAlerts.length > 0) && (
+        <SectionContainer
+          index={10}
+          tag="RADAR TÁTICO"
+          title="Destaques & Alertas da Semana"
+          subtitle="Jogador em evidência, alertas estatísticos e curiosidades da temporada."
+          delay={0.11}
+        >
+          <RadarDaTemporada
+            jogadorDaSemana={jogadorDaSemana}
+            weeklyCuriosity={weeklyCuriosity}
+            smartAlerts={smartAlerts}
+          />
+        </SectionContainer>
+      )}
 
+      {/* ═══ 11. RECORDES & MARCAS DA TEMPORADA ═══ */}
+      {(records.length > 0 || worstRecords.length > 0) && (
+        <SectionContainer
+          index={11}
+          tag="HALL DA FAMA"
+          title="Recordes da Temporada"
+          subtitle="Marcas extremas, atuações de destaque e anomalias registradas pelo grupo."
+          delay={0.12}
+        >
+          <HallOfFame
+            records={records}
+            worstRecords={worstRecords}
+            monitoredPlayers={monitoredPlayers}
+          />
+        </SectionContainer>
+      )}
 
-      {/* ═══ 12. Coach IA ═══ */}
+      {/* ═══ 12. RELATÓRIO TÁTICO DO COACH IA ═══ */}
       <SectionContainer
-        title="Coach IA"
-        subtitle="A análise que você provavelmente não vai gostar de ler."
-        delay={0.14}
+        index={12}
+        tag="INTELIGÊNCIA IA"
+        title="Relatório Tático do Coach"
+        subtitle="Diagnóstico analítico e direto do desempenho coletivo da temporada."
+        delay={0.13}
       >
         <div className="relative w-full">
-          <div className="absolute -inset-px rounded-2xl bg-gradient-to-r from-primary/12 via-accent-violet/6 to-transparent pointer-events-none" />
           <CoachReportCard apiUrl={`/api/coach/dashboard${seasonParam ? `?season=${seasonParam}` : ""}`} />
         </div>
       </SectionContainer>
 
-      {/* ═══ 13. Conquistas Recentes ═══ */}
+      {/* ═══ 13. CONQUISTAS RECENTES ═══ */}
       <SectionContainer
-        title="Conquistas Recentes"
-        subtitle="Feitos desbloqueados nas últimas partidas do grupo."
-        delay={0.15}
+        index={13}
+        tag="FEED DE CONQUISTAS"
+        title="Conquistas Desbloqueadas"
+        subtitle="Feitos e marcos recentemente alcançados pelos membros."
+        href="/achievements"
+        linkLabel="Ver todas as conquistas"
+        delay={0.14}
       >
-        <div className="glass-panel rounded-2xl border border-white/[0.07] overflow-hidden">
+        <div className="bg-surface-panel border border-border/60 rounded-sm overflow-hidden">
           {recentAchievements.length === 0 ? (
-            <p className="text-muted-foreground/55 py-10 text-center text-sm">Nenhuma conquista registrada por enquanto. Joguem mais.</p>
+            <p className="text-muted-foreground/60 py-8 text-center text-xs font-mono">
+              Nenhuma conquista recente registrada.
+            </p>
           ) : (
-            <div className="divide-y divide-white/[0.04]">
+            <div className="divide-y divide-border/30">
               {recentAchievements.map((entry, i) => (
                 <AchievementFeedItem key={entry.id} entry={entry} index={i} />
               ))}
@@ -425,8 +433,6 @@ export default async function DashboardPage(props: {
           )}
         </div>
       </SectionContainer>
-
-
     </div>
   );
 }

@@ -3,24 +3,39 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Users, Scale, Shuffle, Search, Plus, Trash2, 
-  Play, Check, Copy, AlertTriangle, Shield, Sword,
-  Trophy, HelpCircle, RefreshCw, X, Award, MapPin, Target
+import {
+  Users,
+  Scale,
+  Shuffle,
+  Search,
+  Plus,
+  Trash2,
+  Play,
+  Check,
+  Copy,
+  Shield,
+  Sword,
+  Trophy,
+  RefreshCw,
+  X,
+  Award,
+  Target,
+  Swords,
+  Sliders,
+  RotateCcw,
+  Zap,
 } from "lucide-react";
-import { PageHeader } from "@/components/ui/page-header";
-import { SectionContainer } from "@/components/dashboard/section-container";
 import { PlayerAvatar } from "@/components/players/player-avatar";
+import { TacticalBadge } from "@/components/ui/tactical-badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { 
-  BalanceMetric, 
-  PlayerData, 
-  GameMode, 
+import {
+  BalanceMetric,
+  PlayerData,
+  GameMode,
   BalancedTeamResult,
-  TeamBalanceMatchData 
+  TeamBalanceMatchData,
 } from "@/lib/team-balance/types";
-import { getPlayerWeight } from "@/lib/team-balance/metrics";
 
 interface TeamBalanceClientProps {
   initialPlayers: PlayerData[];
@@ -37,10 +52,10 @@ export function TeamBalanceClient({
   const [availablePlayers] = useState<PlayerData[]>(initialPlayers);
   const [selectedPlayers, setSelectedPlayers] = useState<PlayerData[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   // Estado do convidado temporário
   const [guestName, setGuestName] = useState("");
-  const [guestLevel, setGuestLevel] = useState(10); // Nível GC padrão do convidado
+  const [guestLevel, setGuestLevel] = useState(10);
   const [showGuestForm, setShowGuestForm] = useState(false);
 
   // Configurações do sorteio
@@ -59,7 +74,10 @@ export function TeamBalanceClient({
   // Histórico
   const [history, setHistory] = useState<TeamBalanceMatchData[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
-  const [alertMessage, setAlertMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
+  const [alertMessage, setAlertMessage] = useState<{
+    type: "success" | "error" | "info";
+    text: string;
+  } | null>(null);
 
   // Busca o histórico inicial no client
   const fetchHistory = useCallback(async () => {
@@ -68,7 +86,6 @@ export function TeamBalanceClient({
       const res = await fetch("/api/team-balance/matches");
       const data = await res.json();
       if (data.matches) {
-        // Mapeia o resultado do prisma para a tipagem local
         const mappedMatches = data.matches.map((m: any) => ({
           id: m.id,
           seed: m.seed,
@@ -84,8 +101,8 @@ export function TeamBalanceClient({
             team: p.team as "CT" | "TR",
             weight: p.weight,
             guest: p.guest,
-            trackedPlayerId: p.trackedPlayerId
-          }))
+            trackedPlayerId: p.trackedPlayerId,
+          })),
         }));
         setHistory(mappedMatches);
       }
@@ -100,63 +117,73 @@ export function TeamBalanceClient({
     fetchHistory();
   }, [fetchHistory]);
 
-  // Função para exibir alertas temporários
-  const showAlert = useCallback((text: string, type: "success" | "error" | "info" = "success") => {
-    setAlertMessage({ text, type });
-    setTimeout(() => setAlertMessage(null), 4000);
-  }, []);
+  const showAlert = useCallback(
+    (text: string, type: "success" | "error" | "info" = "success") => {
+      setAlertMessage({ text, type });
+      setTimeout(() => setAlertMessage(null), 4000);
+    },
+    []
+  );
 
   // Filtragem da lista de jogadores disponíveis
   const filteredPlayers = useMemo(() => {
     return availablePlayers.filter((p) => {
       const query = searchQuery.toLowerCase().trim();
       if (!query) return true;
-      return p.name.toLowerCase().includes(query) || (p.role && p.role.toLowerCase().includes(query));
+      return (
+        p.name.toLowerCase().includes(query) ||
+        (p.role && p.role.toLowerCase().includes(query))
+      );
     });
   }, [availablePlayers, searchQuery]);
 
   // Selecionar/deselecionar jogador
-  const togglePlayer = useCallback((player: PlayerData) => {
-    setSelectedPlayers((prev) => {
-      const isSelected = prev.some((p) => p.id === player.id);
-      if (isSelected) {
-        return prev.filter((p) => p.id !== player.id);
-      } else {
-        if (prev.length >= 10) {
-          showAlert("Você já selecionou o limite de 10 jogadores.", "info");
-          return prev;
+  const togglePlayer = useCallback(
+    (player: PlayerData) => {
+      setSelectedPlayers((prev) => {
+        const isSelected = prev.some((p) => p.id === player.id);
+        if (isSelected) {
+          return prev.filter((p) => p.id !== player.id);
+        } else {
+          if (prev.length >= 10) {
+            showAlert("Você já selecionou o limite de 10 jogadores.", "info");
+            return prev;
+          }
+          return [...prev, player];
         }
-        return [...prev, player];
-      }
-    });
-  }, [showAlert]);
+      });
+    },
+    [showAlert]
+  );
 
   // Adicionar convidado manual
-  const handleAddGuest = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    if (selectedPlayers.length >= 10) {
-      showAlert("Você já selecionou o limite de 10 jogadores.", "info");
-      return;
-    }
-    const name = guestName.trim() || `Convidado ${selectedPlayers.length + 1}`;
-    
-    // Convidado padrão com níveis neutros
-    const guestPlayer: PlayerData = {
-      name,
-      levelGc: guestLevel,
-      rating: 1.00,
-      adr: 75.0,
-      kd: 1.00,
-      winrate: 50.0,
-      role: "Convidado",
-      guest: true,
-    };
+  const handleAddGuest = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (selectedPlayers.length >= 10) {
+        showAlert("Você já selecionou o limite de 10 jogadores.", "info");
+        return;
+      }
+      const name = guestName.trim() || `Convidado ${selectedPlayers.length + 1}`;
 
-    setSelectedPlayers((prev) => [...prev, guestPlayer]);
-    setGuestName("");
-    setShowGuestForm(false);
-    showAlert(`Convidado '${name}' adicionado ao lobby.`);
-  }, [guestName, guestLevel, selectedPlayers.length, showAlert]);
+      const guestPlayer: PlayerData = {
+        name,
+        levelGc: guestLevel,
+        rating: 1.0,
+        adr: 75.0,
+        kd: 1.0,
+        winrate: 50.0,
+        role: "Convidado",
+        guest: true,
+      };
+
+      setSelectedPlayers((prev) => [...prev, guestPlayer]);
+      setGuestName("");
+      setShowGuestForm(false);
+      showAlert(`Convidado '${name}' adicionado ao lobby.`);
+    },
+    [guestName, guestLevel, selectedPlayers.length, showAlert]
+  );
 
   // Remover jogador do Lobby
   const removeSelectedPlayer = useCallback((index: number) => {
@@ -172,12 +199,15 @@ export function TeamBalanceClient({
   }, []);
 
   // Copiar seed da partida
-  const copySeed = useCallback((seed: string) => {
-    navigator.clipboard.writeText(seed);
-    setCopied(true);
-    showAlert("Seed copiada para a área de transferência.");
-    setTimeout(() => setCopied(false), 2000);
-  }, [showAlert]);
+  const copySeed = useCallback(
+    (seed: string) => {
+      navigator.clipboard.writeText(seed);
+      setCopied(true);
+      showAlert("Seed copiada para a área de transferência.");
+      setTimeout(() => setCopied(false), 2000);
+    },
+    [showAlert]
+  );
 
   // Executar balanceamento chamando a API do backend
   const runShuffle = useCallback(async () => {
@@ -223,90 +253,98 @@ export function TeamBalanceClient({
   }, [selectedPlayers, mode, metric, useCustomSeed, customSeed, fetchHistory, showAlert]);
 
   // Registrar resultado da partida
-  const handleRegisterWinner = useCallback(async (outcome: "CT" | "TR" | "DRAW" | null) => {
-    if (!currentMatchId) return;
+  const handleRegisterWinner = useCallback(
+    async (outcome: "CT" | "TR" | "DRAW" | null) => {
+      if (!currentMatchId) return;
 
-    try {
-      const res = await fetch(`/api/team-balance/matches/${currentMatchId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ winner: outcome }),
-      });
+      try {
+        const res = await fetch(`/api/team-balance/matches/${currentMatchId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ winner: outcome }),
+        });
 
-      const data = await res.json();
-      if (data.success) {
-        setWinner(outcome);
-        fetchHistory();
-        showAlert(`Resultado gravado: ${outcome === "DRAW" ? "Empate" : outcome === "CT" ? "Vitória do CT" : "Vitória do TR"}`);
-      } else {
-        showAlert(data.error || "Erro ao gravar resultado.", "error");
+        const data = await res.json();
+        if (data.success) {
+          setWinner(outcome);
+          fetchHistory();
+          showAlert(
+            `Resultado gravado: ${
+              outcome === "DRAW"
+                ? "Empate"
+                : outcome === "CT"
+                ? "Vitória dos Contra-Terroristas"
+                : "Vitória dos Terroristas"
+            }`
+          );
+        } else {
+          showAlert(data.error || "Erro ao gravar resultado.", "error");
+        }
+      } catch (error) {
+        console.error("Erro ao gravar vencedor:", error);
+        showAlert("Erro na gravação do resultado.", "error");
       }
-    } catch (error) {
-      console.error("Erro ao gravar vencedor:", error);
-      showAlert("Erro na gravação do resultado.", "error");
-    }
-  }, [currentMatchId, fetchHistory, showAlert]);
+    },
+    [currentMatchId, fetchHistory, showAlert]
+  );
 
   // Recarregar partida antiga do histórico
-  const handleLoadHistoryMatch = useCallback(async (match: TeamBalanceMatchData) => {
-    setLoading(true);
-    try {
-      // Reconstroi os jogadores originais a partir do log
-      const playersList: PlayerData[] = match.players.map((p) => {
-        // Procura se o jogador existe no pool ativo para trazer mais estatísticas atuais se necessário, 
-        // caso contrário usa fallback estático guardado no banco
-        const activePlayer = availablePlayers.find((ap) => ap.id === p.trackedPlayerId);
-        
-        return {
-          id: p.trackedPlayerId || undefined,
-          name: p.nickname,
-          avatarUrl: p.avatar,
-          levelGc: activePlayer?.levelGc ?? 10,
-          rating: activePlayer?.rating ?? 1.00,
-          adr: activePlayer?.adr ?? 75.0,
-          kd: activePlayer?.kd ?? 1.00,
-          winrate: activePlayer?.winrate ?? 50.0,
-          role: activePlayer?.role || (p.guest ? "Convidado" : "Membro"),
-          guest: p.guest,
-        };
-      });
+  const handleLoadHistoryMatch = useCallback(
+    async (match: TeamBalanceMatchData) => {
+      setLoading(true);
+      try {
+        const playersList: PlayerData[] = match.players.map((p) => {
+          const activePlayer = availablePlayers.find((ap) => ap.id === p.trackedPlayerId);
 
-      // Define estados para carregar na tela
-      setSelectedPlayers(playersList);
-      setMetric(match.metric);
-      setMode(match.mode);
-      setCustomSeed(match.seed);
-      setUseCustomSeed(true);
+          return {
+            id: p.trackedPlayerId || undefined,
+            name: p.nickname,
+            avatarUrl: p.avatar,
+            levelGc: activePlayer?.levelGc ?? 10,
+            rating: activePlayer?.rating ?? 1.0,
+            adr: activePlayer?.adr ?? 75.0,
+            kd: activePlayer?.kd ?? 1.0,
+            winrate: activePlayer?.winrate ?? 50.0,
+            role: activePlayer?.role || (p.guest ? "Convidado" : "Membro"),
+            guest: p.guest,
+          };
+        });
 
-      // Re-executa localmente via API de replay
-      const res = await fetch("/api/team-balance/matches/replay", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          seed: match.seed,
-          mode: match.mode,
-          metric: match.metric,
-          players: playersList,
-        }),
-      });
+        setSelectedPlayers(playersList);
+        setMetric(match.metric);
+        setMode(match.mode);
+        setCustomSeed(match.seed);
+        setUseCustomSeed(true);
 
-      const data = await res.json();
-      if (data.success) {
-        setResult(data.result);
-        setCurrentMatchId(match.id);
-        setWinner(match.winner || null);
-        showAlert(`Partida antiga (Seed: ${match.seed}) carregada no painel!`);
-      } else {
-        showAlert("Erro ao reprocessar partida antiga.", "error");
+        const res = await fetch("/api/team-balance/matches/replay", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            seed: match.seed,
+            mode: match.mode,
+            metric: match.metric,
+            players: playersList,
+          }),
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          setResult(data.result);
+          setCurrentMatchId(match.id);
+          setWinner(match.winner || null);
+          showAlert(`Partida histórica (Seed: ${match.seed}) carregada no painel!`);
+        } else {
+          showAlert("Erro ao reprocessar partida antiga.", "error");
+        }
+      } catch (error) {
+        console.error("Erro ao carregar do histórico:", error);
+        showAlert("Erro de conexão ao carregar partida.", "error");
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Erro ao carregar do histórico:", error);
-      showAlert("Erro de conexão ao carregar partida.", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, [availablePlayers, showAlert]);
-
+    },
+    [availablePlayers, showAlert]
+  );
 
   // Métricas do Lobby atual
   const avgGcLevel = useMemo(() => {
@@ -322,603 +360,736 @@ export function TeamBalanceClient({
   }, [selectedPlayers]);
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader 
-        title="Gerador de Times"
-        subtitle="Balanceamento baseado em dados da temporada. Para quando o lobby precisa de justiça, não de sorte."
-        actions={
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 font-bold text-xs text-primary shadow-sm select-none">
-            🏆 {activeSeasonName} · {activeSeasonMatches} {activeSeasonMatches === 1 ? "partida analisada" : "partidas analisadas"}
+    <div className="flex flex-col gap-6 max-w-6xl mx-auto w-full px-4 sm:px-6">
+      {/* ── HEADER EDITORIAL ──────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-border/40 pb-5">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-mono font-bold tracking-widest text-primary uppercase">
+              01 / TEAM ASSEMBLY
+            </span>
+            <TacticalBadge variant="tactical" size="sm">
+              SISTEMA DE BALANCEAMENTO
+            </TacticalBadge>
           </div>
-        }
-      />
+          <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-foreground flex items-center gap-2.5">
+            <Swords className="size-6 text-primary shrink-0" />
+            MONTAGEM & SORTEIO DE TIMES
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground/80 max-w-2xl">
+            Divisão equilibrada de forças para confrontos internos baseada no histórico estatístico consolidado da temporada.
+          </p>
+        </div>
 
-      {/* Alerta Global */}
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-surface-panel border border-border/40 shrink-0">
+          <Trophy className="size-3.5 text-accent-gold" />
+          <span className="text-[11px] font-mono text-muted-foreground/80">
+            {activeSeasonName} · <strong className="text-foreground font-bold">{activeSeasonMatches} {activeSeasonMatches === 1 ? "partida" : "partidas"}</strong>
+          </span>
+        </div>
+      </div>
+
+      {/* Alerta Global de Notificação */}
       <AnimatePresence>
         {alertMessage && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            exit={{ opacity: 0, y: -8 }}
             className={cn(
-              "p-3 rounded-xl border text-sm font-semibold flex items-center justify-between shadow-lg",
-              alertMessage.type === "success" && "bg-status-good/10 border-status-good/30 text-green-400",
-              alertMessage.type === "error" && "bg-status-critical/10 border-status-critical/30 text-red-400",
-              alertMessage.type === "info" && "bg-accent-cyan/10 border-accent-cyan/30 text-cyan-400"
+              "p-3 rounded-xs border text-xs font-mono font-bold flex items-center justify-between shadow-sm",
+              alertMessage.type === "success" &&
+                "bg-status-good/10 border-status-good/30 text-status-good",
+              alertMessage.type === "error" &&
+                "bg-status-critical/10 border-status-critical/30 text-status-critical",
+              alertMessage.type === "info" &&
+                "bg-accent-cyan/10 border-accent-cyan/30 text-accent-cyan"
             )}
           >
             <span>{alertMessage.text}</span>
-            <button onClick={() => setAlertMessage(null)} className="text-white/40 hover:text-white ml-2">
-              <X className="size-4" />
+            <button
+              onClick={() => setAlertMessage(null)}
+              className="text-muted-foreground hover:text-foreground ml-2"
+            >
+              <X className="size-3.5" />
             </button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
-        {/* COLUNA ESQUERDA: LOBBY & PRESETS (4 cols) */}
-        <div className="lg:col-span-5 flex flex-col gap-6">
-          <SectionContainer 
-            title={`Lobby (${selectedPlayers.length}/10)`} 
-            subtitle="Selecione 10 jogadores da lista ou adicione convidados."
-          >
-            <div className="glass-panel border border-white/10 rounded-2xl p-4 flex flex-col gap-4 bg-white/[0.01]">
-              
-              {/* Jogadores no Lobby */}
-              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
-                {selectedPlayers.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground/40 text-xs flex flex-col items-center justify-center gap-2">
-                    <Users className="size-8 stroke-[1.5]" />
-                    <span>Lobby vazio. Adicione jogadores do roster à direita.</span>
-                  </div>
-                ) : (
-                  selectedPlayers.map((player, idx) => (
-                    <motion.div 
-                      key={player.id || `guest-${idx}`}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="flex items-center justify-between p-2 rounded-xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.05] transition-colors"
+      {/* ── SEÇÃO DE TIMES SORTEADOS (TACTICAL VERSUS ARENA) ───────────────── */}
+      {result && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.99 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col gap-4"
+        >
+          <div className="surface-panel rounded-sm border border-primary/40 p-5 flex flex-col gap-4 bg-surface-elevated/10">
+            {/* Versus Arena Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/40 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-primary">
+                  CONFRONTO EQUILIBRADO (5v5)
+                </span>
+                <TacticalBadge
+                  variant={
+                    result.diff === 0 || (result.diff <= 0.15 && metric === "RATING")
+                      ? "good"
+                      : "warning"
+                  }
+                  size="xs"
+                >
+                  {result.diff === 0
+                    ? "PARIDADE PERFEITA"
+                    : result.diff <= 0.15 && metric === "RATING"
+                    ? "EQUILÍBRIO EXCELENTE"
+                    : "EQUILIBRADO"}
+                </TacticalBadge>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-mono text-muted-foreground/70">
+                  Diferença: <strong className="text-foreground font-black tabular-nums">{result.diff.toFixed(2)} pts</strong>
+                </span>
+                {currentMatchId && (
+                  <span className="text-[10px] font-mono text-muted-foreground/50 border border-border/60 px-2 py-0.5 rounded-xs">
+                    ID: {currentMatchId.slice(0, 8)}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Barra Gráfica Proporcional de Força */}
+            <div className="flex flex-col gap-1.5">
+              <div className="relative h-5 bg-surface-deck rounded-xs border border-border/60 overflow-hidden flex">
+                <div
+                  className="h-full bg-accent-cyan/80 transition-all duration-300"
+                  style={{ width: `${(result.ctSum / result.total) * 100}%` }}
+                />
+                <div
+                  className="h-full bg-status-critical/80 transition-all duration-300"
+                  style={{ width: `${(result.trSum / result.total) * 100}%` }}
+                />
+                <div className="absolute inset-0 flex items-center justify-between px-3 text-[10px] font-mono font-black text-white drop-shadow-sm select-none">
+                  <span>CT: {((result.ctSum / result.total) * 100).toFixed(1)}%</span>
+                  <span>TR: {((result.trSum / result.total) * 100).toFixed(1)}%</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Grid dos Times: TIME CT vs TIME TR */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+              {/* Squad CT */}
+              <div className="surface-deck rounded-sm border border-accent-cyan/30 p-4 flex flex-col gap-3">
+                <div className="flex items-center justify-between pb-2 border-b border-border/40">
+                  <span className="text-xs font-mono font-black text-accent-cyan flex items-center gap-1.5 uppercase tracking-wide">
+                    <Shield className="size-4" /> Contra-Terroristas (CT)
+                  </span>
+                  <span className="text-xs font-mono font-black text-accent-cyan bg-accent-cyan/10 px-2 py-0.5 rounded-xs border border-accent-cyan/20 tabular-nums">
+                    {result.ctSum.toFixed(2)} pts
+                  </span>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  {result.ct.map((p, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-2 rounded-xs bg-surface-panel border border-border/30 hover:border-border/60 transition-colors"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <PlayerAvatar nickname={player.name} avatarUrl={player.avatarUrl} size="sm" />
+                        <PlayerAvatar nickname={p.name} avatarUrl={p.avatarUrl} size="sm" />
                         <div className="min-w-0">
-                          <p className="text-xs font-bold text-white truncate leading-snug">{player.name}</p>
-                          <p className="text-[9px] text-muted-foreground/60 leading-none">
-                            {player.guest ? "👤 Convidado" : `⭐ Rating ${player.rating.toFixed(2)}`}
-                          </p>
+                          {p.guest ? (
+                            <span className="text-xs font-bold text-foreground truncate block leading-tight">
+                              {p.name}
+                            </span>
+                          ) : (
+                            <Link
+                              href={`/players/${p.id}`}
+                              className="text-xs font-bold text-foreground hover:text-primary truncate block leading-tight transition-colors"
+                            >
+                              {p.name}
+                            </Link>
+                          )}
+                          <span className="text-[10px] font-mono text-muted-foreground/60 leading-none block">
+                            {p.guest ? "Convidado" : p.role || "Operador"}
+                          </span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 border border-white/20 text-white/70 font-mono">
-                          Nível {player.levelGc}
-                        </span>
-                        <button 
-                          onClick={() => removeSelectedPlayer(idx)}
-                          className="p-1 rounded hover:bg-red-500/20 text-muted-foreground hover:text-red-400 transition-colors"
-                        >
-                          <Trash2 className="size-3.5" />
-                        </button>
-                      </div>
-                    </motion.div>
-                  ))
-                )}
-              </div>
-
-              {/* Botão Convidado & Limpar */}
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setShowGuestForm(!showGuestForm)}
-                  className="flex-1 border-white/10 text-xs font-semibold"
-                >
-                  <Plus className="size-3.5 mr-1" /> Convidado
-                </Button>
-                {selectedPlayers.length > 0 && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={clearLobby}
-                    className="border-red-500/20 hover:bg-red-500/10 text-red-400 hover:text-red-300 text-xs font-semibold"
-                  >
-                    Limpar Tudo
-                  </Button>
-                )}
-              </div>
-
-              {/* Formulário Convidado */}
-              <AnimatePresence>
-                {showGuestForm && (
-                  <motion.form 
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    onSubmit={handleAddGuest}
-                    className="border-t border-white/5 pt-3 mt-1 flex flex-col gap-2 overflow-hidden"
-                  >
-                    <div className="flex gap-2 items-center">
-                      <input 
-                        type="text" 
-                        placeholder="Nome do convidado..."
-                        value={guestName}
-                        onChange={(e) => setGuestName(e.target.value)}
-                        className="bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-white/30 flex-1 focus:outline-none focus:border-accent-cyan/50"
-                      />
-                      <div className="flex items-center gap-1 shrink-0">
-                        <span className="text-[10px] text-white/40 font-semibold">Nível:</span>
-                        <select 
-                          value={guestLevel} 
-                          onChange={(e) => setGuestLevel(Number(e.target.value))}
-                          className="bg-zinc-900 border border-white/10 rounded-lg text-xs py-1 px-1.5 focus:outline-none"
-                        >
-                          {Array.from({ length: 21 }, (_, i) => 21 - i).map((lvl) => (
-                            <option key={lvl} value={lvl}>{lvl}</option>
-                          ))}
-                        </select>
-                      </div>
+                      <span className="text-[11px] font-mono font-bold text-foreground/80 tabular-nums shrink-0">
+                        {metric === "LEVEL"
+                          ? `GC ${p.levelGc}`
+                          : metric === "RATING"
+                          ? `★ ${p.rating.toFixed(2)}`
+                          : metric === "ADR"
+                          ? `${p.adr.toFixed(0)} ADR`
+                          : `KD ${p.kd.toFixed(2)}`}
+                      </span>
                     </div>
-                    <Button type="submit" size="sm" className="w-full text-xs font-semibold bg-accent-cyan hover:bg-accent-cyan/80 text-white">
-                      Adicionar Convidado
-                    </Button>
-                  </motion.form>
-                )}
-              </AnimatePresence>
-
-              {/* Estatísticas Rápidas do Lobby */}
-              {selectedPlayers.length > 0 && (
-                <div className="grid grid-cols-2 gap-2 border-t border-white/5 pt-3 mt-1 text-center bg-white/[0.01]">
-                  <div className="border-r border-white/5">
-                    <p className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground/50">Média Nível GC</p>
-                    <p className="text-sm font-black text-white mt-0.5">{avgGcLevel}</p>
-                  </div>
-                  <div>
-                    <p className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground/50">Média Rating</p>
-                    <p className="text-sm font-black text-white mt-0.5">{avgRating}</p>
-                  </div>
+                  ))}
                 </div>
-              )}
+              </div>
 
-            </div>
-          </SectionContainer>
+              {/* Squad TR */}
+              <div className="surface-deck rounded-sm border border-status-critical/30 p-4 flex flex-col gap-3">
+                <div className="flex items-center justify-between pb-2 border-b border-border/40">
+                  <span className="text-xs font-mono font-black text-status-critical flex items-center gap-1.5 uppercase tracking-wide">
+                    <Sword className="size-4" /> Terroristas (TR)
+                  </span>
+                  <span className="text-xs font-mono font-black text-status-critical bg-status-critical/10 px-2 py-0.5 rounded-xs border border-status-critical/20 tabular-nums">
+                    {result.trSum.toFixed(2)} pts
+                  </span>
+                </div>
 
-          <SectionContainer title="Métricas & Presets" subtitle="Escolha o fator de peso para equilibrar.">
-            <div className="glass-panel border border-white/10 rounded-2xl p-4 flex flex-col gap-4 bg-white/[0.01]">
-              
-              {/* Presets Grid */}
-              <div className="grid grid-cols-2 gap-1.5">
-                {[
-                  { key: "RATING", label: "Rating", desc: "Performance hub", icon: Award },
-                  { key: "LEVEL", label: "Nível GC", desc: "Patente externa", icon: Shield },
-                  { key: "ADR", label: "ADR", desc: "Dano p/ rodada", icon: Sword },
-                  { key: "KD", label: "K/D Ratio", desc: "Morte/Abate", icon: Target },
-                ].map((item) => (
-                  <button
-                    key={item.key}
-                    onClick={() => setMetric(item.key as BalanceMetric)}
-                    className={cn(
-                      "flex flex-col text-left p-2.5 rounded-xl border text-xs transition-all card-hover",
-                      metric === item.key
-                        ? "bg-primary/10 border-primary text-white"
-                        : "bg-white/[0.02] border-white/[0.06] text-muted-foreground hover:text-white"
-                    )}
-                  >
-                    <div className="flex items-center gap-1.5 font-bold mb-0.5">
-                      <item.icon className="size-3.5" />
-                      {item.label}
+                <div className="flex flex-col gap-1.5">
+                  {result.tr.map((p, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-2 rounded-xs bg-surface-panel border border-border/30 hover:border-border/60 transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <PlayerAvatar nickname={p.name} avatarUrl={p.avatarUrl} size="sm" />
+                        <div className="min-w-0">
+                          {p.guest ? (
+                            <span className="text-xs font-bold text-foreground truncate block leading-tight">
+                              {p.name}
+                            </span>
+                          ) : (
+                            <Link
+                              href={`/players/${p.id}`}
+                              className="text-xs font-bold text-foreground hover:text-primary truncate block leading-tight transition-colors"
+                            >
+                              {p.name}
+                            </Link>
+                          )}
+                          <span className="text-[10px] font-mono text-muted-foreground/60 leading-none block">
+                            {p.guest ? "Convidado" : p.role || "Operador"}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[11px] font-mono font-bold text-foreground/80 tabular-nums shrink-0">
+                        {metric === "LEVEL"
+                          ? `GC ${p.levelGc}`
+                          : metric === "RATING"
+                          ? `★ ${p.rating.toFixed(2)}`
+                          : metric === "ADR"
+                          ? `${p.adr.toFixed(0)} ADR`
+                          : `KD ${p.kd.toFixed(2)}`}
+                      </span>
                     </div>
-                    <span className="text-[9px] opacity-60 leading-none">{item.desc}</span>
-                  </button>
-                ))}
-                
-                {/* Compound / Peso Composto Inteligente */}
-                <button
-                  onClick={() => setMetric("COMPOUND")}
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Ações de Registro de Resultado */}
+            <div className="border-t border-border/30 pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <span className="text-[10px] font-mono font-bold text-muted-foreground/70 uppercase tracking-wider">
+                Registrar Desfecho da Partida:
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => handleRegisterWinner("CT")}
                   className={cn(
-                    "col-span-2 flex flex-col text-left p-2.5 rounded-xl border text-xs transition-all card-hover",
-                    metric === "COMPOUND"
-                      ? "bg-accent-violet/15 border-accent-violet text-white glow-ring"
-                      : "bg-white/[0.02] border-white/[0.06] text-muted-foreground hover:text-white"
+                    "text-xs font-mono font-bold px-3 py-1.5 rounded-xs border transition-all cursor-pointer",
+                    winner === "CT"
+                      ? "bg-accent-cyan border-accent-cyan text-black font-black"
+                      : "bg-surface-deck border-accent-cyan/30 text-accent-cyan hover:bg-accent-cyan/10"
+                  )}
+                >
+                  CT Venceu
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => handleRegisterWinner("DRAW")}
+                  className={cn(
+                    "text-xs font-mono font-bold px-3 py-1.5 rounded-xs border transition-all cursor-pointer",
+                    winner === "DRAW"
+                      ? "bg-foreground border-foreground text-background font-black"
+                      : "bg-surface-deck border-border/60 text-muted-foreground hover:text-foreground hover:bg-surface-panel"
+                  )}
+                >
+                  Empate
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => handleRegisterWinner("TR")}
+                  className={cn(
+                    "text-xs font-mono font-bold px-3 py-1.5 rounded-xs border transition-all cursor-pointer",
+                    winner === "TR"
+                      ? "bg-status-critical border-status-critical text-white font-black"
+                      : "bg-surface-deck border-status-critical/30 text-status-critical hover:bg-status-critical/10"
+                  )}
+                >
+                  TR Venceu
+                </Button>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* ── GRID PRINCIPAL: LOBBY & PRESETS (ESQUERDA) / ROSTER & HISTÓRICO (DIREITA) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* COLUNA ESQUERDA: LOBBY & CONFIGURAÇÃO (5 cols) */}
+        <div className="lg:col-span-5 flex flex-col gap-6">
+          {/* Painel do Lobby Ativo */}
+          <div className="surface-panel rounded-sm border border-border/40 p-4 sm:p-5 flex flex-col gap-4">
+            <div className="flex items-center justify-between border-b border-border/40 pb-3">
+              <div className="flex items-center gap-2">
+                <Users className="size-4 text-primary" />
+                <h3 className="text-xs font-mono font-black text-foreground uppercase tracking-wider">
+                  Lobby Ativo
+                </h3>
+              </div>
+              <TacticalBadge
+                variant={selectedPlayers.length === 10 ? "good" : "neutral"}
+                size="xs"
+              >
+                {selectedPlayers.length} / 10 OPERADORES
+              </TacticalBadge>
+            </div>
+
+            {/* Lista de Selecionados */}
+            <div className="space-y-1.5 max-h-[280px] overflow-y-auto pr-1">
+              {selectedPlayers.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground/50 text-xs font-mono flex flex-col items-center justify-center gap-2">
+                  <Users className="size-7 stroke-[1.5] text-muted-foreground/30" />
+                  <span>Lobby vazio. Selecione 10 operadores no Roster ao lado.</span>
+                </div>
+              ) : (
+                selectedPlayers.map((player, idx) => (
+                  <motion.div
+                    key={player.id || `guest-${idx}`}
+                    initial={{ opacity: 0, x: -6 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex items-center justify-between p-2 rounded-xs bg-surface-deck border border-border/30 hover:border-border/60 transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <PlayerAvatar nickname={player.name} avatarUrl={player.avatarUrl} size="sm" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-foreground truncate leading-tight">
+                          {player.name}
+                        </p>
+                        <p className="text-[10px] font-mono text-muted-foreground/60 leading-none mt-0.5">
+                          {player.guest ? "Convidado" : `Rating ${player.rating.toFixed(2)}`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-xs bg-surface-panel border border-border/40 text-muted-foreground font-bold">
+                        GC {player.levelGc}
+                      </span>
+                      <button
+                        onClick={() => removeSelectedPlayer(idx)}
+                        className="p-1 rounded-xs hover:bg-status-critical/10 text-muted-foreground/60 hover:text-status-critical transition-colors"
+                        title="Remover do Lobby"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))
+              )}
+            </div>
+
+            {/* Ações Rápidas: Convidado & Limpar */}
+            <div className="flex gap-2 pt-1 border-t border-border/30">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowGuestForm(!showGuestForm)}
+                className="flex-1 border-border/60 text-xs font-mono font-bold uppercase rounded-xs"
+              >
+                <Plus className="size-3.5 mr-1" /> Convidado
+              </Button>
+              {selectedPlayers.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearLobby}
+                  className="border-status-critical/30 hover:bg-status-critical/10 text-status-critical text-xs font-mono font-bold uppercase rounded-xs"
+                >
+                  <RotateCcw className="size-3.5 mr-1" /> Limpar
+                </Button>
+              )}
+            </div>
+
+            {/* Formulário de Convidado */}
+            <AnimatePresence>
+              {showGuestForm && (
+                <motion.form
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  onSubmit={handleAddGuest}
+                  className="border-t border-border/40 pt-3 flex flex-col gap-2 overflow-hidden"
+                >
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      placeholder="Nickname do convidado..."
+                      value={guestName}
+                      onChange={(e) => setGuestName(e.target.value)}
+                      className="bg-surface-deck border border-border/60 rounded-xs px-2.5 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/40 flex-1 focus:outline-none focus:border-primary font-mono"
+                    />
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className="text-[10px] font-mono text-muted-foreground/70 uppercase">GC:</span>
+                      <select
+                        value={guestLevel}
+                        onChange={(e) => setGuestLevel(Number(e.target.value))}
+                        className="bg-surface-deck border border-border/60 rounded-xs text-xs py-1 px-1.5 text-foreground focus:outline-none font-mono"
+                      >
+                        {Array.from({ length: 21 }, (_, i) => 21 - i).map((lvl) => (
+                          <option key={lvl} value={lvl}>
+                            {lvl}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    className="w-full text-xs font-mono font-bold uppercase bg-primary hover:bg-primary/80 text-black rounded-xs"
+                  >
+                    Adicionar ao Lobby
+                  </Button>
+                </motion.form>
+              )}
+            </AnimatePresence>
+
+            {/* Médias do Lobby */}
+            {selectedPlayers.length > 0 && (
+              <div className="grid grid-cols-2 gap-2 border-t border-border/30 pt-3 text-center bg-surface-deck p-2 rounded-xs">
+                <div className="border-r border-border/30">
+                  <p className="text-[9px] font-mono uppercase tracking-wider font-bold text-muted-foreground/60">
+                    Média Nível GC
+                  </p>
+                  <p className="text-sm font-mono font-black text-foreground mt-0.5 tabular-nums">
+                    {avgGcLevel}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[9px] font-mono uppercase tracking-wider font-bold text-muted-foreground/60">
+                    Média Rating 2.0
+                  </p>
+                  <p className="text-sm font-mono font-black text-foreground mt-0.5 tabular-nums">
+                    {avgRating}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Configurações & Presets de Sorteio */}
+          <div className="surface-panel rounded-sm border border-border/40 p-4 sm:p-5 flex flex-col gap-4">
+            <div className="flex items-center justify-between border-b border-border/40 pb-3">
+              <div className="flex items-center gap-2">
+                <Sliders className="size-4 text-primary" />
+                <h3 className="text-xs font-mono font-black text-foreground uppercase tracking-wider">
+                  Métricas de Peso & Modo
+                </h3>
+              </div>
+              <span className="text-[10px] font-mono text-muted-foreground/60 uppercase">
+                {metric}
+              </span>
+            </div>
+
+            {/* Presets Grid */}
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { key: "RATING", label: "Rating 2.0", desc: "Desempenho Hub", icon: Award },
+                { key: "LEVEL", label: "Nível GC", desc: "Patente externa", icon: Shield },
+                { key: "ADR", label: "ADR Médio", desc: "Dano p/ round", icon: Sword },
+                { key: "KD", label: "K/D Ratio", desc: "Taxa de eliminação", icon: Target },
+              ].map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => setMetric(item.key as BalanceMetric)}
+                  className={cn(
+                    "flex flex-col text-left p-2.5 rounded-xs border text-xs font-mono transition-all duration-150",
+                    metric === item.key
+                      ? "bg-surface-elevated border-primary text-foreground shadow-sm"
+                      : "bg-surface-deck border-border/40 text-muted-foreground/70 hover:text-foreground hover:border-border/80"
                   )}
                 >
                   <div className="flex items-center gap-1.5 font-bold mb-0.5">
-                    <Award className="size-3.5 text-accent-violet" />
-                    🧠 Peso Composto (Balanceamento Inteligente)
+                    <item.icon className="size-3.5 text-primary" />
+                    <span>{item.label}</span>
                   </div>
-                  <span className="text-[9px] opacity-60 leading-normal">
-                    Fórmula baseada em Rating (45%), ADR (30%), K/D (15%) e Winrate (10%).
-                  </span>
+                  <span className="text-[10px] opacity-60 leading-none">{item.desc}</span>
                 </button>
-              </div>
+              ))}
 
-              {/* Modo de Geração & Seed */}
-              <div className="border-t border-white/5 pt-3 mt-1 flex flex-col gap-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-semibold text-white/60">Modo de Sorteio</span>
-                  <div className="flex bg-[#0b1220] border border-white/10 rounded-lg p-0.5">
-                    <button
-                      onClick={() => setMode("BALANCED")}
-                      className={cn(
-                        "px-2.5 py-1 rounded text-[10px] font-bold transition-all",
-                        mode === "BALANCED" ? "bg-primary text-white" : "text-muted-foreground"
-                      )}
-                    >
-                      <Scale className="size-3 inline mr-1" /> Equilibrado
-                    </button>
-                    <button
-                      onClick={() => setMode("RANDOM")}
-                      className={cn(
-                        "px-2.5 py-1 rounded text-[10px] font-bold transition-all",
-                        mode === "RANDOM" ? "bg-primary text-white" : "text-muted-foreground"
-                      )}
-                    >
-                      <Shuffle className="size-3 inline mr-1" /> Aleatório
-                    </button>
-                  </div>
-                </div>
-
-                {/* Switch de Seed Manual */}
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-semibold text-white/60">Forçar Seed Manual</span>
-                    <input
-                      type="checkbox"
-                      checked={useCustomSeed}
-                      onChange={(e) => setUseCustomSeed(e.target.checked)}
-                      className="rounded border-white/10 bg-white/5 text-primary focus:ring-0 cursor-pointer"
-                    />
-                  </div>
-                  {useCustomSeed && (
-                    <input
-                      type="text"
-                      placeholder="Seed numérica..."
-                      value={customSeed}
-                      onChange={(e) => setCustomSeed(e.target.value)}
-                      className="bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-accent-cyan/50 font-mono"
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Botão de Sortear */}
-              <Button
-                onClick={runShuffle}
-                disabled={loading || selectedPlayers.length !== 10}
-                className="w-full py-4.5 rounded-xl font-bold bg-primary hover:bg-primary/80 text-white flex items-center justify-center gap-2 mt-1 shrink-0 cursor-pointer"
+              {/* Compound Inteligente */}
+              <button
+                onClick={() => setMetric("COMPOUND")}
+                className={cn(
+                  "col-span-2 flex flex-col text-left p-2.5 rounded-xs border text-xs font-mono transition-all duration-150",
+                  metric === "COMPOUND"
+                    ? "bg-surface-elevated border-accent-violet text-foreground shadow-sm"
+                    : "bg-surface-deck border-border/40 text-muted-foreground/70 hover:text-foreground hover:border-border/80"
+                )}
               >
-                {loading ? (
-                  <>
-                    <RefreshCw className="size-4 animate-spin" />
-                    <span>Balanceando Lobbies...</span>
-                  </>
-                ) : (
-                  <>
-                    <Play className="size-4" />
-                    <span>Sortear Equipes (5v5)</span>
-                  </>
-                )}
-              </Button>
-
+                <div className="flex items-center gap-1.5 font-bold mb-0.5">
+                  <Zap className="size-3.5 text-accent-violet" />
+                  <span className="text-foreground">Peso Composto Inteligente</span>
+                </div>
+                <span className="text-[10px] opacity-60 leading-normal">
+                  Ponderação multivariável: Rating (45%), ADR (30%), K/D (15%) e Winrate (10%).
+                </span>
+              </button>
             </div>
-          </SectionContainer>
+
+            {/* Modo de Geração & Seed */}
+            <div className="border-t border-border/30 pt-3 flex flex-col gap-3">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-mono font-bold text-muted-foreground/80 uppercase">
+                  Modo de Divisão:
+                </span>
+                <div className="flex bg-surface-deck border border-border/60 rounded-xs p-0.5">
+                  <button
+                    onClick={() => setMode("BALANCED")}
+                    className={cn(
+                      "px-2.5 py-1 rounded-xs text-[10px] font-mono font-bold uppercase transition-all",
+                      mode === "BALANCED"
+                        ? "bg-primary text-black font-black"
+                        : "text-muted-foreground/70 hover:text-foreground"
+                    )}
+                  >
+                    <Scale className="size-3 inline mr-1" /> Equilibrado
+                  </button>
+                  <button
+                    onClick={() => setMode("RANDOM")}
+                    className={cn(
+                      "px-2.5 py-1 rounded-xs text-[10px] font-mono font-bold uppercase transition-all",
+                      mode === "RANDOM"
+                        ? "bg-primary text-black font-black"
+                        : "text-muted-foreground/70 hover:text-foreground"
+                    )}
+                  >
+                    <Shuffle className="size-3 inline mr-1" /> Aleatório
+                  </button>
+                </div>
+              </div>
+
+              {/* Seed Manual */}
+              <div className="flex flex-col gap-1.5">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-mono text-muted-foreground/70">
+                    Fixar Seed Numérica
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={useCustomSeed}
+                    onChange={(e) => setUseCustomSeed(e.target.checked)}
+                    className="rounded-xs border-border/60 bg-surface-deck text-primary focus:ring-0 cursor-pointer"
+                  />
+                </div>
+                {useCustomSeed && (
+                  <input
+                    type="text"
+                    placeholder="Código da seed..."
+                    value={customSeed}
+                    onChange={(e) => setCustomSeed(e.target.value)}
+                    className="bg-surface-deck border border-border/60 rounded-xs px-2.5 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary font-mono"
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Botão de Sortear */}
+            <Button
+              onClick={runShuffle}
+              disabled={loading || selectedPlayers.length !== 10}
+              className="w-full py-4 rounded-xs font-mono font-black text-xs uppercase bg-primary hover:bg-primary/90 text-black flex items-center justify-center gap-2 mt-1 shrink-0 cursor-pointer shadow-sm tracking-wider"
+            >
+              {loading ? (
+                <>
+                  <RefreshCw className="size-4 animate-spin" />
+                  <span>Calculando Balanceamento...</span>
+                </>
+              ) : (
+                <>
+                  <Play className="size-4" />
+                  <span>Sortear Equipes (5v5)</span>
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
-        {/* COLUNA DIREITA: ROSTER DE JOGADORES OU RESULTADOS (8 cols) */}
+        {/* COLUNA DIREITA: ROSTER DE JOGADORES & HISTÓRICO (7 cols) */}
         <div className="lg:col-span-7 flex flex-col gap-6">
-          
-          {/* PAINEL DE RESULTADOS (Se existirem) */}
-          {result && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col gap-6"
-            >
-              <SectionContainer title="Times Sorteados" subtitle="Divisão equilibrada das forças em campo.">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  
-                  {/* Time CT */}
-                  <div className="glass-panel border border-cyan-500/20 bg-cyan-950/[0.03] rounded-2xl overflow-hidden p-4.5 flex flex-col gap-3">
-                    <div className="flex items-center justify-between pb-2 border-b border-white/5">
-                      <span className="text-sm font-black text-cyan-400 flex items-center gap-1.5">
-                        <Shield className="size-4" /> Contra-Terroristas
-                      </span>
-                      <span className="text-xs font-mono text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
-                        {result.ctSum.toFixed(2)} pts
-                      </span>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      {result.ct.map((p, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <PlayerAvatar nickname={p.name} avatarUrl={p.avatarUrl} size="sm" />
-                            <div className="min-w-0">
-                              {p.guest ? (
-                                <span className="text-xs font-bold text-white/90 leading-tight block">{p.name}</span>
-                              ) : (
-                                <Link 
-                                  href={`/players/${p.id}`}
-                                  className="text-xs font-bold text-white hover:text-primary leading-tight hover:underline block truncate"
-                                >
-                                  {p.name}
-                                </Link>
-                              )}
-                              <span className="text-[9px] text-muted-foreground/60 leading-none">
-                                {p.guest ? "👥 Convidado" : p.role || "Membro"}
-                              </span>
-                            </div>
-                          </div>
-                          <span className="text-[10px] text-muted-foreground font-semibold">
-                            {metric === "LEVEL" ? `GC ${p.levelGc}` : metric === "RATING" ? `★ ${p.rating.toFixed(2)}` : metric === "ADR" ? `${p.adr} ADR` : `KD ${p.kd}`}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Time TR */}
-                  <div className="glass-panel border border-red-500/20 bg-red-950/[0.03] rounded-2xl overflow-hidden p-4.5 flex flex-col gap-3">
-                    <div className="flex items-center justify-between pb-2 border-b border-white/5">
-                      <span className="text-sm font-black text-red-400 flex items-center gap-1.5">
-                        <Sword className="size-4" /> Terroristas
-                      </span>
-                      <span className="text-xs font-mono text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">
-                        {result.trSum.toFixed(2)} pts
-                      </span>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      {result.tr.map((p, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <PlayerAvatar nickname={p.name} avatarUrl={p.avatarUrl} size="sm" />
-                            <div className="min-w-0">
-                              {p.guest ? (
-                                <span className="text-xs font-bold text-white/90 leading-tight block">{p.name}</span>
-                              ) : (
-                                <Link 
-                                  href={`/players/${p.id}`}
-                                  className="text-xs font-bold text-white hover:text-primary leading-tight hover:underline block truncate"
-                                >
-                                  {p.name}
-                                </Link>
-                              )}
-                              <span className="text-[9px] text-muted-foreground/60 leading-none">
-                                {p.guest ? "👥 Convidado" : p.role || "Membro"}
-                              </span>
-                            </div>
-                          </div>
-                          <span className="text-[10px] text-muted-foreground font-semibold">
-                            {metric === "LEVEL" ? `GC ${p.levelGc}` : metric === "RATING" ? `★ ${p.rating.toFixed(2)}` : metric === "ADR" ? `${p.adr} ADR` : `KD ${p.kd}`}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                </div>
-
-                {/* Indicador de Qualidade */}
-                <div className="glass-panel border border-white/10 rounded-2xl p-4 mt-4 bg-white/[0.01] flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-white/50">Diferença de Força</span>
-                    <span className="text-xs font-mono font-bold text-white">
-                      {result.diff.toFixed(2)} ({result.diff === 0 ? "Perfeita" : result.diff <= 0.15 && metric === "RATING" ? "Excelente" : "Boa"})
-                    </span>
-                  </div>
-                  
-                  {/* Barra Gráfica de Equilíbrio */}
-                  <div className="relative h-6 bg-[#0b1220] rounded-lg border border-white/10 overflow-hidden flex">
-                    <div 
-                      className="h-full bg-cyan-600 transition-all duration-500" 
-                      style={{ width: `${(result.ctSum / result.total) * 100}%` }}
-                    />
-                    <div 
-                      className="h-full bg-red-600 transition-all duration-500" 
-                      style={{ width: `${(result.trSum / result.total) * 100}%` }}
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white/90">
-                      CT: {((result.ctSum / result.total) * 100).toFixed(1)}% vs TR: {((result.trSum / result.total) * 100).toFixed(1)}%
-                    </div>
-                  </div>
-
-                  {/* Registrar Vencedor */}
-                  <div className="border-t border-white/5 pt-3 mt-1 flex flex-col gap-2">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground/60 tracking-wider">
-                      Registrar Resultado do Lobby
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => handleRegisterWinner("CT")}
-                        className={cn(
-                          "flex-1 text-xs font-bold border cursor-pointer",
-                          winner === "CT"
-                            ? "bg-cyan-500 border-cyan-400 text-white"
-                            : "bg-white/[0.02] border-white/10 text-cyan-400 hover:bg-cyan-500/10"
-                        )}
-                      >
-                        CT Venceu
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => handleRegisterWinner("DRAW")}
-                        className={cn(
-                          "flex-1 text-xs font-bold border cursor-pointer",
-                          winner === "DRAW"
-                            ? "bg-zinc-600 border-zinc-500 text-white"
-                            : "bg-white/[0.02] border-white/10 text-white/70 hover:bg-white/10"
-                        )}
-                      >
-                        Empate
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => handleRegisterWinner("TR")}
-                        className={cn(
-                          "flex-1 text-xs font-bold border cursor-pointer",
-                          winner === "TR"
-                            ? "bg-red-500 border-red-400 text-white"
-                            : "bg-white/[0.02] border-white/10 text-red-400 hover:bg-red-500/10"
-                        )}
-                      >
-                        TR Venceu
-                      </Button>
-                    </div>
-                  </div>
-
-                </div>
-
-              </SectionContainer>
-            </motion.div>
-          )}
-
           {/* POOL DE JOGADORES DISPONÍVEIS */}
-          <SectionContainer 
-            title={`Roster de Jogadores (${availablePlayers.length} cadastrados)`} 
-            subtitle="Clique nos jogadores para selecioná-los para o Lobby ativo."
-          >
-            <div className="glass-panel border border-white/10 rounded-2xl p-4 flex flex-col gap-4 bg-white/[0.01]">
-              
-              {/* Barra de Busca */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/60" />
-                <input 
-                  type="text" 
-                  placeholder="Buscar jogador por nickname ou função..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-accent-cyan/50"
-                />
+          <div className="surface-panel rounded-sm border border-border/40 p-4 sm:p-5 flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/40 pb-3">
+              <div className="flex items-center gap-2">
+                <Users className="size-4 text-primary" />
+                <h3 className="text-xs font-mono font-black text-foreground uppercase tracking-wider">
+                  Roster Disponível ({availablePlayers.length} atletas)
+                </h3>
               </div>
-
-              {/* Grid de Roster */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-[460px] overflow-y-auto pr-1">
-                {filteredPlayers.length === 0 ? (
-                  <div className="col-span-full text-center py-12 text-muted-foreground/45 text-xs">
-                    Nenhum jogador correspondente encontrado.
-                  </div>
-                ) : (
-                  filteredPlayers.map((player) => {
-                    const isSelected = selectedPlayers.some((p) => p.id === player.id);
-                    
-                    return (
-                      <button
-                        key={player.id}
-                        onClick={() => togglePlayer(player)}
-                        className={cn(
-                          "glass-panel text-left p-3 rounded-xl border flex gap-2.5 items-center cursor-pointer transition-all card-hover",
-                          isSelected
-                            ? "bg-primary/20 border-primary shadow-[0_0_15px_rgba(110,68,255,0.06)]"
-                            : "bg-white/[0.01] border-white/[0.06]"
-                        )}
-                      >
-                        <PlayerAvatar nickname={player.name} avatarUrl={player.avatarUrl} size="sm" />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-bold text-white truncate leading-snug">{player.name}</p>
-                          <div className="flex gap-1.5 mt-0.5">
-                            <span className="text-[8px] font-mono text-muted-foreground/70">GC {player.levelGc}</span>
-                            <span className="text-[8px] font-mono text-white/50">★ {player.rating.toFixed(2)}</span>
-                          </div>
-                          {player.role && (
-                            <span className="inline-block text-[7px] font-bold text-accent-cyan/80 bg-accent-cyan/5 border border-accent-cyan/15 rounded px-1.5 py-0.2 mt-1">
-                              {player.role}
-                            </span>
-                          )}
-                        </div>
-                        {isSelected && (
-                          <div className="size-4.5 rounded-full bg-primary flex items-center justify-center shrink-0">
-                            <Check className="size-3 text-white" />
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })
-                )}
-              </div>
-
+              <span className="text-[10px] font-mono text-muted-foreground/60">
+                Clique para adicionar ao lobby
+              </span>
             </div>
-          </SectionContainer>
 
-          {/* HISTÓRICO DE AUDITORIA */}
-          <SectionContainer title="Histórico de Auditoria" subtitle="Recupere seeds e resultados de balanceamentos anteriores.">
-            <div className="glass-panel border border-white/10 rounded-2xl p-4 bg-white/[0.01]">
-              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
-                {historyLoading && history.length === 0 ? (
-                  <div className="text-center py-6 text-xs text-muted-foreground">
-                    Carregando histórico...
-                  </div>
-                ) : history.length === 0 ? (
-                  <div className="text-center py-8 text-xs text-muted-foreground/40">
-                    Nenhum balanceamento registrado no histórico ainda.
-                  </div>
-                ) : (
-                  history.map((match) => (
-                    <div 
-                      key={match.id}
-                      onClick={() => handleLoadHistoryMatch(match)}
+            {/* Barra de Busca */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/60" />
+              <input
+                type="text"
+                placeholder="Buscar por nickname ou função..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-surface-deck border border-border/60 rounded-xs pl-9 pr-4 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary"
+              />
+            </div>
+
+            {/* Grid de Roster */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-[460px] overflow-y-auto pr-1">
+              {filteredPlayers.length === 0 ? (
+                <div className="col-span-full text-center py-10 text-muted-foreground/50 text-xs font-mono">
+                  Nenhum jogador localizado.
+                </div>
+              ) : (
+                filteredPlayers.map((player) => {
+                  const isSelected = selectedPlayers.some((p) => p.id === player.id);
+
+                  return (
+                    <button
+                      key={player.id}
+                      onClick={() => togglePlayer(player)}
                       className={cn(
-                        "p-3 rounded-xl border bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.04] transition-colors cursor-pointer flex flex-col sm:flex-row justify-between sm:items-center gap-3",
-                        currentMatchId === match.id && "border-primary bg-primary/5"
+                        "text-left p-2.5 rounded-xs border flex gap-2.5 items-center cursor-pointer transition-all duration-150",
+                        isSelected
+                          ? "bg-surface-elevated border-primary text-foreground shadow-sm"
+                          : "bg-surface-deck border-border/40 hover:border-border/80 hover:bg-surface-panel"
                       )}
                     >
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-bold text-white">Seed: {match.seed}</span>
-                          <span className="text-[9px] px-1 bg-white/5 rounded border border-white/10 text-white/50 font-mono uppercase">
-                            {match.metric}
-                          </span>
-                          {match.winner && (
-                            <span className={cn(
-                              "text-[8px] font-black px-1.5 py-0.2 rounded border",
-                              match.winner === "CT" && "bg-cyan-500/10 border-cyan-500/20 text-cyan-400",
-                              match.winner === "TR" && "bg-red-500/10 border-red-500/20 text-red-400",
-                              match.winner === "DRAW" && "bg-zinc-500/10 border-zinc-500/20 text-white/70"
-                            )}>
-                              {match.winner === "DRAW" ? "EMPATE" : `${match.winner} VENCEU`}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[10px] text-muted-foreground/60 leading-none">
-                          Gerado em {new Date(match.createdAt).toLocaleString("pt-BR")} · Diff: {match.difference.toFixed(2)}
+                      <PlayerAvatar nickname={player.name} avatarUrl={player.avatarUrl} size="sm" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-foreground truncate leading-tight">
+                          {player.name}
                         </p>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {match.players.slice(0, 5).map((p, i) => (
-                            <span key={i} className="text-[8px] text-cyan-400 font-medium truncate max-w-[70px]">
-                              {p.nickname}
-                            </span>
-                          ))}
-                          <span className="text-[8px] text-white/20">|</span>
-                          {match.players.slice(5, 10).map((p, i) => (
-                            <span key={i} className="text-[8px] text-red-400 font-medium truncate max-w-[70px]">
-                              {p.nickname}
-                            </span>
-                          ))}
+                        <div className="flex gap-1.5 mt-0.5 font-mono text-[9px] text-muted-foreground/70">
+                          <span>GC {player.levelGc}</span>
+                          <span className="text-muted-foreground/40">·</span>
+                          <span className="text-foreground font-bold">★ {player.rating.toFixed(2)}</span>
                         </div>
+                        {player.role && (
+                          <span className="inline-block text-[8px] font-mono font-bold text-primary bg-primary/10 rounded-xs px-1 mt-0.5">
+                            {player.role}
+                          </span>
+                        )}
                       </div>
-
-                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            copySeed(match.seed);
-                          }}
-                          className="p-1.5 rounded bg-white/5 border border-white/10 hover:bg-white/10 text-white/50 hover:text-white transition-colors"
-                          title="Copiar Seed"
-                        >
-                          <Copy className="size-3.5" />
-                        </button>
-                      </div>
-
-                    </div>
-                  ))
-                )}
-              </div>
+                      {isSelected && (
+                        <div className="size-4 rounded-full bg-primary flex items-center justify-center shrink-0">
+                          <Check className="size-2.5 text-black stroke-[3]" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })
+              )}
             </div>
-          </SectionContainer>
+          </div>
 
+          {/* HISTÓRICO DE AUDITORIA DE SEEDS */}
+          <div className="surface-panel rounded-sm border border-border/40 p-4 sm:p-5 flex flex-col gap-4">
+            <div className="flex items-center justify-between border-b border-border/40 pb-3">
+              <div className="flex items-center gap-2">
+                <Scale className="size-4 text-primary" />
+                <h3 className="text-xs font-mono font-black text-foreground uppercase tracking-wider">
+                  Histórico de Sorteios & Auditoria
+                </h3>
+              </div>
+              <span className="text-[10px] font-mono text-muted-foreground/60">
+                {history.length} registros
+              </span>
+            </div>
+
+            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+              {historyLoading && history.length === 0 ? (
+                <div className="text-center py-6 text-xs font-mono text-muted-foreground">
+                  Carregando histórico de auditoria...
+                </div>
+              ) : history.length === 0 ? (
+                <div className="text-center py-8 text-xs font-mono text-muted-foreground/40">
+                  Nenhum balanceamento registrado no histórico ainda.
+                </div>
+              ) : (
+                history.map((match) => (
+                  <div
+                    key={match.id}
+                    onClick={() => handleLoadHistoryMatch(match)}
+                    className={cn(
+                      "p-3 rounded-xs border bg-surface-deck border-border/40 hover:bg-surface-panel hover:border-border/80 transition-colors cursor-pointer flex flex-col sm:flex-row justify-between sm:items-center gap-3",
+                      currentMatchId === match.id && "border-primary bg-surface-elevated"
+                    )}
+                  >
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono font-black text-foreground">
+                          Seed: {match.seed}
+                        </span>
+                        <span className="text-[9px] px-1 bg-surface-panel rounded-xs border border-border/60 text-muted-foreground font-mono uppercase">
+                          {match.metric}
+                        </span>
+                        {match.winner && (
+                          <TacticalBadge
+                            variant={
+                              match.winner === "CT"
+                                ? "cyan"
+                                : match.winner === "TR"
+                                ? "critical"
+                                : "neutral"
+                            }
+                            size="xs"
+                          >
+                            {match.winner === "DRAW" ? "EMPATE" : `${match.winner} VENCEU`}
+                          </TacticalBadge>
+                        )}
+                      </div>
+                      <p className="text-[10px] font-mono text-muted-foreground/70 leading-none">
+                        Gerado em {new Date(match.createdAt).toLocaleString("pt-BR")} · Diff: {match.difference.toFixed(2)}
+                      </p>
+                      <div className="flex flex-wrap gap-1 mt-1 font-mono text-[9px]">
+                        {match.players.slice(0, 5).map((p, i) => (
+                          <span key={i} className="text-accent-cyan font-bold truncate max-w-[65px]">
+                            {p.nickname}
+                          </span>
+                        ))}
+                        <span className="text-muted-foreground/40">vs</span>
+                        {match.players.slice(5, 10).map((p, i) => (
+                          <span key={i} className="text-status-critical font-bold truncate max-w-[65px]">
+                            {p.nickname}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          copySeed(match.seed);
+                        }}
+                        className="p-1.5 rounded-xs bg-surface-panel border border-border/60 hover:bg-surface-elevated text-muted-foreground hover:text-foreground transition-colors"
+                        title="Copiar Seed"
+                      >
+                        <Copy className="size-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
-
       </div>
     </div>
   );

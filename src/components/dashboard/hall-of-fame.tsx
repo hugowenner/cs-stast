@@ -4,14 +4,33 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import type { HallOfFameRecord, MonitoredPlayerEntry } from "@/server/services/competitive.service";
-import { Trophy, Flame, Swords, Star, TrendingUp, TrendingDown, ChevronLeft, ChevronRight, Brain, Skull, Bomb, ShieldAlert, BarChart2, AlertTriangle, Ghost, Activity } from "lucide-react";
+import {
+  Trophy,
+  Flame,
+  Swords,
+  Star,
+  TrendingUp,
+  TrendingDown,
+  ChevronLeft,
+  ChevronRight,
+  Brain,
+  Skull,
+  Bomb,
+  ShieldAlert,
+  BarChart2,
+  AlertTriangle,
+  Ghost,
+  Activity,
+  ArrowRight,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { recordNarratives, worstRecordNarratives } from "@/lib/narrator/templates";
-import { HudBadge } from "@/components/ui/hud-badge";
+import { TacticalBadge } from "@/components/ui/tactical-badge";
 
-interface HallOfFameProps {
+export interface HallOfFameProps {
   records: HallOfFameRecord[];
+  worstRecords?: HallOfFameRecord[];
   monitoredPlayers: MonitoredPlayerEntry[];
   variant?: "best" | "worst";
 }
@@ -20,11 +39,7 @@ interface RecordMeta {
   title: string;
   shortLabel: string;
   icon: React.ComponentType<{ className?: string }>;
-  medal: string;
-  medalLabel: string;
   description: string;
-  borderColor: string;
-  bgColor: string;
   iconColor: string;
   accentColor: string;
 }
@@ -34,83 +49,55 @@ const BEST_METADATA_BY_CATEGORY: Record<string, RecordMeta> = {
     title: "Maior Rating",
     shortLabel: "Rating",
     icon: Trophy,
-    medal: "🥇",
-    medalLabel: "🔥 Recorde da Temporada",
-    description: "A atuação mais absurda que o grupo já viu",
-    borderColor: "border-yellow-500/25",
-    bgColor: "bg-yellow-500/[0.02]",
-    iconColor: "text-yellow-400",
-    accentColor: "text-yellow-400",
+    description: "Maior pontuação de Rating 2.0 individual em um único confronto.",
+    iconColor: "text-gold",
+    accentColor: "text-gold",
   },
   "Maior K/D em Jogo": {
     title: "Maior K/D",
     shortLabel: "K/D",
     icon: Swords,
-    medal: "🥇",
-    medalLabel: "🔥 Recorde da Temporada",
-    description: "O round que ele não morreu nem tentando",
-    borderColor: "border-emerald-500/25",
-    bgColor: "bg-emerald-500/[0.02]",
-    iconColor: "text-emerald-400",
-    accentColor: "text-emerald-400",
+    description: "Melhor proporção de eliminações por morte em uma partida.",
+    iconColor: "text-status-good",
+    accentColor: "text-status-good",
   },
   "Maior ADR em Jogo": {
     title: "Maior ADR",
     shortLabel: "ADR",
     icon: Flame,
-    medal: "🥇",
-    medalLabel: "🔥 Recorde da Temporada",
-    description: "Causou dano até em quem não estava na partida",
-    borderColor: "border-orange-500/25",
-    bgColor: "bg-orange-500/[0.02]",
-    iconColor: "text-orange-400",
-    accentColor: "text-orange-400",
+    description: "Recorde de dano médio por round registrado na temporada.",
+    iconColor: "text-primary",
+    accentColor: "text-primary",
   },
   "Recorde de Kills": {
     title: "Mais Kills",
     shortLabel: "Kills",
     icon: Swords,
-    medal: "🥈",
-    medalLabel: "🔥 Recorde da Temporada",
-    description: "Distribuiu chumbo como se fosse saldão",
-    borderColor: "border-red-500/25",
-    bgColor: "bg-red-500/[0.02]",
-    iconColor: "text-red-400",
-    accentColor: "text-red-400",
+    description: "Maior quantidade de eliminações registradas em uma partida.",
+    iconColor: "text-status-good",
+    accentColor: "text-status-good",
   },
   "Maior HS% em Jogo": {
     title: "Maior HS%",
     shortLabel: "HS%",
     icon: Star,
-    medal: "🥈",
-    medalLabel: "🔥 Recorde da Temporada",
-    description: "Só aceita kill se for na cabeça",
-    borderColor: "border-pink-500/25",
-    bgColor: "bg-pink-500/[0.02]",
-    iconColor: "text-pink-400",
-    accentColor: "text-pink-400",
+    description: "Maior porcentagem de precisão em disparos na cabeça.",
+    iconColor: "text-cyan-400",
+    accentColor: "text-cyan-400",
   },
   "Maior Sequência de Vitórias": {
     title: "Maior Sequência",
     shortLabel: "Sequência",
     icon: Star,
-    medal: "🔥",
-    medalLabel: "🔥 Recorde da Temporada",
-    description: "Estava em modo deus e ninguém conseguiu parar",
-    borderColor: "border-purple-500/25",
-    bgColor: "bg-purple-500/[0.02]",
-    iconColor: "text-purple-400",
-    accentColor: "text-purple-400",
+    description: "Maior número de vitórias consecutivas nesta temporada.",
+    iconColor: "text-gold",
+    accentColor: "text-gold",
   },
   "Pico de Rating do Hub": {
     title: "Pico de Rating",
     shortLabel: "Pico Rtg",
     icon: TrendingUp,
-    medal: "🏆",
-    medalLabel: "🔥 Recorde da Temporada",
-    description: "O momento em que o Hub reconheceu que ele era diferente",
-    borderColor: "border-cyan-500/25",
-    bgColor: "bg-cyan-500/[0.02]",
+    description: "Maior pico de pontuação individual alcançado.",
     iconColor: "text-cyan-400",
     accentColor: "text-cyan-400",
   },
@@ -118,172 +105,116 @@ const BEST_METADATA_BY_CATEGORY: Record<string, RecordMeta> = {
     title: "Maior Impacto",
     shortLabel: "Impacto",
     icon: Brain,
-    medal: "🧠",
-    medalLabel: "🔥 Recorde da Temporada",
-    description: "Partida em que os outros 9 eram figurantes",
-    borderColor: "border-indigo-500/25",
-    bgColor: "bg-indigo-500/[0.02]",
-    iconColor: "text-indigo-400",
-    accentColor: "text-indigo-400",
+    description: "Maior índice de jogadas decisivas e abertura de espaço.",
+    iconColor: "text-primary",
+    accentColor: "text-primary",
   },
   "Mais MultiKills na Temporada": {
     title: "Mais MultiKills",
     shortLabel: "MultiKills",
     icon: Skull,
-    medal: "💀",
-    medalLabel: "🔥 Recorde da Temporada",
-    description: "Limpou round atrás de round sem pedir desculpa",
-    borderColor: "border-rose-500/25",
-    bgColor: "bg-rose-500/[0.02]",
-    iconColor: "text-rose-400",
-    accentColor: "text-rose-400",
+    description: "Líder agregado de rodadas com 2K, 3K, 4K e 5K.",
+    iconColor: "text-status-good",
+    accentColor: "text-status-good",
   },
   "Maior Dano em Jogo": {
     title: "Maior Dano Total",
     shortLabel: "Dano",
     icon: Bomb,
-    medal: "💣",
-    medalLabel: "🔥 Recorde da Temporada",
-    description: "Jogou como se cada round valesse R$100",
-    borderColor: "border-amber-500/25",
-    bgColor: "bg-amber-500/[0.02]",
-    iconColor: "text-amber-400",
-    accentColor: "text-amber-400",
+    description: "Volume bruto absoluto de dano causado em uma partida.",
+    iconColor: "text-primary",
+    accentColor: "text-primary",
   },
   "Maior Clutch na Temporada": {
     title: "Maior Clutch",
     shortLabel: "Clutch",
     icon: ShieldAlert,
-    medal: "🧊",
-    medalLabel: "🔥 Recorde da Temporada",
-    description: "1vX? Problema dele, não problema seu",
-    borderColor: "border-teal-500/25",
-    bgColor: "bg-teal-500/[0.02]",
-    iconColor: "text-teal-400",
-    accentColor: "text-teal-400",
+    description: "Maior quantidade de situações 1vX vencidas sob pressão.",
+    iconColor: "text-status-good",
+    accentColor: "text-status-good",
   },
   "Maior Consistência na Temporada": {
     title: "Maior Consistência",
     shortLabel: "Consist.",
     icon: BarChart2,
-    medal: "📊",
-    medalLabel: "🔥 Recorde da Temporada",
-    description: "Nunca brilhou, nunca afundou — a pedra do time",
-    borderColor: "border-sky-500/25",
-    bgColor: "bg-sky-500/[0.02]",
-    iconColor: "text-sky-400",
-    accentColor: "text-sky-400",
+    description: "Maior regularidade de atuações com rating acima da média.",
+    iconColor: "text-cyan-400",
+    accentColor: "text-cyan-400",
   },
 };
 
 const WORST_METADATA_BY_CATEGORY: Record<string, RecordMeta> = {
   "Pior Rating em Jogo": {
-    title: "Pior Rating",
+    title: "Menor Rating",
     shortLabel: "Rating",
     icon: TrendingDown,
-    medal: "💀",
-    medalLabel: "😬 Antirecorde da Temporada",
-    description: "O jogo que o Hub preferia ter esquecido — mas não esqueceu",
-    borderColor: "border-red-500/25",
-    bgColor: "bg-red-500/[0.02]",
-    iconColor: "text-red-400",
-    accentColor: "text-red-400",
+    description: "Menor pontuação individual registrada em uma partida.",
+    iconColor: "text-status-critical",
+    accentColor: "text-status-critical",
   },
   "Pior K/D em Jogo": {
     title: "Pior K/D",
     shortLabel: "K/D",
     icon: Swords,
-    medal: "💀",
-    medalLabel: "😬 Antirecorde da Temporada",
-    description: "Mais mortes do que kills — a matemática não tem como ajudar",
-    borderColor: "border-rose-500/25",
-    bgColor: "bg-rose-500/[0.02]",
-    iconColor: "text-rose-400",
-    accentColor: "text-rose-400",
+    description: "Pior relação entre eliminações e mortes em um confronto.",
+    iconColor: "text-status-critical",
+    accentColor: "text-status-critical",
   },
   "Menor ADR em Jogo": {
     title: "Menor ADR",
     shortLabel: "ADR",
     icon: Flame,
-    medal: "🥶",
-    medalLabel: "😬 Antirecorde da Temporada",
-    description: "Dano médio por round historicamente baixo",
-    borderColor: "border-orange-500/25",
-    bgColor: "bg-orange-500/[0.02]",
-    iconColor: "text-orange-400",
-    accentColor: "text-orange-400",
+    description: "Menor média de dano por round registrado.",
+    iconColor: "text-status-warning",
+    accentColor: "text-status-warning",
   },
   "Mais Mortes em Jogo": {
     title: "Mais Mortes",
     shortLabel: "Mortes",
     icon: Skull,
-    medal: "💀",
-    medalLabel: "😬 Antirecorde da Temporada",
-    description: "Recorde de mortes em uma única partida",
-    borderColor: "border-red-500/25",
-    bgColor: "bg-red-500/[0.015]",
-    iconColor: "text-red-300",
-    accentColor: "text-red-300",
+    description: "Maior quantidade de quedas em uma única partida.",
+    iconColor: "text-status-critical",
+    accentColor: "text-status-critical",
   },
   "Menor HS% em Jogo": {
     title: "Menor HS%",
     shortLabel: "HS%",
     icon: Star,
-    medal: "🥶",
-    medalLabel: "😬 Antirecorde da Temporada",
-    description: "A mira optou por uma abordagem mais corporal",
-    borderColor: "border-amber-500/25",
-    bgColor: "bg-amber-500/[0.02]",
-    iconColor: "text-amber-400",
-    accentColor: "text-amber-400",
+    description: "Menor aproveitamento em disparos na cabeça.",
+    iconColor: "text-status-warning",
+    accentColor: "text-status-warning",
   },
   "Maior Sequência de Derrotas": {
     title: "Sequência de Derrotas",
     shortLabel: "Derrotas",
     icon: AlertTriangle,
-    medal: "😬",
-    medalLabel: "😬 Antirecorde da Temporada",
-    description: "Sequência consecutiva de derrotas que ninguém conseguiu parar",
-    borderColor: "border-rose-500/25",
-    bgColor: "bg-rose-500/[0.015]",
-    iconColor: "text-rose-400",
-    accentColor: "text-rose-400",
+    description: "Maior sequência consecutiva de resultados negativos.",
+    iconColor: "text-status-critical",
+    accentColor: "text-status-critical",
   },
   "Pior Momento no Ranking": {
     title: "Pior Momento no Ranking",
     shortLabel: "Ranking",
     icon: TrendingDown,
-    medal: "📉",
-    medalLabel: "😬 Antirecorde da Temporada",
-    description: "Menor pontuação registrada no ranking interno da temporada",
-    borderColor: "border-orange-500/25",
-    bgColor: "bg-orange-500/[0.015]",
-    iconColor: "text-orange-400",
-    accentColor: "text-orange-400",
+    description: "Menor pontuação atingida no ranking da temporada.",
+    iconColor: "text-status-warning",
+    accentColor: "text-status-warning",
   },
   "Partida Fantasma": {
     title: "Partida Fantasma",
     shortLabel: "Fantasma",
     icon: Ghost,
-    medal: "👻",
-    medalLabel: "😬 Antirecorde da Temporada",
-    description: "Pior combinação de Rating + ADR em uma única partida",
-    borderColor: "border-slate-500/25",
-    bgColor: "bg-slate-500/[0.02]",
-    iconColor: "text-slate-400",
-    accentColor: "text-slate-400",
+    description: "Pior combinação combinada de Rating + ADR em jogo.",
+    iconColor: "text-muted-foreground",
+    accentColor: "text-muted-foreground",
   },
   "Maior Inconsistência na Temporada": {
     title: "Maior Inconsistência",
     shortLabel: "Consist.",
     icon: Activity,
-    medal: "📊",
-    medalLabel: "😬 Antirecorde da Temporada",
-    description: "Mais partidas abaixo de 1.0 de rating na temporada",
-    borderColor: "border-yellow-500/25",
-    bgColor: "bg-yellow-500/[0.015]",
-    iconColor: "text-yellow-400",
-    accentColor: "text-yellow-400",
+    description: "Maior volume de partidas abaixo de 1.00 de rating.",
+    iconColor: "text-status-warning",
+    accentColor: "text-status-warning",
   },
 };
 
@@ -291,26 +222,18 @@ const DEFAULT_META: RecordMeta = {
   title: "Recorde",
   shortLabel: "Recorde",
   icon: Trophy,
-  medal: "🥇",
-  medalLabel: "Destaque",
-  description: "Recorde da temporada",
-  borderColor: "border-white/[0.07]",
-  bgColor: "bg-white/[0.01]",
-  iconColor: "text-white",
-  accentColor: "text-white",
+  description: "Recorde oficial registrado na temporada.",
+  iconColor: "text-foreground",
+  accentColor: "text-foreground",
 };
 
 const DEFAULT_WORST_META: RecordMeta = {
-  title: "Antirecorde",
-  shortLabel: "Pior",
+  title: "Anomalia",
+  shortLabel: "Anomalia",
   icon: TrendingDown,
-  medal: "💀",
-  medalLabel: "Antirecorde",
-  description: "Antirecorde da temporada",
-  borderColor: "border-red-500/[0.07]",
-  bgColor: "bg-red-500/[0.01]",
-  iconColor: "text-red-400",
-  accentColor: "text-red-400",
+  description: "Marca atípica registrada na temporada.",
+  iconColor: "text-status-warning",
+  accentColor: "text-status-warning",
 };
 
 const MAP_IMAGES: Record<string, string> = {
@@ -335,15 +258,20 @@ function extractMapName(detail: string): string | null {
   return match ? match[1] : null;
 }
 
-export function HallOfFame({ records, monitoredPlayers, variant = "best" }: HallOfFameProps) {
+export function HallOfFame({ records, worstRecords, monitoredPlayers, variant = "best" }: HallOfFameProps) {
+  const hasBoth = Boolean(worstRecords && worstRecords.length > 0 && records.length > 0);
+  const [mode, setMode] = useState<"best" | "worst">(variant);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const isWorst = variant === "worst";
+  const isWorst = mode === "worst";
+  const list = isWorst ? (worstRecords ?? records) : records;
   const categoryMetadata = isWorst ? WORST_METADATA_BY_CATEGORY : BEST_METADATA_BY_CATEGORY;
   const defaultMeta = isWorst ? DEFAULT_WORST_META : DEFAULT_META;
   const allNarratives = isWorst ? worstRecordNarratives : recordNarratives;
 
-  const list = records;
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [mode]);
 
   useEffect(() => {
     if (list.length <= 1) return;
@@ -351,9 +279,9 @@ export function HallOfFame({ records, monitoredPlayers, variant = "best" }: Hall
     return () => clearInterval(t);
   }, [list.length]);
 
-  if (records.length === 0) return null;
+  if (list.length === 0) return null;
 
-  const record = list[activeIndex];
+  const record = list[activeIndex] ?? list[0];
   if (!record) return null;
 
   const meta = categoryMetadata[record.category] ?? defaultMeta;
@@ -369,36 +297,82 @@ export function HallOfFame({ records, monitoredPlayers, variant = "best" }: Hall
   const handleNext = () => setActiveIndex((i) => (i + 1) % list.length);
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className={cn(
-        "card-record rounded-3xl overflow-hidden grid grid-cols-1 lg:grid-cols-4 min-h-[280px] relative z-0",
-        meta.borderColor,
-        !mapImgUrl && meta.bgColor
-      )}>
-        {mapImgUrl && (
-          <>
-            <img
-              src={mapImgUrl}
-              alt={record.mapName || mapName || "Map background"}
-              className="bg-map-texture"
-            />
-            <div className="bg-texture-overlay" />
-          </>
+    <div className="bg-surface-panel border border-border/70 rounded-sm overflow-hidden flex flex-col shadow-sm">
+      {/* Top Bar: Selector if both exist + Title */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4 border-b border-border/40 bg-surface-deck/50">
+        <div className="flex items-center gap-2">
+          <TacticalBadge
+            label={isWorst ? "ANOMALIAS & PICOS NEGATIVOS" : "HALL DA FAMA // ELITE"}
+            variant={isWorst ? "critical" : "gold"}
+            size="xs"
+          />
+          <span className="text-[10px] font-mono text-muted-foreground/60 hidden sm:inline">
+            {list.length} marcas registradas
+          </span>
+        </div>
+
+        {hasBoth && (
+          <div className="flex items-center gap-1 bg-surface-panel border border-border/60 p-0.5 rounded-xs">
+            <button
+              onClick={() => setMode("best")}
+              className={cn(
+                "px-2.5 py-1 text-[10px] font-mono font-bold uppercase rounded-xs transition-micro cursor-pointer",
+                !isWorst
+                  ? "bg-gold/15 text-gold border border-gold/30"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Elite
+            </button>
+            <button
+              onClick={() => setMode("worst")}
+              className={cn(
+                "px-2.5 py-1 text-[10px] font-mono font-bold uppercase rounded-xs transition-micro cursor-pointer",
+                isWorst
+                  ? "bg-status-critical/15 text-status-critical border border-status-critical/30"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Anomalias
+            </button>
+          </div>
         )}
+      </div>
 
-        {/* ── Coluna principal (75%) ── */}
-        <div className="lg:col-span-3 p-6 sm:p-8 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-white/[0.05] relative z-10">
+      {/* Main Content: Hero Deck (Col 8) + Category Grid (Col 4) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-border/40 relative">
+        
+        {/* Left / Hero Record Showcase (8 cols) */}
+        <div className="lg:col-span-8 p-5 sm:p-6 flex flex-col justify-between gap-6 relative overflow-hidden">
+          {/* Subtle Map Background overlay if present */}
+          {mapImgUrl && (
+            <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+              <img
+                src={mapImgUrl}
+                alt=""
+                className="w-full h-full object-cover object-center opacity-15 grayscale-[30%]"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = "none";
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-surface-panel via-surface-panel/90 to-surface-panel/70" />
+            </div>
+          )}
 
-          {/* Progress dots */}
+          {/* Progress Strip */}
           {list.length > 1 && (
-            <div className="absolute top-4 left-6 right-6 flex gap-1.5 z-10">
+            <div className="flex gap-1 relative z-10">
               {list.map((_, idx) => (
                 <button
                   key={idx}
                   onClick={() => setActiveIndex(idx)}
-                  className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                    idx === activeIndex ? "bg-white/80" : "bg-white/10 hover:bg-white/20"
-                  }`}
+                  className={cn(
+                    "h-0.5 flex-1 rounded-none transition-colors duration-200 cursor-pointer",
+                    idx === activeIndex
+                      ? isWorst ? "bg-status-critical" : "bg-gold"
+                      : "bg-border/60 hover:bg-border"
+                  )}
+                  aria-label={`Ir para marca ${idx + 1}`}
                 />
               ))}
             </div>
@@ -406,112 +380,127 @@ export function HallOfFame({ records, monitoredPlayers, variant = "best" }: Hall
 
           <AnimatePresence mode="wait">
             <motion.div
-              key={activeIndex}
-              initial={{ opacity: 0, x: 12 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -12 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className="flex flex-col gap-5 pt-4"
+              key={`${mode}-${activeIndex}`}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="flex flex-col gap-4 relative z-10"
             >
-              {/* Badges */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <HudBadge label={isWorst ? "ANTIRECORDE" : "RECORDE"} variant={isWorst ? "red" : "gold"} />
-                {record.mapName || mapName ? (
-                  <HudBadge label={record.mapName || mapName || ""} variant="cyan" />
-                ) : (
-                  <HudBadge label="GERAL" variant="neutral" />
-                )}
-                <HudBadge label="TEMPORADA" variant="neutral" />
+              {/* Category Header */}
+              <div className="flex items-center gap-2">
+                <div className={cn("flex size-7 items-center justify-center rounded-xs border shrink-0", isWorst ? "bg-status-critical/10 border-status-critical/30 text-status-critical" : "bg-gold/10 border-gold/30 text-gold")}>
+                  <IconComponent className="size-4" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className={cn("text-xs font-mono font-bold uppercase tracking-wider", meta.accentColor)}>
+                    {meta.title}
+                  </span>
+                  <span className="text-[10px] font-mono text-muted-foreground/60">
+                    {record.mapName || mapName ? `Mapa ${record.mapName || mapName}` : "Temporada Geral"}
+                  </span>
+                </div>
               </div>
 
-              {/* Player + value */}
-              <div className="flex flex-col sm:flex-row gap-5 items-start sm:items-center">
-                <div className="size-16 rounded-2xl border-2 border-slate-950 ring-4 ring-white/5 overflow-hidden bg-slate-900 flex items-center justify-center shrink-0">
+              {/* Player & Value Matrix */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-y border-border/30 py-4">
+                <div className="flex items-center gap-3.5 min-w-0">
                   <PlayerAvatar
                     nickname={matchedPlayer?.nickname ?? record.playerName}
                     avatarUrl={matchedPlayer?.avatarUrl ?? null}
-                    size="md"
+                    size="lg"
                   />
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/60">
+                      Detentor da Marca
+                    </span>
+                    {matchedPlayer ? (
+                      <Link
+                        href={`/players/${matchedPlayer.id}`}
+                        className="text-lg sm:text-xl font-black tracking-tight text-foreground hover:text-primary transition-colors uppercase truncate"
+                      >
+                        {matchedPlayer.nickname}
+                      </Link>
+                    ) : (
+                      <span className="text-lg sm:text-xl font-black tracking-tight text-foreground uppercase truncate">
+                        {record.playerName}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="space-y-0.5">
-                  {matchedPlayer ? (
-                    <Link
-                      href={`/players/${matchedPlayer.id}`}
-                      className="text-2xl sm:text-3xl font-black tracking-tight text-white hover:text-primary transition-colors leading-none uppercase block"
-                    >
-                      {matchedPlayer.nickname}
-                    </Link>
-                  ) : (
-                    <p className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-none uppercase">
-                      {record.playerName}
-                    </p>
-                  )}
-                  <p className={cn("text-sm font-semibold uppercase tracking-wider", meta.accentColor)}>
-                    {meta.title}
-                  </p>
+
+                <div className="flex flex-col sm:items-end">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/60">
+                    Valor Registrado
+                  </span>
+                  <span className={cn("text-3xl sm:text-4xl font-mono font-black tabular-nums leading-tight", isWorst ? "text-status-critical" : "text-gold")}>
+                    {record.value}
+                  </span>
                 </div>
               </div>
 
-              {/* Big value */}
-              <div className="flex items-end gap-4">
-                <p className="metric-hero text-gradient-gold">
-                  {record.value}
-                </p>
-                <p className="text-sm text-muted-foreground/50 font-medium leading-snug pb-2 max-w-xs">
-                  {meta.description}
-                </p>
-              </div>
-
-              {/* Narrativa do narrador */}
-              {allNarratives[record.category] && (
-                <div className="mt-1 border-l-2 border-white/[0.08] pl-3">
-                  <p className={cn("text-[11px] font-black", meta.accentColor)}>
+              {/* Narrativa ou Descrição Técnica */}
+              {allNarratives[record.category] ? (
+                <div className="border-l-2 border-border/80 pl-3 py-0.5">
+                  <p className={cn("text-xs font-mono font-bold", meta.accentColor)}>
                     {allNarratives[record.category].headline}
                   </p>
-                   <p className="text-[10px] text-muted-foreground/55 italic mt-0.5 leading-relaxed">
+                  <p className="text-[11px] font-mono text-muted-foreground/70 italic mt-0.5">
                     &ldquo;{allNarratives[record.category].quote}&rdquo;
                   </p>
                 </div>
+              ) : (
+                <p className="text-xs font-mono text-muted-foreground/70">
+                  {meta.description}
+                </p>
               )}
             </motion.div>
           </AnimatePresence>
 
-          {/* Footer: nav + link */}
-          <div className="flex items-center justify-between pt-5 border-t border-white/[0.04] mt-5">
+          {/* Footer Controls */}
+          <div className="flex items-center justify-between border-t border-border/30 pt-3 relative z-10">
             <div className="flex items-center gap-2">
-              {list.length > 1 && (
-                <>
-                  <button onClick={handlePrev} className="size-7 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.07] flex items-center justify-center text-white/50 hover:text-white transition-all cursor-pointer">
-                    <ChevronLeft className="size-3.5" />
-                  </button>
-                  <span className="text-[10px] text-muted-foreground/45 font-bold tabular-nums">
-                    {activeIndex + 1} / {list.length}
-                  </span>
-                  <button onClick={handleNext} className="size-7 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.07] flex items-center justify-center text-white/50 hover:text-white transition-all cursor-pointer">
-                    <ChevronRight className="size-3.5" />
-                  </button>
-                </>
-              )}
+              <button
+                onClick={handlePrev}
+                className="size-7 rounded-xs bg-surface-deck border border-border/50 hover:bg-surface-elevated flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                aria-label="Marca anterior"
+              >
+                <ChevronLeft className="size-3.5" />
+              </button>
+              <span className="text-[10px] font-mono text-muted-foreground font-bold tabular-nums">
+                {activeIndex + 1} / {list.length}
+              </span>
+              <button
+                onClick={handleNext}
+                className="size-7 rounded-xs bg-surface-deck border border-border/50 hover:bg-surface-elevated flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                aria-label="Próxima marca"
+              >
+                <ChevronRight className="size-3.5" />
+              </button>
             </div>
+
             {record.matchId && (
               <Link
                 href={`/matches/${record.matchId}`}
-                className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl border border-primary/15 bg-primary/5 hover:bg-primary/10 hover:border-primary/30 text-primary text-[10px] font-black uppercase tracking-wider transition-all"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xs border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-mono font-bold uppercase transition-colors"
               >
-                Ver Partida <span>▶</span>
+                <span>Ver Partida</span>
+                <ArrowRight className="size-3" />
               </Link>
             )}
           </div>
         </div>
 
-        {/* ── Coluna lateral: seletor compacto de categorias ── */}
-        <div className="p-3 bg-black/[0.12] flex flex-col gap-2.5 relative z-10">
-          <div className="flex items-center justify-between px-0.5">
-            <span className="text-[9px] uppercase tracking-widest font-extrabold text-muted-foreground/60">Categorias</span>
-            <span className="text-[9px] text-muted-foreground/40 font-bold">{list.length}</span>
+        {/* Right / Category Selector Grid (4 cols) */}
+        <div className="lg:col-span-4 p-3 sm:p-4 bg-surface-deck/40 flex flex-col gap-2">
+          <div className="flex items-center justify-between px-1 mb-1">
+            <span className="text-[9px] font-mono uppercase tracking-widest font-bold text-muted-foreground/70">
+              Categorias
+            </span>
+            <span className="text-[9px] font-mono text-muted-foreground/50">{list.length} itens</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-1.5">
+          <div className="grid grid-cols-2 lg:grid-cols-1 gap-1.5 max-h-[340px] overflow-y-auto no-scrollbar pr-0.5">
             {list.map((r, idx) => {
               const m = categoryMetadata[r.category] ?? defaultMeta;
               const Icon = m.icon;
@@ -521,24 +510,21 @@ export function HallOfFame({ records, monitoredPlayers, variant = "best" }: Hall
                   key={r.category}
                   onClick={() => setActiveIndex(idx)}
                   className={cn(
-                    "flex flex-col items-center gap-1 p-2 rounded-xl border transition-all cursor-pointer",
+                    "flex items-center gap-2.5 p-2 rounded-xs border text-left transition-micro cursor-pointer",
                     isActive
-                      ? "bg-white/[0.06] border-white/[0.10] shadow-sm"
-                      : "bg-transparent border-transparent hover:bg-white/[0.025] hover:border-white/[0.04]"
+                      ? isWorst
+                        ? "bg-status-critical/10 border-status-critical/40 text-status-critical"
+                        : "bg-gold/10 border-gold/40 text-gold"
+                      : "bg-surface-panel border-border/40 text-muted-foreground hover:text-foreground hover:border-border"
                   )}
                 >
-                  <div className={cn(
-                    "size-6 rounded-lg flex items-center justify-center shrink-0",
-                    isActive ? "bg-white/[0.10]" : "bg-white/[0.03]"
-                  )}>
-                    <Icon className={cn("size-3.5", isActive ? m.iconColor : "text-white/40")} />
-                  </div>
-                  <p className={cn(
-                    "text-[8px] font-bold text-center leading-tight w-full",
-                    isActive ? "text-white/90" : "text-white/40"
-                  )}>
+                  <Icon className={cn("size-3.5 shrink-0", isActive ? (isWorst ? "text-status-critical" : "text-gold") : "text-muted-foreground/60")} />
+                  <span className="text-[10px] font-mono font-bold uppercase truncate flex-1">
                     {m.shortLabel}
-                  </p>
+                  </span>
+                  <span className="text-[10px] font-mono tabular-nums font-bold opacity-70">
+                    {r.value}
+                  </span>
                 </button>
               );
             })}

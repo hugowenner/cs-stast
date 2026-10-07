@@ -1,9 +1,10 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
-import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowRight, Award } from "lucide-react";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import { MatchTypeBadge } from "@/components/matches/match-type-badge";
+import { TacticalBadge } from "@/components/ui/tactical-badge";
 import Link from "next/link";
 import type { RecentMatchCardData } from "./recent-matches-carousel";
 import { cn } from "@/lib/utils";
@@ -12,34 +13,30 @@ import { cn } from "@/lib/utils";
 
 const DATE_FMT = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" });
 
-const POSITION_LABELS = ["🥇", "🥈", "🥉", "4º", "5º", "6º", "7º", "8º", "9º", "10º"];
-
 type PS = RecentMatchCardData["playerStats"][number];
 
 // ─── PlayerRow ─────────────────────────────────────────────────────────────────
-// Rating is the dominant stat. Medal shows rank within the team.
-
 function PlayerRow({ ps, position, isMvp }: { ps: PS; position: number; isMvp: boolean }) {
-  const posLabel = POSITION_LABELS[position] ?? `${position + 1}º`;
+  const isTop1 = position === 0;
   const isTopThree = position < 3;
 
   return (
     <div
       className={cn(
-        "flex items-center gap-1.5 px-2 py-[5px] rounded-lg relative z-10",
+        "flex items-center gap-2 px-2.5 py-1.5 rounded-xs transition-colors relative z-10",
         isMvp
-          ? "bg-accent-gold/[0.05] border border-accent-gold/[0.12]"
-          : "hover:bg-white/[0.025] transition-colors",
+          ? "bg-gold/[0.08] border border-gold/25"
+          : "hover:bg-surface-deck/60"
       )}
     >
-      {/* Position medal */}
+      {/* Position rank */}
       <span
         className={cn(
-          "shrink-0 w-4 text-center leading-none select-none",
-          isTopThree ? "text-[11px] [text-shadow:0_1px_4px_rgba(0,0,0,0.9)]" : "text-[9px] font-bold text-white/40 [text-shadow:0_1px_4px_rgba(0,0,0,0.9)]",
+          "shrink-0 w-4 font-mono text-[10px] font-bold text-center leading-none tabular-nums",
+          isTop1 ? "text-gold font-black" : isTopThree ? "text-white font-bold" : "text-white/40"
         )}
       >
-        {posLabel}
+        #{position + 1}
       </span>
 
       {/* Avatar */}
@@ -47,29 +44,32 @@ function PlayerRow({ ps, position, isMvp }: { ps: PS; position: number; isMvp: b
 
       {/* Name + secondary stats */}
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1 min-w-0">
-          <p className="text-[10px] font-bold text-white truncate leading-tight [text-shadow:0_1px_4px_rgba(0,0,0,0.9)]">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <p className="text-xs font-bold text-white truncate leading-tight">
             {ps.player.nickname}
           </p>
           {isMvp && (
-            <span className="shrink-0 text-[9px] leading-none select-none">🏆</span>
+            <span className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-mono font-black text-gold uppercase px-1 py-0.2 bg-gold/15 border border-gold/30 rounded-2xs">
+              <Award className="size-2.5" />
+              MVP
+            </span>
           )}
         </div>
-        <p className="text-[8px] text-white/70 tabular-nums leading-tight [text-shadow:0_1px_4px_rgba(0,0,0,0.9)]">
+        <p className="text-[10px] font-mono text-white/80 font-medium tabular-nums leading-tight mt-0.5">
           {ps.kills}/{ps.deaths} · {Math.round(ps.adr)} ADR
         </p>
       </div>
 
       {/* Rating — protagonist */}
-      <div className="shrink-0 text-right min-w-[28px]">
+      <div className="shrink-0 text-right min-w-[32px]">
         <p className={cn(
-          "text-xs font-black tabular-nums leading-none [text-shadow:0_1px_6px_rgba(0,0,0,0.95)]",
-          isMvp ? "text-accent-gold" : "text-white",
+          "text-xs font-mono font-black tabular-nums leading-none",
+          isMvp ? "text-gold" : "text-white"
         )}>
           {ps.rating.toFixed(2)}
         </p>
-        <p className="text-[7px] text-white/40 leading-none mt-0.5 uppercase tracking-wider [text-shadow:0_1px_4px_rgba(0,0,0,0.9)]">
-          rating
+        <p className="text-[8px] font-mono text-white/40 font-semibold leading-none mt-0.5 uppercase tracking-wider">
+          RTG
         </p>
       </div>
     </div>
@@ -77,6 +77,22 @@ function PlayerRow({ ps, position, isMvp }: { ps: PS; position: number; isMvp: b
 }
 
 // ─── ConfrontationCard ────────────────────────────────────────────────────────
+
+const MAP_IMAGES: Record<string, string> = {
+  mirage: "/maps/mirage.png",
+  dust2: "/maps/dust2.png",
+  inferno: "/maps/inferno.png",
+  ancient: "/maps/ancient.png",
+  anubis: "/maps/anubis.png",
+  nuke: "/maps/nuke.png",
+  cache: "/maps/cache.png",
+  overpass: "/maps/overpass.png",
+};
+
+function getMapImage(mapName: string): string | null {
+  const norm = mapName.toLowerCase().replace(/^de_/, "").trim();
+  return MAP_IMAGES[norm] ?? null;
+}
 
 function ConfrontationCard({ match }: { match: RecentMatchCardData }) {
   const allSorted = [...match.playerStats].sort((a, b) => b.rating - a.rating);
@@ -98,36 +114,19 @@ function ConfrontationCard({ match }: { match: RecentMatchCardData }) {
   const mvpId = allSorted[0]?.player.id ?? null;
   const date = DATE_FMT.format(new Date(match.playedAt));
 
-  const MAP_IMAGES: Record<string, string> = {
-  mirage: "/maps/mirage.png",
-  dust2: "/maps/dust2.png",
-  inferno: "/maps/inferno.png",
-  ancient: "/maps/ancient.png",
-  anubis: "/maps/anubis.png",
-  nuke: "/maps/nuke.png",
-  cache: "/maps/cache.png",
-  overpass: "/maps/overpass.png",
-};
-
-function getMapImage(mapName: string): string | null {
-  const norm = mapName.toLowerCase().replace(/^de_/, "").trim();
-  return MAP_IMAGES[norm] ?? null;
-}
-
-// For all-same-side matches, determine their result
+  // For all-same-side matches, determine their result
   const monitoredTeam = sideA.length > 0 ? "A" : "B";
   const monitoredWon = allSameSide && (monitoredTeam === "A" ? wonA : wonB);
   const monitoredDraw = allSameSide && draw;
   const monitoredLost = allSameSide && !monitoredWon && !monitoredDraw;
 
-  // Card border reflects result (only when we know which team is "ours")
   const cardBorderClass = allSameSide
     ? monitoredWon
-      ? "border-status-good/[0.25]"
+      ? "border-status-good/40 hover:border-status-good/60"
       : monitoredLost
-      ? "border-status-critical/[0.18]"
-      : "border-white/[0.08]"
-    : "border-white/[0.08]";
+      ? "border-status-critical/30 hover:border-status-critical/50"
+      : "border-border/60 hover:border-border/90"
+    : "border-border/60 hover:border-border/90";
 
   const mapImg = getMapImage(match.map.name);
 
@@ -135,59 +134,60 @@ function getMapImage(mapName: string): string | null {
     <div
       data-card
       className={cn(
-        "glass-panel rounded-2xl border overflow-hidden flex-shrink-0 flex flex-col relative group",
+        "bg-surface-panel rounded-sm border overflow-hidden flex-shrink-0 flex flex-col relative group transition-all duration-200 shadow-sm",
         "w-full sm:w-[calc(50%-7px)] lg:w-[calc(33.333%-10px)]",
-        "hover:shadow-xl hover:shadow-black/[0.28] hover:brightness-105 transition-all duration-200",
         cardBorderClass,
       )}
       style={{ scrollSnapAlign: "start" }}
     >
-      {/* Background Map Image Overlay */}
+      {/* Background Map Texture with vivid recognition (55-65% presence) */}
       {mapImg && (
-        <>
+        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={mapImg}
-            alt={match.map.name}
-            className="bg-map-texture"
+            alt=""
+            className="w-full h-full object-cover object-center opacity-55 group-hover:opacity-75 group-hover:scale-105 transition-all duration-300"
             onError={(e) => {
               (e.target as HTMLElement).style.display = "none";
             }}
           />
-          <div className="bg-texture-overlay" />
-        </>
+          {/* Calibrated tactical scrim: keeps map vivid in header/score while ensuring 100% contrast over player stats */}
+          <div className="absolute inset-0 bg-gradient-to-t from-surface-panel via-surface-panel/80 via-40% to-surface-panel/30" />
+        </div>
       )}
 
-      {/* ── HEADER: map • type • date — compact single line ───── */}
-      <div className="px-4 py-2 border-b border-white/[0.05] flex items-center gap-2 relative z-10">
-        <span className="text-[10px] font-black text-white uppercase tracking-wide truncate [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">
-          {match.map.name}
-        </span>
-        <span className="text-muted-foreground/20 text-[9px] shrink-0">•</span>
-        <span className="shrink-0">
-          <MatchTypeBadge trackedPlayersCount={match.trackedPlayersCount} />
-        </span>
-        <span className="ml-auto text-[9px] text-white/80 shrink-0 font-semibold tabular-nums [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">
+      {/* ── HEADER: map • type • date ───── */}
+      <div className="px-3.5 py-2.5 border-b border-border/40 bg-surface-deck/80 backdrop-blur-xs flex items-center justify-between gap-2 relative z-10">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="text-xs font-mono font-black text-white uppercase tracking-wider truncate">
+            {match.map.name}
+          </span>
+          <span className="shrink-0">
+            <MatchTypeBadge trackedPlayersCount={match.trackedPlayersCount} />
+          </span>
+        </div>
+        <span className="text-[10px] font-mono font-medium text-white/70 shrink-0 tabular-nums">
           {date}
         </span>
       </div>
 
       {/* ── SCORE HERO ────────────────────────────────────────── */}
-      <div className="px-4 py-2.5 border-b border-white/[0.04] flex items-center justify-between gap-3 relative z-10">
-        {/* Score — largest element in card */}
+      <div className="px-3.5 py-2.5 border-b border-border/30 flex items-center justify-between gap-3 relative z-10">
         <div className="flex items-center gap-2">
           <span
             className={cn(
-              "text-[22px] font-black tabular-nums leading-none [text-shadow:0_2px_8px_rgba(0,0,0,0.95)]",
-              wonA ? "text-status-good" : draw ? "text-white/60" : "text-white/30",
+              "text-2xl font-mono font-black tabular-nums leading-none",
+              wonA ? "text-white" : draw ? "text-white" : "text-white/60"
             )}
           >
             {match.scoreTeamA}
           </span>
-          <span className="text-[11px] text-white/40 font-black [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">×</span>
+          <span className="text-xs font-mono text-white/40 font-bold">×</span>
           <span
             className={cn(
-              "text-[22px] font-black tabular-nums leading-none [text-shadow:0_2px_8px_rgba(0,0,0,0.95)]",
-              wonB ? "text-status-good" : draw ? "text-white/60" : "text-white/30",
+              "text-2xl font-mono font-black tabular-nums leading-none",
+              wonB ? "text-white" : draw ? "text-white" : "text-white/60"
             )}
           >
             {match.scoreTeamB}
@@ -196,97 +196,67 @@ function getMapImage(mapName: string): string | null {
 
         {/* Result badge */}
         {allSameSide && (
-          <span
-            className={cn(
-              "text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border shrink-0 [text-shadow:0_1px_2px_rgba(0,0,0,0.5)]",
-              monitoredWon
-                ? "text-status-good bg-status-good/[0.08] border-status-good/[0.2]"
-                : monitoredDraw
-                ? "text-white/60 bg-white/[0.02] border-white/[0.06]"
-                : "text-status-critical bg-status-critical/[0.07] border-status-critical/[0.15]",
-            )}
-          >
-            {monitoredWon ? "Vitória" : monitoredDraw ? "Empate" : "Derrota"}
-          </span>
+          <TacticalBadge
+            label={monitoredWon ? "VITÓRIA" : monitoredDraw ? "EMPATE" : "DERROTA"}
+            variant={monitoredWon ? "good" : monitoredDraw ? "neutral" : "critical"}
+            size="xs"
+          />
         )}
         {hasConfrontation && !is1v1 && (
-          <span className="text-[8px] font-bold text-white/50 uppercase tracking-wider shrink-0 [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">
-            5v5
-          </span>
+          <TacticalBadge label="5v5" variant="primary" size="xs" />
         )}
       </div>
 
       {/* ── BODY ──────────────────────────────────────────────── */}
-      <div className="flex-1 px-3 py-2 flex flex-col relative z-10">
-
+      <div className="flex-1 p-2.5 flex flex-col relative z-10">
         {/* 1v1 layout */}
         {is1v1 && (() => {
           const a = sideA[0];
           const b = sideB[0];
           return (
-            <div className="flex items-stretch gap-3 py-1">
+            <div className="flex items-stretch gap-2 py-1">
               {/* Player A */}
-              <div
-                className={cn(
-                  "flex-1 flex flex-col items-center gap-1 py-2 rounded-xl",
-                  !wonA && !draw ? "opacity-40" : "",
-                )}
-              >
-                <PlayerAvatar nickname={a.player.nickname} avatarUrl={a.player.avatarUrl} size="lg" />
-                <p className="text-[10px] font-bold text-white truncate max-w-full text-center leading-tight [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">
+              <div className={cn("flex-1 flex flex-col items-center gap-1.5 p-2 rounded-xs bg-surface-deck/60", !wonA && !draw ? "opacity-75" : "")}>
+                <PlayerAvatar nickname={a.player.nickname} avatarUrl={a.player.avatarUrl} size="md" />
+                <p className="text-xs font-bold text-white truncate max-w-full text-center">
                   {a.player.nickname}
                 </p>
                 {a.player.id === mvpId && (
-                  <span className="text-[9px] text-accent-gold font-black leading-none [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">🏆 MVP</span>
+                  <TacticalBadge label="MVP" variant="gold" size="xs" />
                 )}
-                <div className="mt-1.5 text-center space-y-0.5">
-                  <p className="text-sm font-black text-white tabular-nums leading-none [text-shadow:0_2px_8px_rgba(0,0,0,0.95)]">
+                <div className="mt-1 text-center font-mono">
+                  <p className="text-sm font-black text-white tabular-nums">
                     {a.rating.toFixed(2)}
                   </p>
-                  <p className="text-[7px] text-white/50 uppercase tracking-wider leading-none [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">
-                    rating
+                  <p className="text-[8px] text-white/50 uppercase font-semibold">rating</p>
+                  <p className="text-[10px] text-white/80 font-medium tabular-nums mt-1">
+                    {a.kills}/{a.deaths} · {Math.round(a.adr)} ADR
                   </p>
-                  <p className="text-[9px] font-semibold text-white/80 tabular-nums mt-1.5 [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">
-                    {a.kills}/{a.deaths}
-                  </p>
-                  <p className="text-[8px] text-white/70 [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">{Math.round(a.adr)} ADR</p>
                 </div>
               </div>
 
               {/* VS divider */}
-              <div className="flex flex-col items-center justify-center shrink-0 gap-1">
-                <div className="flex-1 w-px bg-white/[0.05]" />
-                <span className="text-[8px] font-black text-white/30 uppercase tracking-widest [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">
-                  vs
-                </span>
-                <div className="flex-1 w-px bg-white/[0.05]" />
+              <div className="flex flex-col items-center justify-center shrink-0">
+                <span className="text-[9px] font-mono font-black text-white/40 uppercase">VS</span>
               </div>
 
               {/* Player B */}
-              <div
-                className={cn(
-                  "flex-1 flex flex-col items-center gap-1 py-2 rounded-xl",
-                  !wonB && !draw ? "opacity-40" : "",
-                )}
-              >
-                <PlayerAvatar nickname={b.player.nickname} avatarUrl={b.player.avatarUrl} size="lg" />
-                <p className="text-[10px] font-bold text-white truncate max-w-full text-center leading-tight [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">
+              <div className={cn("flex-1 flex flex-col items-center gap-1.5 p-2 rounded-xs bg-surface-deck/60", !wonB && !draw ? "opacity-75" : "")}>
+                <PlayerAvatar nickname={b.player.nickname} avatarUrl={b.player.avatarUrl} size="md" />
+                <p className="text-xs font-bold text-white truncate max-w-full text-center">
                   {b.player.nickname}
                 </p>
                 {b.player.id === mvpId && (
-                  <span className="text-[9px] text-accent-gold font-black leading-none [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">🏆 MVP</span>
+                  <TacticalBadge label="MVP" variant="gold" size="xs" />
                 )}
-                <div className="mt-1.5 text-center space-y-0.5">
-                  <p className="text-sm font-black text-white tabular-nums leading-none [text-shadow:0_2px_8px_rgba(0,0,0,0.95)]">
+                <div className="mt-1 text-center font-mono">
+                  <p className="text-sm font-black text-white tabular-nums">
                     {b.rating.toFixed(2)}
                   </p>
-                  <p className="text-[7px] text-white/50 uppercase tracking-wider leading-none [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">
-                    rating
+                  <p className="text-[8px] text-white/50 uppercase font-semibold">rating</p>
+                  <p className="text-[10px] text-white/80 font-medium tabular-nums mt-1">
+                    {b.kills}/{b.deaths} · {Math.round(b.adr)} ADR
                   </p>
-                  <p className="text-[9px] font-semibold text-white/80 tabular-nums mt-1.5 [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">
-                    {b.kills}/{b.deaths}
-                  </p>
-                  <p className="text-[8px] text-white/70 [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]">{Math.round(b.adr)} ADR</p>
                 </div>
               </div>
             </div>
@@ -295,31 +265,26 @@ function getMapImage(mapName: string): string | null {
 
         {/* 5v5 confrontation layout */}
         {hasConfrontation && !is1v1 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-x-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {/* Side A */}
             <div className="flex flex-col gap-0.5">
-              <p
-                className={cn(
-                  "text-[7px] uppercase tracking-widest font-black px-2 pb-1 leading-none [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]",
-                  wonA ? "text-status-good/95" : "text-white/40",
-                )}
-              >
-                {wonA ? "✓ Vitória" : draw ? "Empate" : "Derrota"}
-              </p>
+              <div className="px-2 py-0.5 mb-0.5">
+                <span className={cn("text-[9px] font-mono font-bold uppercase tracking-wider", wonA ? "text-status-good" : draw ? "text-white/80" : "text-white/50")}>
+                  {wonA ? "Vitória" : draw ? "Empate" : "Derrota"}
+                </span>
+              </div>
               {sideA.map((ps, i) => (
                 <PlayerRow key={ps.player.id} ps={ps} position={i} isMvp={ps.player.id === mvpId} />
               ))}
             </div>
+
             {/* Side B */}
-            <div className="flex flex-col gap-0.5 border-t sm:border-t-0 sm:border-l border-white/[0.06] pt-2 sm:pt-0 pl-0 sm:pl-1">
-              <p
-                className={cn(
-                  "text-[7px] uppercase tracking-widest font-black px-2 pb-1 leading-none [text-shadow:0_1px_4px_rgba(0,0,0,0.95)]",
-                  wonB ? "text-status-good/95" : "text-white/40",
-                )}
-              >
-                {wonB ? "✓ Vitória" : draw ? "Empate" : "Derrota"}
-              </p>
+            <div className="flex flex-col gap-0.5 border-t sm:border-t-0 sm:border-l border-border/30 pt-2 sm:pt-0 sm:pl-2">
+              <div className="px-2 py-0.5 mb-0.5">
+                <span className={cn("text-[9px] font-mono font-bold uppercase tracking-wider", wonB ? "text-status-good" : draw ? "text-white/80" : "text-white/50")}>
+                  {wonB ? "Vitória" : draw ? "Empate" : "Derrota"}
+                </span>
+              </div>
               {sideB.map((ps, i) => (
                 <PlayerRow key={ps.player.id} ps={ps} position={i} isMvp={ps.player.id === mvpId} />
               ))}
@@ -338,12 +303,12 @@ function getMapImage(mapName: string): string | null {
       </div>
 
       {/* ── FOOTER ─────────────────────────────────────────────── */}
-      <div className="px-4 py-2 border-t border-white/[0.04] flex items-center justify-end relative z-10">
+      <div className="px-3.5 py-2 border-t border-border/30 bg-surface-deck/30 flex items-center justify-end relative z-10">
         <Link
           href={`/matches/${match.id}`}
-          className="text-[10px] text-primary/50 hover:text-primary transition-colors font-semibold inline-flex items-center gap-1 group/btn"
+          className="text-xs font-mono font-bold text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-1 group/btn"
         >
-          Ver detalhes
+          <span>Ver detalhes</span>
           <ArrowRight className="size-3 group-hover/btn:translate-x-0.5 transition-transform" />
         </Link>
       </div>
@@ -416,7 +381,7 @@ export function ConfrontationsCarousel({ matches }: Props) {
     <div className="flex flex-col gap-3">
       {/* Controles */}
       <div className="flex items-center justify-between">
-        <span className="text-[10px] text-muted-foreground/50 font-semibold tabular-nums">
+        <span className="text-[10px] font-mono text-muted-foreground/60 font-semibold tabular-nums">
           {currentIndex + 1} de {matches.length}
         </span>
         <div className="flex items-center gap-1.5">
@@ -424,7 +389,7 @@ export function ConfrontationsCarousel({ matches }: Props) {
             onClick={handlePrev}
             disabled={!canPrev}
             aria-label="Confronto anterior"
-            className="flex items-center justify-center size-7 rounded-lg border border-white/[0.07] bg-white/[0.03] text-muted-foreground/60 hover:text-white hover:border-white/[0.12] hover:bg-white/[0.06] disabled:opacity-25 disabled:cursor-not-allowed transition-all"
+            className="flex items-center justify-center size-7 rounded-xs border border-border/50 bg-surface-deck text-muted-foreground hover:text-foreground hover:bg-surface-elevated disabled:opacity-25 disabled:cursor-not-allowed transition-all"
           >
             <ChevronLeft className="size-3.5" />
           </button>
@@ -432,7 +397,7 @@ export function ConfrontationsCarousel({ matches }: Props) {
             onClick={handleNext}
             disabled={!canNext}
             aria-label="Próximo confronto"
-            className="flex items-center justify-center size-7 rounded-lg border border-white/[0.07] bg-white/[0.03] text-muted-foreground/60 hover:text-white hover:border-white/[0.12] hover:bg-white/[0.06] disabled:opacity-25 disabled:cursor-not-allowed transition-all"
+            className="flex items-center justify-center size-7 rounded-xs border border-border/50 bg-surface-deck text-muted-foreground hover:text-foreground hover:bg-surface-elevated disabled:opacity-25 disabled:cursor-not-allowed transition-all"
           >
             <ChevronRight className="size-3.5" />
           </button>
@@ -451,17 +416,16 @@ export function ConfrontationsCarousel({ matches }: Props) {
       </div>
 
       {/* Dots */}
-      <div className="flex items-center justify-center gap-1.5 pt-1">
+      <div className="flex items-center justify-center gap-1 pt-1">
         {matches.map((_, i) => (
           <button
             key={i}
             onClick={() => { setCurrentIndex(i); scrollToIndex(i); }}
             aria-label={`Ir para partida ${i + 1}`}
-            className={`rounded-full transition-all ${
-              i === currentIndex
-                ? "w-4 h-1.5 bg-primary/70"
-                : "size-1.5 bg-white/[0.15] hover:bg-white/[0.3]"
-            }`}
+            className={cn(
+              "h-1 rounded-none transition-all cursor-pointer",
+              i === currentIndex ? "w-5 bg-primary" : "w-2 bg-border/60 hover:bg-border"
+            )}
           />
         ))}
       </div>

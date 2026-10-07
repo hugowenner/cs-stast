@@ -21,7 +21,8 @@ function groupSessionsByDate(sessions: SimpleSessionSummary[]): YearGroup[] {
   sessions.forEach((session) => {
     const sDate = new Date(session.date);
     const year = sDate.getUTCFullYear();
-    const monthName = sDate.toLocaleDateString("pt-BR", { month: "long", timeZone: "UTC" })
+    const monthName = sDate
+      .toLocaleDateString("pt-BR", { month: "long", timeZone: "UTC" })
       .replace(/^\w/, (c) => c.toUpperCase());
 
     let yGroup = groups.find((g) => g.year === year);
@@ -56,31 +57,37 @@ export function SessionTimeline({ sessions }: SessionTimelineProps) {
   const grouped = groupSessionsByDate(sessions);
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-8">
       {grouped.map((yGroup) => (
         <div key={yGroup.year} className="flex flex-col gap-6">
           {/* Cabeçalho do Ano */}
-          <div className="flex items-center gap-4">
-            <span className="text-xl font-black text-white bg-white/[0.03] border border-white/[0.08] px-4 py-1 rounded-xl shadow-[0_0_12px_rgba(255,255,255,0.01)]">
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-sm font-black text-foreground bg-surface-deck border border-border/60 px-3 py-1 rounded-xs tracking-wider">
               {yGroup.year}
             </span>
-            <div className="h-px bg-white/[0.06] flex-1" />
+            <div className="h-px bg-border/40 flex-1" />
           </div>
 
           {yGroup.months.map((mGroup) => (
-            <div key={mGroup.monthName} className="flex flex-col gap-4">
+            <div key={mGroup.monthName} className="flex flex-col gap-3">
               {/* Cabeçalho do Mês */}
-              <h3 className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-[0.2em] pl-3">
-                {mGroup.monthName}
-              </h3>
+              <div className="flex items-center gap-2 pl-3">
+                <span className="size-1.5 rounded-full bg-primary/80" />
+                <h3 className="text-[11px] font-mono font-bold text-muted-foreground uppercase tracking-widest">
+                  {mGroup.monthName}
+                </h3>
+                <span className="text-[10px] font-mono text-muted-foreground/40">
+                  ({mGroup.sessions.length} {mGroup.sessions.length === 1 ? "sessão" : "sessões"})
+                </span>
+              </div>
 
               {/* Trilha Timeline */}
-              <div className="relative border-l border-white/[0.06] pl-6 ml-3 flex flex-col gap-5">
+              <div className="relative border-l border-border/40 pl-5 sm:pl-6 ml-3.5 flex flex-col gap-3.5">
                 {mGroup.sessions.map((session) => (
                   <div key={session.id} className="relative group">
                     {/* Nó Dot Interativo */}
-                    <span className="absolute -left-[29.5px] top-[28px] size-2 rounded-full bg-white/20 border border-[#0a0a0c] group-hover:bg-primary group-hover:scale-125 group-hover:shadow-[0_0_8px_0_rgba(var(--primary-rgb),0.5)] transition-all duration-200 z-10" />
-                    
+                    <span className="absolute -left-[25px] sm:-left-[29.5px] top-[26px] size-2 rounded-xs bg-muted-foreground/30 border border-background group-hover:bg-primary group-hover:scale-125 transition-all duration-150 z-10" />
+
                     <SessionCard session={session} />
                   </div>
                 ))}

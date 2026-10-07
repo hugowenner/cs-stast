@@ -10,7 +10,6 @@ import { SessionFilters, type SessionPeriod } from "@/components/sessions/sessio
 import { SessionTimeline } from "@/components/sessions/session-timeline";
 import { SessionEmptyState } from "@/components/sessions/session-empty-state";
 import { SessionPerformanceView } from "@/components/sessions/session-performance-view";
-
 import { getActiveSeason } from "@/server/services/season.service";
 
 export const dynamic = "force-dynamic";
@@ -55,7 +54,7 @@ export default async function SessionsPage({
   // ── View: Performance ──────────────────────────────────────────────────────
   if (isPerformanceView) {
     return (
-      <div className="flex flex-col gap-6 max-w-4xl mx-auto w-full px-4 sm:px-6">
+      <div className="flex flex-col gap-6 max-w-6xl mx-auto w-full px-4 sm:px-6">
         <FadeIn>
           <SessionPerformanceView
             sessions={simpleSessions}
@@ -69,15 +68,15 @@ export default async function SessionsPage({
 
   // ── View: Partidas (padrão) ─────────────────────────────────────────────────
   return (
-    <div className="flex flex-col gap-6 max-w-4xl mx-auto w-full px-4 sm:px-6">
+    <div className="flex flex-col gap-6 max-w-6xl mx-auto w-full px-4 sm:px-6">
       {/* Hero Header */}
       <FadeIn>
         <SessionHero overview={overview} />
       </FadeIn>
 
-      {/* Filtros Temporais */}
+      {/* Filtros Temporais & View Switcher */}
       <FadeIn delay={0.03}>
-        <SessionFilters activePeriod={activePeriod} />
+        <SessionFilters activePeriod={activePeriod} isPerformanceView={false} />
       </FadeIn>
 
       {/* Timeline ou Estado Vazio */}
@@ -88,20 +87,6 @@ export default async function SessionsPage({
           <SessionTimeline sessions={simpleSessions} />
         )}
       </FadeIn>
-
-      {/* Footer Integrado */}
-      <footer className="mt-12 pt-6 border-t border-white/[0.04] text-center flex flex-col items-center gap-1.5 pb-8">
-        <p className="text-[10px] uppercase tracking-widest font-black text-white/40 leading-none">
-          CS2 Stats Hub
-        </p>
-        <p className="text-[10px] text-muted-foreground/50 leading-none">
-          Plataforma de análise competitiva para partidas de CS2
-        </p>
-        <p className="text-[9px] text-muted-foreground/35 leading-none mt-1">
-          &copy; 2026 · Desenvolvido com ⚡ por LorD
-        </p>
-      </footer>
     </div>
   );
 }
-

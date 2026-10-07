@@ -2,15 +2,23 @@ import { SectionContainer } from "@/components/dashboard/section-container";
 import { PageHeader } from "@/components/ui/page-header";
 import { FadeIn } from "@/components/motion/fade-in";
 import { PlayerAvatar } from "@/components/players/player-avatar";
+import { TacticalBadge } from "@/components/ui/tactical-badge";
 import { AnimatedNumber } from "@/components/motion/animated-number";
 import { FORMA_STYLE } from "@/lib/forma";
 import { Users, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import { safeQuery } from "@/server/safeQuery";
 import * as playerService from "@/server/services/player.service";
 import * as competitiveService from "@/server/services/competitive.service";
 
 export const dynamic = "force-dynamic";
+
+function getFormaBadgeVariant(forma: string): "good" | "warning" | "neutral" {
+  if (forma === "Excelente" || forma === "Em alta") return "good";
+  if (forma === "Oscilando") return "warning";
+  return "neutral";
+}
 
 export default async function PlayersPage() {
   // Carrega o dataset completo do banco para manter a consistência de cálculo do Dashboard
@@ -52,87 +60,129 @@ export default async function PlayersPage() {
   return (
     <div className="flex flex-col gap-6">
       <FadeIn>
-        <PageHeader title="Jogadores" subtitle="Roster completo. Os números dizem quem está jogando bem." />
+        <PageHeader
+          title="Jogadores"
+          subtitle="Roster completo. Inteligência tática e métricas operacionais do elenco."
+        />
       </FadeIn>
 
       <SectionContainer
-        title="Jogadores Monitorados"
-        subtitle={`${players.length} jogadores ativos nesta temporada`}
+        title="Roster de Jogadores"
+        subtitle={`${players.length} jogadores monitorados nesta temporada`}
         delay={0.05}
       >
         {sortedPlayers.length === 0 ? (
-          <div className="glass-panel rounded-2xl border border-white/[0.06] p-12 text-center">
+          <div className="surface-panel rounded-sm border border-border/40 p-12 text-center">
             <Users className="size-10 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground/50">Nenhum jogador monitorado sincronizado ainda.</p>
+            <p className="text-sm font-mono text-muted-foreground/50">
+              Nenhum jogador monitorado sincronizado ainda.
+            </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {sortedPlayers.map((player) => {
               const entry = monitoredByPlayerId.get(player.id);
+              const isTop1 = entry?.rank === 1;
 
               if (entry) {
-                // Jogador ativo com estatísticas calculadas na temporada
                 const forma = FORMA_STYLE[entry.forma] ?? FORMA_STYLE["Oscilando"];
-                const FormaIcon = forma.icon;
-                const rankGlow =
-                  entry.rank === 1 ? "border-status-warning/45 shadow-[0_0_15px_0_rgba(245,158,11,0.08)]" :
-                  entry.rank === 2 ? "border-white/20" :
-                  entry.rank === 3 ? "border-accent-violet/30" :
-                  "border-white/[0.08]";
 
                 return (
                   <Link
                     key={player.id}
                     href={`/players/${player.id}`}
-                    className={`glass-panel card-hover rounded-2xl border overflow-hidden flex flex-col group ${rankGlow}`}
+                    className={cn(
+                      "surface-panel rounded-sm border overflow-hidden flex flex-col group transition-all duration-150",
+                      "hover:border-primary/50 hover:bg-surface-elevated/40",
+                      isTop1
+                        ? "border-gold/40 shadow-xs"
+                        : "border-border/40"
+                    )}
                   >
-                    {/* Cabeçalho do Card */}
-                    <div className="px-4 pt-4 pb-3 border-b border-white/[0.05] flex items-center gap-3">
-                      <div className="relative shrink-0">
-                        <PlayerAvatar nickname={player.nickname} avatarUrl={player.avatarUrl} size="md" />
-                        <span className={`absolute -bottom-1 -right-1 text-[8px] font-black leading-none px-1 py-0.5 rounded-full border ${
-                          entry.rank === 1 ? "bg-status-warning text-black border-status-warning/50" :
-                          entry.rank === 2 ? "bg-white/15 text-white border-white/20" :
-                          entry.rank === 3 ? "bg-accent-violet/20 text-accent-violet border-accent-violet/30" :
-                          "bg-white/[0.06] text-muted-foreground/70 border-white/[0.08]"
-                        }`}>
-                          #{entry.rank}
+                    {/* Header do Card: Rank • Avatar • Nick/GC • Forma • Arrow */}
+                    <div className="px-3.5 py-2.5 border-b border-border/30 bg-surface-deck/50 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {/* Posição Operacional */}
+                        <span
+                          className={cn(
+                            "font-mono text-xs font-black tabular-nums shrink-0 w-6 text-center leading-none",
+                            isTop1 ? "text-gold" : "text-white/40"
+                          )}
+                        >
+                          #{String(entry.rank).padStart(2, "0")}
                         </span>
+
+                        {/* Avatar */}
+                        <div className="shrink-0 rounded-xs overflow-hidden border border-border/50">
+                          <PlayerAvatar
+                            nickname={player.nickname}
+                            avatarUrl={player.avatarUrl}
+                            size="sm"
+                          />
+                        </div>
+
+                        {/* Nick e Nível GC */}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs sm:text-sm font-bold text-white truncate leading-tight group-hover:text-primary transition-colors">
+                            {player.nickname}
+                          </p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            {player.levelGc ? (
+                              <span className="font-mono text-[9px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
+                                GC {player.levelGc}
+                              </span>
+                            ) : (
+                              <span className="font-mono text-[9px] text-muted-foreground/40 uppercase tracking-wider">
+                                GC —
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-black text-white truncate leading-snug">{player.nickname}</p>
-                        {player.levelGc && (
-                          <p className="text-[9px] text-muted-foreground/55 font-semibold mt-0.5">GC Nível {player.levelGc}</p>
-                        )}
-                      </div>
-                      <div className="flex flex-col items-end shrink-0">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold border ${forma.bg} ${forma.border} ${forma.color}`}>
-                          <FormaIcon className="size-2.5" />
-                          {forma.text}
-                        </span>
+
+                      {/* Status / Forma & Seta de Ação */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <TacticalBadge
+                          label={forma.text.toUpperCase()}
+                          variant={getFormaBadgeVariant(entry.forma)}
+                          size="xs"
+                        />
+                        <ArrowRight className="size-3 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-transform" />
                       </div>
                     </div>
 
-                    {/* Métricas Rápidas: Rating e Winrate */}
-                    <div className="px-4 py-4.5 grid grid-cols-2 gap-4 border-b border-white/[0.04] bg-white/[0.01]">
-                      <div className="text-center border-r border-white/[0.04]">
-                        <p className="text-[8px] uppercase tracking-widest font-bold text-muted-foreground/50">Rating</p>
-                        <p className="text-xl font-black text-white mt-1.5 tabular-nums">
+                    {/* Faixa de Telemetria Integrada */}
+                    <div className="px-3.5 py-2.5 grid grid-cols-3 gap-2 text-center bg-surface-panel">
+                      <div className="flex flex-col items-center justify-center min-w-0">
+                        <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60 truncate">
+                          Rating
+                        </span>
+                        <span
+                          className={cn(
+                            "text-sm sm:text-base font-mono font-black tabular-nums mt-0.5 leading-none",
+                            isTop1 ? "text-gold" : "text-white"
+                          )}
+                        >
                           <AnimatedNumber value={entry.rating} decimals={2} duration={0.8} />
-                        </p>
+                        </span>
                       </div>
-                      <div className="text-center">
-                        <p className="text-[8px] uppercase tracking-widest font-bold text-muted-foreground/50">Winrate</p>
-                        <p className="text-xl font-black text-white mt-1.5 tabular-nums">
-                          <AnimatedNumber value={entry.winrate} decimals={0} suffix="%" duration={0.6} />
-                        </p>
-                      </div>
-                    </div>
 
-                    {/* Botão de Ação CTA */}
-                    <div className="mt-auto px-4 pb-4 pt-3.5">
-                      <div className="w-full py-2 px-3 rounded-xl bg-white/[0.03] border border-white/[0.07] text-center text-xs font-bold text-white/90 flex items-center justify-center gap-1 transition-all duration-300 group-hover:bg-primary group-hover:text-black group-hover:border-primary">
-                        Ver perfil <ArrowRight className="size-3 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-transform" />
+                      <div className="flex flex-col items-center justify-center min-w-0 border-x border-border/30 px-1">
+                        <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60 truncate">
+                          Winrate
+                        </span>
+                        <span className="text-xs sm:text-sm font-mono font-bold text-white/90 tabular-nums mt-0.5 leading-none">
+                          <AnimatedNumber value={entry.winrate} decimals={0} suffix="%" duration={0.6} />
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col items-center justify-center min-w-0">
+                        <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60 truncate">
+                          Partidas
+                        </span>
+                        <span className="text-xs sm:text-sm font-mono font-medium text-muted-foreground/80 tabular-nums mt-0.5 leading-none">
+                          {entry.matchCount} {entry.matchCount === 1 ? "jogo" : "jogos"}
+                        </span>
                       </div>
                     </div>
                   </Link>
@@ -143,27 +193,75 @@ export default async function PlayersPage() {
                   <Link
                     key={player.id}
                     href={`/players/${player.id}`}
-                    className="glass-panel card-hover rounded-2xl border border-white/[0.08] overflow-hidden flex flex-col p-6 text-center items-center justify-between gap-4 min-h-[220px] group"
+                    className={cn(
+                      "surface-panel rounded-sm border border-border/40 overflow-hidden flex flex-col group transition-all duration-150",
+                      "hover:border-primary/50 hover:bg-surface-elevated/40 opacity-75 hover:opacity-100"
+                    )}
                   >
-                    <div className="flex flex-col items-center gap-3">
-                      <PlayerAvatar nickname={player.nickname} avatarUrl={player.avatarUrl} size="md" />
-                      <div className="min-w-0">
-                        <p className="text-base font-black text-white truncate leading-snug">{player.nickname}</p>
-                        {player.levelGc ? (
-                          <p className="text-xs text-muted-foreground/50 font-semibold mt-1">GC Nível {player.levelGc}</p>
-                        ) : (
-                          <p className="text-xs text-muted-foreground/45 font-semibold mt-1">Nível GC não disponível</p>
-                        )}
+                    {/* Header do Card */}
+                    <div className="px-3.5 py-2.5 border-b border-border/30 bg-surface-deck/50 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className="font-mono text-xs font-bold text-white/30 tabular-nums shrink-0 w-6 text-center leading-none">
+                          —
+                        </span>
+                        <div className="shrink-0 rounded-xs overflow-hidden border border-border/50">
+                          <PlayerAvatar
+                            nickname={player.nickname}
+                            avatarUrl={player.avatarUrl}
+                            size="sm"
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs sm:text-sm font-bold text-white truncate leading-tight group-hover:text-primary transition-colors">
+                            {player.nickname}
+                          </p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            {player.levelGc ? (
+                              <span className="font-mono text-[9px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
+                                GC {player.levelGc}
+                              </span>
+                            ) : (
+                              <span className="font-mono text-[9px] text-muted-foreground/40 uppercase tracking-wider">
+                                GC —
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <TacticalBadge label="SEM AMOSTRA" variant="neutral" size="xs" />
+                        <ArrowRight className="size-3 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-transform" />
                       </div>
                     </div>
 
-                    <p className="text-[10px] text-muted-foreground/50 leading-relaxed italic max-w-[200px]">
-                      "Sem dados suficientes nesta temporada"
-                    </p>
+                    {/* Faixa de Telemetria Integrada (Sem dados) */}
+                    <div className="px-3.5 py-2.5 grid grid-cols-3 gap-2 text-center bg-surface-panel">
+                      <div className="flex flex-col items-center justify-center min-w-0">
+                        <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60 truncate">
+                          Rating
+                        </span>
+                        <span className="text-sm sm:text-base font-mono font-bold text-muted-foreground/40 tabular-nums mt-0.5 leading-none">
+                          —
+                        </span>
+                      </div>
 
-                    <div className="w-full pt-2 mt-auto">
-                      <div className="w-full py-2 px-3 rounded-xl bg-white/[0.03] border border-white/[0.07] text-center text-xs font-bold text-white/90 flex items-center justify-center gap-1 transition-all duration-300 group-hover:bg-primary group-hover:text-black group-hover:border-primary">
-                        Ver perfil <ArrowRight className="size-3 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-transform" />
+                      <div className="flex flex-col items-center justify-center min-w-0 border-x border-border/30 px-1">
+                        <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60 truncate">
+                          Winrate
+                        </span>
+                        <span className="text-xs sm:text-sm font-mono font-bold text-muted-foreground/40 tabular-nums mt-0.5 leading-none">
+                          —
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col items-center justify-center min-w-0">
+                        <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60 truncate">
+                          Partidas
+                        </span>
+                        <span className="text-xs sm:text-sm font-mono font-medium text-muted-foreground/40 tabular-nums mt-0.5 leading-none">
+                          0 jogos
+                        </span>
                       </div>
                     </div>
                   </Link>

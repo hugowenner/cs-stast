@@ -1,13 +1,16 @@
-import { ReactNode } from "react";
+import * as React from "react";
 import { FadeIn } from "@/components/motion/fade-in";
-import { SectionHeader } from "@/components/dashboard/section-header";
+import { SectionHeader } from "@/components/ui/section-header";
+import { cn } from "@/lib/utils";
 
-interface SectionContainerProps {
+export interface SectionContainerProps {
   title: string;
   subtitle?: string;
+  index?: string | number;
+  tag?: string;
   href?: string;
   linkLabel?: string;
-  children: ReactNode;
+  children: React.ReactNode;
   className?: string;
   delay?: number;
 }
@@ -15,6 +18,8 @@ interface SectionContainerProps {
 export function SectionContainer({
   title,
   subtitle,
+  index,
+  tag,
   href,
   linkLabel,
   children,
@@ -22,14 +27,16 @@ export function SectionContainer({
   delay = 0.05,
 }: SectionContainerProps) {
   return (
-    <section className={`w-full ${className}`}>
+    <section className={cn("w-full flex flex-col gap-3", className)}>
       <FadeIn delay={delay}>
         <SectionHeader
           title={title}
           subtitle={subtitle}
+          index={index}
+          tag={tag}
           href={href}
           linkLabel={linkLabel}
-          className="mb-4"
+          className="mb-1"
         />
       </FadeIn>
       <FadeIn delay={delay + 0.02}>

@@ -1,13 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Trophy, Clock, Flame } from "lucide-react";
+import * as React from "react";
+import Link from "next/link";
+import { Trophy, TrendingUp, TrendingDown, Target, Shield, Flame, Activity, Compass } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { AnimatedNumber } from "@/components/motion/animated-number";
+import { MetricDisplay } from "@/components/ui/metric-display";
+import { TacticalBadge } from "@/components/ui/tactical-badge";
+import { DeltaIndicator } from "@/components/ui/delta-indicator";
+import { getCleanMapImage } from "@/components/ui/map-performance-card";
 import type { PlayerMomentumEntry, MapPerformanceEntry } from "@/server/services/competitive.service";
 import { cn } from "@/lib/utils";
 
-interface SeasonHeroProps {
+export interface SeasonHeroProps {
   seasonLabel: string;
   seasonStatus?: string;
   totalMatches: number;
@@ -29,13 +34,21 @@ interface SeasonHeroProps {
   action?: React.ReactNode;
 }
 
-function PlayerAvatar({ avatarUrl, nickname, size = "size-5" }: { avatarUrl?: string | null; nickname: string; size?: string }) {
+function PlayerAvatar({
+  avatarUrl,
+  nickname,
+  size = "size-8",
+}: {
+  avatarUrl?: string | null;
+  nickname: string;
+  size?: string;
+}) {
   if (avatarUrl) {
     return (
       <img
         src={avatarUrl}
         alt={nickname}
-        className={cn("rounded-full object-cover border border-white/10 shrink-0", size)}
+        className={cn("rounded-sm object-cover border border-border/80 shrink-0", size)}
         onError={(e) => {
           (e.target as HTMLElement).style.display = "none";
         }}
@@ -45,7 +58,12 @@ function PlayerAvatar({ avatarUrl, nickname, size = "size-5" }: { avatarUrl?: st
 
   const initial = nickname.slice(0, 2).toUpperCase();
   return (
-    <div className={cn("rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0 font-bold text-primary text-[8px] uppercase tracking-wider select-none", size)}>
+    <div
+      className={cn(
+        "rounded-sm bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0 font-mono font-bold text-primary text-[10px] uppercase tracking-wider select-none",
+        size
+      )}
+    >
       {initial}
     </div>
   );
@@ -66,15 +84,6 @@ export function SeasonHero({
   worstMap,
   action,
 }: SeasonHeroProps) {
-  const [showVideo, setShowVideo] = useState(false);
-
-  useEffect(() => {
-    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (!prefersReduced && window.innerWidth >= 768) {
-      setShowVideo(true);
-    }
-  }, []);
-
   const formattedLabel = seasonLabel
     .replace(" de ", "/")
     .replace(/^\w/, (c) => c.toUpperCase());
@@ -82,180 +91,330 @@ export function SeasonHero({
   const isActive = seasonStatus === "ACTIVE";
   const prefersReduced = useReducedMotion();
 
+  const dominantMapImg = dominantMap ? getCleanMapImage(dominantMap.name) : null;
+  const bestMapImg = bestMap ? getCleanMapImage(bestMap.map) : null;
+  const worstMapImg = worstMap ? getCleanMapImage(worstMap.map) : null;
+
+  const bestMapMatch = bestMap && dominantMap && (
+    bestMap.map.toLowerCase().replace(/^de_/, "").trim() === dominantMap.name.toLowerCase().replace(/^de_/, "").trim()
+  ) ? bestMap : null;
+
   return (
-    <div className="glass-panel relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.003] p-4 sm:p-6 shadow-2xl flex flex-col gap-6 sm:gap-8">
-      {/* Video background */}
-      {showVideo && (
-        <video
-          className="absolute inset-0 w-full h-full object-cover object-center opacity-[0.28] pointer-events-none select-none"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="none"
-        >
-          <source src="/video/videocapa.mp4" type="video/mp4" />
-        </video>
-      )}
-      {/* Single overlay for contrast */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/20 to-black/65 pointer-events-none select-none" />
+    <div className="relative flex flex-col bg-surface-panel border border-border/70 rounded-sm overflow-hidden shadow-lg">
+      {/* Top Tactical Accent Bar */}
+      <div className="h-[2px] w-full bg-gradient-to-r from-primary via-gold to-border/40" />
 
-      {/* Ambient light — single, subtle */}
-      <div className="absolute -right-24 -top-24 size-72 rounded-full bg-primary/8 blur-[100px] pointer-events-none select-none" />
-
-      {/* ── HEADER ── */}
-      <div className="flex items-center justify-between z-10">
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col gap-0.5">
-            <div className="flex items-center gap-1.5">
-              <Trophy className="size-3.5 text-status-warning shrink-0" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">
-                {isActive ? "Temporada" : "Temporada encerrada"}
+      {/* ─── 1. HEADER ROW: Season Identity + Status + Selector ─── */}
+      <div className="flex flex-wrap items-center justify-between gap-4 p-4 sm:p-5 border-b border-border/40 bg-surface-deck/40">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex size-9 items-center justify-center bg-primary/10 border border-primary/25 rounded-xs shrink-0">
+            <Trophy className="size-4 text-primary" />
+          </div>
+          <div className="flex flex-col min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-[0.16em] text-muted-foreground/70">
+                Central de Inteligência
               </span>
+              <TacticalBadge
+                label={isActive ? "EM ANDAMENTO" : "FINALIZADA"}
+                variant={isActive ? "good" : "neutral"}
+                size="xs"
+              />
             </div>
-            <h2 className="text-xl lg:text-2xl font-black text-white uppercase tracking-tight leading-none mt-1 [text-shadow:0_2px_8px_rgba(0,0,0,0.8)]">
+            <h2 className="text-lg sm:text-xl font-black text-foreground uppercase tracking-tight truncate mt-0.5">
               {formattedLabel}
             </h2>
           </div>
-
-          <div className="h-8 w-px bg-white/5 shrink-0" />
-
-          {isActive ? (
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold text-emerald-400 shadow-[0_0_15px_-3px_rgba(16,185,129,0.2)] select-none">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-              <span>Em andamento</span>
-            </div>
-          ) : (
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] font-bold text-muted-foreground select-none">
-              <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
-              <span>Finalizada</span>
-            </div>
-          )}
         </div>
 
         {action && <div className="shrink-0">{action}</div>}
       </div>
 
-      {/* ── MÉTRICAS PRINCIPAIS ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-6 sm:gap-y-8 z-10">
-        {/* Partidas */}
-        <motion.div
-          className="flex flex-col gap-2"
-          initial={{ opacity: 0, y: prefersReduced ? 0 : 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: prefersReduced ? 0.01 : 0.22, delay: prefersReduced ? 0 : 0.2, ease: [0.25, 0, 0, 1] }}
-        >
-          <p className="text-3xl min-[360px]:text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_2px_12px_rgba(0,0,0,0.7)]">
-            {totalMatches}
-          </p>
-          <p className="text-[9px] font-bold text-muted-foreground/55 uppercase tracking-widest select-none">
-            Partidas
-          </p>
-        </motion.div>
+      {/* ─── 2. MAIN TELEMETRY DECK ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-border/40">
+        
+        {/* Leader Highlight Module (5 cols) */}
+        <div className="lg:col-span-5 p-5 sm:p-6 flex flex-col justify-between gap-6 bg-gradient-to-b from-surface-elevated/20 to-transparent">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-1.5">
+                <TacticalBadge label="LÍDER OFICIAL" variant="gold" size="xs" />
+                <span className="text-[10px] font-mono text-gold font-bold">#1 DA TEMPORADA</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground/70 font-medium mt-0.5">
+                Maior pontuação competitiva registrada.
+              </p>
+            </div>
+          </div>
 
-        {/* Winrate */}
-        <motion.div
-          className="flex flex-col gap-2"
-          initial={{ opacity: 0, y: prefersReduced ? 0 : 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: prefersReduced ? 0.01 : 0.22, delay: prefersReduced ? 0 : 0.26, ease: [0.25, 0, 0, 1] }}
-        >
-          <p className="text-3xl min-[360px]:text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_2px_12px_rgba(0,0,0,0.7)]">
-            {communityWinrate}%
-          </p>
-          <p className="text-[9px] font-bold text-muted-foreground/55 uppercase tracking-widest select-none">
-            Winrate
-          </p>
-        </motion.div>
+          {bestPlayer ? (
+            <div className="flex items-center gap-4 py-2">
+              <PlayerAvatar
+                avatarUrl={bestPlayer.avatarUrl}
+                nickname={bestPlayer.nickname}
+                size="size-14 sm:size-16"
+              />
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground/60 font-semibold">
+                  Melhor Rating Médio
+                </span>
+                <span className="text-xl sm:text-2xl font-black text-foreground uppercase tracking-tight truncate">
+                  {bestPlayer.nickname}
+                </span>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-2xl sm:text-3xl font-mono font-black text-gold tabular-nums">
+                    <AnimatedNumber value={bestPlayer.rating} decimals={2} />
+                  </span>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-gold/80 font-bold">
+                    RATING 2.0
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="py-6 text-sm text-muted-foreground/60 font-mono">
+              Aguardando primeiras partidas oficiais.
+            </div>
+          )}
 
-        {/* Melhor Rating */}
-        <motion.div
-          className="flex flex-col gap-2"
-          initial={{ opacity: 0, y: prefersReduced ? 0 : 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: prefersReduced ? 0.01 : 0.22, delay: prefersReduced ? 0 : 0.32, ease: [0.25, 0, 0, 1] }}
-        >
-          <p className="text-3xl min-[360px]:text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_2px_12px_rgba(0,0,0,0.7)]">
-            {bestPlayer ? bestPlayer.rating.toFixed(2) : "—"}
-          </p>
-          <p className="text-[9px] font-bold text-muted-foreground/55 uppercase tracking-widest select-none">
-            Melhor Rating
-          </p>
-        </motion.div>
+          <div className="flex items-center justify-between border-t border-border/30 pt-3 text-[11px] text-muted-foreground/70 font-mono">
+            <span>{totalPlayers} jogadores monitorados</span>
+            <Link
+              href="/rankings"
+              className="text-primary hover:text-primary/80 font-bold uppercase tracking-wider transition-micro flex items-center gap-1"
+            >
+              Ver Tabela Completa →
+            </Link>
+          </div>
+        </div>
 
-        {/* Líder */}
-        <motion.div
-          className="flex flex-col gap-2"
-          initial={{ opacity: 0, y: prefersReduced ? 0 : 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: prefersReduced ? 0.01 : 0.22, delay: prefersReduced ? 0 : 0.38, ease: [0.25, 0, 0, 1] }}
-        >
-          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-            {bestPlayer && (
-              <PlayerAvatar avatarUrl={bestPlayer.avatarUrl} nickname={bestPlayer.nickname} size="size-7 sm:size-9" />
-            )}
-            <p className="text-lg min-[360px]:text-xl sm:text-2xl lg:text-3xl font-black text-white leading-none uppercase tracking-tight truncate [text-shadow:0_2px_12px_rgba(0,0,0,0.7)]">
-              {bestPlayer ? bestPlayer.nickname : "—"}
-            </p>
-          </div>
-          <p className="text-[9px] font-bold text-muted-foreground/55 uppercase tracking-widest select-none">
-            Líder da Temporada
-          </p>
-        </motion.div>
-      </div>
+        {/* Core Season Telemetry Matrix (7 cols) */}
+        <div className="lg:col-span-7 p-5 sm:p-6 flex flex-col justify-between gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
+            <MetricDisplay
+              label="PARTIDAS"
+              value={totalMatches}
+              context={`${advancedStats.totalRounds} rounds jogados`}
+              size="md"
+              accent="orange"
+            />
+            <MetricDisplay
+              label="TAXA DE VITÓRIA"
+              value={`${communityWinrate}%`}
+              context={communityWinrate >= 50 ? "Balanço positivo" : "Abaixo de 50%"}
+              reaction={communityWinrate >= 55 ? "positive" : communityWinrate < 45 ? "negative" : "neutral"}
+              size="md"
+            />
+            <MetricDisplay
+              label="TOTAL DE KILLS"
+              value={<AnimatedNumber value={advancedStats.totalKills} decimals={0} />}
+              context={`${advancedStats.avgAdr.toFixed(0)} ADR médio coletivo`}
+              size="md"
+              accent="muted"
+            />
+            <MetricDisplay
+              label="K/D COLETIVO"
+              value={<AnimatedNumber value={advancedStats.avgKd} decimals={2} />}
+              context="Relação de eliminações"
+              reaction={advancedStats.avgKd >= 1.05 ? "positive" : advancedStats.avgKd < 0.95 ? "negative" : "neutral"}
+              size="md"
+            />
+            <MetricDisplay
+              label="PRECISÃO HS%"
+              value={<AnimatedNumber value={advancedStats.avgHsPercent} decimals={0} suffix="%" />}
+              context="Taxa de tiro na cabeça"
+              size="md"
+              accent="cyan"
+            />
 
-      {/* ── MÉTRICAS DE COMBATE ── */}
-      <div className="z-10 border-t border-white/[0.05] pt-4 sm:pt-5">
-        <div className="grid grid-cols-2 min-[480px]:grid-cols-3 lg:grid-cols-5 gap-y-4 gap-x-2 text-center">
-          <div className="flex flex-col gap-1.5 px-2 border-r border-white/[0.04]">
-            <p className="text-base min-[360px]:text-lg sm:text-xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]">
-              <AnimatedNumber value={advancedStats.totalRounds} decimals={0} />
-            </p>
-            <p className="text-[8px] uppercase tracking-wider text-muted-foreground/50 font-bold leading-none select-none">Rounds</p>
+            {/* Bloco MAPA DOMINANTE com miniatura compacta */}
+            <div className="flex flex-col gap-1.5 min-w-0">
+              <span className="text-[11px] font-mono font-bold uppercase tracking-[0.16em] text-gold/90 truncate">
+                MAPA DOMINANTE
+              </span>
+              <div className="flex items-center gap-2.5 min-w-0">
+                {dominantMapImg && (
+                  <div className="relative size-8 sm:size-9 rounded-sm overflow-hidden border border-border/60 shrink-0 bg-surface-panel shadow-xs">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={dominantMapImg}
+                      alt={dominantMap ? dominantMap.name : "Mapa"}
+                      className="w-full h-full object-cover object-center opacity-85"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = "none";
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-black/10" />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate block leading-tight uppercase">
+                    {dominantMap ? dominantMap.name.replace(/^de_/i, "") : "—"}
+                  </span>
+                </div>
+              </div>
+              <span className="text-xs font-mono text-muted-foreground/80 truncate">
+                {dominantMap ? (
+                  <>
+                    <span className="font-semibold text-foreground/90">{dominantMap.percentage}%</span> das partidas
+                    {bestMapMatch ? ` · ${bestMapMatch.winrate.toFixed(0)}% WR` : ""}
+                  </>
+                ) : (
+                  "Distribuição neutra"
+                )}
+              </span>
+            </div>
           </div>
-          <div className="flex flex-col gap-1.5 px-2 min-[480px]:border-r border-white/[0.04]">
-            <p className="text-base min-[360px]:text-lg sm:text-xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]">
-              <AnimatedNumber value={advancedStats.totalKills} decimals={0} />
-            </p>
-            <p className="text-[8px] uppercase tracking-wider text-muted-foreground/50 font-bold leading-none select-none">Kills</p>
-          </div>
-          <div className="flex flex-col gap-1.5 px-2 border-r min-[480px]:border-r-0 lg:border-r border-white/[0.04]">
-            <p className="text-base min-[360px]:text-lg sm:text-xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]">
-              <AnimatedNumber value={advancedStats.avgAdr} decimals={0} />
-            </p>
-            <p className="text-[8px] uppercase tracking-wider text-muted-foreground/50 font-bold leading-none select-none">ADR</p>
-          </div>
-          <div className="flex flex-col gap-1.5 px-2 min-[480px]:border-r lg:border-r border-white/[0.04]">
-            <p className="text-base min-[360px]:text-lg sm:text-xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]">
-              <AnimatedNumber value={advancedStats.avgKd} decimals={2} />
-            </p>
-            <p className="text-[8px] uppercase tracking-wider text-muted-foreground/50 font-bold leading-none select-none">K/D</p>
-          </div>
-          <div className="flex flex-col gap-1.5 px-2 col-span-2 min-[480px]:col-span-1 lg:col-span-1">
-            <p className="text-base min-[360px]:text-lg sm:text-xl font-black text-white leading-none tracking-tight tabular-nums [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]">
-              <AnimatedNumber value={advancedStats.avgHsPercent} decimals={0} suffix="%" />
-            </p>
-            <p className="text-[8px] uppercase tracking-wider text-muted-foreground/50 font-bold leading-none select-none">HS%</p>
+
+          {/* Quick Context Strip */}
+          <div className="border-t border-border/30 pt-3 text-[11px] text-muted-foreground/60 font-mono flex items-center justify-between">
+            <span>Telemetria agregada da temporada</span>
+            <span className="text-foreground/80 font-bold uppercase">Taxa de amostragem ativa</span>
           </div>
         </div>
       </div>
 
-      {/* ── FOOTER ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-white/[0.04] pt-3 z-10 text-[10px] text-muted-foreground/45 font-medium">
-        <div className="flex items-center gap-1.5 select-none">
-          <Clock className="size-3 text-muted-foreground/30" />
-          <span>Última atualização: agora</span>
-        </div>
+      {/* ─── 3. TRAJECTORY & MOMENTUM FOOTER ─── */}
+      {(hottestPlayer || coldestPlayer || bestMap || worstMap) && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-border/30 border-t border-border/40 bg-surface-deck/70">
+          
+          {/* Em Alta */}
+          {hottestPlayer ? (
+            <div className="p-3.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <PlayerAvatar
+                  nickname={hottestPlayer.player.nickname}
+                  avatarUrl={hottestPlayer.player.avatarUrl}
+                  size="size-7"
+                />
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[9px] font-mono uppercase tracking-wider text-status-good font-bold">
+                    EM ALTA · ÚLTIMOS JOGOS
+                  </span>
+                  <Link
+                    href={`/players/${hottestPlayer.player.id}`}
+                    className="text-xs font-bold text-foreground hover:text-primary transition-micro truncate block"
+                  >
+                    {hottestPlayer.player.nickname}
+                  </Link>
+                </div>
+              </div>
+              <span className="font-mono text-xs font-bold text-status-good shrink-0 tabular-nums">
+                {hottestPlayer.recentRating.toFixed(2)}
+              </span>
+            </div>
+          ) : (
+            <div className="p-3.5 text-[11px] text-muted-foreground/50 font-mono">Sem streak de alta</div>
+          )}
 
-        {dominantMap && (
-          <div className="flex items-center gap-1.5">
-            <Flame className="size-3 text-status-danger/60 shrink-0" />
-            <span>
-              Território: <strong className="text-foreground/70">{dominantMap.name}</strong> ({dominantMap.percentage}%)
-            </span>
-          </div>
-        )}
-      </div>
+          {/* Ponto de Atenção */}
+          {coldestPlayer ? (
+            <div className="p-3.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <PlayerAvatar
+                  nickname={coldestPlayer.player.nickname}
+                  avatarUrl={coldestPlayer.player.avatarUrl}
+                  size="size-7"
+                />
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[9px] font-mono uppercase tracking-wider text-status-warning font-bold">
+                    PONTO DE ATENÇÃO
+                  </span>
+                  <Link
+                    href={`/players/${coldestPlayer.player.id}`}
+                    className="text-xs font-bold text-foreground hover:text-primary transition-micro truncate block"
+                  >
+                    {coldestPlayer.player.nickname}
+                  </Link>
+                </div>
+              </div>
+              <span className="font-mono text-xs font-bold text-status-warning shrink-0 tabular-nums">
+                {coldestPlayer.recentRating.toFixed(2)} ({coldestPlayer.ratingChangeText})
+              </span>
+            </div>
+          ) : (
+            <div className="p-3.5 text-[11px] text-muted-foreground/50 font-mono">Sem queda crítica</div>
+          )}
+
+          {/* Melhor Mapa */}
+          {bestMap ? (
+            <div className="p-3.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                {bestMapImg ? (
+                  <div className="relative size-7 rounded-sm overflow-hidden border border-border/60 shrink-0 bg-surface-panel shadow-xs">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={bestMapImg}
+                      alt={bestMap.map}
+                      className="w-full h-full object-cover object-center opacity-85"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = "none";
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-black/10" />
+                  </div>
+                ) : (
+                  <div className="flex size-7 items-center justify-center rounded-sm bg-primary/15 text-primary border border-primary/25 shrink-0">
+                    <Flame className="size-3.5" />
+                  </div>
+                )}
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[9px] font-mono uppercase tracking-wider text-primary font-bold">
+                    MELHOR APROVEITAMENTO
+                  </span>
+                  <span className="text-xs font-bold text-foreground truncate block">
+                    {bestMap.map.replace(/^de_/i, "")}
+                  </span>
+                </div>
+              </div>
+              <span className="font-mono text-xs font-bold text-primary shrink-0 tabular-nums">
+                {bestMap.winrate.toFixed(0)}% WR
+              </span>
+            </div>
+          ) : (
+            <div className="p-3.5 text-[11px] text-muted-foreground/50 font-mono">Sem mapa destaque</div>
+          )}
+
+          {/* Pior Mapa */}
+          {worstMap ? (
+            <div className="p-3.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                {worstMapImg ? (
+                  <div className="relative size-7 rounded-sm overflow-hidden border border-border/60 shrink-0 bg-surface-panel shadow-xs">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={worstMapImg}
+                      alt={worstMap.map}
+                      className="w-full h-full object-cover object-center opacity-85"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = "none";
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-black/10" />
+                  </div>
+                ) : (
+                  <div className="flex size-7 items-center justify-center rounded-sm bg-status-critical/15 text-status-critical border border-status-critical/25 shrink-0">
+                    <Compass className="size-3.5" />
+                  </div>
+                )}
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[9px] font-mono uppercase tracking-wider text-status-critical font-bold">
+                    MAPA VULNERÁVEL
+                  </span>
+                  <span className="text-xs font-bold text-foreground truncate block">
+                    {worstMap.map.replace(/^de_/i, "")}
+                  </span>
+                </div>
+              </div>
+              <span className="font-mono text-xs font-bold text-status-critical shrink-0 tabular-nums">
+                {worstMap.winrate.toFixed(0)}% WR
+              </span>
+            </div>
+          ) : (
+            <div className="p-3.5 text-[11px] text-muted-foreground/50 font-mono">Sem mapa crítico</div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

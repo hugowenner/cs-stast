@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Search, ChevronDown, ChevronRight } from "lucide-react";
+import { Search, ChevronDown, ChevronRight, Award, Flame, Zap, Shield, Trophy } from "lucide-react";
 import type { AchievementCategory } from "@/server/domain/achievementCatalog";
 import { AchievementCard } from "./achievement-card";
+import { TacticalBadge } from "@/components/ui/tactical-badge";
+import { cn } from "@/lib/utils";
 
 type CatalogEntry = {
   code: string;
@@ -21,17 +23,23 @@ type CategoryData = {
 type FilterTab = "all" | AchievementCategory | "unlocked";
 
 const CATEGORY_LABELS: Record<AchievementCategory, string> = {
-  combate: "Combate",
-  clutch: "Clutch",
-  carreira: "Carreira",
+  combate: "DISTINÇÕES DE COMBATE",
+  clutch: "DISTINÇÕES DE CLUTCH & IMPACTO",
+  carreira: "CONDECORAÇÕES DE CARREIRA",
+};
+
+const CATEGORY_ICONS: Record<AchievementCategory, React.ElementType> = {
+  combate: Flame,
+  clutch: Zap,
+  carreira: Trophy,
 };
 
 const FILTER_TABS: { value: FilterTab; label: string }[] = [
-  { value: "all", label: "Todos" },
-  { value: "combate", label: "Combate" },
-  { value: "clutch", label: "Clutch" },
-  { value: "carreira", label: "Carreira" },
-  { value: "unlocked", label: "Desbloqueadas" },
+  { value: "all", label: "TODAS" },
+  { value: "combate", label: "COMBATE" },
+  { value: "clutch", label: "CLUTCH" },
+  { value: "carreira", label: "CARREIRA" },
+  { value: "unlocked", label: "DESBLOQUEADAS" },
 ];
 
 export function AchievementCatalog({ categories }: { categories: CategoryData[] }) {
@@ -55,71 +63,84 @@ export function AchievementCatalog({ categories }: { categories: CategoryData[] 
     .filter((cat) => cat.entries.length > 0);
 
   return (
-    <div className="flex flex-col gap-3">
-      {/* Filter bar */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-36">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3 text-muted-foreground/40" />
+    <div className="flex flex-col gap-4">
+      {/* Filter & Search Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/40 pb-3">
+        {/* Chips de Categoria */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+          {FILTER_TABS.map((tab) => {
+            const isActive = filter === tab.value;
+            return (
+              <button
+                key={tab.value}
+                onClick={() => setFilter(tab.value)}
+                className={cn(
+                  "px-3 py-1.5 rounded-xs text-[11px] font-mono font-bold uppercase tracking-wider transition-all duration-150 border whitespace-nowrap cursor-pointer",
+                  isActive
+                    ? "bg-surface-panel text-primary border-primary/50 shadow-sm"
+                    : "bg-surface-deck text-muted-foreground/70 border-border/40 hover:text-foreground hover:border-border/80"
+                )}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Input de Busca */}
+        <div className="relative min-w-[220px]">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground/50" />
           <input
             type="text"
-            placeholder="Buscar conquista..."
+            placeholder="Buscar por distinção..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] pl-7 pr-3 py-1.5 text-[11px] text-white placeholder:text-muted-foreground/40 outline-none focus:border-white/[0.15] transition-colors"
+            className="w-full rounded-xs border border-border/60 bg-surface-deck pl-8 pr-3 py-1.5 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary transition-colors"
           />
-        </div>
-        <div className="flex items-center gap-1 flex-wrap">
-          {FILTER_TABS.map((tab) => (
-            <button
-              key={tab.value}
-              onClick={() => setFilter(tab.value)}
-              className={`rounded-lg px-2.5 py-1.5 text-[10px] font-bold transition-colors ${
-                filter === tab.value
-                  ? "bg-white/[0.1] text-white"
-                  : "text-muted-foreground/55 hover:text-white/70"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
         </div>
       </div>
 
-      {/* Accordion */}
+      {/* Accordion das Categorias */}
       {visible.length === 0 ? (
-        <p className="py-10 text-center text-sm text-muted-foreground/40">
-          Nenhuma conquista encontrada.
-        </p>
+        <div className="surface-panel rounded-sm border border-border/40 p-12 text-center text-xs font-mono text-muted-foreground/50">
+          Nenhuma distinção localizada com os filtros selecionados.
+        </div>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
           {visible.map(({ category, entries }) => {
             const isOpen = isSearching || openCategory === category;
+            const CategoryIcon = CATEGORY_ICONS[category] ?? Award;
+
             return (
               <div
                 key={category}
-                className="glass-panel rounded-2xl border border-white/[0.06] overflow-hidden"
+                className="surface-panel rounded-sm border border-border/40 overflow-hidden"
               >
                 <button
                   onClick={() =>
                     setOpenCategory(isOpen && !isSearching ? null : category)
                   }
-                  className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.02] transition-colors"
+                  className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-surface-elevated/40 transition-colors cursor-pointer"
                 >
-                  {isOpen ? (
-                    <ChevronDown className="size-3.5 shrink-0 text-muted-foreground/50" />
-                  ) : (
-                    <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/50" />
-                  )}
-                  <span className="text-[11px] font-black uppercase tracking-[0.08em] text-white">
-                    {CATEGORY_LABELS[category]}
-                  </span>
-                  <span className="text-[9px] text-muted-foreground/45 tabular-nums">
-                    {entries.length} conquista{entries.length !== 1 ? "s" : ""}
-                  </span>
+                  <div className="flex items-center gap-2.5">
+                    {isOpen ? (
+                      <ChevronDown className="size-4 shrink-0 text-primary" />
+                    ) : (
+                      <ChevronRight className="size-4 shrink-0 text-muted-foreground/60" />
+                    )}
+                    <CategoryIcon className="size-4 text-primary shrink-0" />
+                    <span className="text-xs font-mono font-black uppercase tracking-wider text-foreground">
+                      {CATEGORY_LABELS[category]}
+                    </span>
+                  </div>
+
+                  <TacticalBadge variant="neutral" size="xs">
+                    {entries.length} DISTINÇÕES
+                  </TacticalBadge>
                 </button>
 
                 {isOpen && (
-                  <div className="grid grid-cols-3 gap-1.5 border-t border-white/[0.04] p-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 border-t border-border/30 p-4 bg-surface-deck/40">
                     {entries.map((entry) => (
                       <AchievementCard key={entry.code} entry={entry} />
                     ))}

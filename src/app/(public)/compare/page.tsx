@@ -1,3 +1,4 @@
+import * as React from "react";
 import { listPlayersWithBasicStats } from "@/server/repositories/player.repository";
 import { getPlayerComparison } from "@/server/services/comparison.service";
 import { ComparisonSelector } from "@/components/players/comparison-selector";
@@ -8,14 +9,15 @@ import { ComparisonTimeline } from "@/components/players/comparison-timeline";
 import { ComparisonInsights } from "@/components/players/comparison-insights";
 import { ComparisonOverview } from "@/components/players/comparison-overview";
 import { CoachReportCard } from "@/components/ui/coach-report-card";
-import { PageHeader } from "@/components/ui/page-header";
-import { SectionCard } from "@/components/ui/section-card";
+import { SectionContainer } from "@/components/dashboard/section-container";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FadeIn } from "@/components/motion/fade-in";
-import { Swords, ShieldAlert, HeartHandshake, Award } from "lucide-react";
+import { TacticalBadge } from "@/components/ui/tactical-badge";
+import { Swords, ShieldAlert, HeartHandshake, Award, Crosshair, Target, Shield, Trophy } from "lucide-react";
 import { safeQuery } from "@/server/safeQuery";
 import { SeasonSelect } from "@/components/dashboard/season-select";
 import { listSeasons } from "@/server/services/season.service";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +32,6 @@ export default async function ComparePage({
   const season = query.season;
   const targetSeason = season === "all" ? undefined : season;
 
-  // Carregar todas as temporadas para o seletor
   const allSeasons = await safeQuery(() => listSeasons(), []);
   const seasonOptions = [
     { id: "all", name: "Carreira (Histórico)", status: "CLOSED" as const },
@@ -38,7 +39,6 @@ export default async function ComparePage({
   ];
   const currentSeason = season || "all";
 
-  // Carregar todos os jogadores ativos monitorados com rating calculado
   const allPlayers = await safeQuery(() => listPlayersWithBasicStats(), []);
 
   const selectorPlayers = allPlayers.map((p) => ({
@@ -49,32 +49,50 @@ export default async function ComparePage({
     rating: p.rating,
   }));
 
-  // Se os dois parâmetros foram passados, buscar a comparação
   const hasParams = !!playerAId && !!playerBId;
   const comparison = hasParams
     ? await safeQuery(() => getPlayerComparison(playerAId, playerBId, targetSeason), null)
     : null;
 
   return (
-    <div className="flex flex-col gap-6 max-w-6xl mx-auto w-full px-4 sm:px-6">
-      {/* Cabeçalho */}
+    <div className="flex flex-col gap-10 lg:gap-12 pb-16">
+      
+      {/* ═══ 01. HEADER & VERSUS TITLE ═══ */}
       <FadeIn>
-        <PageHeader
-          title="Scout H2H"
-          subtitle="Compare dois jogadores. Depois decida quem realmente é melhor — com dados, não com papo de lobby."
-          icon={
-            <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
-              <Swords className="size-6" />
+        <div className="bg-surface-panel border border-border/70 rounded-sm overflow-hidden flex flex-col shadow-lg">
+          <div className="h-[2px] w-full bg-gradient-to-r from-primary via-cyan-400 to-transparent" />
+          
+          <div className="p-5 sm:p-6 flex flex-wrap items-center justify-between gap-4 border-b border-border/40 bg-surface-deck/40">
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="flex size-10 items-center justify-center bg-primary/10 border border-primary/25 rounded-xs text-primary shrink-0">
+                <Swords className="size-5" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-[0.16em] text-muted-foreground/70">
+                    VERSUS INTELLIGENCE ARENA
+                  </span>
+                  <TacticalBadge label="H2H SCOUT" variant="primary" size="xs" />
+                </div>
+                <h1 className="text-xl sm:text-2xl font-black text-foreground uppercase tracking-tight truncate mt-0.5">
+                  Confronto Direto (Player vs Player)
+                </h1>
+              </div>
             </div>
-          }
-          actions={
-            <SeasonSelect seasons={seasonOptions} currentSeasonId={currentSeason} />
-          }
-        />
+
+            <div className="shrink-0">
+              <SeasonSelect seasons={seasonOptions} currentSeasonId={currentSeason} />
+            </div>
+          </div>
+
+          <div className="p-4 bg-surface-deck/20 text-xs font-sans text-muted-foreground/75 leading-relaxed">
+            Compare o histórico competitivo, duelos diretos e eficiência de dois jogadores. As conclusões partem exclusivamente dos dados do servidor.
+          </div>
+        </div>
       </FadeIn>
 
-      {/* Seletor de Comparação */}
-      <FadeIn delay={0.03}>
+      {/* ═══ 02. COMPARISON SELECTOR ═══ */}
+      <FadeIn delay={0.04}>
         <ComparisonSelector
           players={selectorPlayers}
           initialPlayerA={playerAId}
@@ -82,160 +100,183 @@ export default async function ComparePage({
         />
       </FadeIn>
 
-      {/* Caso tenha parâmetros mas deu erro no carregamento */}
+      {/* Error state if params exist but comparison failed */}
       {hasParams && !comparison && (
         <FadeIn delay={0.06}>
           <EmptyState
-            message="Não foi possível carregar o duelo. Certifique-se de que os jogadores selecionados são válidos e estão ativos."
+            message="Não foi possível carregar o duelo. Certifique-se de que os jogadores selecionados são válidos e estão ativos na temporada."
             icon={ShieldAlert}
           />
         </FadeIn>
       )}
 
-      {/* Estado Inicial sem Seleção */}
+      {/* Initial state before selection */}
       {!hasParams && (
         <FadeIn delay={0.06}>
-          <div className="glass-panel p-8 border border-white/[0.06] bg-white/[0.005] rounded-2xl text-center flex flex-col items-center justify-center max-w-2xl mx-auto my-4 select-none">
-            <div className="flex size-14 items-center justify-center rounded-2xl bg-white/[0.02] border border-white/[0.06] text-muted-foreground/30 mb-5">
-              <Swords className="size-6 text-primary" />
+          <div className="p-8 bg-surface-panel border border-border/60 rounded-sm text-center flex flex-col items-center justify-center max-w-2xl mx-auto my-2 shadow-md">
+            <div className="flex size-12 items-center justify-center rounded-xs bg-surface-deck border border-border/60 text-primary mb-4">
+              <Swords className="size-5" />
             </div>
-            <h3 className="text-base font-black text-white mb-2">Inicie o confronto</h3>
-            <p className="text-xs text-muted-foreground/60 max-w-md mb-6 leading-relaxed">
-              Selecione dois jogadores e descubra quem realmente é melhor — com dados, sem papo de lobby:
+            <h3 className="text-base font-mono font-black text-foreground uppercase tracking-wider mb-2">
+              Selecione os dois oponentes acima
+            </h3>
+            <p className="text-xs text-muted-foreground/75 font-sans max-w-md mb-6 leading-relaxed">
+              O módulo de Scout H2H analisa métricas auditadas, duelos quando jogaram juntos, confrontos diretos e mapas dominantes:
             </p>
-            
-            {/* Grid de Bullets explicativos */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left max-w-md w-full border-t border-white/[0.04] pt-5">
-              <div className="flex items-start gap-2.5">
-                <div>
-                  <p className="text-xs font-bold text-white/90 leading-none">Impacto</p>
-                  <p className="text-[10px] text-muted-foreground/65 mt-1 leading-tight">Quem causa mais dano e abre mais rounds</p>
-                </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left max-w-md w-full border-t border-border/30 pt-4">
+              <div className="p-3 bg-surface-deck rounded-xs border border-border/40">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-primary block">
+                  RÉGUA DE COMBATE
+                </span>
+                <span className="text-[11px] text-muted-foreground/70 block mt-0.5">
+                  Rating 2.0, ADR, K/D, Impacto e HS%
+                </span>
               </div>
-              <div className="flex items-start gap-2.5">
-                <div>
-                  <p className="text-xs font-bold text-white/90 leading-none">Retrospecto H2H</p>
-                  <p className="text-[10px] text-muted-foreground/65 mt-1 leading-tight">Histórico direto entre os dois no servidor</p>
-                </div>
+              <div className="p-3 bg-surface-deck rounded-xs border border-border/40">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-400 block">
+                  HISTÓRICO H2H
+                </span>
+                <span className="text-[11px] text-muted-foreground/70 block mt-0.5">
+                  Partidas jogadas juntos vs jogando contra
+                </span>
               </div>
-              <div className="flex items-start gap-2.5">
-                <div>
-                  <p className="text-xs font-bold text-white/90 leading-none">Clutches</p>
-                  <p className="text-[10px] text-muted-foreground/65 mt-1 leading-tight">Quem entrega quando o round está perdido</p>
-                </div>
+              <div className="p-3 bg-surface-deck rounded-xs border border-border/40">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-gold block">
+                  BALANÇO DE MAPAS
+                </span>
+                <span className="text-[11px] text-muted-foreground/70 block mt-0.5">
+                  Aproveitamento percentual por cenário
+                </span>
               </div>
-              <div className="flex items-start gap-2.5">
-                <div>
-                  <p className="text-xs font-bold text-white/90 leading-none">Mapas</p>
-                  <p className="text-[10px] text-muted-foreground/65 mt-1 leading-tight">Desempenho comparado por mapa</p>
-                </div>
+              <div className="p-3 bg-surface-deck rounded-xs border border-border/40">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-status-good block">
+                  ÍNDICE DE SINERGIA
+                </span>
+                <span className="text-[11px] text-muted-foreground/70 block mt-0.5">
+                  Compatibilidade tática da dupla
+                </span>
               </div>
             </div>
           </div>
         </FadeIn>
       )}
 
-      {/* Resultados do Confronto */}
+      {/* Comparison Results */}
       {comparison && (
-        <div className="flex flex-col gap-6">
-          {/* Placar Comparativo do Duelo (Full Width) */}
-          <FadeIn delay={0.06}>
+        <div className="flex flex-col gap-10">
+          
+          {/* ═══ 01 / PLACAR DO DUELO ═══ */}
+          <SectionContainer
+            index={1}
+            tag="PLACAR COMPETITIVO"
+            title="Vantagem Tática e Categorias"
+            subtitle="Balanço direto das 7 métricas principais do CS2 Stats."
+            delay={0.06}
+          >
             <ComparisonOverview comparison={comparison} />
-          </FadeIn>
+          </SectionContainer>
 
+          {/* ═══ 02 / RÉGUA COMPARATIVA ═══ */}
+          <SectionContainer
+            index={2}
+            tag="RÉGUA DE COMBATE"
+            title="Comparativo Detalhado de Métricas"
+            subtitle="Vantagem matemática em cada pilar de desempenho."
+            delay={0.08}
+          >
+            <ComparisonStats players={comparison.players} />
+          </SectionContainer>
+
+          {/* ═══ 03 / GRID DE SINERGIA, RADAR & MAPAS ═══ */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Coluna da Esquerda: Insights, Radar e H2H */}
-            <div className="lg:col-span-4 flex flex-col gap-6">
-              {/* Sinergia / Compatibilidade */}
-              <FadeIn delay={0.08} className="glass-panel p-5 border border-white/[0.06] flex items-center justify-between">
+            
+            {/* Coluna Esquerda: Sinergia, Radar, Histórico H2H, Insights, Coach IA */}
+            <div className="lg:col-span-5 flex flex-col gap-6">
+              
+              {/* Sinergia */}
+              <div className="p-4 bg-surface-panel border border-border/60 rounded-sm flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex size-10 items-center justify-center rounded-lg bg-status-good/10 text-status-good border border-status-good/20">
-                    <HeartHandshake className="size-5" />
+                  <div className="flex size-9 items-center justify-center rounded-xs bg-status-good/10 text-status-good border border-status-good/25">
+                    <HeartHandshake className="size-4" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white">Índice de Sinergia</h4>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/70 block">
+                      ÍNDICE DE SINERGIA
+                    </span>
+                    <span className="text-xs font-bold text-foreground">
                       {comparison.compatibility.label}
-                    </p>
+                    </span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-2xl font-black text-status-good">
-                    {comparison.compatibility.score}%
-                  </span>
-                </div>
-              </FadeIn>
+                <span className="font-mono text-xl font-black text-status-good tabular-nums">
+                  {comparison.compatibility.score}%
+                </span>
+              </div>
 
-              {/* Radar Scout */}
-              <FadeIn delay={0.1}>
+              {/* Radar */}
+              <div className="bg-surface-panel border border-border/60 rounded-sm p-4">
                 <ComparisonRadar players={comparison.players} />
-              </FadeIn>
+              </div>
 
-              {/* Histórico H2H */}
-              <FadeIn delay={0.12}>
-                <SectionCard title="Confronto Direto (H2H)">
-                  <div className="flex flex-col gap-4 text-sm">
-                    {/* Jogando Juntos */}
-                    <div className="flex flex-col gap-1.5 p-3 rounded-lg bg-white/[0.02] border border-white/5">
-                      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                        Jogaram Juntos
-                      </span>
-                      <p className="font-bold text-white text-base">
-                        {comparison.h2h.together.total} partidas
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {comparison.h2h.together.wins} vitórias / {comparison.h2h.together.losses} derrotas (
-                        {comparison.h2h.together.winrate}% winrate)
-                      </p>
-                    </div>
+              {/* Histórico H2H Direto */}
+              <div className="bg-surface-panel border border-border/60 rounded-sm p-4 flex flex-col gap-3">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-foreground">
+                  Histórico no Servidor (H2H)
+                </span>
 
-                    {/* Jogando Contra */}
-                    <div className="flex flex-col gap-1.5 p-3 rounded-lg bg-white/[0.02] border border-white/5">
-                      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                        Jogando Contra
-                      </span>
-                      <p className="font-bold text-white text-base">
-                        {comparison.h2h.against.total} partidas
-                      </p>
-                      <div className="flex flex-col gap-1 text-xs text-muted-foreground mt-1">
-                        {comparison.players.map((p) => (
-                          <p key={p.id} className="flex justify-between">
-                            <span>{p.nickname} venceu:</span>
-                            <span className="font-bold text-white">
-                              {comparison.h2h.against.wins[p.id] ?? 0}
-                            </span>
-                          </p>
-                        ))}
-                      </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  {/* Juntos */}
+                  <div className="p-3 bg-surface-deck border border-border/40 rounded-xs flex flex-col gap-1">
+                    <span className="text-[9px] font-mono text-muted-foreground/60 uppercase font-bold">
+                      JOGARAM JUNTOS
+                    </span>
+                    <span className="font-mono text-base font-black text-foreground tabular-nums">
+                      {comparison.h2h.together.total} partidas
+                    </span>
+                    <span className="text-[10px] font-mono text-muted-foreground/60">
+                      {comparison.h2h.together.wins}V / {comparison.h2h.together.losses}D ({comparison.h2h.together.winrate}% WR)
+                    </span>
+                  </div>
+
+                  {/* Contra */}
+                  <div className="p-3 bg-surface-deck border border-border/40 rounded-xs flex flex-col gap-1">
+                    <span className="text-[9px] font-mono text-muted-foreground/60 uppercase font-bold">
+                      JOGANDO CONTRA
+                    </span>
+                    <span className="font-mono text-base font-black text-foreground tabular-nums">
+                      {comparison.h2h.against.total} confrontos
+                    </span>
+                    <div className="flex flex-col gap-0.5 text-[10px] font-mono text-muted-foreground/75 mt-0.5">
+                      {comparison.players.map((p) => (
+                        <div key={p.id} className="flex justify-between">
+                          <span className="truncate">{p.nickname}:</span>
+                          <span className="font-bold text-foreground">
+                            {comparison.h2h.against.wins[p.id] ?? 0}V
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </SectionCard>
-              </FadeIn>
+                </div>
+              </div>
 
-              {/* Insights */}
-              <FadeIn delay={0.14}>
-                <SectionCard title="Dicas e Análise Tática">
-                  <ComparisonInsights insights={comparison.insights} />
-                </SectionCard>
-              </FadeIn>
+              {/* Insights Táticos */}
+              <div className="bg-surface-panel border border-border/60 rounded-sm p-4">
+                <ComparisonInsights insights={comparison.insights} />
+              </div>
 
-              {/* Coach IA Report */}
-              <FadeIn delay={0.16}>
-                <CoachReportCard
-                  apiUrl={`/api/coach/compare?playerA=${comparison.players[0].id}&playerB=${comparison.players[1].id}&season=${currentSeason}`}
-                />
-              </FadeIn>
+              {/* Relatório do Coach IA */}
+              <CoachReportCard
+                apiUrl={`/api/coach/compare?playerA=${comparison.players[0].id}&playerB=${comparison.players[1].id}&season=${currentSeason}`}
+              />
             </div>
 
-            {/* Coluna da Direita: Métricas, Gráfico Temporal, Mapas e Conquistas */}
-            <div className="lg:col-span-8 flex flex-col gap-6">
-              {/* Métricas Detalhadas (Destaques) */}
-              <FadeIn delay={0.08}>
-                <ComparisonStats players={comparison.players} />
-              </FadeIn>
-
-              {/* Gráfico Temporal */}
-              <FadeIn delay={0.1}>
+            {/* Coluna Direita: Timeline, Mapas e Conquistas */}
+            <div className="lg:col-span-7 flex flex-col gap-6">
+              
+              {/* Timeline */}
+              <div className="bg-surface-panel border border-border/60 rounded-sm p-4">
                 <ComparisonTimeline
                   timeline={comparison.timeline}
                   playerIdA={comparison.players[0].id}
@@ -243,77 +284,78 @@ export default async function ComparePage({
                   nicknameA={comparison.players[0].nickname}
                   nicknameB={comparison.players[1].nickname}
                 />
-              </FadeIn>
+              </div>
 
               {/* Desempenho por Mapa */}
-              <FadeIn delay={0.12}>
-                <SectionCard title="Desempenho comparado por mapa">
-                  <ComparisonMaps
-                    maps={comparison.maps}
-                    playerIdA={comparison.players[0].id}
-                    playerIdB={comparison.players[1].id}
-                    nicknameA={comparison.players[0].nickname}
-                    nicknameB={comparison.players[1].nickname}
-                  />
-                </SectionCard>
-              </FadeIn>
+              <div className="flex flex-col gap-2">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/70">
+                  BALANÇO POR MAPA
+                </span>
+                <ComparisonMaps
+                  maps={comparison.maps}
+                  playerIdA={comparison.players[0].id}
+                  playerIdB={comparison.players[1].id}
+                  nicknameA={comparison.players[0].nickname}
+                  nicknameB={comparison.players[1].nickname}
+                />
+              </div>
 
               {/* Conquistas Comparadas */}
-              <FadeIn delay={0.14}>
-                <SectionCard title="Conquistas Compartilhadas">
-                  <div className="flex flex-col divide-y divide-white/5">
-                    {comparison.achievements.map((ach) => {
-                      const earnedA = ach.earnedBy[comparison.players[0].id];
-                      const earnedB = ach.earnedBy[comparison.players[1].id];
+              <div className="bg-surface-panel border border-border/60 rounded-sm p-4 flex flex-col gap-3">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-foreground">
+                  Conquistas Compartilhadas
+                </span>
 
-                      return (
-                        <div key={ach.code} className="py-3.5 flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-3">
-                            <Award className="size-4.5 text-accent-cyan" />
-                            <div>
-                              <p className="font-bold text-white">{ach.name}</p>
-                              <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
-                                CÓD: {ach.code}
-                              </p>
-                            </div>
-                          </div>
+                <div className="flex flex-col divide-y divide-border/30">
+                  {comparison.achievements.map((ach) => {
+                    const earnedA = ach.earnedBy[comparison.players[0].id];
+                    const earnedB = ach.earnedBy[comparison.players[1].id];
 
-                          <div className="flex items-center gap-6">
-                            {/* Jogador A */}
-                            <div className="flex flex-col items-center">
-                              <span className="text-[10px] text-muted-foreground">
-                                {comparison.players[0].nickname}
-                              </span>
-                              <span
-                                className={`inline-block size-2 rounded-full mt-1.5 ${
-                                  earnedA ? "bg-status-good shadow-[0_0_8px_var(--status-good)]" : "bg-white/10"
-                                }`}
-                              />
-                            </div>
-
-                            {/* Jogador B */}
-                            <div className="flex flex-col items-center">
-                              <span className="text-[10px] text-muted-foreground">
-                                {comparison.players[1].nickname}
-                              </span>
-                              <span
-                                className={`inline-block size-2 rounded-full mt-1.5 ${
-                                  earnedB ? "bg-status-good shadow-[0_0_8px_var(--status-good)]" : "bg-white/10"
-                                }`}
-                              />
-                            </div>
+                    return (
+                      <div key={ach.code} className="py-3 flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Award className="size-4 text-cyan-400 shrink-0" />
+                          <div className="min-w-0">
+                            <span className="font-bold text-foreground truncate block">{ach.name}</span>
+                            <span className="text-[9px] text-muted-foreground/50 font-mono">
+                              CÓD: {ach.code}
+                            </span>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                </SectionCard>
-              </FadeIn>
+
+                        <div className="flex items-center gap-6 shrink-0 font-mono text-[10px]">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-muted-foreground/60">{comparison.players[0].nickname}:</span>
+                            <span
+                              className={cn(
+                                "size-2 rounded-full",
+                                earnedA ? "bg-status-good" : "bg-border/60"
+                              )}
+                            />
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-muted-foreground/60">{comparison.players[1].nickname}:</span>
+                            <span
+                              className={cn(
+                                "size-2 rounded-full",
+                                earnedB ? "bg-status-good" : "bg-border/60"
+                              )}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
             </div>
+
           </div>
+
         </div>
       )}
+
     </div>
   );
 }
-

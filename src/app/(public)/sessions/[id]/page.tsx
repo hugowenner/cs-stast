@@ -4,200 +4,290 @@ import {
   Gamepad2,
   Trophy,
   Percent,
-  Crown,
-  Award,
   TrendingUp,
   TrendingDown,
   ArrowRight,
-  Flame,
-  ShieldAlert,
-  Sparkles,
   Zap,
-  Target,
-  Skull,
-  UserCheck,
+  Swords,
+  Clock,
+  MapPin,
   Minus,
 } from "lucide-react";
-import { SectionCard } from "@/components/ui/section-card";
-import { StatTile } from "@/components/ui/stat-tile";
 import { FadeIn } from "@/components/motion/fade-in";
-import { PageHeader } from "@/components/ui/page-header";
-import { EmptyState } from "@/components/ui/empty-state";
 import { RatingBadge } from "@/components/players/rating-badge";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import { CoachReportCard } from "@/components/ui/coach-report-card";
+import { TacticalBadge } from "@/components/ui/tactical-badge";
 import { safeQuery } from "@/server/safeQuery";
 import * as sessionService from "@/server/services/session.service";
+import { cn } from "@/lib/utils";
 
 export default async function SessionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const summary = await safeQuery(() => sessionService.getSessionSummary(id), null);
   if (!summary) notFound();
 
-  const { metadata, overview, timeline, players, maps, highlights, trends, bestDuo, insights } = summary;
+  const { metadata, overview, timeline, players, maps, highlights, trends, bestDuo } = summary;
 
-  // Humor Heuristics styling
-  const getMoodConfig = (mood: string) => {
+  const getMoodBadge = (mood: string) => {
     switch (mood) {
       case "excellent":
-        return { label: "Excelente Noite", emoji: "🔥", colorClass: "text-status-good border-status-good/20 bg-status-good/10 shadow-[0_0_12px_rgba(var(--status-good),0.15)]" };
+        return { label: "EXCELENTE", variant: "good" as const };
       case "good":
-        return { label: "Boa Noite", emoji: "🙂", colorClass: "text-accent-cyan border-accent-cyan/20 bg-accent-cyan/10" };
+        return { label: "EM EVOLUÇÃO", variant: "good" as const };
       case "stable":
-        return { label: "Noite Estável", emoji: "😐", colorClass: "text-muted-foreground border-white/10 bg-white/5" };
+        return { label: "ESTÁVEL", variant: "neutral" as const };
       case "difficult":
-        return { label: "Noite Difícil", emoji: "⚠", colorClass: "text-status-warning border-status-warning/20 bg-status-warning/10" };
+        return { label: "DIFÍCIL", variant: "warning" as const };
       case "disaster":
-        return { label: "Desastre total", emoji: "💀", colorClass: "text-status-critical border-status-critical/20 bg-status-critical/10 animate-pulse" };
+        return { label: "CRÍTICO", variant: "critical" as const };
       default:
-        return { label: "Estável", emoji: "😐", colorClass: "text-muted-foreground" };
+        return { label: "ESTÁVEL", variant: "neutral" as const };
     }
   };
 
-  const moodConfig = getMoodConfig(metadata.mood);
-
-  // ELO indicator
+  const moodBadge = getMoodBadge(metadata.mood);
   const eloSign = overview.eloChangeGroup >= 0 ? "+" : "";
+  const isEloPositive = overview.eloChangeGroup >= 0;
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Cabeçalho */}
+    <div className="flex flex-col gap-6 max-w-6xl mx-auto w-full px-4 sm:px-6">
+      {/* Header */}
       <FadeIn>
-        <PageHeader
-          title={metadata.name}
-          subtitle={`Noite de jogo registrada em ${new Date(metadata.date).toLocaleDateString("pt-BR")}`}
-          icon={
-            <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
-              <Gamepad2 className="size-6" />
-            </div>
-          }
-          actions={
-            <div className="flex items-center gap-3">
-              <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold border ${moodConfig.colorClass}`}>
-                <span>{moodConfig.emoji}</span>
-                <span>{moodConfig.label}</span>
+        <div className="surface-panel rounded-sm border border-border/40 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-mono font-bold tracking-widest text-primary uppercase">
+                DETALHES DA SESSÃO
               </span>
-              <span className="inline-flex items-center rounded-full bg-white/5 px-2.5 py-1 text-xs font-semibold text-white border border-white/10">
-                Sinergia: {overview.teamSynergy}%
+              <TacticalBadge variant={moodBadge.variant} size="sm">
+                {moodBadge.label}
+              </TacticalBadge>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-foreground flex items-center gap-2.5">
+              <Swords className="size-6 text-primary shrink-0" />
+              {metadata.name}
+            </h1>
+            <p className="text-xs sm:text-sm font-mono text-muted-foreground/80">
+              Registrada em {new Date(metadata.date).toLocaleDateString("pt-BR", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+              })}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-surface-deck border border-border/60">
+              <span className="text-[10px] font-mono uppercase text-muted-foreground/70">
+                Sinergia:
+              </span>
+              <span className="font-mono text-xs font-black text-foreground tabular-nums">
+                {overview.teamSynergy}%
               </span>
             </div>
-          }
-        />
+
+            {overview.eloChangeGroup !== 0 && (
+              <div
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-sm font-mono text-xs font-black border",
+                  isEloPositive
+                    ? "text-status-good border-status-good/30 bg-status-good/10"
+                    : "text-status-critical border-status-critical/30 bg-status-critical/10"
+                )}
+              >
+                {isEloPositive ? <TrendingUp className="size-3.5" /> : <TrendingDown className="size-3.5" />}
+                {eloSign}{overview.eloChangeGroup} ELO
+              </div>
+            )}
+          </div>
+        </div>
       </FadeIn>
 
-      {/* Grid de Visão Geral (Overview) */}
-      <FadeIn delay={0.05} className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatTile
-          label="Partidas (V/D/E)"
-          value={`${overview.totalMatches} (${overview.wins}V-${overview.losses}D)`}
-          icon={Gamepad2}
-          accent="violet"
-        />
-        <StatTile
-          label="Winrate da Sessão"
-          value={`${overview.winrate}%`}
-          icon={Percent}
-          accent="cyan"
-        />
-        <StatTile
-          label="Saldo ELO"
-          value={`${eloSign}${overview.eloChangeGroup}`}
-          icon={Zap}
-          accent={overview.eloChangeGroup >= 0 ? "cyan" : "violet"}
-        />
-        <StatTile
-          label="Rating Médio do Time"
-          value={overview.ratingAvg.toFixed(2)}
-          icon={Trophy}
-          accent="violet"
-        />
+      {/* KPI Ribbon */}
+      <FadeIn delay={0.04}>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="surface-panel rounded-sm p-4 border border-border/40 flex flex-col justify-between gap-2">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60">
+              Partidas Disputadas
+            </span>
+            <div className="flex items-baseline gap-2">
+              <span className="font-mono text-2xl sm:text-3xl font-black text-foreground tabular-nums">
+                {overview.totalMatches}
+              </span>
+              <span className="text-xs font-mono font-bold text-muted-foreground/70">
+                ({overview.wins}V - {overview.losses}D)
+              </span>
+            </div>
+          </div>
+
+          <div className="surface-panel rounded-sm p-4 border border-border/40 flex flex-col justify-between gap-2">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60">
+              Aproveitamento
+            </span>
+            <div className="flex items-baseline gap-2">
+              <span
+                className={cn(
+                  "font-mono text-2xl sm:text-3xl font-black tabular-nums",
+                  overview.winrate >= 50 ? "text-status-good" : "text-status-critical"
+                )}
+              >
+                {overview.winrate}%
+              </span>
+              <span className="text-[10px] font-mono text-muted-foreground/60">winrate</span>
+            </div>
+          </div>
+
+          <div className="surface-panel rounded-sm p-4 border border-border/40 flex flex-col justify-between gap-2">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60">
+              Rating Médio Coletivo
+            </span>
+            <div className="flex items-baseline gap-2">
+              <span
+                className={cn(
+                  "font-mono text-2xl sm:text-3xl font-black tabular-nums",
+                  overview.ratingAvg >= 1.15
+                    ? "text-status-good"
+                    : overview.ratingAvg < 0.95
+                    ? "text-status-critical"
+                    : "text-foreground"
+                )}
+              >
+                {overview.ratingAvg.toFixed(2)}
+              </span>
+              <span className="text-[10px] font-mono text-muted-foreground/60">Rating 2.0</span>
+            </div>
+          </div>
+
+          <div className="surface-panel rounded-sm p-4 border border-border/40 flex flex-col justify-between gap-2">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60">
+              Saldo Líquido ELO
+            </span>
+            <div className="flex items-baseline gap-2">
+              <span
+                className={cn(
+                  "font-mono text-2xl sm:text-3xl font-black tabular-nums",
+                  isEloPositive ? "text-status-good" : "text-status-critical"
+                )}
+              >
+                {eloSign}{overview.eloChangeGroup}
+              </span>
+              <span className="text-[10px] font-mono text-muted-foreground/60">pontos</span>
+            </div>
+          </div>
+        </div>
       </FadeIn>
 
-      {/* Grid Central: Coluna da Esquerda (Destaques, Duplas) & Coluna da Direita (Replay, Insights, Mapas) */}
+      {/* Grid Central: Coluna da Esquerda (Scout/Tendências) & Coluna da Direita (Replay/Mapas/Leaderboard) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {/* Lado Esquerdo: Scout & Tendências (4 colunas) */}
+        {/* Lado Esquerdo (4 cols) */}
         <div className="lg:col-span-4 flex flex-col gap-6">
           {/* Tendências da Noite */}
           <FadeIn delay={0.08}>
-            <SectionCard title="Tendências vs Histórico">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="surface-panel rounded-sm border border-border/40 p-4 sm:p-5 flex flex-col gap-4">
+              <div className="flex items-center gap-2 border-b border-border/40 pb-3">
+                <TrendingUp className="size-4 text-primary" />
+                <h3 className="text-xs font-mono font-black text-foreground uppercase tracking-wider">
+                  Tendências vs Histórico
+                </h3>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {trends.map((t) => {
                   const Icon = t.direction === "up" ? TrendingUp : t.direction === "down" ? TrendingDown : Minus;
-                  const colorClass = t.direction === "up" ? "text-status-good bg-status-good/10" : t.direction === "down" ? "text-status-critical bg-status-critical/10" : "text-muted-foreground bg-white/5";
+                  const colorClass =
+                    t.direction === "up"
+                      ? "text-status-good bg-status-good/10 border-status-good/30"
+                      : t.direction === "down"
+                      ? "text-status-critical bg-status-critical/10 border-status-critical/30"
+                      : "text-muted-foreground bg-surface-deck border-border/40";
 
                   return (
-                    <div key={t.metric} className="p-3 border border-white/5 bg-white/[0.01] rounded-xl flex items-center justify-between">
+                    <div
+                      key={t.metric}
+                      className="p-3 border border-border/40 bg-surface-deck rounded-xs flex items-center justify-between"
+                    >
                       <div>
-                        <span className="text-[10px] text-muted-foreground uppercase font-bold block">
+                        <span className="text-[10px] font-mono text-muted-foreground/70 uppercase font-bold block">
                           {t.label}
                         </span>
-                        <span className="text-sm font-black text-white mt-1 block">
+                        <span className="text-sm font-mono font-black text-foreground mt-0.5 block tabular-nums">
                           {t.value}
                         </span>
                       </div>
-                      <div className={`p-1.5 rounded-lg ${colorClass}`}>
-                        <Icon className="size-4" />
+                      <div className={cn("p-1.5 rounded-xs border", colorClass)}>
+                        <Icon className="size-3.5" />
                       </div>
                     </div>
                   );
                 })}
               </div>
-            </SectionCard>
+            </div>
           </FadeIn>
 
-          {/* Destaques da Noite (Scouting) */}
+          {/* Scout da Noite */}
           <FadeIn delay={0.1}>
-            <SectionCard title="Scout da Noite">
-              <div className="flex flex-col gap-3">
+            <div className="surface-panel rounded-sm border border-border/40 p-4 sm:p-5 flex flex-col gap-4">
+              <div className="flex items-center gap-2 border-b border-border/40 pb-3">
+                <Trophy className="size-4 text-accent-gold" />
+                <h3 className="text-xs font-mono font-black text-foreground uppercase tracking-wider">
+                  Scout da Noite
+                </h3>
+              </div>
+              <div className="flex flex-col gap-2.5">
                 {highlights.map((h) => (
                   <div
                     key={h.category}
-                    className="flex items-center justify-between p-3 border border-white/5 bg-white/[0.01] rounded-xl"
+                    className="flex items-center justify-between p-2.5 border border-border/40 bg-surface-deck rounded-xs"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       <PlayerAvatar nickname={h.playerName} avatarUrl={h.playerAvatar} size="sm" />
-                      <div>
-                        <span className="text-[10px] text-muted-foreground font-semibold block">
+                      <div className="min-w-0">
+                        <span className="text-[10px] font-mono text-muted-foreground/70 uppercase font-bold block truncate">
                           {h.label}
                         </span>
-                        <span className="text-xs font-bold text-white mt-0.5 block">
+                        <span className="text-xs font-bold text-foreground block truncate">
                           {h.playerName}
                         </span>
                       </div>
                     </div>
-                    <span className="text-sm font-black text-accent-cyan">{h.value}</span>
+                    <span className="font-mono text-sm font-black text-accent-cyan ml-2 shrink-0 tabular-nums">
+                      {h.value}
+                    </span>
                   </div>
                 ))}
               </div>
-            </SectionCard>
+            </div>
           </FadeIn>
 
-          {/* Melhor Dupla e Compatibilidade */}
+          {/* Melhor Dupla */}
           {bestDuo && (
             <FadeIn delay={0.12}>
-              <SectionCard title="Dupla do Servidor">
-                <div className="p-4 border border-white/5 bg-white/[0.01] rounded-xl flex items-center justify-between">
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-1">
-                      <span className="font-bold text-white text-sm">{bestDuo.playerAName}</span>
-                      <span className="text-muted-foreground text-xs font-bold">+</span>
-                      <span className="font-bold text-white text-sm">{bestDuo.playerBName}</span>
+              <div className="surface-panel rounded-sm border border-border/40 p-4 sm:p-5 flex flex-col gap-3">
+                <span className="text-[10px] font-mono font-bold text-primary uppercase tracking-wider">
+                  DUPLA DO SERVIDOR
+                </span>
+                <div className="p-3 border border-border/40 bg-surface-deck rounded-xs flex items-center justify-between">
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-foreground text-xs">{bestDuo.playerAName}</span>
+                      <span className="text-muted-foreground/40 text-xs font-mono">+</span>
+                      <span className="font-bold text-foreground text-xs">{bestDuo.playerBName}</span>
                     </div>
-                    <span className="text-[10px] text-muted-foreground uppercase font-semibold">
-                      Parceria com maior aproveitamento
+                    <span className="text-[10px] font-mono text-muted-foreground/60 uppercase">
+                      Maior aproveitamento conjunto
                     </span>
                   </div>
-                  <span className="text-base font-black text-status-good">
+                  <span className="font-mono text-sm font-black text-status-good tabular-nums">
                     {bestDuo.wins}V - {bestDuo.losses}D
                   </span>
                 </div>
-              </SectionCard>
+              </div>
             </FadeIn>
           )}
         </div>
 
-        {/* Lado Direito: Replay, Análise Coach, Mapas (8 colunas) */}
+        {/* Lado Direito (8 cols) */}
         <div className="lg:col-span-8 flex flex-col gap-6">
           
           {/* Relatório Avançado do Coach IA */}
@@ -205,49 +295,69 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             <CoachReportCard apiUrl={`/api/coach/session/${metadata.id}`} />
           </FadeIn>
 
-          {/* Replay da Sessão (Timeline) */}
+          {/* Replay da Sessão (Timeline de Partidas) */}
           <FadeIn delay={0.1}>
-            <SectionCard title="Replay da Sessão (Timeline)">
+            <div className="surface-panel rounded-sm border border-border/40 p-5 flex flex-col gap-4">
+              <div className="flex items-center justify-between border-b border-border/40 pb-3">
+                <div className="flex items-center gap-2">
+                  <Clock className="size-4 text-primary" />
+                  <h3 className="text-xs font-mono font-black text-foreground uppercase tracking-wider">
+                    Replay da Sessão & Acontecimentos
+                  </h3>
+                </div>
+                <span className="text-[11px] font-mono text-muted-foreground/60">
+                  {timeline.length} eventos registrados
+                </span>
+              </div>
+
               {timeline.length === 0 ? (
-                <EmptyState message="Sem acontecimentos registrados na sessão." />
+                <div className="p-6 text-center text-xs font-mono text-muted-foreground/60">
+                  Sem acontecimentos registrados na sessão.
+                </div>
               ) : (
-                <div className="relative pl-6 border-l border-white/10 flex flex-col gap-6 my-2">
+                <div className="relative pl-5 sm:pl-6 border-l border-border/40 flex flex-col gap-5 my-1 ml-2">
                   {timeline.map((event, idx) => {
                     const isMilestone = event.type === "milestone";
                     const isWin = event.outcome === "win";
                     const isLoss = event.outcome === "loss";
 
                     return (
-                      <div key={idx} className="relative">
+                      <div key={idx} className="relative group">
                         {/* Indicador de Timeline */}
                         <span
-                          className={`absolute -left-[31px] top-1.5 flex size-4 items-center justify-center rounded-full border ${
+                          className={cn(
+                            "absolute -left-[25px] sm:-left-[29px] top-1.5 flex size-3.5 items-center justify-center rounded-xs border",
                             isMilestone
-                              ? "bg-accent-violet border-accent-violet/30"
+                              ? "bg-accent-violet border-accent-violet/50"
                               : isWin
-                              ? "bg-status-good border-status-good/30"
+                              ? "bg-status-good border-status-good/50"
                               : isLoss
-                              ? "bg-status-critical border-status-critical/30"
-                              : "bg-white/10 border-white/20"
-                          }`}
+                              ? "bg-status-critical border-status-critical/50"
+                              : "bg-surface-deck border-border/80"
+                          )}
                         />
 
                         {/* Conteúdo do Evento */}
                         <div className="min-w-0">
-                          <div className="flex items-center justify-between">
-                            <h4 className={`text-sm font-bold text-white ${isMilestone ? "text-accent-cyan" : ""}`}>
+                          <div className="flex items-center justify-between gap-2">
+                            <h4
+                              className={cn(
+                                "text-xs font-mono font-bold",
+                                isMilestone ? "text-accent-cyan" : "text-foreground"
+                              )}
+                            >
                               {event.title}
                             </h4>
                             {event.matchId && (
                               <Link
                                 href={`/matches/${event.matchId}`}
-                                className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-semibold"
+                                className="inline-flex items-center gap-1 text-[11px] font-mono text-primary hover:underline font-bold shrink-0"
                               >
-                                Ver Detalhes <ArrowRight className="size-3" />
+                                Ver Partida <ArrowRight className="size-3" />
                               </Link>
                             )}
                           </div>
-                          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                          <p className="text-xs text-muted-foreground/80 mt-1 leading-relaxed">
                             {event.description}
                           </p>
                         </div>
@@ -256,38 +366,51 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
                   })}
                 </div>
               )}
-            </SectionCard>
+            </div>
           </FadeIn>
 
           {/* Desempenho por Mapa */}
           <FadeIn delay={0.12}>
-            <SectionCard title="Aproveitamento por Mapa">
+            <div className="surface-panel rounded-sm border border-border/40 p-5 flex flex-col gap-4">
+              <div className="flex items-center gap-2 border-b border-border/40 pb-3">
+                <MapPin className="size-4 text-accent-cyan" />
+                <h3 className="text-xs font-mono font-black text-foreground uppercase tracking-wider">
+                  Aproveitamento por Mapa na Sessão
+                </h3>
+              </div>
+
               {maps.length === 0 ? (
-                <EmptyState message="Sem dados de mapas disputados." />
+                <div className="p-6 text-center text-xs font-mono text-muted-foreground/60">
+                  Sem dados de mapas disputados.
+                </div>
               ) : (
                 <div className="overflow-x-auto w-full">
-                  <table className="w-full text-sm text-left border-collapse">
+                  <table className="w-full text-xs text-left border-collapse min-w-[480px]">
                     <thead>
-                      <tr className="border-b border-white/15 text-xs text-muted-foreground uppercase tracking-wider">
-                        <th className="px-4 py-2.5 font-semibold">Mapa</th>
-                        <th className="px-4 py-2.5 font-semibold text-center">Jogos</th>
-                        <th className="px-4 py-2.5 font-semibold text-right">Winrate</th>
-                        <th className="px-4 py-2.5 font-semibold w-1/3 text-center">Aproveitamento</th>
+                      <tr className="border-b border-border/40 text-[10px] font-mono text-muted-foreground/60 uppercase tracking-wider">
+                        <th className="px-3 py-2 font-bold">Mapa</th>
+                        <th className="px-3 py-2 font-bold text-center">Partidas</th>
+                        <th className="px-3 py-2 font-bold text-right">Winrate</th>
+                        <th className="px-3 py-2 font-bold w-1/3 text-center">Aproveitamento</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
+                    <tbody className="divide-y divide-border/20">
                       {maps.map((map) => (
-                        <tr key={map.mapName} className="hover:bg-white/[0.01] transition-colors">
-                          <td className="px-4 py-3 font-bold text-white">{map.mapName}</td>
-                          <td className="px-4 py-3 text-center font-mono">{map.matchesPlayed}</td>
-                          <td className="px-4 py-3 text-right font-bold text-accent-cyan">
+                        <tr key={map.mapName} className="hover:bg-surface-elevated/40 transition-colors">
+                          <td className="px-3 py-2.5 font-mono font-bold text-foreground">
+                            {map.mapName.replace(/^de_/i, "").toUpperCase()}
+                          </td>
+                          <td className="px-3 py-2.5 text-center font-mono tabular-nums text-muted-foreground">
+                            {map.matchesPlayed}
+                          </td>
+                          <td className="px-3 py-2.5 text-right font-mono font-bold text-accent-cyan tabular-nums">
                             {map.winrate.toFixed(0)}%
                           </td>
-                          <td className="px-4 py-3">
-                            <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+                          <td className="px-3 py-2.5">
+                            <div className="h-2 w-full rounded-xs bg-surface-deck border border-border/40 overflow-hidden">
                               <div
                                 style={{ width: `${map.winrate}%` }}
-                                className="h-full bg-status-good rounded-full"
+                                className="h-full bg-status-good"
                               />
                             </div>
                           </td>
@@ -297,58 +420,69 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
                   </table>
                 </div>
               )}
-            </SectionCard>
+            </div>
           </FadeIn>
 
           {/* Leaderboard da Sessão */}
           <FadeIn delay={0.14}>
-            <SectionCard title="Performance dos Jogadores na Sessão" variant="highlight">
+            <div className="surface-panel rounded-sm border border-border/40 p-5 flex flex-col gap-4">
+              <div className="flex items-center gap-2 border-b border-border/40 pb-3">
+                <Trophy className="size-4 text-primary" />
+                <h3 className="text-xs font-mono font-black text-foreground uppercase tracking-wider">
+                  Performance Individual na Sessão
+                </h3>
+              </div>
+
               {players.length === 0 ? (
-                <EmptyState message="Sem dados de jogadores." />
+                <div className="p-6 text-center text-xs font-mono text-muted-foreground/60">
+                  Sem dados de jogadores.
+                </div>
               ) : (
                 <div className="overflow-x-auto w-full">
-                  <table className="w-full text-sm text-left border-collapse">
+                  <table className="w-full text-xs text-left border-collapse min-w-[560px]">
                     <thead>
-                      <tr className="border-b border-white/15 text-xs text-muted-foreground uppercase tracking-wider">
-                        <th className="px-4 py-2.5 font-semibold">Jogador</th>
-                        <th className="px-4 py-2.5 font-semibold text-center">Jogos</th>
-                        <th className="px-4 py-2.5 font-semibold text-right">Rating</th>
-                        <th className="px-4 py-2.5 font-semibold text-right">KD</th>
-                        <th className="px-4 py-2.5 font-semibold text-right">ADR</th>
-                        <th className="px-4 py-2.5 font-semibold text-right">HS%</th>
-                        <th className="px-4 py-2.5 font-semibold text-right">ELO</th>
+                      <tr className="border-b border-border/40 text-[10px] font-mono text-muted-foreground/60 uppercase tracking-wider">
+                        <th className="px-3 py-2 font-bold">Jogador</th>
+                        <th className="px-3 py-2 font-bold text-center">Jogos</th>
+                        <th className="px-3 py-2 font-bold text-right">Rating</th>
+                        <th className="px-3 py-2 font-bold text-right">K/D</th>
+                        <th className="px-3 py-2 font-bold text-right">ADR</th>
+                        <th className="px-3 py-2 font-bold text-right">HS%</th>
+                        <th className="px-3 py-2 font-bold text-right">ELO</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
+                    <tbody className="divide-y divide-border/20">
                       {players.map((p) => {
-                        const isEloPositive = p.eloChange >= 0;
-                        const eloColor = isEloPositive ? "text-status-good" : "text-status-critical";
+                        const isEloPos = p.eloChange >= 0;
+                        const eloColor = isEloPos ? "text-status-good" : "text-status-critical";
 
                         return (
-                          <tr key={p.id} className="hover:bg-white/[0.01] transition-colors">
-                            <td className="px-4 py-3">
-                              <Link href={`/players/${p.id}`} className="flex items-center gap-3 group">
+                          <tr key={p.id} className="hover:bg-surface-elevated/40 transition-colors">
+                            <td className="px-3 py-2.5">
+                              <Link href={`/players/${p.id}`} className="flex items-center gap-2.5 group">
                                 <PlayerAvatar nickname={p.nickname} avatarUrl={p.avatarUrl} size="sm" />
-                                <span className="font-bold text-white group-hover:text-primary transition-colors">
+                                <span className="font-bold text-foreground group-hover:text-primary transition-colors truncate max-w-[120px]">
                                   {p.nickname}
                                 </span>
                               </Link>
                             </td>
-                            <td className="px-4 py-3 text-center font-mono">{p.matchesPlayed}</td>
-                            <td className="px-4 py-3 text-right">
+                            <td className="px-3 py-2.5 text-center font-mono tabular-nums text-muted-foreground">
+                              {p.matchesPlayed}
+                            </td>
+                            <td className="px-3 py-2.5 text-right font-mono tabular-nums font-bold">
                               <RatingBadge rating={p.ratingAvg} />
                             </td>
-                            <td className="px-4 py-3 text-right font-mono font-medium">
+                            <td className="px-3 py-2.5 text-right font-mono tabular-nums font-medium text-foreground">
                               {p.kd.toFixed(2)}
                             </td>
-                            <td className="px-4 py-3 text-right font-mono font-medium">
+                            <td className="px-3 py-2.5 text-right font-mono tabular-nums font-medium text-foreground">
                               {p.adrAvg.toFixed(1)}
                             </td>
-                            <td className="px-4 py-3 text-right font-mono font-medium">
+                            <td className="px-3 py-2.5 text-right font-mono tabular-nums font-medium text-muted-foreground">
                               {p.hsPercentage.toFixed(1)}%
                             </td>
-                            <td className={`px-4 py-3 text-right font-bold ${eloColor}`}>
-                              {isEloPositive ? "+" : ""}
+                            <td className={cn("px-3 py-2.5 text-right font-mono font-black tabular-nums", eloColor)}>
+                              {isEloPos ? "+" : ""}
                               {p.eloChange}
                             </td>
                           </tr>
@@ -358,7 +492,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
                   </table>
                 </div>
               )}
-            </SectionCard>
+            </div>
           </FadeIn>
         </div>
       </div>

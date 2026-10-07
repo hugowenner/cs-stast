@@ -1,4 +1,6 @@
-import { MessageSquareCode } from "lucide-react";
+import { MessageSquareCode, Flame, Crosshair } from "lucide-react";
+import { TacticalBadge } from "@/components/ui/tactical-badge";
+import { cn } from "@/lib/utils";
 import type { MatchTimelineEventDTO } from "@/server/dtos/matchDetails.dto";
 
 export function MatchTimeline({ events }: { events: MatchTimelineEventDTO[] }) {
@@ -7,47 +9,52 @@ export function MatchTimeline({ events }: { events: MatchTimelineEventDTO[] }) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       {/* Linha do Tempo (Eventos de Destaque) */}
-      <div className="glass-panel p-5 col-span-1 lg:col-span-2 flex flex-col gap-4 border border-white/5 bg-white/[0.01]">
-        <h3 className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
-          Timeline da Partida (Eventos Especiais)
-        </h3>
+      <div className="surface-panel rounded-sm p-5 col-span-1 lg:col-span-2 flex flex-col gap-4 border border-border/40">
+        <div className="flex items-center justify-between border-b border-border/40 pb-3">
+          <div className="flex items-center gap-2">
+            <Flame className="size-4 text-primary" />
+            <h3 className="text-xs font-mono font-black text-foreground uppercase tracking-wider">
+              Timeline de Eventos Críticos
+            </h3>
+          </div>
+          <span className="text-[11px] font-mono text-muted-foreground/60">
+            {specialEvents.length} eventos registrados
+          </span>
+        </div>
 
         {specialEvents.length === 0 ? (
-          <p className="text-muted-foreground py-8 text-center text-sm">
+          <p className="text-muted-foreground/60 py-8 text-center text-xs font-mono">
             Nenhum evento especial (Aces ou Multi-kills) registrado nesta partida.
           </p>
         ) : (
-          <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto pr-1">
+          <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-1">
             {specialEvents.map((event) => {
               const label =
                 event.type === "ACE"
-                  ? "Ace (Eliminou o time inteiro no round)"
+                  ? "Ace (Eliminou o time adversário inteiro)"
                   : event.type === "MULTI_KILL_4"
-                  ? "Quadra Kill (4 eliminação no mesmo round)"
+                  ? "Quadra Kill (4 eliminações no round)"
                   : event.type === "MULTI_KILL_3"
-                  ? "Triple Kill (3 eliminações no mesmo round)"
+                  ? "Triple Kill (3 eliminações no round)"
                   : event.type;
 
-              const badgeColorClass =
-                event.type === "ACE"
-                  ? "bg-status-good/10 text-status-good border-status-good/20"
-                  : "bg-accent-violet/10 text-accent-violet border-accent-violet/20";
+              const isAce = event.type === "ACE";
 
               return (
                 <div
                   key={event.id}
-                  className="flex items-center gap-3 rounded-lg border border-white/5 bg-white/[0.01] p-3 text-xs"
+                  className="flex items-center gap-3 rounded-xs border border-border/40 bg-surface-deck p-2.5 text-xs"
                 >
-                  <div className="flex size-7 items-center justify-center rounded-lg bg-white/5 text-muted-foreground font-bold tabular-nums shrink-0">
+                  <div className="flex size-7 items-center justify-center rounded-xs bg-surface-panel border border-border/60 text-foreground font-mono font-bold text-xs tabular-nums shrink-0">
                     R{event.roundNumber}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-white truncate">{event.playerNickname}</p>
-                    <p className="text-muted-foreground text-[10px] mt-0.5">{label}</p>
+                    <p className="font-bold text-foreground truncate">{event.playerNickname}</p>
+                    <p className="text-muted-foreground/70 text-[10px] font-mono">{label}</p>
                   </div>
-                  <span className={`rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider shrink-0 ${badgeColorClass}`}>
-                    {event.type.replace("MULTI_KILL_", "MK")}
-                  </span>
+                  <TacticalBadge variant={isAce ? "gold" : "good"} size="sm">
+                    {event.type.replace("MULTI_KILL_", "MK ")}
+                  </TacticalBadge>
                 </div>
               );
             })}
@@ -55,22 +62,22 @@ export function MatchTimeline({ events }: { events: MatchTimelineEventDTO[] }) {
         )}
       </div>
 
-      {/* Análise da Partida (Coach IA Placeholder) */}
-      <div className="glass-panel p-5 flex flex-col justify-between gap-4 border border-white/10 bg-gradient-to-br from-primary/5 to-accent-violet/5">
+      {/* Análise de Inteligência Tática */}
+      <div className="surface-panel rounded-sm p-5 flex flex-col justify-between gap-4 border border-border/40 bg-surface-elevated/20">
         <div className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
-            Coach IA
-          </h3>
-          <p className="text-xl font-bold mt-1 text-white">Análise da Partida</p>
-          <p className="text-xs text-muted-foreground leading-relaxed mt-1">
-            Nas próximas etapas, o Coach IA irá analisar automaticamente o andamento deste confronto, destacando viradas de clutch, impacto de abertura e rotinas recomendadas baseadas nas estatísticas de equipe.
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-primary">
+            ANÁLISE DE COMBATE
+          </span>
+          <p className="text-lg font-mono font-black text-foreground">Inteligência Tática</p>
+          <p className="text-xs text-muted-foreground/80 leading-relaxed">
+            Métricas integradas de trade, conversão de clutches e impacto round a round computadas diretamente a partir do log do servidor.
           </p>
         </div>
 
-        <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.01] p-4 text-center mt-3">
-          <MessageSquareCode className="size-6 text-muted-foreground mx-auto" />
-          <p className="text-[10px] text-muted-foreground mt-2 font-medium uppercase tracking-wider">
-            Funcionalidade em Breve
+        <div className="rounded-xs border border-border/40 bg-surface-deck p-4 text-center">
+          <Crosshair className="size-5 text-primary mx-auto mb-1.5" />
+          <p className="text-[10px] font-mono text-muted-foreground/70 font-bold uppercase tracking-wider">
+            Telemetria de Rounds Ativa
           </p>
         </div>
       </div>

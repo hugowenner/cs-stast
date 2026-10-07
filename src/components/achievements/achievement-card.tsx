@@ -1,11 +1,32 @@
 "use client";
 
 import {
-  Crosshair, Flame, Shield, Swords, Target, TrendingUp,
-  Trophy, Star, Zap, Crown, Award, Heart, Skull, Eye,
-  Layers, Users, Timer, Sparkles, Activity, BarChart2,
+  Crosshair,
+  Flame,
+  Shield,
+  Swords,
+  Target,
+  TrendingUp,
+  Trophy,
+  Star,
+  Zap,
+  Crown,
+  Award,
+  Heart,
+  Skull,
+  Eye,
+  Layers,
+  Users,
+  Timer,
+  Sparkles,
+  Activity,
+  BarChart2,
+  Check,
+  Lock,
 } from "lucide-react";
 import { AchievementTierBadge } from "./achievement-tier-badge";
+import { TacticalBadge } from "@/components/ui/tactical-badge";
+import { cn } from "@/lib/utils";
 import type { AchievementCode } from "@/server/domain/achievementCatalog";
 
 const ICON_MAP: Partial<Record<AchievementCode, React.ElementType>> = {
@@ -45,10 +66,17 @@ const ICON_MAP: Partial<Record<AchievementCode, React.ElementType>> = {
   CONSISTENCY_CAREER: Star,
 };
 
-const TIER_COLOR: Record<string, string> = {
+const TIER_BORDER: Record<string, string> = {
+  bronze: "border-border/40 hover:border-[#c97a48]/50",
+  silver: "border-border/40 hover:border-slate-400/50",
+  gold: "border-border/40 hover:border-accent-gold/50",
+  legendary: "border-border/40 hover:border-accent-violet/50",
+};
+
+const TIER_ICON_COLOR: Record<string, string> = {
   bronze: "text-[#c97a48]",
   silver: "text-slate-300",
-  gold: "text-status-warning",
+  gold: "text-accent-gold",
   legendary: "text-accent-violet",
 };
 
@@ -62,25 +90,68 @@ type CardEntry = {
 
 export function AchievementCard({ entry }: { entry: CardEntry }) {
   const Icon = ICON_MAP[entry.code as AchievementCode] ?? Trophy;
-  const iconColor = TIER_COLOR[entry.tier] ?? "text-muted-foreground/60";
+  const iconColor = TIER_ICON_COLOR[entry.tier] ?? "text-primary";
+  const borderHover = TIER_BORDER[entry.tier] ?? "hover:border-primary/50";
+  const isUnlocked = entry.unlockCount > 0;
 
   return (
-    <div className="group relative flex flex-col gap-1.5 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 transition-all hover:border-white/[0.12] hover:bg-white/[0.04] overflow-hidden cursor-default select-none">
-      {/* Normal state */}
-      <div className="flex items-start gap-2">
-        <Icon className={`size-3.5 mt-0.5 shrink-0 ${iconColor}`} />
-        <p className="text-[10px] font-bold text-white leading-snug line-clamp-2">{entry.name}</p>
-      </div>
-      <div className="flex flex-wrap items-center gap-1.5">
-        <AchievementTierBadge tier={entry.tier} />
-        <span className="text-[8px] text-muted-foreground/40 tabular-nums">
-          {entry.unlockCount > 0 ? `${entry.unlockCount}×` : "Nenhum"}
-        </span>
+    <div
+      className={cn(
+        "surface-panel rounded-sm p-3.5 sm:p-4 border transition-all duration-150 flex flex-col justify-between gap-3 group relative",
+        borderHover,
+        isUnlocked ? "bg-surface-panel" : "bg-surface-deck/80 opacity-80"
+      )}
+    >
+      {/* Header: Icon + Name + Tier Badge */}
+      <div className="flex items-start justify-between gap-2.5">
+        <div className="flex items-start gap-2.5 min-w-0">
+          <div
+            className={cn(
+              "flex size-8 shrink-0 items-center justify-center rounded-xs border bg-surface-deck",
+              isUnlocked ? "border-border/60" : "border-border/40"
+            )}
+          >
+            <Icon className={cn("size-4 shrink-0", iconColor)} />
+          </div>
+          <div className="min-w-0">
+            <h4 className="text-xs font-mono font-bold text-foreground leading-snug line-clamp-1 group-hover:text-primary transition-colors">
+              {entry.name}
+            </h4>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <AchievementTierBadge tier={entry.tier} />
+            </div>
+          </div>
+        </div>
+
+        <div className="shrink-0">
+          {isUnlocked ? (
+            <span className="font-mono text-[9px] font-black text-status-good px-1.5 py-0.5 rounded-xs bg-status-good/10 border border-status-good/30 tabular-nums">
+              {entry.unlockCount}×
+            </span>
+          ) : (
+            <span className="font-mono text-[9px] text-muted-foreground/40 px-1.5 py-0.5 rounded-xs bg-surface-deck border border-border/40 flex items-center gap-1">
+              <Lock className="size-2.5" /> 0×
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Hover overlay: description */}
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-xl bg-black/80 px-3 py-2 opacity-0 transition-opacity duration-150 group-hover:opacity-100 backdrop-blur-[2px]">
-        <p className="text-[10px] text-center text-white/80 leading-relaxed">{entry.description}</p>
+      {/* Description / Requirement */}
+      <p className="text-[11px] text-muted-foreground/75 leading-relaxed">
+        {entry.description}
+      </p>
+
+      {/* Footer State */}
+      <div className="pt-2 border-t border-border/30 flex items-center justify-between text-[9px] font-mono">
+        <span className="text-muted-foreground/50 uppercase">Status:</span>
+        <span
+          className={cn(
+            "font-bold uppercase tracking-wider",
+            isUnlocked ? "text-status-good" : "text-muted-foreground/60"
+          )}
+        >
+          {isUnlocked ? "DESBLOQUEADA" : "EM PROGRESSO"}
+        </span>
       </div>
     </div>
   );

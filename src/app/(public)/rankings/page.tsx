@@ -1,57 +1,138 @@
+import * as React from "react";
 import Link from "next/link";
-import { PageHeader } from "@/components/ui/page-header";
 import { FadeIn } from "@/components/motion/fade-in";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import { SectionContainer } from "@/components/dashboard/section-container";
+import { SeasonSelect } from "@/components/dashboard/season-select";
+import { TacticalBadge } from "@/components/ui/tactical-badge";
+import { SampleIndicator } from "@/components/ui/sample-indicator";
+import { DeltaIndicator } from "@/components/ui/delta-indicator";
 import { FORMA_STYLE } from "@/lib/forma";
 import { prisma } from "@/server/db";
 import { safeQuery } from "@/server/safeQuery";
 import * as statsService from "@/server/services/stats.service";
 import * as competitiveService from "@/server/services/competitive.service";
-import { cn } from "@/lib/utils";
-import { ChevronRight, Users, Trophy, Activity, Calendar } from "lucide-react";
-import { SeasonSelect } from "@/components/dashboard/season-select";
 import { listSeasons, resolveSeasonId } from "@/server/services/season.service";
+import { cn } from "@/lib/utils";
+import {
+  Trophy,
+  Users,
+  Calendar,
+  ChevronRight,
+  TrendingUp,
+  Zap,
+  Crosshair,
+  Target,
+  ShieldCheck,
+  Activity,
+  Flame,
+  Crown,
+  ShieldAlert,
+  Info,
+} from "lucide-react";
+
+export const dynamic = "force-dynamic";
 
 const METRICS = [
-  { value: "seasonScore", label: "Score Oficial" },
-  { value: "rating", label: "Rating" },
-  { value: "adr", label: "ADR" },
-  { value: "kd", label: "K/D" },
-  { value: "impact", label: "Impacto" },
-  { value: "kast", label: "KAST" },
-  { value: "consistency", label: "Consistência" },
-  { value: "evolution", label: "Evolução" },
-  { value: "elo", label: "Hub ELO" },
-  { value: "hs", label: "HS%" },
-  { value: "entry", label: "Entry Kills" },
+  { value: "seasonScore", label: "Score Oficial 3.5", icon: Trophy, accent: "gold" },
+  { value: "rating",      label: "Rating 2.0",        icon: TrendingUp, accent: "orange" },
+  { value: "adr",         label: "ADR",               icon: Zap, accent: "cyan" },
+  { value: "kd",          label: "K/D",               icon: Crosshair, accent: "green" },
+  { value: "impact",      label: "Impacto",           icon: Flame, accent: "orange" },
+  { value: "kast",        label: "KAST%",             icon: Target, accent: "cyan" },
+  { value: "consistency", label: "Consistência",      icon: ShieldCheck, accent: "green" },
+  { value: "evolution",   label: "Evolução",          icon: Activity, accent: "orange" },
+  { value: "elo",         label: "Hub ELO",           icon: Crown, accent: "gold" },
+  { value: "hs",          label: "HS%",               icon: Crosshair, accent: "cyan" },
+  { value: "entry",       label: "Entry Kills",       icon: Flame, accent: "orange" },
 ] as const;
 
 type Metric = (typeof METRICS)[number]["value"];
 
-const METRIC_INFOS: Record<Metric, { explanation: string; icon: string }> = {
-  seasonScore: { explanation: "Score oficial da temporada combinando performance individual, resultado coletivo e ajuste Bayesiano de amostra (mín. 10 partidas).", icon: "🏆" },
-  rating: { explanation: "Indicador geral de performance considerando impacto individual e resultado de rounds.", icon: "📈" },
-  adr: { explanation: "Dano médio causado por round (Average Damage per Round).", icon: "💥" },
-  kd: { explanation: "Relação acumulada entre eliminações e mortes (Kills/Deaths).", icon: "🎯" },
-  impact: { explanation: "Métrica que mede a influência de multikills, opening kills e clutches ganhos.", icon: "⚡" },
-  kast: { explanation: "Porcentagem de rounds com Kill, Assist, Survival ou Trade.", icon: "🤝" },
-  consistency: { explanation: "Porcentagem de partidas em que o jogador obteve Rating ≥ 1.0 (mín. 3 partidas).", icon: "🛡️" },
-  evolution: { explanation: "Desempenho das últimas 5 partidas em relação à média geral do jogador na temporada.", icon: "🚀" },
-  elo: { explanation: "Pontuação interna do Hub ELO baseada em vitórias e derrotas.", icon: "👑" },
-  hs: { explanation: "Porcentagem de abates que foram headshots (mín. 3 partidas).", icon: "💀" },
-  entry: { explanation: "Média de primeiros abates (Entry Kills) obtidos por partida (mín. 3 partidas).", icon: "⚔️" },
+const METRIC_INFOS: Record<
+  Metric,
+  {
+    explanation: string;
+    badgeLabel: string;
+    badgeVariant: "good" | "warning" | "critical" | "gold" | "info" | "neutral" | "primary";
+  }
+> = {
+  seasonScore: {
+    explanation:
+      "Classificação auditada oficial do CS2 Stats. Combina performance individual (Rating ponderado), taxa de vitória com amortização Bayesiana e filtro de amostragem mínima de 10 partidas.",
+    badgeLabel: "SCORE OFICIAL",
+    badgeVariant: "gold",
+  },
+  rating: {
+    explanation:
+      "Indicador de performance geral HLTV 2.0 adaptado para o Hub, considerando impacto individual, sobrevivência e eficiência em rounds.",
+    badgeLabel: "RATING 2.0",
+    badgeVariant: "primary",
+  },
+  adr: {
+    explanation:
+      "Dano médio causado por round (Average Damage per Round). Mede a capacidade direta de desgastar as forças inimigas.",
+    badgeLabel: "DANO / ROUND",
+    badgeVariant: "info",
+  },
+  kd: {
+    explanation:
+      "Relação acumulada entre eliminações conseguidas e mortes sofridas (Kills / Deaths) durante o período da temporada.",
+    badgeLabel: "KILL / DEATH",
+    badgeVariant: "good",
+  },
+  impact: {
+    explanation:
+      "Métrica de influência em rounds decisivos, medindo peso de multikills, opening kills e vitórias em situações de clutch.",
+    badgeLabel: "IMPACTO",
+    badgeVariant: "primary",
+  },
+  kast: {
+    explanation:
+      "Porcentagem de rounds em que o jogador contribuiu ativamente com Kill, Assistência, Sobrevivência ou Trade.",
+    badgeLabel: "KAST",
+    badgeVariant: "info",
+  },
+  consistency: {
+    explanation:
+      "Percentual de partidas em que o jogador atingiu Rating ≥ 1.00 (mínimo de 3 partidas disputadas).",
+    badgeLabel: "REGULARIDADE",
+    badgeVariant: "good",
+  },
+  evolution: {
+    explanation:
+      "Comparativo percentual de desempenho nas últimas 5 partidas em relação à média histórica do jogador na temporada.",
+    badgeLabel: "DELTA FORMA",
+    badgeVariant: "primary",
+  },
+  elo: {
+    explanation:
+      "Pontuação competitiva do Hub baseada nos confrontos, vitórias e derrotas contra os pares do grupo.",
+    badgeLabel: "ELO OFICIAL",
+    badgeVariant: "gold",
+  },
+  hs: {
+    explanation:
+      "Percentual de eliminações concluídas com tiro na cabeça (Headshot Accuracy, mín. 3 partidas).",
+    badgeLabel: "PRECISÃO HS",
+    badgeVariant: "info",
+  },
+  entry: {
+    explanation:
+      "Média de primeiros abates (Entry Kills) obtidos por partida disputada no período (mín. 3 partidas).",
+    badgeLabel: "ABERTURAS",
+    badgeVariant: "primary",
+  },
 };
 
 function formatMetricValue(value: number, metric: Metric): string {
-  if (metric === "consistency" || metric === "hs") return `${value}%`;
-  if (metric === "evolution") return `${value > 0 ? "+" : ""}${value}%`;
+  if (metric === "consistency" || metric === "hs" || metric === "kast") return `${value.toFixed(0)}%`;
+  if (metric === "evolution") return `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
   if (metric === "seasonScore") return value.toFixed(3);
   if (metric === "rating" || metric === "kd") return value.toFixed(2);
+  if (metric === "adr") return value.toFixed(0);
   return value.toString();
 }
-
-export const dynamic = "force-dynamic";
 
 export default async function RankingsPage({
   searchParams,
@@ -108,331 +189,400 @@ export default async function RankingsPage({
     where: resolvedSeasonId ? { seasonId: resolvedSeasonId } : undefined,
   });
 
-  const dataset = await competitiveService.loadCompetitiveDataset();
+  const dataset = await competitiveService.loadCompetitiveDataset(resolvedSeasonId);
   const bundle = await competitiveService.getDashboardCompetitiveBundle(dataset);
   const monitoredByPlayerId = new Map(bundle.monitoredPlayers.map((p) => [p.player.id, p]));
 
   const top3 = ranking.slice(0, 3);
   const listPlayers = ranking.slice(3);
 
-  const metricLabel = METRICS.find((m) => m.value === metric)?.label ?? "";
+  const activeMetricConfig = METRICS.find((m) => m.value === metric) ?? METRICS[0];
+  const activeMetricInfo = METRIC_INFOS[metric];
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-10 lg:gap-12 pb-16">
+      
+      {/* ═══ 01. HEADER & CENTRAL TELEMETRY ═══ */}
       <FadeIn>
-        <PageHeader
-          title="Rankings"
-          subtitle="Classificação competitiva da temporada. Amizade não entra no cálculo."
-          actions={
-            <SeasonSelect seasons={seasonOptions} currentSeasonId={currentSeason} />
-          }
-        />
-      </FadeIn>
+        <div className="flex flex-col bg-surface-panel border border-border/70 rounded-sm overflow-hidden shadow-lg">
+          <div className="h-[2px] w-full bg-gradient-to-r from-gold via-primary to-transparent" />
+          
+          <div className="p-5 sm:p-6 flex flex-wrap items-center justify-between gap-4 border-b border-border/40 bg-surface-deck/40">
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="flex size-10 items-center justify-center bg-gold/10 border border-gold/30 rounded-xs text-gold shrink-0">
+                <Trophy className="size-5" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-[0.16em] text-muted-foreground/70">
+                    CENTRAL DE RANKING
+                  </span>
+                  <TacticalBadge label="OFICIAL" variant="gold" size="xs" />
+                </div>
+                <h1 className="text-xl sm:text-2xl font-black text-foreground uppercase tracking-tight truncate mt-0.5">
+                  Classificação da Temporada
+                </h1>
+              </div>
+            </div>
 
-      {/* Indicadores de Temporada */}
-      <FadeIn delay={0.05}>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="glass-panel border-white/[0.06] p-4 rounded-xl flex items-center gap-3">
-            <Users className="size-5 text-primary shrink-0" />
-            <div>
-              <p className="text-[10px] uppercase tracking-widest font-black text-muted-foreground/50">Jogadores Ranqueados</p>
-              <p className="text-lg font-black text-white mt-0.5">{totalPlayers} monitorados</p>
+            <div className="shrink-0">
+              <SeasonSelect seasons={seasonOptions} currentSeasonId={currentSeason} />
             </div>
           </div>
-          <div className="glass-panel border-white/[0.06] p-4 rounded-xl flex items-center gap-3">
-            <Trophy className="size-5 text-status-warning shrink-0" />
-            <div>
-              <p className="text-[10px] uppercase tracking-widest font-black text-muted-foreground/50">Partidas Analisadas</p>
-              <p className="text-lg font-black text-white mt-0.5">{totalMatches} partidas</p>
+
+          {/* Quick Stats Strip */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border/30 bg-surface-deck/20">
+            <div className="p-4 flex items-center gap-3">
+              <Users className="size-4 text-primary shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground/60 font-bold">
+                  JOGADORES ATIVOS
+                </span>
+                <span className="font-mono text-sm font-bold text-foreground">
+                  {totalPlayers} monitorados
+                </span>
+              </div>
             </div>
-          </div>
-          <div className="glass-panel border-white/[0.06] p-4 rounded-xl flex items-center gap-3">
-            <Calendar className="size-5 text-accent-violet shrink-0" />
-            <div>
-              <p className="text-[10px] uppercase tracking-widest font-black text-muted-foreground/50">Visualização</p>
-              <p className="text-lg font-black text-white mt-0.5">{seasonLabel}</p>
+
+            <div className="p-4 flex items-center gap-3">
+              <Trophy className="size-4 text-gold shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground/60 font-bold">
+                  PARTIDAS ANALISADAS
+                </span>
+                <span className="font-mono text-sm font-bold text-foreground">
+                  {totalMatches} confrontos
+                </span>
+              </div>
+            </div>
+
+            <div className="p-4 flex items-center gap-3">
+              <Calendar className="size-4 text-cyan-400 shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground/60 font-bold">
+                  PERÍODO ATIVO
+                </span>
+                <span className="font-mono text-sm font-bold text-foreground truncate">
+                  {seasonLabel}
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </FadeIn>
 
-      {/* Seletor de Métricas */}
-      <FadeIn delay={0.1}>
+      {/* ═══ 02. SELETOR TÁTICO DE MÉTRICAS & EXPLANATION ═══ */}
+      <FadeIn delay={0.06}>
         <div className="flex flex-col gap-3">
-          <div className="flex gap-1.5 overflow-x-auto pb-1.5 scrollbar-none whitespace-nowrap flex-nowrap shrink-0 border-b border-white/[0.04]">
-            {METRICS.map((m) => (
-              <Link
-                key={m.value}
-                href={`/rankings?metric=${m.value}${season ? `&season=${season}` : ""}`}
-                className={cn(
-                  "rounded-xl px-4 py-2 text-xs font-bold transition-all border",
-                  metric === m.value
-                    ? "bg-primary text-black border-primary font-black shadow-[0_0_12px_0_rgba(var(--primary-rgb),0.15)]"
-                    : "text-muted-foreground/75 border-white/[0.06] bg-white/[0.02] hover:text-white hover:border-white/[0.12] hover:bg-white/[0.04]",
-                )}
-              >
-                {m.label}
-              </Link>
-            ))}
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-[0.16em] text-muted-foreground/70">
+              SELECIONE A MÉTRICA DE ORDENAÇÃO
+            </span>
+            <span className="text-[10px] font-mono text-muted-foreground/50">
+              11 métricas disponíveis
+            </span>
           </div>
-          <div className="glass-panel rounded-2xl border border-white/[0.06] p-4 bg-white/[0.01] flex items-start gap-3">
-            <span className="text-xl shrink-0 leading-none">{METRIC_INFOS[metric].icon}</span>
-            <div className="min-w-0">
-              <p className="text-xs font-bold text-white uppercase tracking-wider">{metricLabel}</p>
-              <p className="text-xs text-muted-foreground/70 mt-1 leading-relaxed">{METRIC_INFOS[metric].explanation}</p>
+
+          {/* Metric Chips Bar */}
+          <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar border-b border-border/30">
+            {METRICS.map((m) => {
+              const isActive = metric === m.value;
+              const IconComponent = m.icon;
+              return (
+                <Link
+                  key={m.value}
+                  href={`/rankings?metric=${m.value}${season ? `&season=${season}` : ""}`}
+                  className={cn(
+                    "flex items-center gap-2 px-3.5 py-2 rounded-xs text-xs font-mono font-bold uppercase tracking-wider transition-micro border whitespace-nowrap",
+                    isActive
+                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                      : "bg-surface-panel text-muted-foreground/80 border-border/60 hover:border-border hover:text-foreground hover:bg-surface-deck"
+                  )}
+                >
+                  <IconComponent className={cn("size-3.5", isActive ? "text-primary-foreground" : "text-muted-foreground/60")} />
+                  <span>{m.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Explanatory Technical Box */}
+          <div className="flex items-start gap-3 p-4 bg-surface-deck/60 border border-border/50 rounded-xs">
+            <Info className="size-4 text-primary shrink-0 mt-0.5" />
+            <div className="flex flex-col min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-bold uppercase text-foreground">
+                  {activeMetricConfig.label}
+                </span>
+                <TacticalBadge
+                  label={activeMetricInfo.badgeLabel}
+                  variant={activeMetricInfo.badgeVariant}
+                  size="xs"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground/75 font-sans mt-1 leading-relaxed">
+                {activeMetricInfo.explanation}
+              </p>
             </div>
           </div>
         </div>
       </FadeIn>
 
+      {/* ═══ 03. CLASSIFICAÇÃO GERAL & PÓDIO ═══ */}
       <SectionContainer
-        title={`Classificação por ${metricLabel}`}
-        subtitle="Ranking calculado em tempo real com base na temporada"
-        delay={0.15}
+        index={1}
+        tag="CLASSIFICAÇÃO OFICIAL"
+        title={`Ranking por ${activeMetricConfig.label}`}
+        subtitle={`Classificação calculada para a temporada selecionada ordenando por ${activeMetricConfig.label}.`}
+        delay={0.1}
       >
         {ranking.length === 0 ? (
-          <div className="glass-panel rounded-2xl border border-white/[0.06] p-12 text-center">
-            <Trophy className="size-10 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground/50">Sem dados suficientes ainda.</p>
+          <div className="bg-surface-panel border border-border/60 rounded-sm p-12 text-center flex flex-col items-center gap-3">
+            <Trophy className="size-8 text-muted-foreground/30" />
+            <p className="text-xs font-mono text-muted-foreground/60 uppercase tracking-wider">
+              Nenhum dado registrado para esta métrica na temporada selecionada.
+            </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-6">
 
-            {/* ── Pódio ──────────────────────────────────────────────── */}
-            {top3.length >= 3 && (() => {
-              // Ordem visual: [2º esq] [1º centro] [3º dir]
-              const PODIUM: Array<{
-                pos: 1 | 2 | 3;
-                entry: (typeof top3)[number];
-                medal: string;
-                platformClass: string;
-                cardBorder: string;
-                cardShadow: string;
-                cardHoverShadow: string;
-                glowStyle: string;
-                orderClass: string;
-              }> = [
-                {
-                  pos: 2,
-                  entry: top3[1]!,
-                  medal: "🥈",
-                  platformClass: "h-1.5 bg-slate-400/12",
-                  cardBorder: "border-slate-400/18",
-                  cardShadow: "shadow-[0_0_12px_0_rgba(148,163,184,0.07)]",
-                  cardHoverShadow: "hover:shadow-[0_0_18px_0_rgba(148,163,184,0.14)]",
-                  glowStyle: "radial-gradient(ellipse at 50% 90%, rgba(148,163,184,0.12) 0%, transparent 65%)",
-                  orderClass: "order-2 md:order-1",
-                },
-                {
-                  pos: 1,
-                  entry: top3[0]!,
-                  medal: "🥇",
-                  platformClass: "h-3 bg-status-warning/14",
-                  cardBorder: "border-status-warning/28",
-                  cardShadow: "shadow-[0_0_16px_0_rgba(245,158,11,0.10)]",
-                  cardHoverShadow: "hover:shadow-[0_0_24px_0_rgba(245,158,11,0.20)]",
-                  glowStyle: "radial-gradient(ellipse at 50% 90%, rgba(245,158,11,0.16) 0%, transparent 65%)",
-                  orderClass: "order-1 md:order-2",
-                },
-                {
-                  pos: 3,
-                  entry: top3[2]!,
-                  medal: "🥉",
-                  platformClass: "h-1 bg-[#c97a48]/10",
-                  cardBorder: "border-[#c97a48]/16",
-                  cardShadow: "shadow-[0_0_10px_0_rgba(201,122,72,0.07)]",
-                  cardHoverShadow: "hover:shadow-[0_0_16px_0_rgba(201,122,72,0.13)]",
-                  glowStyle: "radial-gradient(ellipse at 50% 90%, rgba(201,122,72,0.12) 0%, transparent 65%)",
-                  orderClass: "order-3",
-                },
-              ];
+            {/* ─── PÓDIO DE IMPACTO (TOP 3) ─── */}
+            {(() => {
+              const first = top3[0];
+              const second = top3[1];
+              const third = top3[2];
+              if (!first?.player || !second?.player || !third?.player) return null;
 
               return (
-                <div className="flex flex-col md:flex-row md:items-end justify-center gap-1.5 md:gap-2">
-                  {PODIUM.map(({ pos, entry, medal, platformClass, cardBorder, cardShadow, cardHoverShadow, glowStyle, orderClass }) => {
-                    if (!entry?.player) return null;
-                    const forma = monitoredByPlayerId.get(entry.player.id)?.forma;
-                    const formaStyle = forma ? FORMA_STYLE[forma] : null;
-                    const FormaIcon = formaStyle?.icon;
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 items-end">
+                  
+                  {/* #2 — PRATA */}
+                  <div className="flex flex-col p-4 bg-surface-panel border border-border/70 rounded-xs hover:border-border/90 transition-micro order-2 md:order-1">
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <span className="font-mono text-xs font-bold text-muted-foreground/80">#2 COLOCADO</span>
+                      <TacticalBadge label="TOP 2" variant="neutral" size="xs" />
+                    </div>
 
-                    return (
-                      <div key={pos} className={cn("flex flex-col md:w-[30%] lg:w-[28%]", orderClass)}>
-                        <div className="relative group">
-                          <div
-                            className="pointer-events-none absolute inset-x-0 bottom-0 h-full rounded-xl -z-10 opacity-50 transition-opacity duration-200 group-hover:opacity-80"
-                            style={{ background: glowStyle }}
-                          />
-                          <Link
-                            href={`/players/${entry.player.id}`}
-                            className={cn(
-                              "flex flex-col items-center gap-1.5 rounded-xl p-2.5 text-center transition-all duration-200",
-                              "glass-panel border",
-                              cardBorder,
-                              cardShadow,
-                              cardHoverShadow,
-                              "hover:-translate-y-0.5",
-                            )}
-                          >
-                            <span className="text-sm leading-none">{medal}</span>
-
-                            <PlayerAvatar
-                              nickname={entry.player.nickname}
-                              avatarUrl={entry.player.avatarUrl}
-                              size="sm"
-                            />
-
-                            <div className="flex flex-col items-center gap-0 w-full min-w-0">
-                              <p className="text-[11px] font-black text-white truncate w-full leading-tight">
-                                {entry.player.nickname}
-                              </p>
-                              {entry.player.levelGc !== null && (
-                                <p className="text-[7px] text-muted-foreground/45 font-semibold">
-                                  GC {entry.player.levelGc}
-                                </p>
-                              )}
-                            </div>
-
-                            {formaStyle && FormaIcon && (
-                              <span className={cn(
-                                "inline-flex items-center gap-0.5 px-1 py-0.5 rounded-full text-[7px] font-bold border",
-                                formaStyle.bg, formaStyle.border, formaStyle.color,
-                              )}>
-                                <FormaIcon className="size-1.5" />
-                                {formaStyle.text}
-                              </span>
-                            )}
-
-                            <div>
-                              <p className="text-[7px] uppercase tracking-[0.1em] font-bold text-muted-foreground/40">
-                                {metricLabel}
-                              </p>
-                              <p className={cn(
-                                "font-black tabular-nums leading-none",
-                                pos === 1 ? "text-base text-white" : "text-sm text-white/85",
-                              )}>
-                                {formatMetricValue(entry.value, metric)}
-                              </p>
-                            </div>
-                          </Link>
-                        </div>
-
-                        <div className={cn("w-full rounded-b", platformClass)} />
+                    <div className="flex items-center gap-3 py-2 border-y border-border/30 my-2">
+                      <PlayerAvatar
+                        nickname={second.player.nickname}
+                        avatarUrl={second.player.avatarUrl}
+                        size="md"
+                      />
+                      <div className="min-w-0 flex flex-col">
+                        <Link
+                          href={`/players/${second.player.id}`}
+                          className="text-sm font-bold text-foreground hover:text-primary transition-micro truncate"
+                        >
+                          {second.player.nickname}
+                        </Link>
+                        {second.player.levelGc !== null && (
+                          <span className="text-[10px] font-mono text-muted-foreground/60">
+                            GC Nível {second.player.levelGc}
+                          </span>
+                        )}
                       </div>
-                    );
-                  })}
+                    </div>
+
+                    <div className="flex items-baseline justify-between pt-1">
+                      <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground/60">
+                        {activeMetricConfig.label}
+                      </span>
+                      <span className="font-mono text-lg font-bold text-foreground tabular-nums">
+                        {formatMetricValue(second.value, metric)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* #1 — OURO DOMINANTE (CENTRO) */}
+                  <div className="relative flex flex-col p-5 bg-gradient-to-b from-gold/[0.06] to-surface-panel border-2 border-gold/40 rounded-xs shadow-md order-1 md:order-2">
+                    <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-gold via-yellow-200 to-gold" />
+                    
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-1.5">
+                        <Crown className="size-4 text-gold shrink-0" />
+                        <span className="font-mono text-xs font-black text-gold tracking-wider">#1 LÍDER OFICIAL</span>
+                      </div>
+                      <TacticalBadge label="LÍDER" variant="gold" size="xs" />
+                    </div>
+
+                    <div className="flex items-center gap-4 py-3 border-y border-gold/20 my-2">
+                      <PlayerAvatar
+                        nickname={first.player.nickname}
+                        avatarUrl={first.player.avatarUrl}
+                        size="lg"
+                      />
+                      <div className="min-w-0 flex flex-col">
+                        <Link
+                          href={`/players/${first.player.id}`}
+                          className="text-base sm:text-lg font-black text-foreground hover:text-primary transition-micro truncate"
+                        >
+                          {first.player.nickname}
+                        </Link>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {first.player.levelGc !== null && (
+                            <span className="text-[10px] font-mono text-muted-foreground/60">
+                              GC Lvl {first.player.levelGc}
+                            </span>
+                          )}
+                          {monitoredByPlayerId.get(first.player.id)?.forma && (
+                            <span className="text-[9px] font-mono font-bold text-status-good uppercase">
+                              · {monitoredByPlayerId.get(first.player.id)?.forma}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-baseline justify-between pt-1">
+                      <span className="text-[10px] font-mono uppercase tracking-widest text-gold font-bold">
+                        {activeMetricConfig.label}
+                      </span>
+                      <span className="font-mono text-2xl font-black text-gold tabular-nums drop-shadow-[0_0_10px_rgba(230,175,46,0.3)]">
+                        {formatMetricValue(first.value, metric)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* #3 — BRONZE */}
+                  <div className="flex flex-col p-4 bg-surface-panel border border-border/70 rounded-xs hover:border-border/90 transition-micro order-3">
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <span className="font-mono text-xs font-bold text-muted-foreground/80">#3 COLOCADO</span>
+                      <TacticalBadge label="TOP 3" variant="neutral" size="xs" />
+                    </div>
+
+                    <div className="flex items-center gap-3 py-2 border-y border-border/30 my-2">
+                      <PlayerAvatar
+                        nickname={third.player.nickname}
+                        avatarUrl={third.player.avatarUrl}
+                        size="md"
+                      />
+                      <div className="min-w-0 flex flex-col">
+                        <Link
+                          href={`/players/${third.player.id}`}
+                          className="text-sm font-bold text-foreground hover:text-primary transition-micro truncate"
+                        >
+                          {third.player.nickname}
+                        </Link>
+                        {third.player.levelGc !== null && (
+                          <span className="text-[10px] font-mono text-muted-foreground/60">
+                            GC Nível {third.player.levelGc}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-baseline justify-between pt-1">
+                      <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground/60">
+                        {activeMetricConfig.label}
+                      </span>
+                      <span className="font-mono text-lg font-bold text-foreground tabular-nums">
+                        {formatMetricValue(third.value, metric)}
+                      </span>
+                    </div>
+                  </div>
+
                 </div>
               );
             })()}
 
-            {/* ── Lista (4º+) ─────────────────────────────────────────── */}
-            <div className="glass-panel rounded-2xl border border-white/[0.06] overflow-hidden flex flex-col">
-              {listPlayers.length === 0 && top3.length < 3 ? (
-                ranking.map((entry, index) => {
+            {/* ─── TABELA DE CLASSIFICAÇÃO GERAL (4º EM DIANTE OU TODAS) ─── */}
+            <div className="bg-surface-panel border border-border/70 rounded-sm overflow-hidden flex flex-col">
+              
+              {/* Table Header */}
+              <div className="px-4 py-3 border-b border-border/40 bg-surface-deck/40 flex items-center justify-between text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/70">
+                <div className="flex items-center gap-3">
+                  <span className="w-8 text-center">POS</span>
+                  <span>JOGADOR</span>
+                </div>
+                <div className="flex items-center gap-8 text-right">
+                  <span className="hidden sm:inline-block">FORMA</span>
+                  <span className="w-24 text-right">{activeMetricConfig.label}</span>
+                </div>
+              </div>
+
+              {/* Table Rows */}
+              <div className="divide-y divide-border/30">
+                {(top3.length >= 3 ? listPlayers : ranking).map((entry, idx) => {
                   if (!entry.player) return null;
-                  const position = index + 1;
-                  const forma = monitoredByPlayerId.get(entry.player.id)?.forma;
+                  const rank = top3.length >= 3 ? idx + 4 : idx + 1;
+                  const isTop1 = rank === 1;
+                  const isTop3 = rank <= 3;
+                  const monitored = monitoredByPlayerId.get(entry.player.id);
+                  const forma = monitored?.forma;
                   const formaStyle = forma ? FORMA_STYLE[forma] : null;
-                  const FormaIcon = formaStyle?.icon;
 
                   return (
                     <Link
                       key={entry.player.id}
                       href={`/players/${entry.player.id}`}
-                      className="flex items-center gap-3 px-4 py-3.5 hover:bg-white/[0.02] transition-colors border-b border-white/[0.04] last:border-b-0 group"
+                      className="px-4 py-3 flex items-center justify-between gap-3 hover:bg-surface-elevated/30 transition-micro group"
                     >
-                      <span className="flex size-7 shrink-0 items-center justify-center rounded-lg text-xs font-black tabular-nums bg-white/5 border border-white/10 text-muted-foreground/75">
-                        {position}
-                      </span>
-                      <div className="shrink-0">
-                        <PlayerAvatar nickname={entry.player.nickname} avatarUrl={entry.player.avatarUrl} size="sm" />
-                      </div>
-                      <div className="min-w-0 flex-1 flex flex-col sm:flex-row sm:items-center sm:gap-2">
-                        <span className="font-bold text-white text-sm group-hover:text-primary transition-colors truncate">
-                          {entry.player.nickname}
+                      {/* Left: Position & Avatar & Nickname */}
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <span
+                          className={cn(
+                            "font-mono text-xs font-black w-8 text-center shrink-0 tabular-nums",
+                            isTop1
+                              ? "text-gold"
+                              : isTop3
+                                ? "text-foreground font-bold"
+                                : "text-muted-foreground/50 font-semibold"
+                          )}
+                        >
+                          #{rank}
                         </span>
-                        {entry.player.levelGc !== null && (
-                          <span className="text-[8px] font-black px-1.5 py-0.5 bg-white/[0.04] border border-white/10 rounded text-muted-foreground/60 w-max mt-0.5 sm:mt-0">
-                            LVL {entry.player.levelGc}
-                          </span>
-                        )}
-                      </div>
-                      {formaStyle && FormaIcon && (
-                        <div className="shrink-0 hidden sm:block">
-                          <span className={cn(
-                            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold border",
-                            formaStyle.bg, formaStyle.border, formaStyle.color,
-                          )}>
-                            <FormaIcon className="size-2.5" />
-                            {formaStyle.text}
-                          </span>
-                        </div>
-                      )}
-                      <div className="shrink-0 text-right min-w-[70px]">
-                        <p className="text-[7px] uppercase tracking-widest font-bold text-muted-foreground/50">{metricLabel}</p>
-                        <p className="text-sm font-black text-white tabular-nums mt-0.5">
-                          {formatMetricValue(entry.value, metric)}
-                        </p>
-                      </div>
-                      <div className="shrink-0 pl-1">
-                        <ChevronRight className="size-3.5 text-muted-foreground/30 group-hover:text-white transition-colors" />
-                      </div>
-                    </Link>
-                  );
-                })
-              ) : (
-                listPlayers.map((entry, index) => {
-                  if (!entry.player) return null;
-                  const position = index + 4;
-                  const forma = monitoredByPlayerId.get(entry.player.id)?.forma;
-                  const formaStyle = forma ? FORMA_STYLE[forma] : null;
-                  const FormaIcon = formaStyle?.icon;
 
-                  return (
-                    <Link
-                      key={entry.player.id}
-                      href={`/players/${entry.player.id}`}
-                      className="flex items-center gap-3 px-4 py-3.5 hover:bg-white/[0.02] transition-colors border-b border-white/[0.04] last:border-b-0 group"
-                    >
-                      <span className="flex size-7 shrink-0 items-center justify-center rounded-lg text-xs font-black tabular-nums bg-white/5 border border-white/10 text-muted-foreground/75">
-                        {position}
-                      </span>
-                      <div className="shrink-0">
-                        <PlayerAvatar nickname={entry.player.nickname} avatarUrl={entry.player.avatarUrl} size="sm" />
-                      </div>
-                      <div className="min-w-0 flex-1 flex flex-col sm:flex-row sm:items-center sm:gap-2">
-                        <span className="font-bold text-white text-sm group-hover:text-primary transition-colors truncate">
-                          {entry.player.nickname}
-                        </span>
-                        {entry.player.levelGc !== null && (
-                          <span className="text-[8px] font-black px-1.5 py-0.5 bg-white/[0.04] border border-white/10 rounded text-muted-foreground/60 w-max mt-0.5 sm:mt-0">
-                            LVL {entry.player.levelGc}
+                        <PlayerAvatar
+                          nickname={entry.player.nickname}
+                          avatarUrl={entry.player.avatarUrl}
+                          size="sm"
+                        />
+
+                        <div className="min-w-0 flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                          <span className="text-xs sm:text-sm font-bold text-foreground group-hover:text-primary transition-micro truncate">
+                            {entry.player.nickname}
                           </span>
-                        )}
+                          {entry.player.levelGc !== null && (
+                            <span className="text-[9px] font-mono text-muted-foreground/50">
+                              LVL {entry.player.levelGc}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      {formaStyle && FormaIcon && (
-                        <div className="shrink-0 hidden sm:block">
-                          <span className={cn(
-                            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold border",
-                            formaStyle.bg, formaStyle.border, formaStyle.color,
-                          )}>
-                            <FormaIcon className="size-2.5" />
-                            {formaStyle.text}
+
+                      {/* Right: Forma & Metric Value */}
+                      <div className="flex items-center gap-6 sm:gap-8 text-right shrink-0">
+                        {forma && (
+                          <div className="hidden sm:block">
+                            <span
+                              className={cn(
+                                "text-[10px] font-mono font-bold uppercase",
+                                forma === "Excelente" || forma === "Em alta"
+                                  ? "text-status-good"
+                                  : forma === "Oscilando"
+                                    ? "text-status-warning"
+                                    : "text-muted-foreground/60"
+                              )}
+                            >
+                              {forma}
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="w-24 text-right">
+                          <span className="font-mono text-sm sm:text-base font-black text-foreground group-hover:text-primary transition-micro tabular-nums">
+                            {formatMetricValue(entry.value, metric)}
                           </span>
                         </div>
-                      )}
-                      <div className="shrink-0 text-right min-w-[70px]">
-                        <p className="text-[7px] uppercase tracking-widest font-bold text-muted-foreground/50">{metricLabel}</p>
-                        <p className="text-sm font-black text-white tabular-nums mt-0.5">
-                          {formatMetricValue(entry.value, metric)}
-                        </p>
-                      </div>
-                      <div className="shrink-0 pl-1">
-                        <ChevronRight className="size-3.5 text-muted-foreground/30 group-hover:text-white transition-colors" />
+
+                        <ChevronRight className="size-3.5 text-muted-foreground/30 group-hover:text-foreground transition-micro" />
                       </div>
                     </Link>
                   );
-                })
-              )}
+                })}
+              </div>
+
             </div>
 
           </div>

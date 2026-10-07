@@ -1,9 +1,12 @@
 "use client";
 
+import * as React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Swords, X } from "lucide-react";
 import { PlayerAvatar } from "@/components/players/player-avatar";
+import { TacticalBadge } from "@/components/ui/tactical-badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export interface SelectorPlayer {
@@ -25,7 +28,6 @@ export function ComparisonSelector({
 }) {
   const router = useRouter();
 
-  // Encontrar jogadores selecionados inicialmente
   const initA = players.find((p) => p.id === initialPlayerA) || null;
   const initB = players.find((p) => p.id === initialPlayerB) || null;
 
@@ -57,11 +59,8 @@ export function ComparisonSelector({
   };
 
   return (
-    <div className="glass-panel p-5 border border-white/[0.06] bg-white/[0.01] rounded-2xl flex flex-col gap-6 max-w-3xl mx-auto relative overflow-hidden">
-      {/* Background Glow */}
-      <div className="absolute -right-20 -top-20 size-40 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
-
-      {/* Backdrop para fechar dropdowns */}
+    <div className="bg-surface-panel border border-border/70 rounded-sm p-5 sm:p-6 flex flex-col gap-6 relative shadow-md">
+      {/* Backdrop */}
       {(isOpenA || isOpenB) && (
         <div
           className="fixed inset-0 z-10"
@@ -72,18 +71,18 @@ export function ComparisonSelector({
         />
       )}
 
-      {/* Grid de Seleção (Duelo) */}
+      {/* Versus Selector Grid */}
       <div className="grid grid-cols-1 md:grid-cols-11 gap-4 items-center relative z-20">
         
         {/* JOGADOR A */}
         <div className="md:col-span-5 flex flex-col gap-3 relative">
-          <span className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest text-center md:text-left">
-            Jogador Principal (A)
+          <span className="text-[10px] font-mono font-bold text-primary uppercase tracking-[0.16em]">
+            Jogador A
           </span>
 
           {/* Autocomplete Input */}
           <div className="relative">
-            <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground/45" />
+            <Search className="absolute left-3 top-2.5 size-3.5 text-muted-foreground/50" />
             <input
               type="text"
               placeholder="Pesquisar jogador A..."
@@ -93,7 +92,7 @@ export function ComparisonSelector({
                 setIsOpenB(false);
               }}
               onChange={(e) => setSearchA(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 text-xs bg-white/[0.03] border border-white/[0.07] rounded-xl text-white focus:outline-none focus:border-primary/40 focus:bg-white/[0.05] transition-all"
+              className="w-full pl-9 pr-8 py-2 text-xs font-mono bg-surface-deck border border-border/60 rounded-xs text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/60 transition-micro"
             />
             {selectedA && (
               <button
@@ -101,15 +100,15 @@ export function ComparisonSelector({
                   setSelectedA(null);
                   setSearchA("");
                 }}
-                className="absolute right-2.5 top-2 size-5 flex items-center justify-center rounded-lg bg-white/[0.04] border border-white/[0.08] hover:bg-status-critical/10 hover:text-status-critical hover:border-status-critical/20 transition-all text-muted-foreground"
+                className="absolute right-2 top-2 size-5 flex items-center justify-center rounded-xs bg-surface-elevated text-muted-foreground hover:text-foreground transition-micro"
               >
                 <X className="size-3" />
               </button>
             )}
 
-            {/* Dropdown de Resultados */}
+            {/* Dropdown Results */}
             {isOpenA && filteredA.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1.5 max-h-48 overflow-y-auto bg-[#0a0a0c] border border-white/[0.08] rounded-xl shadow-xl z-30 p-1 scrollbar-none">
+              <div className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-surface-elevated border border-border/80 rounded-xs shadow-xl z-30 p-1 no-scrollbar">
                 {filteredA.map((p) => (
                   <button
                     key={p.id}
@@ -118,12 +117,12 @@ export function ComparisonSelector({
                       setSearchA(p.nickname);
                       setIsOpenA(false);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs text-white hover:bg-white/[0.04] hover:text-primary transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xs text-left text-xs font-mono text-foreground hover:bg-primary/15 hover:text-primary transition-micro"
                   >
                     <PlayerAvatar nickname={p.nickname} avatarUrl={p.avatarUrl} size="sm" />
-                    <span className="font-bold flex-1">{p.nickname}</span>
-                    <span className="text-[10px] text-muted-foreground/50 font-medium">
-                      Level {p.levelGc ?? "—"}
+                    <span className="font-bold flex-1 truncate">{p.nickname}</span>
+                    <span className="text-[10px] text-muted-foreground/60">
+                      Lvl {p.levelGc ?? "—"}
                     </span>
                   </button>
                 ))}
@@ -133,46 +132,43 @@ export function ComparisonSelector({
 
           {/* Card Preview Jogador A */}
           {selectedA ? (
-            <div className="glass-panel border border-primary/20 bg-primary/[0.01] rounded-2xl p-4 flex flex-col items-center text-center gap-2 select-none shadow-[0_0_15px_rgba(var(--primary-rgb),0.02)]">
-              <PlayerAvatar nickname={selectedA.nickname} avatarUrl={selectedA.avatarUrl} size="sm" />
-              <div className="min-w-0">
-                <span className="text-sm font-black text-white block truncate">{selectedA.nickname}</span>
-                <p className="text-[9px] text-muted-foreground/50 font-bold mt-0.5 flex items-center justify-center gap-0.5">
-                  <span>🏅</span>
-                  <span>Nível {selectedA.levelGc ?? "—"} GC</span>
-                </p>
+            <div className="p-3.5 bg-surface-deck border border-primary/30 rounded-xs flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <PlayerAvatar nickname={selectedA.nickname} avatarUrl={selectedA.avatarUrl} size="sm" />
+                <div className="min-w-0">
+                  <span className="text-xs font-bold text-foreground block truncate">
+                    {selectedA.nickname}
+                  </span>
+                  <span className="text-[10px] font-mono text-muted-foreground/60 block">
+                    GC Nível {selectedA.levelGc ?? "—"}
+                  </span>
+                </div>
               </div>
-              <div className="mt-1 bg-primary/10 border border-primary/20 px-2.5 py-0.5 rounded-full">
-                <span className="text-[10px] font-black text-primary tabular-nums">
-                  {selectedA.rating.toFixed(2)} Rating
-                </span>
-              </div>
+              <TacticalBadge label={`${selectedA.rating.toFixed(2)} RTG`} variant="primary" size="xs" />
             </div>
           ) : (
-            <div className="border-2 border-dashed border-white/[0.06] bg-white/[0.005] rounded-2xl p-6 flex flex-col items-center justify-center text-center select-none min-h-[126px]">
-              <span className="text-muted-foreground/30 text-[10px] uppercase tracking-wider font-bold">
-                Selecione o Jogador A
-              </span>
+            <div className="p-3.5 bg-surface-deck/40 border border-dashed border-border/40 rounded-xs text-center text-[11px] font-mono text-muted-foreground/50">
+              Nenhum jogador selecionado
             </div>
           )}
         </div>
 
-        {/* VS CENTRAL NODE */}
-        <div className="md:col-span-1 flex items-center justify-center py-2 md:py-0">
-          <div className="flex size-9 items-center justify-center rounded-full bg-white/[0.02] border border-white/[0.08] text-white/40 text-[10px] font-black select-none shadow-[0_0_12px_rgba(255,255,255,0.01)] group-hover:border-primary/20 transition-all">
+        {/* VERSUS ICON (1 col) */}
+        <div className="md:col-span-1 flex flex-col items-center justify-center my-2 md:my-0">
+          <div className="flex size-9 items-center justify-center rounded-xs bg-surface-deck border border-border/60 text-primary font-mono font-black text-xs">
             VS
           </div>
         </div>
 
         {/* JOGADOR B */}
         <div className="md:col-span-5 flex flex-col gap-3 relative">
-          <span className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest text-center md:text-left">
-            Jogador Comparado (B)
+          <span className="text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-[0.16em]">
+            Jogador B
           </span>
 
           {/* Autocomplete Input */}
           <div className="relative">
-            <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground/45" />
+            <Search className="absolute left-3 top-2.5 size-3.5 text-muted-foreground/50" />
             <input
               type="text"
               placeholder="Pesquisar jogador B..."
@@ -182,7 +178,7 @@ export function ComparisonSelector({
                 setIsOpenA(false);
               }}
               onChange={(e) => setSearchB(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 text-xs bg-white/[0.03] border border-white/[0.07] rounded-xl text-white focus:outline-none focus:border-primary/40 focus:bg-white/[0.05] transition-all"
+              className="w-full pl-9 pr-8 py-2 text-xs font-mono bg-surface-deck border border-border/60 rounded-xs text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-cyan-400/60 transition-micro"
             />
             {selectedB && (
               <button
@@ -190,15 +186,15 @@ export function ComparisonSelector({
                   setSelectedB(null);
                   setSearchB("");
                 }}
-                className="absolute right-2.5 top-2 size-5 flex items-center justify-center rounded-lg bg-white/[0.04] border border-white/[0.08] hover:bg-status-critical/10 hover:text-status-critical hover:border-status-critical/20 transition-all text-muted-foreground"
+                className="absolute right-2 top-2 size-5 flex items-center justify-center rounded-xs bg-surface-elevated text-muted-foreground hover:text-foreground transition-micro"
               >
                 <X className="size-3" />
               </button>
             )}
 
-            {/* Dropdown de Resultados */}
+            {/* Dropdown Results */}
             {isOpenB && filteredB.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1.5 max-h-48 overflow-y-auto bg-[#0a0a0c] border border-white/[0.08] rounded-xl shadow-xl z-30 p-1 scrollbar-none">
+              <div className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-surface-elevated border border-border/80 rounded-xs shadow-xl z-30 p-1 no-scrollbar">
                 {filteredB.map((p) => (
                   <button
                     key={p.id}
@@ -207,12 +203,12 @@ export function ComparisonSelector({
                       setSearchB(p.nickname);
                       setIsOpenB(false);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs text-white hover:bg-white/[0.04] hover:text-primary transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xs text-left text-xs font-mono text-foreground hover:bg-cyan-500/15 hover:text-cyan-400 transition-micro"
                   >
                     <PlayerAvatar nickname={p.nickname} avatarUrl={p.avatarUrl} size="sm" />
-                    <span className="font-bold flex-1">{p.nickname}</span>
-                    <span className="text-[10px] text-muted-foreground/50 font-medium">
-                      Level {p.levelGc ?? "—"}
+                    <span className="font-bold flex-1 truncate">{p.nickname}</span>
+                    <span className="text-[10px] text-muted-foreground/60">
+                      Lvl {p.levelGc ?? "—"}
                     </span>
                   </button>
                 ))}
@@ -222,40 +218,42 @@ export function ComparisonSelector({
 
           {/* Card Preview Jogador B */}
           {selectedB ? (
-            <div className="glass-panel border border-accent-cyan/20 bg-accent-cyan/[0.01] rounded-2xl p-4 flex flex-col items-center text-center gap-2 select-none shadow-[0_0_15px_rgba(var(--accent-cyan-rgb),0.02)]">
-              <PlayerAvatar nickname={selectedB.nickname} avatarUrl={selectedB.avatarUrl} size="sm" />
-              <div className="min-w-0">
-                <span className="text-sm font-black text-white block truncate">{selectedB.nickname}</span>
-                <p className="text-[9px] text-muted-foreground/50 font-bold mt-0.5 flex items-center justify-center gap-0.5">
-                  <span>🏅</span>
-                  <span>Nível {selectedB.levelGc ?? "—"} GC</span>
-                </p>
+            <div className="p-3.5 bg-surface-deck border border-cyan-500/30 rounded-xs flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <PlayerAvatar nickname={selectedB.nickname} avatarUrl={selectedB.avatarUrl} size="sm" />
+                <div className="min-w-0">
+                  <span className="text-xs font-bold text-foreground block truncate">
+                    {selectedB.nickname}
+                  </span>
+                  <span className="text-[10px] font-mono text-muted-foreground/60 block">
+                    GC Nível {selectedB.levelGc ?? "—"}
+                  </span>
+                </div>
               </div>
-              <div className="mt-1 bg-accent-cyan/10 border border-accent-cyan/20 px-2.5 py-0.5 rounded-full">
-                <span className="text-[10px] font-black text-accent-cyan tabular-nums">
-                  {selectedB.rating.toFixed(2)} Rating
-                </span>
-              </div>
+              <TacticalBadge label={`${selectedB.rating.toFixed(2)} RTG`} variant="info" size="xs" />
             </div>
           ) : (
-            <div className="border-2 border-dashed border-white/[0.06] bg-white/[0.005] rounded-2xl p-6 flex flex-col items-center justify-center text-center select-none min-h-[126px]">
-              <span className="text-muted-foreground/30 text-[10px] uppercase tracking-wider font-bold">
-                Selecione o Jogador B
-              </span>
+            <div className="p-3.5 bg-surface-deck/40 border border-dashed border-border/40 rounded-xs text-center text-[11px] font-mono text-muted-foreground/50">
+              Nenhum jogador selecionado
             </div>
           )}
         </div>
+
       </div>
 
-      {/* Botão Iniciar Confronto */}
-      <button
-        onClick={handleCompare}
-        disabled={!selectedA || !selectedB || selectedA.id === selectedB.id}
-        className="w-full py-2.5 px-4 bg-primary text-black font-black rounded-xl text-xs hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all shadow-[0_0_12px_rgba(var(--primary-rgb),0.1)] active:scale-[0.99] cursor-pointer"
-      >
-        <Swords className="size-4 shrink-0" />
-        Iniciar Scout
-      </button>
+      {/* Action Compare Button */}
+      <div className="flex justify-center border-t border-border/30 pt-4">
+        <Button
+          onClick={handleCompare}
+          disabled={!selectedA || !selectedB || selectedA.id === selectedB.id}
+          size="lg"
+          variant="tactical"
+          className="gap-2 px-8"
+        >
+          <Swords className="size-4" />
+          <span>Executar Scout H2H</span>
+        </Button>
+      </div>
     </div>
   );
 }

@@ -14,7 +14,6 @@ import {
   Search,
   Users,
   Trophy,
-  Link2,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -59,7 +58,7 @@ function DesktopNav({ pathname }: { pathname: string }) {
   const searchParams = useSearchParams();
 
   return (
-    <nav className="hidden md:flex items-center gap-1">
+    <nav className="hidden md:flex items-center gap-1" aria-label="Navegação Principal">
       {NAV_ITEMS.map((item) => {
         const active = isActive(item.href, pathname, searchParams);
         const Icon = item.icon;
@@ -68,11 +67,12 @@ function DesktopNav({ pathname }: { pathname: string }) {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold border transition-all duration-200 select-none",
+              "flex items-center gap-1.5 rounded-sm px-2.5 py-1.5 text-xs font-mono border transition-colors duration-150 select-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary",
               active
-                ? "bg-primary/10 text-primary border-primary/20 shadow-[0_0_12px_-3px_rgba(132,108,240,0.15)]"
-                : "text-muted-foreground hover:text-foreground hover:bg-white/5 border-transparent",
+                ? "bg-primary/10 text-primary border-primary/30 font-semibold shadow-none"
+                : "text-muted-foreground hover:text-foreground hover:bg-surface-deck border-transparent",
             )}
+            aria-current={active ? "page" : undefined}
           >
             <Icon className="size-3.5 shrink-0" />
             <span>{item.label}</span>
@@ -87,7 +87,7 @@ function MobileNav({ pathname, onClose }: { pathname: string; onClose: () => voi
   const searchParams = useSearchParams();
 
   return (
-    <nav className="md:hidden border-t border-white/5 px-3 pb-3 pt-2 grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+    <nav className="md:hidden border-t border-border-subtle p-2 sm:p-2.5 grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-surface-deck/90" aria-label="Navegação Mobile">
       {NAV_ITEMS.map((item) => {
         const active = isActive(item.href, pathname, searchParams);
         const Icon = item.icon;
@@ -97,11 +97,12 @@ function MobileNav({ pathname, onClose }: { pathname: string; onClose: () => voi
             href={item.href}
             onClick={onClose}
             className={cn(
-              "flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-semibold border transition-all duration-200 select-none",
+              "flex items-center gap-2 rounded-sm px-2.5 py-2 text-xs font-mono border transition-colors duration-150 select-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary",
               active
-                ? "bg-primary/10 text-primary border-primary/20 shadow-[0_0_12px_-3px_rgba(132,108,240,0.15)]"
-                : "text-muted-foreground hover:text-foreground hover:bg-white/5 border-transparent",
+                ? "bg-primary/10 text-primary border-primary/30 font-semibold"
+                : "text-muted-foreground hover:text-foreground hover:bg-surface-panel border-border-subtle/40",
             )}
+            aria-current={active ? "page" : undefined}
           >
             <Icon className="size-3.5 shrink-0" />
             <span>{item.label}</span>
@@ -119,53 +120,53 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="mx-auto flex max-w-[1440px] flex-col gap-6 p-4 sm:p-6 lg:px-8 lg:py-6 min-h-screen">
-      {/* Header + Nav — extends slightly beyond the content column on large screens */}
-      <header className="glass-panel relative border border-white/10 bg-white/[0.02] rounded-2xl overflow-hidden shadow-2xl lg:-mx-6 xl:-mx-10 min-h-[80px] lg:min-h-[96px]">
-        {/* Background image */}
-        <div className="pointer-events-none absolute inset-0 z-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/maps/primeirocard.jpg"
-            alt=""
-            className="h-full w-full object-cover object-center"
-            style={{ opacity: 0.28 }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-black/40" />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/40" />
-        </div>
-
-        {/* Linha superior: logo + status + hamburger */}
-        <div className="relative z-10 flex items-center justify-between px-3.5 sm:px-5 py-4 sm:py-5 lg:py-6 gap-2 sm:gap-4">
-          <div className="flex items-center gap-3 sm:gap-6 min-w-0">
-            <Link href="/" className="flex flex-col gap-0.5 group min-w-0 shrink">
-              <span className="text-gradient text-xs min-[360px]:text-sm sm:text-base font-black tracking-tight group-hover:text-primary transition-colors uppercase truncate sm:whitespace-nowrap">
-                CSzin da Criticância Performance
-              </span>
-              <span className="text-[8px] text-muted-foreground/60 font-bold tracking-wider uppercase leading-none truncate">
-                Counter-Strike Performance Intelligence
-              </span>
+      {/* Header + Nav — Tactical Command Bar */}
+      <header className="relative border border-border-subtle bg-surface-panel rounded-sm shadow-sm overflow-hidden">
+        {/* Linha superior: logo + nav desktop + controle mobile */}
+        <div className="relative z-10 flex items-center justify-between px-3.5 sm:px-4 py-2.5 sm:py-3 gap-3">
+          <div className="flex items-center gap-3 lg:gap-5 min-w-0">
+            <Link
+              href="/"
+              className="flex items-center gap-2.5 group shrink-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+              aria-label="CS2 Stats Início"
+            >
+              <div className="size-7 rounded-sm bg-primary/10 border border-primary/30 flex items-center justify-center shrink-0 group-hover:border-primary/60 transition-colors">
+                <span className="font-mono text-[11px] font-black text-primary tracking-tight">CS2</span>
+              </div>
+              <div className="flex flex-col min-w-0 leading-none">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold text-xs sm:text-sm tracking-tight text-foreground group-hover:text-primary transition-colors uppercase whitespace-nowrap">
+                    CS2 STATS
+                  </span>
+                  <span className="font-mono text-[9px] font-bold text-primary/60 tracking-widest uppercase hidden sm:inline">
+                    //
+                  </span>
+                </div>
+                <span className="font-mono text-[8px] sm:text-[9px] font-medium text-muted-foreground tracking-wider uppercase truncate mt-0.5">
+                  PERFORMANCE INTELLIGENCE
+                </span>
+              </div>
             </Link>
 
-            <div className="hidden lg:block h-6 w-px bg-white/10 shrink-0" />
+            <div className="hidden md:block h-5 w-px bg-border-subtle shrink-0" />
 
-            <Suspense fallback={<div className="hidden md:block w-96 h-8 bg-white/5 animate-pulse rounded-lg" />}>
+            <Suspense fallback={<div className="hidden md:block w-96 h-8 bg-surface-deck animate-pulse rounded-sm" />}>
               <DesktopNav pathname={pathname} />
             </Suspense>
           </div>
 
-          {/* Direita: GC status + hamburger mobile */}
+          {/* Direita: toggle mobile */}
           <div className="flex items-center gap-2 shrink-0">
-            <div className="hidden min-[380px]:flex items-center gap-1.5 text-[10px] text-muted-foreground rounded-lg border border-white/10 bg-white/5 px-2 py-0.5 sm:px-2.5 sm:py-1 select-none">
-              <span className="bg-status-critical size-1.5 rounded-full shrink-0 animate-pulse" />
-              <Link2 className="size-3 text-muted-foreground/60 shrink-0" />
-              <span>GC Companion</span>
-            </div>
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden p-1.5 rounded-xl border border-white/10 hover:bg-white/5 text-white transition-colors shrink-0"
-              aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"}
+              className="md:hidden flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm border border-border-subtle hover:border-border-strong bg-surface-deck text-foreground transition-colors font-mono text-xs"
+              aria-label={mobileOpen ? "Fechar menu de navegação" : "Abrir menu de navegação"}
+              aria-expanded={mobileOpen}
             >
-              {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+              {mobileOpen ? <X className="size-4" /> : <Menu className="size-4" />}
+              <span className="font-bold uppercase text-[10px] hidden min-[360px]:inline">
+                {mobileOpen ? "Fechar" : "Menu"}
+              </span>
             </button>
           </div>
         </div>
@@ -173,7 +174,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         {/* Nav mobile */}
         {mobileOpen && (
           <div className="relative z-10">
-            <Suspense fallback={<div className="h-16 bg-white/5 animate-pulse" />}>
+            <Suspense fallback={<div className="h-16 bg-surface-deck animate-pulse" />}>
               <MobileNav pathname={pathname} onClose={() => setMobileOpen(false)} />
             </Suspense>
           </div>
