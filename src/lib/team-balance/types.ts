@@ -39,6 +39,7 @@ export interface TeamBalanceMatchData {
     team: "CT" | "TR";
     weight: number;
     guest: boolean;
+    playerId?: string | null;
     trackedPlayerId?: string | null;
   }[];
 }

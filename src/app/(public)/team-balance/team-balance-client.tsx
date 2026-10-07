@@ -101,7 +101,8 @@ export function TeamBalanceClient({
             team: p.team as "CT" | "TR",
             weight: p.weight,
             guest: p.guest,
-            trackedPlayerId: p.trackedPlayerId,
+            playerId: p.playerId || p.trackedPlayerId || null,
+            trackedPlayerId: p.playerId || p.trackedPlayerId || null,
           })),
         }));
         setHistory(mappedMatches);
@@ -294,19 +295,24 @@ export function TeamBalanceClient({
       setLoading(true);
       try {
         const playersList: PlayerData[] = match.players.map((p) => {
-          const activePlayer = availablePlayers.find((ap) => ap.id === p.trackedPlayerId);
+          const activePlayer = availablePlayers.find(
+            (ap) =>
+              (p.playerId && ap.id === p.playerId) ||
+              (p.trackedPlayerId && ap.id === p.trackedPlayerId) ||
+              ap.name.toLowerCase() === p.nickname.toLowerCase()
+          );
 
           return {
-            id: p.trackedPlayerId || undefined,
-            name: p.nickname,
-            avatarUrl: p.avatar,
-            levelGc: activePlayer?.levelGc ?? 10,
+            id: activePlayer?.id || p.playerId || p.trackedPlayerId || undefined,
+            name: activePlayer?.name || p.nickname,
+            avatarUrl: activePlayer?.avatarUrl || p.avatar,
+            levelGc: activePlayer?.levelGc ?? (p.guest ? 10 : 1),
             rating: activePlayer?.rating ?? 1.0,
             adr: activePlayer?.adr ?? 75.0,
             kd: activePlayer?.kd ?? 1.0,
             winrate: activePlayer?.winrate ?? 50.0,
             role: activePlayer?.role || (p.guest ? "Convidado" : "Membro"),
-            guest: p.guest,
+            guest: p.guest ?? !activePlayer,
           };
         });
 
@@ -511,20 +517,29 @@ export function TeamBalanceClient({
                               {p.name}
                             </Link>
                           )}
-                          <span className="text-[10px] font-mono text-muted-foreground/60 leading-none block">
-                            {p.guest ? "Convidado" : p.role || "Operador"}
-                          </span>
+                          <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground/60 leading-none mt-0.5">
+                            <span>{p.guest ? "Convidado" : p.role || "Operador"}</span>
+                            <span>·</span>
+                            <span>GC {p.levelGc}</span>
+                          </div>
                         </div>
                       </div>
-                      <span className="text-[11px] font-mono font-bold text-foreground/80 tabular-nums shrink-0">
-                        {metric === "LEVEL"
-                          ? `GC ${p.levelGc}`
-                          : metric === "RATING"
-                          ? `★ ${p.rating.toFixed(2)}`
-                          : metric === "ADR"
-                          ? `${p.adr.toFixed(0)} ADR`
-                          : `KD ${p.kd.toFixed(2)}`}
-                      </span>
+                      <div className="flex flex-col items-end shrink-0 font-mono">
+                        <span className="text-xs font-black text-foreground tabular-nums">
+                          ★ {p.rating.toFixed(2)}
+                        </span>
+                        <span className="text-[9px] text-muted-foreground/60 tabular-nums">
+                          {metric === "LEVEL"
+                            ? `GC ${p.levelGc}`
+                            : metric === "ADR"
+                            ? `${p.adr.toFixed(0)} ADR`
+                            : metric === "KD"
+                            ? `KD ${p.kd.toFixed(2)}`
+                            : metric === "COMPOUND"
+                            ? `${(p.winrate || 50).toFixed(0)}% WR`
+                            : `${p.adr.toFixed(0)} ADR`}
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -562,20 +577,29 @@ export function TeamBalanceClient({
                               {p.name}
                             </Link>
                           )}
-                          <span className="text-[10px] font-mono text-muted-foreground/60 leading-none block">
-                            {p.guest ? "Convidado" : p.role || "Operador"}
-                          </span>
+                          <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground/60 leading-none mt-0.5">
+                            <span>{p.guest ? "Convidado" : p.role || "Operador"}</span>
+                            <span>·</span>
+                            <span>GC {p.levelGc}</span>
+                          </div>
                         </div>
                       </div>
-                      <span className="text-[11px] font-mono font-bold text-foreground/80 tabular-nums shrink-0">
-                        {metric === "LEVEL"
-                          ? `GC ${p.levelGc}`
-                          : metric === "RATING"
-                          ? `★ ${p.rating.toFixed(2)}`
-                          : metric === "ADR"
-                          ? `${p.adr.toFixed(0)} ADR`
-                          : `KD ${p.kd.toFixed(2)}`}
-                      </span>
+                      <div className="flex flex-col items-end shrink-0 font-mono">
+                        <span className="text-xs font-black text-foreground tabular-nums">
+                          ★ {p.rating.toFixed(2)}
+                        </span>
+                        <span className="text-[9px] text-muted-foreground/60 tabular-nums">
+                          {metric === "LEVEL"
+                            ? `GC ${p.levelGc}`
+                            : metric === "ADR"
+                            ? `${p.adr.toFixed(0)} ADR`
+                            : metric === "KD"
+                            ? `KD ${p.kd.toFixed(2)}`
+                            : metric === "COMPOUND"
+                            ? `${(p.winrate || 50).toFixed(0)}% WR`
+                            : `${p.adr.toFixed(0)} ADR`}
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>
