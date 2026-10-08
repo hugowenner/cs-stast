@@ -169,13 +169,13 @@ export function RankingTable({
                       RATING BRUTO
                     </span>
                     <span className="font-mono text-xs font-bold text-foreground/90 tabular-nums block">
-                      <AnimatedNumber value={entry.rawRating} decimals={2} />
+                      <AnimatedNumber value={entry.rawRating} decimals={3} />
                     </span>
                   </div>
 
                   <div>
                     <span className="text-[9px] font-mono uppercase tracking-wider text-primary font-bold block">
-                      SCORE 3.5
+                      SCORE
                     </span>
                     <span
                       className={cn(
@@ -191,7 +191,7 @@ export function RankingTable({
                 {/* Mobile stats representation */}
                 <div className="md:hidden text-right shrink-0">
                   <span className="text-[9px] font-mono uppercase tracking-wider text-primary font-bold block">
-                    SCORE 3.5
+                    SCORE
                   </span>
                   <span
                     className={cn(
