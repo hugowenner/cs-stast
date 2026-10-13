@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 // Importamos a função de interesse
-// @ts-ignore -- Precisamos ignorar o ts-ignore caso por algum motivo a compilação do teste se comporte diferente
-import { getMapSpecialistsFromDataset, getPlayerArchetypesFromDataset, getAdvancedPerformanceStatsFromDataset, getMultikillsLeaderboards } from "./competitive.service";
+import {
+  getMapSpecialistsFromDataset,
+  getPlayerArchetypesFromDataset,
+  getAdvancedPerformanceStatsFromDataset,
+  getMultikillsLeaderboards,
+  getPerformanceExtremesFromDataset,
+  getWorstRecordsFromDataset,
+} from "./competitive.service";
 
 describe("getMapSpecialistsFromDataset", () => {
   it("eleger o jogador com melhor rating entre os elegíveis (dois jogadores diferentes no mesmo mapa)", () => {
@@ -289,6 +295,65 @@ describe("getMultikillsLeaderboards", () => {
     expect(result.tripleKills).toHaveLength(0);
     expect(result.quadKills).toHaveLength(0);
     expect(result.aces).toHaveLength(0);
+  });
+});
+
+describe("getPerformanceExtremesFromDataset e getWorstRecordsFromDataset", () => {
+  it("deve incluir partida com < 5 kills como pior atuação se o jogador teve participação substancial (deaths >= 10)", () => {
+    const dataset = {
+      activePlayers: [
+        { id: "p1", nickname: "Jogador 1", avatarUrl: null, levelGc: 10 },
+      ],
+      statsByPlayer: new Map(),
+      allStats: [
+        // 5 partidas para atingir MIN_PLAYER_MATCHES = 5
+        { playerId: "p1", kills: 15, deaths: 12, rating: 1.10, adr: 80, match: { id: "m1", map: { name: "Dust2" }, scoreTeamA: 13, scoreTeamB: 10 } },
+        { playerId: "p1", kills: 14, deaths: 13, rating: 1.05, adr: 75, match: { id: "m2", map: { name: "Dust2" }, scoreTeamA: 13, scoreTeamB: 10 } },
+        { playerId: "p1", kills: 16, deaths: 11, rating: 1.15, adr: 85, match: { id: "m3", map: { name: "Dust2" }, scoreTeamA: 13, scoreTeamB: 10 } },
+        { playerId: "p1", kills: 15, deaths: 12, rating: 1.10, adr: 80, match: { id: "m4", map: { name: "Dust2" }, scoreTeamA: 13, scoreTeamB: 10 } },
+        // Partida horrível legítima: 3 kills, 16 mortes (rating 0.10)
+        { playerId: "p1", kills: 3, deaths: 16, rating: 0.10, adr: 30, match: { id: "m5", map: { name: "Inferno" }, scoreTeamA: 7, scoreTeamB: 13 } },
+      ],
+    };
+
+    dataset.statsByPlayer.set("p1", dataset.allStats);
+
+    // @ts-ignore
+    const extremes = getPerformanceExtremesFromDataset(dataset);
+    expect(extremes.worst).not.toBeNull();
+    expect(extremes.worst?.kills).toBe(3);
+    expect(extremes.worst?.deaths).toBe(16);
+    expect(extremes.worst?.rating).toBe(0.10);
+
+    // @ts-ignore
+    const worstRecords = getWorstRecordsFromDataset(dataset);
+    const worstRatingRecord = worstRecords.find(r => r.category === "Pior Rating em Jogo");
+    expect(worstRatingRecord).toBeDefined();
+    expect(worstRatingRecord?.value).toBe("0.10");
+  });
+
+  it("deve ignorar desconexão ou substituição precoce (ex: 0 kills, 1 morte) como pior atuação", () => {
+    const dataset = {
+      activePlayers: [
+        { id: "p1", nickname: "Jogador 1", avatarUrl: null, levelGc: 10 },
+      ],
+      statsByPlayer: new Map(),
+      allStats: [
+        { playerId: "p1", kills: 15, deaths: 12, rating: 1.10, adr: 80, match: { id: "m1", map: { name: "Dust2" }, scoreTeamA: 13, scoreTeamB: 10 } },
+        { playerId: "p1", kills: 14, deaths: 13, rating: 1.05, adr: 75, match: { id: "m2", map: { name: "Dust2" }, scoreTeamA: 13, scoreTeamB: 10 } },
+        { playerId: "p1", kills: 16, deaths: 11, rating: 1.15, adr: 85, match: { id: "m3", map: { name: "Dust2" }, scoreTeamA: 13, scoreTeamB: 10 } },
+        { playerId: "p1", kills: 15, deaths: 12, rating: 1.10, adr: 80, match: { id: "m4", map: { name: "Dust2" }, scoreTeamA: 13, scoreTeamB: 10 } },
+        // Jogador caiu na 2ª rodada: 0 kills, 1 morte (rating 0.00)
+        { playerId: "p1", kills: 0, deaths: 1, rating: 0.00, adr: 5, match: { id: "m5", map: { name: "Inferno" }, scoreTeamA: 13, scoreTeamB: 10 } },
+      ],
+    };
+
+    dataset.statsByPlayer.set("p1", dataset.allStats);
+
+    // @ts-ignore
+    const extremes = getPerformanceExtremesFromDataset(dataset);
+    // A pior atuação não deve ser a desconexão (0 kills, 1 morte), mas sim a partida válida com menor rating (m2 com rating 1.05)
+    expect(extremes.worst?.rating).toBe(1.05);
   });
 });
 

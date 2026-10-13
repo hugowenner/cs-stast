@@ -156,17 +156,17 @@ export function SeasonHero({
               />
               <div className="flex flex-col min-w-0">
                 <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground/60 font-semibold">
-                  Melhor Rating Médio
+                  Líder Season Score
                 </span>
                 <span className="text-xl sm:text-2xl font-black text-foreground uppercase tracking-tight truncate">
                   {bestPlayer.nickname}
                 </span>
                 <div className="flex items-baseline gap-2 mt-1">
                   <span className="text-2xl sm:text-3xl font-mono font-black text-gold tabular-nums">
-                    <AnimatedNumber value={bestPlayer.rating} decimals={2} />
+                    <AnimatedNumber value={bestPlayer.rating} decimals={3} />
                   </span>
                   <span className="text-[10px] font-mono uppercase tracking-widest text-gold/80 font-bold">
-                    RATING 2.0
+                    SEASON SCORE
                   </span>
                 </div>
               </div>

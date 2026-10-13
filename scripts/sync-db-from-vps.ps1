@@ -129,6 +129,23 @@ try {
         exit 1
     }
 
+    # -- [2.5/4] Gerar backup de segurança do DEV local -----------------------
+
+    Write-Host "  [2.5/4] Criando backup de seguranca do banco DEV local..." -ForegroundColor White
+    $backupDir = Join-Path $ROOT "backups"
+    if (-not (Test-Path $backupDir)) { New-Item -ItemType Directory -Path $backupDir | Out-Null }
+    $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    $backupFile = Join-Path $backupDir "dev_backup_before_vps_sync_$timestamp.dump"
+    
+    try {
+        & docker exec cs2-stats-postgres-dev pg_dump -U cs2stats_dev -d cs2_stats_dev_snapshot_20260920 -F c -f /tmp/backup_dev.dump
+        & docker cp cs2-stats-postgres-dev:/tmp/backup_dev.dump $backupFile
+        & docker exec cs2-stats-postgres-dev rm /tmp/backup_dev.dump
+        Write-Host "    ✓ Backup DEV salvo em: $backupFile" -ForegroundColor Green
+    } catch {
+        Write-Host "    ! Aviso: Nao foi possivel gerar dump local via docker cp. Prosseguindo com cautela." -ForegroundColor Yellow
+    }
+
     # -- [3/4] Sincronizar VPS PostgreSQL -> DEV PostgreSQL ------------------
 
     Write-Host "  [3/4] Importando dados da producao para o DEV PostgreSQL..." -ForegroundColor White

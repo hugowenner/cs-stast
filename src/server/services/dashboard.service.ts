@@ -144,19 +144,35 @@ export async function getDashboardSummary(
     }
   }
 
-  // Melhor jogador da temporada — piso mínimo de partidas
-  const MIN_MATCHES_FOR_MVP = 10;
-  const ratingLeaderboard = await statsService.getRanking("rating", resolvedSeasonId, 50);
-  const bestPlayerEntry = ratingLeaderboard.find(
-    (entry) => entry.player && entry.matchesPlayed >= MIN_MATCHES_FOR_MVP,
-  );
-  const bestPlayer = bestPlayerEntry?.player
-    ? {
-        nickname: bestPlayerEntry.player.nickname,
-        rating: bestPlayerEntry.value,
-        avatarUrl: bestPlayerEntry.player.avatarUrl,
-      }
-    : null;
+  // Melhor jogador / Líder da temporada — alinhado com o ranking oficial de Season Score 3.5 (N >= 10 partidas)
+  const officialRanking = await statsService.getSeasonScoreRanking(resolvedSeasonId, 1);
+  const seasonLeader = officialRanking[0];
+
+  let bestPlayer = null;
+  if (seasonLeader?.player) {
+    bestPlayer = {
+      nickname: seasonLeader.player.nickname,
+      rating: seasonLeader.value, // Season Score 3.5 oficial
+      rawRating: seasonLeader.rawRating,
+      matchesPlayed: seasonLeader.matchesPlayed,
+      avatarUrl: seasonLeader.player.avatarUrl,
+    };
+  } else {
+    // Fallback gracioso para temporadas novas com < 10 partidas: melhor rating geral
+    const provisionalRanking = await statsService.getSeasonScoreRanking(resolvedSeasonId, 1, {
+      includeProvisional: true,
+    });
+    const provisionalLeader = provisionalRanking[0];
+    if (provisionalLeader?.player) {
+      bestPlayer = {
+        nickname: provisionalLeader.player.nickname,
+        rating: provisionalLeader.value,
+        rawRating: provisionalLeader.rawRating,
+        matchesPlayed: provisionalLeader.matchesPlayed,
+        avatarUrl: provisionalLeader.player.avatarUrl,
+      };
+    }
+  }
 
   return {
     totalMatches,

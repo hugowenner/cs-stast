@@ -719,6 +719,26 @@ async function getDecisivePlayersFromDataset(
     (aggregateAll._sum.clutchesWon ?? 0);
   const hideTradesAndClutches = totalTradesInDb === 0 && totalClutchesInDb === 0;
 
+  // Coleta dados de telemetria real de trades (PlayerTradeEvent) para as partidas do dataset
+  const matchIdsInDataset = Array.from(new Set(dataset.allStats.map((s) => s.matchId)));
+  const playerIdsInDataset = dataset.activePlayers.map((p) => p.id);
+
+  const tradedDeathsGroup = matchIdsInDataset.length > 0
+    ? await prisma.playerTradeEvent.groupBy({
+        by: ["victimId"],
+        where: {
+          matchId: { in: matchIdsInDataset },
+          victimId: { in: playerIdsInDataset },
+        },
+        _count: { id: true },
+      })
+    : [];
+
+  const tradedDeathsByPlayer = new Map<string, number>();
+  for (const group of tradedDeathsGroup) {
+    tradedDeathsByPlayer.set(group.victimId, group._count.id);
+  }
+
   const entries: DecisivePlayerEntry[] = [];
 
   for (const player of dataset.activePlayers) {
@@ -735,7 +755,21 @@ async function getDecisivePlayersFromDataset(
 
     const tradeKills = stats.reduce((sum, s) => sum + s.tradeKills, 0);
     const totalDeaths = stats.reduce((sum, s) => sum + s.deaths, 0);
-    const tradeEfficiency = totalDeaths > 0 ? Math.round((tradeKills / totalDeaths) * 100) : 0;
+
+    // tradedDeaths: mortes do jogador que foram vingadas por um aliado
+    const tradedDeaths = tradedDeathsByPlayer.get(player.id) ?? 0;
+
+    // Trade Efficiency (taxa de conversão de mortes em re-trade de equipe)
+    // Se há telemetria de demo com eventos de trade, calcula (tradedDeaths / totalDeaths * 100).
+    // Caso a temporada não tenha telemetria de demos mas tenha tradeKills da GC, calcula a eficiência de trade kills por morte.
+    let tradeEfficiency = 0;
+    if (totalDeaths > 0) {
+      if (tradedDeaths > 0) {
+        tradeEfficiency = Math.round((tradedDeaths / totalDeaths) * 100);
+      } else if (tradeKills > 0) {
+        tradeEfficiency = Math.round((tradeKills / totalDeaths) * 100);
+      }
+    }
 
     const clutchWins = stats.reduce(
       (sum, s) =>
@@ -756,7 +790,7 @@ async function getDecisivePlayersFromDataset(
       entryDeaths,
       openingWinrate,
       tradeKills,
-      tradedDeaths: tradeKills,
+      tradedDeaths,
       tradeEfficiency,
       clutchWins,
       hideTradesAndClutches,
@@ -1209,17 +1243,20 @@ function getHallOfFameRecordsFromDataset(
   return records;
 }
 
-function getWorstRecordsFromDataset(dataset: CompetitiveDataset): HallOfFameRecord[] {
-  const MIN_KILLS = 5;
+export function getWorstRecordsFromDataset(dataset: CompetitiveDataset): HallOfFameRecord[] {
   const statsToUse = dataset.allStats;
 
   const playerName = (s: (typeof dataset.allStats)[number] | null) =>
     dataset.activePlayers.find((p) => p.id === s?.playerId)?.nickname ?? "N/A";
 
+  // Participação substancial: jogador completou a partida (evita subs com 0-2 mortes ou abandono precoce)
+  const isEligibleWorst = (s: (typeof dataset.allStats)[number]) =>
+    s.deaths >= 10 || (s.kills >= 3 && s.deaths >= 8);
+
   // 1. Pior Rating em Jogo
   let minRatingStat: (typeof dataset.allStats)[number] | null = null;
   for (const s of statsToUse) {
-    if (s.kills < MIN_KILLS) continue;
+    if (!isEligibleWorst(s)) continue;
     if (!minRatingStat || s.rating < minRatingStat.rating) minRatingStat = s;
   }
 
@@ -1227,7 +1264,7 @@ function getWorstRecordsFromDataset(dataset: CompetitiveDataset): HallOfFameReco
   let minKdStat: (typeof dataset.allStats)[number] | null = null;
   let minKdVal = Infinity;
   for (const s of statsToUse) {
-    if (s.kills < MIN_KILLS) continue;
+    if (!isEligibleWorst(s)) continue;
     const kd = s.deaths > 0 ? s.kills / s.deaths : s.kills;
     if (kd < minKdVal) { minKdStat = s; minKdVal = kd; }
   }
@@ -1235,18 +1272,18 @@ function getWorstRecordsFromDataset(dataset: CompetitiveDataset): HallOfFameReco
   // 3. Menor ADR em Jogo
   let minAdrStat: (typeof dataset.allStats)[number] | null = null;
   for (const s of statsToUse) {
-    if (s.kills < MIN_KILLS) continue;
+    if (!isEligibleWorst(s)) continue;
     if (!minAdrStat || s.adr < minAdrStat.adr) minAdrStat = s;
   }
 
   // 4. Mais Mortes em Jogo
   let maxDeathsStat: (typeof dataset.allStats)[number] | null = null;
   for (const s of statsToUse) {
-    if (s.kills < MIN_KILLS) continue;
+    if (!isEligibleWorst(s)) continue;
     if (!maxDeathsStat || s.deaths > maxDeathsStat.deaths) maxDeathsStat = s;
   }
 
-  // 5. Menor HS% em Jogo (mínimo 10 kills)
+  // 5. Menor HS% em Jogo (mínimo 10 kills para haver significância estatística em headshots)
   let minHsStat: (typeof dataset.allStats)[number] | null = null;
   let minHsVal = Infinity;
   for (const s of statsToUse) {
@@ -1287,7 +1324,7 @@ function getWorstRecordsFromDataset(dataset: CompetitiveDataset): HallOfFameReco
   let minImpactStat: (typeof dataset.allStats)[number] | null = null;
   let minImpactScore = Infinity;
   for (const s of statsToUse) {
-    if (s.kills < MIN_KILLS) continue;
+    if (!isEligibleWorst(s)) continue;
     const score = s.rating * 100 + s.adr;
     if (score < minImpactScore) { minImpactStat = s; minImpactScore = score; }
   }
@@ -1411,13 +1448,12 @@ function getWorstRecordsFromDataset(dataset: CompetitiveDataset): HallOfFameReco
   return records;
 }
 
-function getPerformanceExtremesFromDataset(dataset: CompetitiveDataset): {
+export function getPerformanceExtremesFromDataset(dataset: CompetitiveDataset): {
   best: PerformanceExtreme | null;
   worst: PerformanceExtreme | null;
 } {
-  const MIN_TOTAL_ROUNDS = 20; // partida precisa ter duração mínima (exclui abortadas/incompletas)
-  const MIN_KILLS_IN_MATCH = 5; // volume mínimo do jogador na partida (exclui desconexão/sub/erro de payload)
-  const MIN_PLAYER_MATCHES = 5; // jogador precisa ter presença mínima na temporada (exclui "1 partida ruim")
+  const MIN_TOTAL_ROUNDS = 20; // partida precisa ter duração mínima competitiva (exclui desistências precoces)
+  const MIN_PLAYER_MATCHES = 5; // jogador precisa ter presença mínima na temporada (exclui "1 partida isolada")
 
   let bestStat: (typeof dataset.allStats)[number] | null = null;
   let worstStat: (typeof dataset.allStats)[number] | null = null;
@@ -1425,15 +1461,21 @@ function getPerformanceExtremesFromDataset(dataset: CompetitiveDataset): {
   for (const s of dataset.allStats) {
     const totalRounds = s.match.scoreTeamA + s.match.scoreTeamB;
     if (totalRounds < MIN_TOTAL_ROUNDS) continue;
-    if (s.kills < MIN_KILLS_IN_MATCH) continue;
 
     const playerMatchCount = dataset.statsByPlayer.get(s.playerId)?.length ?? 0;
     if (playerMatchCount < MIN_PLAYER_MATCHES) continue;
 
-    // Melhor e pior usam exatamente o mesmo universo elegível — nunca aplicar um piso
-    // só para "pior atuação" e deixar a "melhor" sem os mesmos filtros.
-    if (!bestStat || s.rating > bestStat.rating) bestStat = s;
-    if (!worstStat || s.rating < worstStat.rating) worstStat = s;
+    // Melhor atuação: requer volume mínimo de abates (pelo menos 5 kills)
+    if (s.kills >= 5) {
+      if (!bestStat || s.rating > bestStat.rating) bestStat = s;
+    }
+
+    // Pior atuação: jogador precisa ter jogado a partida substancialmente (mínimo de 10 mortes
+    // ou pelo menos 3 kills com >= 8 mortes), excluindo substituições com 0-2 mortes e desconexões.
+    const isSubstantialParticipation = s.deaths >= 10 || (s.kills >= 3 && s.deaths >= 8);
+    if (isSubstantialParticipation) {
+      if (!worstStat || s.rating < worstStat.rating) worstStat = s;
+    }
   }
 
   const toExtreme = (s: (typeof dataset.allStats)[number] | null): PerformanceExtreme | null => {

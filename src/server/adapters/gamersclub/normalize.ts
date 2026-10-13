@@ -132,20 +132,24 @@ function normalizeMapName(rawName: string): string {
 }
 
 /**
- * A GC manda `"data": "20/07/2026 19:22"` (DD/MM/YYYY HH:mm, sem timezone) — formato
- * que `new Date()` nativo não entende de forma confiável (ambíguo com MM/DD). Parseia
- * esse formato explicitamente antes de cair no parser nativo (que ainda cobre o
- * formato ISO usado pelos fixtures de demo).
+ * A GC manda `"data": "20/07/2026 19:22"` (DD/MM/YYYY HH:mm no horário de Brasília / America/Sao_Paulo).
+ * O Brasil aboliu o horário de verão em 2019, portanto o fuso de Brasília é fixo em UTC-3.
+ * 
+ * 1. Formatos brasileiros DD/MM/YYYY HH:mm[:ss] são interpretados no horário de Brasília (-03:00)
+ *    e convertidos para Date UTC no armazenamento interno (ex: 19:22 BRT -> 22:22 UTC).
+ * 2. Formatos ISO já contendo fuso ou sufixo Z são preservados pelo parser nativo sem dupla conversão.
+ * 3. Valores inválidos caem em fallback seguro para a data atual.
  */
-function parseDate(value: string | undefined): Date {
+export function parseDate(value: string | undefined): Date {
   if (!value) return new Date();
 
-  const brFormat = value.match(/^(\d{2})\/(\d{2})\/(\d{4})[ T](\d{2}):(\d{2})/);
+  const brFormat = value.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/);
   if (brFormat) {
-    const [, day, month, year, hour, minute] = brFormat;
-    const parsed = new Date(
-      Date.UTC(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute)),
-    );
+    const [, day, month, year, hour, minute, second] = brFormat;
+    const s = second ? second.padStart(2, "0") : "00";
+    // ISO 8601 com offset explícito de Brasília (-03:00)
+    const isoString = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}T${hour.padStart(2, "0")}:${minute.padStart(2, "0")}:${s}-03:00`;
+    const parsed = new Date(isoString);
     if (!Number.isNaN(parsed.getTime())) return parsed;
   }
 

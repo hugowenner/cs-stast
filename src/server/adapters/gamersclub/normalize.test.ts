@@ -73,8 +73,8 @@ describe("normalizeGamersClubMatch", () => {
     expect(result.matchId).toBe("27483022");
     // "map_name": "de_overpass" na GC → aliased para o nome de exibição do catálogo.
     expect(result.map).toBe("Overpass");
-    // "data": "20/07/2026 19:22" (DD/MM/YYYY) — não a data de hoje.
-    expect(result.playedAt.toISOString()).toBe("2026-07-20T19:22:00.000Z");
+    // "data": "20/07/2026 19:22" (DD/MM/YYYY no horário de Brasília) -> 22:22 UTC (-03:00)
+    expect(result.playedAt.toISOString()).toBe("2026-07-20T22:22:00.000Z");
     expect(result.scoreTeamA).toBe(4);
     expect(result.scoreTeamB).toBe(13);
     expect(result.players).toHaveLength(4);
@@ -156,5 +156,40 @@ describe("normalizeGamersClubMatch", () => {
     expect(player.tripleKills).toBe(4);
     expect(player.quadKills).toBe(1);
     expect(player.aces).toBe(0);
+  });
+
+  describe("parseDate e fuso horário America/Sao_Paulo", () => {
+    it("converte data brasileira DD/MM/YYYY HH:mm para UTC (+3h)", () => {
+      const match = normalizeGamersClubMatch({ data: "15/08/2026 14:30" });
+      expect(match.playedAt.toISOString()).toBe("2026-08-15T17:30:00.000Z");
+    });
+
+    it("trata corretamente partida no fim do dia (22:00 BRT -> 01:00 UTC do dia seguinte)", () => {
+      const match = normalizeGamersClubMatch({ data: "31/07/2026 22:00" });
+      expect(match.playedAt.toISOString()).toBe("2026-08-01T01:00:00.000Z");
+    });
+
+    it("trata corretamente partida no fim do ano (31/12/2026 23:45 BRT -> 01/01/2027 02:45 UTC)", () => {
+      const match = normalizeGamersClubMatch({ data: "31/12/2026 23:45" });
+      expect(match.playedAt.toISOString()).toBe("2027-01-01T02:45:00.000Z");
+    });
+
+    it("não aplica dupla conversão se o timestamp já vier em ISO com timezone UTC (Z)", () => {
+      const match = normalizeGamersClubMatch({ data: "2026-08-15T17:30:00.000Z" });
+      expect(match.playedAt.toISOString()).toBe("2026-08-15T17:30:00.000Z");
+    });
+
+    it("preserva timestamp ISO que já possui offset explícito", () => {
+      const match = normalizeGamersClubMatch({ data: "2026-08-15T14:30:00-03:00" });
+      expect(match.playedAt.toISOString()).toBe("2026-08-15T17:30:00.000Z");
+    });
+
+    it("degrada para data atual caso a string seja indefinida ou inválida", () => {
+      const before = Date.now();
+      const match = normalizeGamersClubMatch({ data: "data_invalida_xyz" });
+      const after = Date.now();
+      expect(match.playedAt.getTime()).toBeGreaterThanOrEqual(before);
+      expect(match.playedAt.getTime()).toBeLessThanOrEqual(after);
+    });
   });
 });
