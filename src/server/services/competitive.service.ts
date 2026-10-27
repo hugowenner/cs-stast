@@ -1,5 +1,6 @@
 import { prisma } from "@/server/db";
 import { communityMatchStatsWhere, communityMatchWhere, individualMatchWhere } from "@/server/domain/matchClassification";
+import { calculateWeightedAdr } from "@/server/domain/adr";
 import { generateHighlights } from "@/server/services/highlights/highlights.service";
 import { DashboardHighlight } from "@/server/services/highlights/highlight.types";
 import { getActiveSeason } from "@/server/services/season.service";
@@ -234,7 +235,7 @@ function getPowerRankingFromDataset(dataset: CompetitiveDataset, take = 5): Powe
     const totalMatches = stats.length;
     const avgRating = stats.reduce((sum, s) => sum + s.rating, 0) / totalMatches;
     const avgImpact = stats.reduce((sum, s) => sum + s.impact, 0) / totalMatches;
-    const avgAdr = stats.reduce((sum, s) => sum + s.adr, 0) / totalMatches;
+    const avgAdr = calculateWeightedAdr(stats);
     const avgKast = stats.reduce((sum, s) => sum + s.kast, 0) / totalMatches;
 
     const totalKills = stats.reduce((sum, s) => sum + s.kills, 0);
@@ -345,7 +346,7 @@ export function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): Pla
     const totalFlashAssists = stats.reduce((sum, s) => sum + s.flashAssists, 0);
 
     const avgRating = stats.reduce((sum, s) => sum + s.rating, 0) / totalMatches;
-    const avgAdr = stats.reduce((sum, s) => sum + s.adr, 0) / totalMatches;
+    const avgAdr = calculateWeightedAdr(stats);
     const avgKast = stats.reduce((sum, s) => sum + s.kast, 0) / totalMatches;
 
     const hsRate = totalKills > 0 ? (totalHeadshots / totalKills) * 100 : 0;
@@ -1584,7 +1585,7 @@ function getMonitoredPlayersFromDataset(dataset: CompetitiveDataset): MonitoredP
 
     const matchCount = stats.length;
     const avgRating = stats.reduce((sum, s) => sum + s.rating, 0) / matchCount;
-    const avgAdr = stats.reduce((sum, s) => sum + s.adr, 0) / matchCount;
+    const avgAdr = calculateWeightedAdr(stats);
     const avgKast = stats.reduce((sum, s) => sum + s.kast, 0) / matchCount;
     const totalKills = stats.reduce((sum, s) => sum + s.kills, 0);
     const totalDeaths = stats.reduce((sum, s) => sum + s.deaths, 0);
@@ -1665,7 +1666,7 @@ function computeWindowMetrics(stats: CompetitiveDataset["allStats"]) {
   const totalKills = stats.reduce((sum, s) => sum + s.kills, 0);
   const totalDeaths = stats.reduce((sum, s) => sum + s.deaths, 0);
   const avgRating = stats.reduce((sum, s) => sum + s.rating, 0) / matchCount;
-  const avgAdr = stats.reduce((sum, s) => sum + s.adr, 0) / matchCount;
+  const avgAdr = calculateWeightedAdr(stats);
   const kd = totalDeaths > 0 ? totalKills / totalDeaths : totalKills;
 
   let wins = 0;

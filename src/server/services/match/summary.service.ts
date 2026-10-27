@@ -2,9 +2,10 @@ import type { MatchMetadataDTO } from "@/server/dtos/matchDetails.dto";
 import { getMatchType } from "@/server/domain/matchClassification";
 
 export function formatMatchSummary(match: any): MatchMetadataDTO {
-  const durationMin = Math.floor(match.durationSeconds / 60);
-  const durationSec = match.durationSeconds % 60;
-  const durationFormatted = `${durationMin}m ${durationSec.toString().padStart(2, "0")}s`;
+  const durationFormatted =
+    match.durationSeconds > 0
+      ? `${Math.floor(match.durationSeconds / 60)}m ${(match.durationSeconds % 60).toString().padStart(2, "0")}s`
+      : "—";
 
   // Somatório de ELO ganho/perdido pelos jogadores da watchlist nesta partida
   let eloChangeGroup = 0;

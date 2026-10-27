@@ -268,7 +268,7 @@ export function SeasonHero({
 
           {/* Quick Context Strip */}
           <div className="border-t border-border/30 pt-3 text-[11px] text-muted-foreground/60 font-mono flex items-center justify-between">
-            <span>Telemetria agregada da temporada</span>
+            <span>Métricas Globais da Temporada</span>
             <span className="text-foreground/80 font-bold uppercase">Taxa de amostragem ativa</span>
           </div>
         </div>

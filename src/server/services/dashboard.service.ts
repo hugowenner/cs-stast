@@ -3,6 +3,7 @@ import * as playerRepo from "@/server/repositories/player.repository";
 import * as statsService from "@/server/services/stats.service";
 import type { CompetitiveDataset } from "@/server/services/competitive.service";
 import { communityMatchWhere, individualMatchWhere } from "@/server/domain/matchClassification";
+import { calculateWeightedAdr } from "@/server/domain/adr";
 import { getActiveSeason, resolveSeasonId } from "@/server/services/season.service";
 
 /**
@@ -102,13 +103,12 @@ export async function getDashboardSummary(
     }),
   ]);
 
-  // Aritmética comunitária da temporada
+  // Métricas Globais da Temporada (Todos os jogadores monitorados, ADR ponderado por rounds válidos)
   const totalKills = allStats.reduce((sum, s) => sum + s.kills, 0);
   const totalDeaths = allStats.reduce((sum, s) => sum + s.deaths, 0);
-  const totalAdr = allStats.reduce((sum, s) => sum + s.adr, 0);
   const totalHeadshots = allStats.reduce((sum, s) => sum + s.headshots, 0);
   const avgKills = allStats.length > 0 ? totalKills / allStats.length : 0;
-  const avgAdr = allStats.length > 0 ? totalAdr / allStats.length : 0;
+  const avgAdr = calculateWeightedAdr(allStats);
   const avgKd = totalDeaths > 0 ? totalKills / totalDeaths : 0;
   const avgHsPercent = totalKills > 0 ? (totalHeadshots / totalKills) * 100 : 0;
 
