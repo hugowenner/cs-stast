@@ -5,6 +5,7 @@ import { HallOfFame } from "@/components/dashboard/hall-of-fame";
 import { CoachReportCard } from "@/components/ui/coach-report-card";
 import { ConfrontationsCarousel } from "@/components/matches/confrontations-carousel";
 import { MonitoredPlayersCarousel } from "@/components/players/monitored-players-carousel";
+import { transformMonitoredPlayersForCarousel } from "@/lib/monitored-players";
 import { RankingTable } from "@/components/ranking/ranking-table";
 import type { RecentMatchCardData } from "@/components/matches/recent-matches-carousel";
 import { SectionContainer } from "@/components/dashboard/section-container";
@@ -192,6 +193,20 @@ export default async function DashboardPage(props: {
   const hottestPlayer = momentum.find((m) => m.status === "up") ?? null;
   const coldestPlayer = momentum.find((m) => m.status === "down") ?? null;
 
+  // Mapa de fallback para recuperar total real de partidas em snapshots arquivados
+  const seasonMatchesFallbackMap = new Map<string, number>();
+  if (competitive.powerRanking) {
+    for (const pr of competitive.powerRanking) {
+      seasonMatchesFallbackMap.set(pr.player.id, pr.matchCount);
+    }
+  }
+
+  // Transformação isolada exclusivamente para os cards do carrossel (sem mutar monitoredPlayers compartilhado)
+  const carouselMonitoredPlayers = transformMonitoredPlayersForCarousel(
+    monitoredPlayers,
+    seasonMatchesFallbackMap,
+  );
+
   return (
     <div className="flex flex-col gap-10 lg:gap-12 pb-16">
       {/* ═══ 01. TACTICAL HERO COMMAND CENTER ═══ */}
@@ -242,19 +257,20 @@ export default async function DashboardPage(props: {
       )}
 
       {/* ═══ 03. JOGADORES MONITORADOS ═══ */}
-      {monitoredPlayers.length > 0 && (
-        <SectionContainer
-          index={3}
-          tag="ROSTER ATIVO"
-          title="Jogadores Monitorados"
-          subtitle="Membros com partidas e estatísticas ativas na temporada."
-          href="/players"
-          linkLabel="Ver todos os jogadores"
-          delay={0.035}
-        >
-          <MonitoredPlayersCarousel players={monitoredPlayers} />
-        </SectionContainer>
-      )}
+      <SectionContainer
+        index={3}
+        tag="ROSTER ATIVO"
+        title="Jogadores Monitorados"
+        subtitle="Desempenho recente · mínimo de 5 partidas para aparecer e 10 para disputar posições."
+        href="/players"
+        linkLabel="Ver todos os jogadores"
+        delay={0.035}
+      >
+        <MonitoredPlayersCarousel
+          players={carouselMonitoredPlayers}
+          isAllSeasons={!selectedSeason}
+        />
+      </SectionContainer>
 
       {/* ═══ 04. CLASSIFICAÇÃO OFICIAL (SCORE 3.5) ═══ */}
       <SectionContainer

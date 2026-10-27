@@ -5,16 +5,16 @@ import { ChevronLeft, ChevronRight, Map, Users, Clock } from "lucide-react";
 import Link from "next/link";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import { AnimatedNumber } from "@/components/motion/animated-number";
-import { TacticalBadge } from "@/components/ui/tactical-badge";
 import { FORMA_STYLE } from "@/lib/forma";
-import type { MonitoredPlayerEntry } from "@/server/services/competitive.service";
+import type { CarouselMonitoredPlayerEntry } from "@/lib/monitored-players";
 import { cn } from "@/lib/utils";
 
 interface Props {
-  players: MonitoredPlayerEntry[];
+  players: CarouselMonitoredPlayerEntry[];
+  isAllSeasons?: boolean;
 }
 
-export function MonitoredPlayersCarousel({ players }: Props) {
+export function MonitoredPlayersCarousel({ players, isAllSeasons = false }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -47,6 +47,14 @@ export function MonitoredPlayersCarousel({ players }: Props) {
     scrollToIndex(next);
   }, [currentIndex, players.length, scrollToIndex]);
 
+  // Reseta scroll e paginação ao trocar a lista filtrada (ex: troca de temporada)
+  useEffect(() => {
+    setCurrentIndex(0);
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ left: 0, behavior: "instant" });
+    }
+  }, [players]);
+
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -58,11 +66,14 @@ export function MonitoredPlayersCarousel({ players }: Props) {
         if (!card) return;
         const cardWidth = card.offsetWidth + 12;
         const idx = Math.round(el.scrollLeft / cardWidth);
-        setCurrentIndex(Math.min(idx, players.length - 1));
+        setCurrentIndex(Math.min(idx, Math.max(0, players.length - 1)));
       }, 80);
     };
     el.addEventListener("scroll", onScroll, { passive: true });
-    return () => { el.removeEventListener("scroll", onScroll); clearTimeout(timeout); };
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      clearTimeout(timeout);
+    };
   }, [players.length]);
 
   const visibleCount = getVisibleCount();
@@ -70,17 +81,26 @@ export function MonitoredPlayersCarousel({ players }: Props) {
   const canNext = currentIndex < players.length - visibleCount;
 
   if (players.length === 0) {
+    const emptyMessage = isAllSeasons
+      ? "Nenhum jogador atingiu o mínimo de 5 partidas no histórico."
+      : "Nenhum jogador atingiu o mínimo de 5 partidas nesta temporada.";
+
     return (
-      <div className="bg-surface-panel rounded-sm border border-border/60 p-8 text-center">
-        <Users className="size-8 text-muted-foreground/40 mx-auto mb-2" />
-        <p className="text-xs font-mono text-muted-foreground/60">Nenhum jogador monitorado com partidas registradas.</p>
+      <div className="bg-surface-panel rounded-sm border border-border/60 p-8 text-center flex flex-col items-center justify-center gap-2">
+        <Users className="size-8 text-muted-foreground/40 mb-1" />
+        <p className="text-xs font-mono font-bold text-foreground">
+          {emptyMessage}
+        </p>
+        <p className="text-[11px] font-mono text-muted-foreground/60 max-w-sm">
+          Mínimo de 5 partidas para aparecer e 10 para disputar posições oficiais.
+        </p>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Controles */}
+      {/* Controles de navegação e paginação */}
       <div className="flex items-center justify-between">
         <span className="text-[10px] font-mono text-muted-foreground/60 font-semibold tabular-nums">
           {currentIndex + 1} de {players.length}
@@ -105,7 +125,7 @@ export function MonitoredPlayersCarousel({ players }: Props) {
         </div>
       </div>
 
-      {/* Trilho */}
+      {/* Trilho de Cards */}
       <div
         ref={scrollRef}
         className="flex gap-3 overflow-x-auto scroll-smooth no-scrollbar"
@@ -114,7 +134,7 @@ export function MonitoredPlayersCarousel({ players }: Props) {
         {players.map((entry) => {
           const forma = FORMA_STYLE[entry.forma] ?? FORMA_STYLE["Oscilando"];
           const FormaIcon = forma.icon;
-          const isTop1 = entry.rank === 1;
+          const isTop1 = entry.displayRank === 1 && !entry.isInitialSample;
 
           return (
             <Link
@@ -127,23 +147,26 @@ export function MonitoredPlayersCarousel({ players }: Props) {
               )}
               style={{ scrollSnapAlign: "start" }}
             >
-              {/* Header */}
+              {/* Header do Card */}
               <div className="px-3.5 py-3 border-b border-border/40 bg-surface-deck/40 flex items-center justify-between gap-3 relative z-10">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="relative">
                     <PlayerAvatar nickname={entry.player.nickname} avatarUrl={entry.player.avatarUrl} size="md" />
-                    <span
-                      className={cn(
-                        "absolute -bottom-1 -right-1 text-[8px] font-mono font-black leading-none px-1 py-0.5 rounded-2xs border tabular-nums",
-                        entry.rank === 1
-                          ? "bg-gold text-black border-gold font-black"
-                          : entry.rank <= 3
-                          ? "bg-surface-panel text-foreground border-border"
-                          : "bg-surface-deck text-muted-foreground border-border/60"
-                      )}
-                    >
-                      #{entry.rank}
-                    </span>
+                    {/* Numeração exibida exclusivamente para quem tem amostra completa */}
+                    {!entry.isInitialSample && entry.displayRank !== null && (
+                      <span
+                        className={cn(
+                          "absolute -bottom-1 -right-1 text-[8px] font-mono font-black leading-none px-1 py-0.5 rounded-2xs border tabular-nums",
+                          entry.displayRank === 1
+                            ? "bg-gold text-black border-gold font-black"
+                            : entry.displayRank <= 3
+                            ? "bg-surface-panel text-foreground border-border"
+                            : "bg-surface-deck text-muted-foreground border-border/60"
+                        )}
+                      >
+                        #{entry.displayRank}
+                      </span>
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-bold text-foreground group-hover:text-primary transition-colors truncate">
@@ -162,13 +185,21 @@ export function MonitoredPlayersCarousel({ players }: Props) {
                 </div>
 
                 <div className="flex flex-col items-end gap-1 shrink-0">
-                  <span className={cn("inline-flex items-center gap-1 px-1.5 py-0.5 rounded-2xs text-[9px] font-mono font-bold border", forma.bg, forma.border, forma.color)}>
-                    <FormaIcon className="size-2.5" />
-                    {forma.text}
-                  </span>
+                  <div className="flex items-center gap-1">
+                    {/* Badge Amostra Inicial para 5 a 9 partidas */}
+                    {entry.isInitialSample && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-2xs text-[8px] font-mono font-bold uppercase tracking-wider border border-amber-500/30 bg-amber-500/10 text-amber-400">
+                        Amostra inicial
+                      </span>
+                    )}
+                    <span className={cn("inline-flex items-center gap-1 px-1.5 py-0.5 rounded-2xs text-[9px] font-mono font-bold border", forma.bg, forma.border, forma.color)}>
+                      <FormaIcon className="size-2.5" />
+                      {forma.text}
+                    </span>
+                  </div>
                   <span className="inline-flex items-center gap-0.5 text-[8px] font-mono text-muted-foreground/60">
                     <Clock className="size-2" />
-                    {entry.matchCount} jogos
+                    Últimas {entry.sampleMatches} partidas
                   </span>
                 </div>
               </div>
@@ -211,7 +242,7 @@ export function MonitoredPlayersCarousel({ players }: Props) {
                 </div>
               </div>
 
-              {/* Stats totais */}
+              {/* Stats totais da amostra recente */}
               <div className="px-3.5 py-2 grid grid-cols-4 gap-1 border-b border-border/30 bg-surface-deck/30 text-center font-mono relative z-10">
                 {[
                   { label: "KILLS",    value: entry.totalKills,   dec: 0 },
@@ -228,7 +259,7 @@ export function MonitoredPlayersCarousel({ players }: Props) {
                 ))}
               </div>
 
-              {/* Mapas + última partida */}
+              {/* Mapas + Total real de partidas no período */}
               <div className="px-3.5 py-2.5 flex items-start justify-between gap-2 mt-auto bg-surface-panel relative z-10">
                 <div className="min-w-0 flex-1 font-mono text-[9px]">
                   {entry.bestMap && (
@@ -247,8 +278,12 @@ export function MonitoredPlayersCarousel({ players }: Props) {
                   )}
                 </div>
                 <div className="shrink-0 text-right font-mono">
-                  <span className="text-[7px] font-bold uppercase tracking-wider text-muted-foreground/60 block">PARTIDAS</span>
-                  <span className="text-[11px] font-black text-foreground tabular-nums">{entry.matchCount}</span>
+                  <span className="text-[7px] font-bold uppercase tracking-wider text-muted-foreground/60 block">
+                    {isAllSeasons ? "NO HISTÓRICO" : "NA TEMPORADA"}
+                  </span>
+                  <span className="text-[11px] font-black text-foreground tabular-nums">
+                    {entry.totalSeasonMatches} partidas
+                  </span>
                 </div>
               </div>
             </Link>
@@ -256,12 +291,15 @@ export function MonitoredPlayersCarousel({ players }: Props) {
         })}
       </div>
 
-      {/* Dots */}
+      {/* Indicadores de bolinha (Dots) */}
       <div className="flex items-center justify-center gap-1 pt-1">
         {players.map((_, i) => (
           <button
             key={i}
-            onClick={() => { setCurrentIndex(i); scrollToIndex(i); }}
+            onClick={() => {
+              setCurrentIndex(i);
+              scrollToIndex(i);
+            }}
             aria-label={`Ir para jogador ${i + 1}`}
             className={cn(
               "h-1 rounded-none transition-all cursor-pointer",

@@ -1564,6 +1564,7 @@ export interface MonitoredPlayerEntry {
   winrate: number;
   hsPercent: number;
   matchCount: number;
+  seasonMatchCount?: number;
   totalKills: number;
   totalDeaths: number;
   totalAssists: number;
@@ -1579,9 +1580,12 @@ function getMonitoredPlayersFromDataset(dataset: CompetitiveDataset): MonitoredP
   const entries: MonitoredPlayerEntry[] = [];
 
   for (const player of dataset.activePlayers) {
+    const allPlayerStats = dataset.statsByPlayer.get(player.id) ?? [];
+    if (allPlayerStats.length === 0) continue;
+
+    const seasonMatchCount = allPlayerStats.length;
     // stats already sorted desc by playedAt — take the most recent 10
-    const stats = (dataset.statsByPlayer.get(player.id) ?? []).slice(0, MONITORED_RECENT_WINDOW);
-    if (stats.length === 0) continue;
+    const stats = allPlayerStats.slice(0, MONITORED_RECENT_WINDOW);
 
     const matchCount = stats.length;
     const avgRating = stats.reduce((sum, s) => sum + s.rating, 0) / matchCount;
@@ -1633,6 +1637,7 @@ function getMonitoredPlayersFromDataset(dataset: CompetitiveDataset): MonitoredP
       winrate: Math.round(winrate),
       hsPercent: Math.round(hsPercent),
       matchCount,
+      seasonMatchCount,
       totalKills,
       totalDeaths,
       totalAssists,
