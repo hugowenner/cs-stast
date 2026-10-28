@@ -68,15 +68,31 @@ export interface DuoSummary {
   avgRating: number;
 }
 
+export interface MapSpecialistPlayer {
+  id: string;
+  nickname: string;
+  avatarUrl: string | null;
+  levelGc: number | null;
+}
+
+export interface MapPodiumEntry {
+  player: MapSpecialistPlayer;
+  rating: number;
+  wins: number;
+  matches: number;
+  winrate: number;
+}
+
 export interface MapSpecialist {
   mapId?: string;
   mapName: string;
   cleanMapName: string;
-  player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null } | null;
+  player: MapSpecialistPlayer | null;
   rating: number | null;
   wins: number;
   matches: number;
   winrate: number;
+  podium: MapPodiumEntry[];
 }
 
 export interface PlayerMomentumEntry {
@@ -660,6 +676,7 @@ export function getMapSpecialistsFromDataset(dataset: CompetitiveDataset): MapSp
         wins: 0,
         matches: 0,
         winrate: 0,
+        podium: [],
       });
       continue;
     }
@@ -673,6 +690,19 @@ export function getMapSpecialistsFromDataset(dataset: CompetitiveDataset): MapSp
     });
 
     const leader = eligible[0];
+    const podium: MapPodiumEntry[] = eligible.slice(0, 3).map((item) => ({
+      player: {
+        id: item.player.id,
+        nickname: item.player.nickname,
+        avatarUrl: item.player.avatarUrl,
+        levelGc: item.player.levelGc,
+      },
+      rating: item.avgRating,
+      wins: item.wins,
+      matches: item.matches,
+      winrate: item.winrate,
+    }));
+
     specialists.push({
       mapId: mapEntry.mapId,
       mapName,
@@ -687,6 +717,7 @@ export function getMapSpecialistsFromDataset(dataset: CompetitiveDataset): MapSp
       wins: leader.wins,
       matches: leader.matches,
       winrate: leader.winrate,
+      podium,
     });
   }
 

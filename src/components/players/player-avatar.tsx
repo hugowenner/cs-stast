@@ -10,7 +10,7 @@ export function PlayerAvatar({
 }: {
   nickname: string;
   avatarUrl?: string | null;
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
 }) {
   const [loaded, setLoaded] = useState(false);
   const [errored, setErrored] = useState(false);
@@ -30,7 +30,13 @@ export function PlayerAvatar({
   }, [avatarUrl]);
 
   const dimension =
-    size === "sm" ? "size-7 text-xs" : size === "lg" ? "size-14 text-lg" : "size-9 text-sm";
+    size === "xs"
+      ? "size-5 text-[9px]"
+      : size === "sm"
+        ? "size-7 text-xs"
+        : size === "lg"
+          ? "size-14 text-lg"
+          : "size-9 text-sm";
 
   const initials = nickname
     .split(" ")

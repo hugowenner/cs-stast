@@ -99,63 +99,116 @@ export function ReisDosMapa({
                       )}
                     </div>
 
-                    {/* Middle Row: Leader Player or Empty State */}
+                    {/* Middle Row: Leader Player & Podium or Empty State */}
                     {spec.player ? (
-                      <div className="relative z-10 flex items-center gap-2 py-1.5 border-y border-border/30 my-1">
-                        <PlayerAvatar
-                          nickname={spec.player.nickname}
-                          avatarUrl={spec.player.avatarUrl}
-                          size="sm"
-                        />
-                        <div className="flex flex-col min-w-0 flex-1">
-                          <div className="flex items-center gap-1 min-w-0">
-                            <Link
-                              href={`/players/${spec.player.id}`}
-                              className="text-xs font-bold text-foreground hover:text-primary transition-micro truncate leading-tight"
-                            >
-                              {spec.player.nickname}
-                            </Link>
-                            <Crown className="size-3 text-gold shrink-0" aria-label="Líder em vitórias" />
-                          </div>
-                          <div className="flex items-center justify-between gap-1 mt-0.5">
-                            <span className="text-[11px] font-mono font-black text-status-good tabular-nums">
-                              {spec.wins} {spec.wins === 1 ? "vitória" : "vitórias"}
-                            </span>
-                            {spec.rating !== null && (
-                              <span className="text-[9px] font-mono text-muted-foreground/70 tabular-nums">
-                                {spec.rating.toFixed(2)} <span className="text-[8px] font-normal text-muted-foreground/50">RTG</span>
+                      <div className="relative z-10 flex flex-col gap-2 my-1">
+                        {/* ─── 1º Colocado (Destaque) ─── */}
+                        <div className="flex items-center gap-2 py-1.5 border-y border-border/30">
+                          <PlayerAvatar
+                            nickname={spec.player.nickname}
+                            avatarUrl={spec.player.avatarUrl}
+                            size="sm"
+                          />
+                          <div className="flex flex-col min-w-0 flex-1">
+                            <div className="flex items-center gap-1 min-w-0">
+                              <span className="text-[9px] font-mono font-bold text-gold shrink-0">#1</span>
+                              <Link
+                                href={`/players/${spec.player.id}`}
+                                className="text-xs font-bold text-foreground hover:text-primary transition-micro truncate leading-tight"
+                              >
+                                {spec.player.nickname}
+                              </Link>
+                              <Crown className="size-3 text-gold shrink-0" aria-label="1º lugar (Líder em vitórias)" />
+                            </div>
+                            <div className="flex items-center justify-between gap-1 mt-0.5">
+                              <span className="text-[11px] font-mono font-black text-status-good tabular-nums">
+                                {spec.wins} {spec.wins === 1 ? "vitória" : "vitórias"}
                               </span>
-                            )}
+                              <div className="flex items-center gap-1 text-[9px] font-mono text-muted-foreground/70 tabular-nums">
+                                <span>{spec.matches}P · {spec.winrate.toFixed(0)}% WR</span>
+                                {spec.rating !== null && (
+                                  <span
+                                    title={`Rating no mapa: ${spec.rating.toFixed(2)}`}
+                                    className="cursor-help text-muted-foreground/50 hover:text-foreground hidden sm:inline"
+                                  >
+                                    ({spec.rating.toFixed(2)})
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
+
+                        {/* ─── 2º e 3º Colocados (Linhas Compactas) ─── */}
+                        {spec.podium && spec.podium.length > 1 && (
+                          <div className="flex flex-col gap-1">
+                            {spec.podium.slice(1).map((runnerUp, idx) => {
+                              const pos = idx + 2;
+                              return (
+                                <div
+                                  key={runnerUp.player.id}
+                                  className="flex items-center justify-between gap-1.5 py-1 px-1.5 rounded-xs bg-surface-base/30 border border-border/25 text-[10px] font-mono hover:border-border/60 transition-micro"
+                                  title={`Rating no mapa: ${runnerUp.rating.toFixed(2)}`}
+                                >
+                                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                    <span className={cn(
+                                      "text-[8px] font-bold px-1 rounded-[2px] shrink-0 tabular-nums",
+                                      pos === 2 ? "text-slate-300 bg-white/10" : "text-amber-500 bg-amber-500/10"
+                                    )}>
+                                      #{pos}
+                                    </span>
+                                    <PlayerAvatar
+                                      nickname={runnerUp.player.nickname}
+                                      avatarUrl={runnerUp.player.avatarUrl}
+                                      size="xs"
+                                    />
+                                    <Link
+                                      href={`/players/${runnerUp.player.id}`}
+                                      className="font-medium text-foreground/90 hover:text-primary transition-micro truncate leading-tight max-w-[85px] sm:max-w-[110px]"
+                                    >
+                                      {runnerUp.player.nickname}
+                                    </Link>
+                                  </div>
+
+                                  <div className="flex items-center gap-1 shrink-0 tabular-nums text-[9px] text-muted-foreground/80">
+                                    <span className="font-bold text-foreground">
+                                      {runnerUp.wins}V
+                                    </span>
+                                    <span>{runnerUp.matches}P</span>
+                                    <span className="text-muted-foreground/40">·</span>
+                                    <span className={cn(
+                                      "font-medium",
+                                      runnerUp.winrate >= 60
+                                        ? "text-status-good"
+                                        : runnerUp.winrate < 45
+                                          ? "text-status-critical"
+                                          : "text-foreground/80"
+                                    )}>
+                                      {runnerUp.winrate.toFixed(0)}%
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     ) : (
-                      <div className="relative z-10 flex flex-col justify-center py-2 border-y border-border/30 my-1 min-h-[52px]">
+                      <div className="relative z-10 flex flex-col justify-center py-3 border-y border-border/30 my-1 min-h-[56px]">
                         <span className="text-[11px] font-mono font-bold text-muted-foreground/80">
                           Nenhum jogador elegível
                         </span>
                         <span className="text-[9px] font-mono text-muted-foreground/50 leading-tight mt-0.5">
-                          Mínimo de 3 partidas e 1 vitória não atingido.
+                          É necessário disputar pelo menos 3 partidas e conquistar 1 vitória neste mapa.
                         </span>
                       </div>
                     )}
 
                     {/* Bottom Row: Individual Performance or Placeholder */}
                     {spec.player ? (
-                      <div className="relative z-10 flex items-center justify-between pt-1 text-[9px] font-mono text-muted-foreground/70">
-                        <span>{spec.matches} {spec.matches === 1 ? "partida" : "partidas"}</span>
-                        <span
-                          className={cn(
-                            "font-bold tabular-nums",
-                            spec.winrate >= 60
-                              ? "text-status-good"
-                              : spec.winrate < 45
-                                ? "text-status-critical"
-                                : "text-foreground"
-                          )}
-                        >
-                          {spec.winrate.toFixed(0)}% aproveitamento
-                        </span>
+                      <div className="relative z-10 flex items-center justify-between pt-1 text-[9px] font-mono text-muted-foreground/50">
+                        <span>Pódio do Mapa</span>
+                        <span>{spec.podium ? spec.podium.length : 1} {spec.podium?.length === 1 ? "elegível" : "elegíveis"}</span>
                       </div>
                     ) : (
                       <div className="relative z-10 flex items-center justify-between pt-1 text-[9px] font-mono text-muted-foreground/40">

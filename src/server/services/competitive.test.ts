@@ -121,7 +121,7 @@ describe("getMapSpecialistsFromDataset", () => {
     expect(infernoSpec?.rating).toBe(1.50);
   });
 
-  it("retornar player: null e rating: null para mapa sem jogador elegível", () => {
+  it("retornar player: null, rating: null e podium vazio para mapa sem jogador elegível (0 elegíveis)", () => {
     const dataset = {
       activePlayers: [
         { id: "playerA", nickname: "Jogador A", avatarUrl: null, levelGc: 15 },
@@ -148,7 +148,169 @@ describe("getMapSpecialistsFromDataset", () => {
       wins: 0,
       matches: 0,
       winrate: 0,
+      podium: [],
     });
+  });
+
+  it("retornar pódio com exatamente 1 jogador quando apenas 1 for elegível", () => {
+    const dataset = {
+      activePlayers: [
+        { id: "p1", nickname: "Player 1", avatarUrl: null, levelGc: 10 },
+        { id: "p2", nickname: "Player 2", avatarUrl: null, levelGc: 10 },
+      ],
+      statsByPlayer: new Map(),
+      allStats: [
+        // p1: 3 partidas, 2 vitórias (ELEGÍVEL)
+        { playerId: "p1", rating: 1.10, team: "A", match: { map: { name: "Dust2" }, scoreTeamA: 13, scoreTeamB: 5 } },
+        { playerId: "p1", rating: 1.20, team: "A", match: { map: { name: "Dust2" }, scoreTeamA: 13, scoreTeamB: 5 } },
+        { playerId: "p1", rating: 1.00, team: "A", match: { map: { name: "Dust2" }, scoreTeamA: 5, scoreTeamB: 13 } },
+
+        // p2: apenas 2 partidas (INELEGÍVEL por partidas < 3)
+        { playerId: "p2", rating: 1.90, team: "A", match: { map: { name: "Dust2" }, scoreTeamA: 13, scoreTeamB: 5 } },
+        { playerId: "p2", rating: 1.90, team: "A", match: { map: { name: "Dust2" }, scoreTeamA: 13, scoreTeamB: 5 } },
+      ],
+    };
+
+    dataset.statsByPlayer.set("p1", dataset.allStats.filter(s => s.playerId === "p1"));
+    dataset.statsByPlayer.set("p2", dataset.allStats.filter(s => s.playerId === "p2"));
+
+    // @ts-ignore
+    const specialists = getMapSpecialistsFromDataset(dataset);
+    expect(specialists).toHaveLength(1);
+    expect(specialists[0].player?.id).toBe("p1");
+    expect(specialists[0].podium).toHaveLength(1);
+    expect(specialists[0].podium[0].player.id).toBe("p1");
+    expect(specialists[0].podium[0].wins).toBe(2);
+    expect(specialists[0].podium[0].matches).toBe(3);
+  });
+
+  it("retornar pódio com 2 jogadores quando apenas 2 forem elegíveis", () => {
+    const dataset = {
+      activePlayers: [
+        { id: "p1", nickname: "Player 1", avatarUrl: null, levelGc: 10 },
+        { id: "p2", nickname: "Player 2", avatarUrl: null, levelGc: 10 },
+        { id: "p3", nickname: "Player 3", avatarUrl: null, levelGc: 10 },
+      ],
+      statsByPlayer: new Map(),
+      allStats: [
+        // p1: 4 partidas, 3 vitórias
+        { playerId: "p1", rating: 1.20, team: "A", match: { map: { name: "Mirage" }, scoreTeamA: 13, scoreTeamB: 5 } },
+        { playerId: "p1", rating: 1.20, team: "A", match: { map: { name: "Mirage" }, scoreTeamA: 13, scoreTeamB: 5 } },
+        { playerId: "p1", rating: 1.20, team: "A", match: { map: { name: "Mirage" }, scoreTeamA: 13, scoreTeamB: 5 } },
+        { playerId: "p1", rating: 1.00, team: "A", match: { map: { name: "Mirage" }, scoreTeamA: 5, scoreTeamB: 13 } },
+
+        // p2: 3 partidas, 2 vitórias
+        { playerId: "p2", rating: 1.15, team: "A", match: { map: { name: "Mirage" }, scoreTeamA: 13, scoreTeamB: 5 } },
+        { playerId: "p2", rating: 1.15, team: "A", match: { map: { name: "Mirage" }, scoreTeamA: 13, scoreTeamB: 5 } },
+        { playerId: "p2", rating: 1.00, team: "A", match: { map: { name: "Mirage" }, scoreTeamA: 5, scoreTeamB: 13 } },
+
+        // p3: 3 partidas, 0 vitórias (INELEGÍVEL)
+        { playerId: "p3", rating: 1.50, team: "A", match: { map: { name: "Mirage" }, scoreTeamA: 5, scoreTeamB: 13 } },
+        { playerId: "p3", rating: 1.50, team: "A", match: { map: { name: "Mirage" }, scoreTeamA: 5, scoreTeamB: 13 } },
+        { playerId: "p3", rating: 1.50, team: "A", match: { map: { name: "Mirage" }, scoreTeamA: 5, scoreTeamB: 13 } },
+      ],
+    };
+
+    dataset.statsByPlayer.set("p1", dataset.allStats.filter(s => s.playerId === "p1"));
+    dataset.statsByPlayer.set("p2", dataset.allStats.filter(s => s.playerId === "p2"));
+    dataset.statsByPlayer.set("p3", dataset.allStats.filter(s => s.playerId === "p3"));
+
+    // @ts-ignore
+    const specialists = getMapSpecialistsFromDataset(dataset);
+    expect(specialists).toHaveLength(1);
+    expect(specialists[0].player?.id).toBe("p1");
+    expect(specialists[0].podium).toHaveLength(2);
+    expect(specialists[0].podium[0].player.id).toBe("p1");
+    expect(specialists[0].podium[1].player.id).toBe("p2");
+  });
+
+  it("retornar no máximo 3 jogadores no pódio e ordenar por todos os critérios de desempate", () => {
+    // 5 jogadores elegíveis para testar desempates:
+    // p1: 4 vitórias em 5 partidas (80% WR, rating 1.20) -> 1º lugar por vitórias
+    // p2: 3 vitórias em 3 partidas (100% WR, rating 1.10) -> 2º lugar (3V, maior WR que p3)
+    // p3: 3 vitórias em 4 partidas (75% WR, rating 1.30) -> 3º lugar (3V, 75% WR, maior rating que p4)
+    // p4: 3 vitórias em 4 partidas (75% WR, rating 1.10) -> 4º lugar (fica fora do pódio)
+    // p5: 3 vitórias em 4 partidas (75% WR, rating 1.10) -> 5º lugar (desempate por ID alfabético com p4)
+    const dataset = {
+      activePlayers: [
+        { id: "p1", nickname: "P1", avatarUrl: null, levelGc: 10 },
+        { id: "p2", nickname: "P2", avatarUrl: null, levelGc: 10 },
+        { id: "p3", nickname: "P3", avatarUrl: null, levelGc: 10 },
+        { id: "p4_b", nickname: "P4_B", avatarUrl: null, levelGc: 10 },
+        { id: "p4_a", nickname: "P4_A", avatarUrl: null, levelGc: 10 },
+      ],
+      statsByPlayer: new Map(),
+      allStats: [
+        // p1: 4V em 5P
+        ...Array(4).fill(0).map(() => ({ playerId: "p1", rating: 1.20, team: "A", match: { map: { name: "Inferno" }, scoreTeamA: 13, scoreTeamB: 5 } })),
+        { playerId: "p1", rating: 1.20, team: "A", match: { map: { name: "Inferno" }, scoreTeamA: 5, scoreTeamB: 13 } },
+
+        // p2: 3V em 3P (100% WR)
+        ...Array(3).fill(0).map(() => ({ playerId: "p2", rating: 1.10, team: "A", match: { map: { name: "Inferno" }, scoreTeamA: 13, scoreTeamB: 5 } })),
+
+        // p3: 3V em 4P (75% WR, rating 1.30)
+        ...Array(3).fill(0).map(() => ({ playerId: "p3", rating: 1.30, team: "A", match: { map: { name: "Inferno" }, scoreTeamA: 13, scoreTeamB: 5 } })),
+        { playerId: "p3", rating: 1.30, team: "A", match: { map: { name: "Inferno" }, scoreTeamA: 5, scoreTeamB: 13 } },
+
+        // p4_a: 3V em 4P (75% WR, rating 1.10, ID p4_a < p4_b)
+        ...Array(3).fill(0).map(() => ({ playerId: "p4_a", rating: 1.10, team: "A", match: { map: { name: "Inferno" }, scoreTeamA: 13, scoreTeamB: 5 } })),
+        { playerId: "p4_a", rating: 1.10, team: "A", match: { map: { name: "Inferno" }, scoreTeamA: 5, scoreTeamB: 13 } },
+
+        // p4_b: 3V em 4P (75% WR, rating 1.10, ID p4_b)
+        ...Array(3).fill(0).map(() => ({ playerId: "p4_b", rating: 1.10, team: "A", match: { map: { name: "Inferno" }, scoreTeamA: 13, scoreTeamB: 5 } })),
+        { playerId: "p4_b", rating: 1.10, team: "A", match: { map: { name: "Inferno" }, scoreTeamA: 5, scoreTeamB: 13 } },
+      ],
+    };
+
+    dataset.activePlayers.forEach(p => {
+      dataset.statsByPlayer.set(p.id, dataset.allStats.filter(s => s.playerId === p.id));
+    });
+
+    // @ts-ignore
+    const specialists = getMapSpecialistsFromDataset(dataset);
+    expect(specialists).toHaveLength(1);
+    
+    // O líder do mapa deve ser exatamente o 1º colocado do pódio
+    expect(specialists[0].player?.id).toBe("p1");
+    expect(specialists[0].wins).toBe(4);
+
+    // O pódio deve retornar exatamente 3 jogadores distintos (p1, p2, p3)
+    expect(specialists[0].podium).toHaveLength(3);
+    expect(specialists[0].podium[0].player.id).toBe("p1");
+    expect(specialists[0].podium[1].player.id).toBe("p2");
+    expect(specialists[0].podium[2].player.id).toBe("p3");
+
+    // Jogadores fora do top 3 não devem entrar
+    const podiumIds = specialists[0].podium.map(e => e.player.id);
+    expect(podiumIds).not.toContain("p4_a");
+    expect(podiumIds).not.toContain("p4_b");
+  });
+
+  it("desempatar corretamente pelo ID estável crescente quando vitórias, WR e rating forem idênticos", () => {
+    const dataset = {
+      activePlayers: [
+        { id: "player_zeta", nickname: "Zeta", avatarUrl: null, levelGc: 10 },
+        { id: "player_alpha", nickname: "Alpha", avatarUrl: null, levelGc: 10 },
+      ],
+      statsByPlayer: new Map(),
+      allStats: [
+        // Ambos jogam 3 partidas, ganham 3, com rating 1.20
+        ...Array(3).fill(0).map(() => ({ playerId: "player_zeta", rating: 1.20, team: "A", match: { map: { name: "Overpass" }, scoreTeamA: 13, scoreTeamB: 5 } })),
+        ...Array(3).fill(0).map(() => ({ playerId: "player_alpha", rating: 1.20, team: "A", match: { map: { name: "Overpass" }, scoreTeamA: 13, scoreTeamB: 5 } })),
+      ],
+    };
+
+    dataset.activePlayers.forEach(p => {
+      dataset.statsByPlayer.set(p.id, dataset.allStats.filter(s => s.playerId === p.id));
+    });
+
+    // @ts-ignore
+    const specialists = getMapSpecialistsFromDataset(dataset);
+    expect(specialists).toHaveLength(1);
+    // player_alpha vem antes de player_zeta por ordenação alfabética de ID (critério 4)
+    expect(specialists[0].player?.id).toBe("player_alpha");
+    expect(specialists[0].podium[0].player.id).toBe("player_alpha");
+    expect(specialists[0].podium[1].player.id).toBe("player_zeta");
   });
 });
 
