@@ -18,16 +18,16 @@ describe("getMapSpecialistsFromDataset", () => {
       ],
       statsByPlayer: new Map(),
       allStats: [
-        // Jogador A jogou 3 partidas com média 1.10
-        { playerId: "playerA", rating: 1.10, match: { map: { name: "Dust2" } } },
-        { playerId: "playerA", rating: 1.10, match: { map: { name: "Dust2" } } },
-        { playerId: "playerA", rating: 1.10, match: { map: { name: "Dust2" } } },
+        // Jogador A jogou 3 partidas com média 1.10 (3 vitórias)
+        { playerId: "playerA", rating: 1.10, team: "A", match: { map: { id: "m_dust2", name: "Dust2" }, scoreTeamA: 13, scoreTeamB: 5 } },
+        { playerId: "playerA", rating: 1.10, team: "A", match: { map: { id: "m_dust2", name: "Dust2" }, scoreTeamA: 13, scoreTeamB: 5 } },
+        { playerId: "playerA", rating: 1.10, team: "A", match: { map: { id: "m_dust2", name: "Dust2" }, scoreTeamA: 13, scoreTeamB: 5 } },
         
-        // Jogador B jogou 4 partidas com média 1.30
-        { playerId: "playerB", rating: 1.30, match: { map: { name: "Dust2" } } },
-        { playerId: "playerB", rating: 1.30, match: { map: { name: "Dust2" } } },
-        { playerId: "playerB", rating: 1.30, match: { map: { name: "Dust2" } } },
-        { playerId: "playerB", rating: 1.30, match: { map: { name: "Dust2" } } },
+        // Jogador B jogou 4 partidas com média 1.30 (4 vitórias)
+        { playerId: "playerB", rating: 1.30, team: "A", match: { map: { id: "m_dust2", name: "Dust2" }, scoreTeamA: 13, scoreTeamB: 5 } },
+        { playerId: "playerB", rating: 1.30, team: "A", match: { map: { id: "m_dust2", name: "Dust2" }, scoreTeamA: 13, scoreTeamB: 5 } },
+        { playerId: "playerB", rating: 1.30, team: "A", match: { map: { id: "m_dust2", name: "Dust2" }, scoreTeamA: 13, scoreTeamB: 5 } },
+        { playerId: "playerB", rating: 1.30, team: "A", match: { map: { id: "m_dust2", name: "Dust2" }, scoreTeamA: 13, scoreTeamB: 5 } },
       ],
     };
 
@@ -39,6 +39,7 @@ describe("getMapSpecialistsFromDataset", () => {
 
     expect(specialists).toHaveLength(1);
     expect(specialists[0]).toMatchObject({
+      mapId: "m_dust2",
       mapName: "Dust2",
       player: { id: "playerB", nickname: "Jogador B", levelGc: 12 },
       rating: 1.30,
@@ -53,15 +54,15 @@ describe("getMapSpecialistsFromDataset", () => {
       ],
       statsByPlayer: new Map(),
       allStats: [
-        // Jogador A jogou 5 partidas com média 1.20
-        { playerId: "playerA", rating: 1.20, match: { map: { name: "Mirage" } } },
-        { playerId: "playerA", rating: 1.20, match: { map: { name: "Mirage" } } },
-        { playerId: "playerA", rating: 1.20, match: { map: { name: "Mirage" } } },
-        { playerId: "playerA", rating: 1.20, match: { map: { name: "Mirage" } } },
-        { playerId: "playerA", rating: 1.20, match: { map: { name: "Mirage" } } },
+        // Jogador A jogou 5 partidas com média 1.20 e vitórias
+        { playerId: "playerA", rating: 1.20, team: "A", match: { map: { name: "Mirage" }, scoreTeamA: 13, scoreTeamB: 5 } },
+        { playerId: "playerA", rating: 1.20, team: "A", match: { map: { name: "Mirage" }, scoreTeamA: 13, scoreTeamB: 5 } },
+        { playerId: "playerA", rating: 1.20, team: "A", match: { map: { name: "Mirage" }, scoreTeamA: 13, scoreTeamB: 5 } },
+        { playerId: "playerA", rating: 1.20, team: "A", match: { map: { name: "Mirage" }, scoreTeamA: 13, scoreTeamB: 5 } },
+        { playerId: "playerA", rating: 1.20, team: "A", match: { map: { name: "Mirage" }, scoreTeamA: 13, scoreTeamB: 5 } },
         
         // Jogador B jogou apenas 1 partida com rating 2.0 (Dominante, mas volume insuficiente)
-        { playerId: "playerB", rating: 2.00, match: { map: { name: "Mirage" } } },
+        { playerId: "playerB", rating: 2.00, team: "A", match: { map: { name: "Mirage" }, scoreTeamA: 13, scoreTeamB: 5 } },
       ],
     };
 
@@ -89,15 +90,15 @@ describe("getMapSpecialistsFromDataset", () => {
       ],
       statsByPlayer: new Map(),
       allStats: [
-        // Mapa Nuke: Jogador A é o único elegível (3 partidas)
-        { playerId: "playerA", rating: 1.40, match: { map: { name: "Nuke" } } },
-        { playerId: "playerA", rating: 1.40, match: { map: { name: "Nuke" } } },
-        { playerId: "playerA", rating: 1.40, match: { map: { name: "Nuke" } } },
+        // Mapa Nuke: Jogador A é o único elegível (3 partidas com vitória)
+        { playerId: "playerA", rating: 1.40, team: "A", match: { map: { name: "Nuke" }, scoreTeamA: 13, scoreTeamB: 5 } },
+        { playerId: "playerA", rating: 1.40, team: "A", match: { map: { name: "Nuke" }, scoreTeamA: 13, scoreTeamB: 5 } },
+        { playerId: "playerA", rating: 1.40, team: "A", match: { map: { name: "Nuke" }, scoreTeamA: 13, scoreTeamB: 5 } },
 
-        // Mapa Inferno: Jogador B é o único elegível (3 partidas)
-        { playerId: "playerB", rating: 1.50, match: { map: { name: "Inferno" } } },
-        { playerId: "playerB", rating: 1.50, match: { map: { name: "Inferno" } } },
-        { playerId: "playerB", rating: 1.50, match: { map: { name: "Inferno" } } },
+        // Mapa Inferno: Jogador B é o único elegível (3 partidas com vitória)
+        { playerId: "playerB", rating: 1.50, team: "A", match: { map: { name: "Inferno" }, scoreTeamA: 13, scoreTeamB: 5 } },
+        { playerId: "playerB", rating: 1.50, team: "A", match: { map: { name: "Inferno" }, scoreTeamA: 13, scoreTeamB: 5 } },
+        { playerId: "playerB", rating: 1.50, team: "A", match: { map: { name: "Inferno" }, scoreTeamA: 13, scoreTeamB: 5 } },
       ],
     };
 
@@ -111,13 +112,43 @@ describe("getMapSpecialistsFromDataset", () => {
     
     const nukeSpec = specialists.find(s => s.mapName === "Nuke");
     expect(nukeSpec).toBeDefined();
-    expect(nukeSpec?.player.id).toBe("playerA");
+    expect(nukeSpec?.player?.id).toBe("playerA");
     expect(nukeSpec?.rating).toBe(1.40);
 
     const infernoSpec = specialists.find(s => s.mapName === "Inferno");
     expect(infernoSpec).toBeDefined();
-    expect(infernoSpec?.player.id).toBe("playerB");
+    expect(infernoSpec?.player?.id).toBe("playerB");
     expect(infernoSpec?.rating).toBe(1.50);
+  });
+
+  it("retornar player: null e rating: null para mapa sem jogador elegível", () => {
+    const dataset = {
+      activePlayers: [
+        { id: "playerA", nickname: "Jogador A", avatarUrl: null, levelGc: 15 },
+      ],
+      statsByPlayer: new Map(),
+      allStats: [
+        // Jogador A jogou 3 partidas mas perdeu todas (scoreTeamA 5 < scoreTeamB 13)
+        { playerId: "playerA", rating: 1.20, team: "A", match: { map: { name: "Anubis" }, scoreTeamA: 5, scoreTeamB: 13 } },
+        { playerId: "playerA", rating: 1.20, team: "A", match: { map: { name: "Anubis" }, scoreTeamA: 5, scoreTeamB: 13 } },
+        { playerId: "playerA", rating: 1.20, team: "A", match: { map: { name: "Anubis" }, scoreTeamA: 5, scoreTeamB: 13 } },
+      ],
+    };
+
+    dataset.statsByPlayer.set("playerA", dataset.allStats);
+
+    // @ts-ignore
+    const specialists = getMapSpecialistsFromDataset(dataset);
+
+    expect(specialists).toHaveLength(1);
+    expect(specialists[0]).toMatchObject({
+      mapName: "Anubis",
+      player: null,
+      rating: null,
+      wins: 0,
+      matches: 0,
+      winrate: 0,
+    });
   });
 });
 

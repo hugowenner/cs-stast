@@ -69,6 +69,7 @@ export interface DuoSummary {
 }
 
 export interface MapSpecialist {
+  mapId?: string;
   mapName: string;
   cleanMapName: string;
   player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null } | null;
@@ -602,26 +603,40 @@ function getDuoLeaderboardFromDataset(dataset: CompetitiveDataset, take = 3): Du
 }
 
 export function getMapSpecialistsFromDataset(dataset: CompetitiveDataset): MapSpecialist[] {
-  const byMap = new Map<string, Map<string, { player: PlayerRow; matches: number; wins: number; ratings: number[] }>>();
+  const byMap = new Map<
+    string,
+    {
+      mapId?: string;
+      playerStats: Map<string, { player: PlayerRow; matches: number; wins: number; ratings: number[] }>;
+    }
+  >();
 
   for (const s of dataset.allStats) {
     const mapName = s.match.map.name;
+    const mapId = (s.match.map as any)?.id;
     const player = dataset.activePlayers.find((p) => p.id === s.playerId);
     if (!player) continue;
 
-    const playerMapStats = byMap.get(mapName) ?? new Map<string, { player: PlayerRow; matches: number; wins: number; ratings: number[] }>();
-    const entry = playerMapStats.get(s.playerId) ?? { player, matches: 0, wins: 0, ratings: [] };
+    const mapEntry = byMap.get(mapName) ?? {
+      mapId,
+      playerStats: new Map<string, { player: PlayerRow; matches: number; wins: number; ratings: number[] }>(),
+    };
+    if (!mapEntry.mapId && mapId) {
+      mapEntry.mapId = mapId;
+    }
+
+    const entry = mapEntry.playerStats.get(s.playerId) ?? { player, matches: 0, wins: 0, ratings: [] };
     entry.matches += 1;
     entry.ratings.push(s.rating);
     if (isWin(s)) entry.wins += 1;
-    playerMapStats.set(s.playerId, entry);
-    byMap.set(mapName, playerMapStats);
+    mapEntry.playerStats.set(s.playerId, entry);
+    byMap.set(mapName, mapEntry);
   }
 
   const specialists: MapSpecialist[] = [];
 
-  for (const [mapName, playerMapStats] of byMap.entries()) {
-    const playersList = Array.from(playerMapStats.values()).map((p) => {
+  for (const [mapName, mapEntry] of byMap.entries()) {
+    const playersList = Array.from(mapEntry.playerStats.values()).map((p) => {
       const avgRating = p.ratings.reduce((sum, r) => sum + r, 0) / p.ratings.length;
       return {
         ...p,
@@ -637,6 +652,7 @@ export function getMapSpecialistsFromDataset(dataset: CompetitiveDataset): MapSp
 
     if (eligible.length === 0) {
       specialists.push({
+        mapId: mapEntry.mapId,
         mapName,
         cleanMapName: cleanMapName(mapName),
         player: null,
@@ -658,6 +674,7 @@ export function getMapSpecialistsFromDataset(dataset: CompetitiveDataset): MapSp
 
     const leader = eligible[0];
     specialists.push({
+      mapId: mapEntry.mapId,
       mapName,
       cleanMapName: cleanMapName(mapName),
       player: {

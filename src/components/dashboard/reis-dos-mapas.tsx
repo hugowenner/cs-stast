@@ -61,7 +61,7 @@ export function ReisDosMapa({
 
                 return (
                   <div
-                    key={spec.mapName}
+                    key={spec.mapId ?? spec.mapName}
                     className={cn(
                       "relative flex flex-col justify-between p-3.5 bg-surface-deck border rounded-xs transition-micro group overflow-hidden",
                       isDominant

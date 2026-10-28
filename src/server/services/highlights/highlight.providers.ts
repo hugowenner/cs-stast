@@ -929,7 +929,7 @@ function makeMapProvider(targetMap: string): StoryProvider {
     generate(dataset) {
       const specialists = getMapSpecialistsFromDataset(dataset);
       const spec = specialists.find((s) => s.mapName === targetMap);
-      if (!spec) return null;
+      if (!spec || !spec.player || spec.rating === null) return null;
       const mapStats = (dataset.statsByPlayer.get(spec.player.id) ?? []).filter((s) => s.match.map.name === targetMap);
       if (mapStats.length < 3 || spec.rating < 1.1) return null;
       const wins = mapStats.filter((s) => isWin(s)).length;
