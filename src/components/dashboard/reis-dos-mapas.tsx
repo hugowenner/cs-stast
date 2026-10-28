@@ -42,8 +42,11 @@ export function ReisDosMapa({
                 Controle de Território por Mapa
               </span>
             </div>
-            <span className="text-[10px] font-mono text-muted-foreground/60">
-              Mínimo 3 partidas e 1 vitória
+            <span
+              className="text-[10px] font-mono text-muted-foreground/60 cursor-help"
+              title="O mínimo é de 5 partidas ou metade das partidas do jogador mais ativo neste mapa, arredondada para cima — o que for maior. A classificação prioriza aproveitamento; os desempates são vitórias e rating."
+            >
+              Melhor aproveitamento · Mínimo dinâmico
             </span>
           </div>
 
@@ -102,7 +105,7 @@ export function ReisDosMapa({
                     {/* Middle Row: Leader Player & Podium or Empty State */}
                     {spec.player ? (
                       <div className="relative z-10 flex flex-col gap-2 my-1">
-                        {/* ─── 1º Colocado (Destaque) ─── */}
+                        {/* ─── 1º Colocado (Destaque: Melhor Aproveitamento) ─── */}
                         <div className="flex items-center gap-2 py-1.5 border-y border-border/30">
                           <PlayerAvatar
                             nickname={spec.player.nickname}
@@ -110,31 +113,33 @@ export function ReisDosMapa({
                             size="sm"
                           />
                           <div className="flex flex-col min-w-0 flex-1">
-                            <div className="flex items-center gap-1 min-w-0">
-                              <span className="text-[9px] font-mono font-bold text-gold shrink-0">#1</span>
-                              <Link
-                                href={`/players/${spec.player.id}`}
-                                className="text-xs font-bold text-foreground hover:text-primary transition-micro truncate leading-tight"
-                              >
-                                {spec.player.nickname}
-                              </Link>
-                              <Crown className="size-3 text-gold shrink-0" aria-label="1º lugar (Líder em vitórias)" />
-                            </div>
-                            <div className="flex items-center justify-between gap-1 mt-0.5">
-                              <span className="text-[11px] font-mono font-black text-status-good tabular-nums">
-                                {spec.wins} {spec.wins === 1 ? "vitória" : "vitórias"}
-                              </span>
-                              <div className="flex items-center gap-1 text-[9px] font-mono text-muted-foreground/70 tabular-nums">
-                                <span>{spec.matches}P · {spec.winrate.toFixed(0)}% WR</span>
-                                {spec.rating !== null && (
-                                  <span
-                                    title={`Rating no mapa: ${spec.rating.toFixed(2)}`}
-                                    className="cursor-help text-muted-foreground/50 hover:text-foreground hidden sm:inline"
-                                  >
-                                    ({spec.rating.toFixed(2)})
-                                  </span>
-                                )}
+                            <div className="flex items-center justify-between gap-1 min-w-0">
+                              <div className="flex items-center gap-1 min-w-0">
+                                <span className="text-[9px] font-mono font-bold text-gold shrink-0">#1</span>
+                                <Link
+                                  href={`/players/${spec.player.id}`}
+                                  className="text-xs font-bold text-foreground hover:text-primary transition-micro truncate leading-tight"
+                                >
+                                  {spec.player.nickname}
+                                </Link>
+                                <Crown className="size-3 text-gold shrink-0" aria-label="1º lugar (Melhor aproveitamento)" />
                               </div>
+                              {spec.rating !== null && (
+                                <span
+                                  title={`Rating no mapa: ${spec.rating.toFixed(2)}`}
+                                  className="cursor-help text-[9px] font-mono text-muted-foreground/60 hover:text-foreground shrink-0 tabular-nums"
+                                >
+                                  ({spec.rating.toFixed(2)})
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-baseline justify-between gap-1 mt-0.5">
+                              <span className="text-xs font-mono font-black text-status-good tabular-nums">
+                                {spec.winrate.toFixed(0)}%
+                              </span>
+                              <span className="text-[9px] font-mono text-muted-foreground/75 tabular-nums">
+                                {spec.wins} {spec.wins === 1 ? "vitória" : "vitórias"} em {spec.matches} {spec.matches === 1 ? "partida" : "partidas"}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -172,19 +177,11 @@ export function ReisDosMapa({
 
                                   <div className="flex items-center gap-1 shrink-0 tabular-nums text-[9px] text-muted-foreground/80">
                                     <span className="font-bold text-foreground">
-                                      {runnerUp.wins}V
-                                    </span>
-                                    <span>{runnerUp.matches}P</span>
-                                    <span className="text-muted-foreground/40">·</span>
-                                    <span className={cn(
-                                      "font-medium",
-                                      runnerUp.winrate >= 60
-                                        ? "text-status-good"
-                                        : runnerUp.winrate < 45
-                                          ? "text-status-critical"
-                                          : "text-foreground/80"
-                                    )}>
                                       {runnerUp.winrate.toFixed(0)}%
+                                    </span>
+                                    <span className="text-muted-foreground/40">·</span>
+                                    <span>
+                                      {runnerUp.wins}V em {runnerUp.matches}P
                                     </span>
                                   </div>
                                 </div>
@@ -199,23 +196,25 @@ export function ReisDosMapa({
                           Nenhum jogador elegível
                         </span>
                         <span className="text-[9px] font-mono text-muted-foreground/50 leading-tight mt-0.5">
-                          É necessário disputar pelo menos 3 partidas e conquistar 1 vitória neste mapa.
+                          É necessário disputar pelo menos {spec.minMatches} partidas e conquistar 1 vitória neste mapa.
                         </span>
                       </div>
                     )}
 
                     {/* Bottom Row: Individual Performance or Placeholder */}
-                    {spec.player ? (
-                      <div className="relative z-10 flex items-center justify-between pt-1 text-[9px] font-mono text-muted-foreground/50">
-                        <span>Pódio do Mapa</span>
-                        <span>{spec.podium ? spec.podium.length : 1} {spec.podium?.length === 1 ? "elegível" : "elegíveis"}</span>
-                      </div>
-                    ) : (
-                      <div className="relative z-10 flex items-center justify-between pt-1 text-[9px] font-mono text-muted-foreground/40">
-                        <span>Sem líder consolidado</span>
-                        <span>—</span>
-                      </div>
-                    )}
+                    <div className="relative z-10 flex items-center justify-between pt-1 text-[9px] font-mono text-muted-foreground/50">
+                      <span
+                        className="cursor-help underline decoration-dotted decoration-muted-foreground/40 hover:text-foreground transition-micro"
+                        title="O mínimo é de 5 partidas ou metade das partidas do jogador mais ativo neste mapa, arredondada para cima — o que for maior. A classificação prioriza aproveitamento; os desempates são vitórias e rating."
+                      >
+                        Mínimo: {spec.minMatches} {spec.minMatches === 1 ? "partida" : "partidas"}
+                      </span>
+                      <span>
+                        {spec.player && spec.podium && spec.podium.length > 0
+                          ? `${spec.podium.length} ${spec.podium.length === 1 ? "elegível" : "elegíveis"}`
+                          : "—"}
+                      </span>
+                    </div>
                   </div>
                 );
               })}

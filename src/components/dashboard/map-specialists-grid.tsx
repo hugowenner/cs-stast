@@ -49,17 +49,24 @@ export function MapSpecialistsGrid({ specialists }: Props) {
                     Nenhum jogador elegível
                   </p>
                   <p className="text-[9px] text-muted-foreground/50 leading-relaxed mt-1">
-                    É necessário disputar pelo menos 3 partidas e conquistar 1 vitória neste mapa.
+                    É necessário disputar pelo menos {entry.minMatches} partidas e conquistar 1 vitória neste mapa.
                   </p>
                 </div>
               </div>
 
               {/* Rodapé informativo */}
-              <div className="px-3 py-2.5">
-                <p className="text-[7px] uppercase tracking-widest font-bold text-muted-foreground/40">Status</p>
-                <p className="text-[11px] font-medium text-muted-foreground/40 mt-0.5">
-                  Sem líder consolidado
-                </p>
+              <div className="px-3 py-2.5 flex items-center justify-between">
+                <div>
+                  <p
+                    className="text-[7px] uppercase tracking-widest font-bold text-muted-foreground/40 cursor-help"
+                    title="O mínimo é de 5 partidas ou metade das partidas do jogador mais ativo neste mapa, arredondada para cima — o que for maior. A classificação prioriza aproveitamento; os desempates são vitórias e rating."
+                  >
+                    Mínimo: {entry.minMatches}P
+                  </p>
+                  <p className="text-[11px] font-medium text-muted-foreground/40 mt-0.5">
+                    Sem líder consolidado
+                  </p>
+                </div>
               </div>
             </div>
           );
@@ -83,7 +90,7 @@ export function MapSpecialistsGrid({ specialists }: Props) {
                 </div>
               </div>
 
-              {/* 1º Colocado (Destaque) */}
+              {/* 1º Colocado (Destaque: Melhor Aproveitamento) */}
               <div className="px-3 py-2.5 flex items-center gap-2 border-b border-white/[0.04]">
                 <PlayerAvatar
                   nickname={player.nickname}
@@ -91,22 +98,24 @@ export function MapSpecialistsGrid({ specialists }: Props) {
                   size="sm"
                 />
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1 min-w-0">
-                    <span className="text-[9px] font-mono font-bold text-gold shrink-0">#1</span>
-                    <Link
-                      href={`/players/${player.id}`}
-                      className="text-[11px] font-black text-white hover:text-accent-cyan transition-colors truncate"
-                    >
-                      {player.nickname}
-                    </Link>
-                    <Crown className="size-3 text-gold shrink-0" aria-label="1º lugar (Líder em vitórias)" />
+                  <div className="flex items-center justify-between gap-1 min-w-0">
+                    <div className="flex items-center gap-1 min-w-0">
+                      <span className="text-[9px] font-mono font-bold text-gold shrink-0">#1</span>
+                      <Link
+                        href={`/players/${player.id}`}
+                        className="text-[11px] font-black text-white hover:text-accent-cyan transition-colors truncate"
+                      >
+                        {player.nickname}
+                      </Link>
+                      <Crown className="size-3 text-gold shrink-0" aria-label="1º lugar (Melhor aproveitamento)" />
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between gap-1 mt-0.5">
-                    <p className="text-[9px] font-bold text-status-good tabular-nums">
-                      {entry.wins} {entry.wins === 1 ? "vitória" : "vitórias"}
+                  <div className="flex items-baseline justify-between gap-1 mt-0.5">
+                    <p className="text-[11px] font-mono font-black text-status-good tabular-nums">
+                      {entry.winrate.toFixed(0)}%
                     </p>
-                    <p className="text-[8px] text-muted-foreground/60 tabular-nums">
-                      {entry.matches}P · {entry.winrate.toFixed(0)}% WR
+                    <p className="text-[8px] font-mono text-muted-foreground/70 tabular-nums">
+                      {entry.wins}V em {entry.matches}P
                     </p>
                   </div>
                 </div>
@@ -140,10 +149,9 @@ export function MapSpecialistsGrid({ specialists }: Props) {
                           </Link>
                         </div>
                         <div className="flex items-center gap-1 shrink-0 tabular-nums text-muted-foreground/70">
-                          <span className="font-bold text-white/90">{runnerUp.wins}V</span>
-                          <span>{runnerUp.matches}P</span>
+                          <span className="font-bold text-white/90">{runnerUp.winrate.toFixed(0)}%</span>
                           <span>·</span>
-                          <span>{runnerUp.winrate.toFixed(0)}%</span>
+                          <span>{runnerUp.wins}V/{runnerUp.matches}P</span>
                         </div>
                       </div>
                     );
@@ -152,16 +160,24 @@ export function MapSpecialistsGrid({ specialists }: Props) {
               )}
             </div>
 
-            {/* Rating no mapa do líder */}
-            <div className="px-3 py-2.5">
-              <p className="text-[7px] uppercase tracking-widest font-bold text-muted-foreground/50">Rating no Mapa (#1)</p>
-              <p className="text-sm font-black text-white/90 tabular-nums mt-0.5">
-                {entry.rating !== null ? (
-                  <AnimatedNumber value={entry.rating} decimals={2} duration={0.7} />
-                ) : (
-                  "—"
-                )}
-              </p>
+            {/* Rating no mapa do líder + Requisito do mapa */}
+            <div className="px-3 py-2.5 flex items-center justify-between">
+              <div>
+                <p className="text-[7px] uppercase tracking-widest font-bold text-muted-foreground/50">Rating no Mapa (#1)</p>
+                <p className="text-sm font-black text-white/90 tabular-nums mt-0.5">
+                  {entry.rating !== null ? (
+                    <AnimatedNumber value={entry.rating} decimals={2} duration={0.7} />
+                  ) : (
+                    "—"
+                  )}
+                </p>
+              </div>
+              <span
+                className="text-[8px] font-mono text-muted-foreground/50 cursor-help"
+                title="O mínimo é de 5 partidas ou metade das partidas do jogador mais ativo neste mapa, arredondada para cima — o que for maior. A classificação prioriza aproveitamento; os desempates são vitórias e rating."
+              >
+                Min: {entry.minMatches}P
+              </span>
             </div>
           </div>
         );

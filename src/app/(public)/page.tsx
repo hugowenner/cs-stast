@@ -292,12 +292,12 @@ export default async function DashboardPage(props: {
       </SectionContainer>
 
       {/* ═══ 05. TENDÊNCIAS & FORMA ═══ */}
-      {(topGainers.length > 0 || topDecliners.length > 0 || hotStreaks.length > 0 || coldStreaks.length > 0) && (
+      {(topGainers.length > 0 || topDecliners.length > 0 || hotStreaks.length > 0 || coldStreaks.length > 0 || mapWinrates.length > 0) && (
         <SectionContainer
           index={5}
           tag="TRAJETÓRIA & FORMA"
           title="Tendências Recentes"
-          subtitle="Comparativo das últimas 10 partidas vs. média histórica da temporada."
+          subtitle="Últimas 10 partidas comparadas às 10 anteriores, dentro do período selecionado."
           delay={0.06}
         >
           <TendenciasDaTemporada
@@ -306,6 +306,8 @@ export default async function DashboardPage(props: {
             hotStreaks={hotStreaks}
             coldStreaks={coldStreaks}
             mapWinrates={mapWinrates}
+            bestMap={bestMap}
+            worstMap={worstMap}
           />
         </SectionContainer>
       )}
