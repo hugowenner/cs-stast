@@ -1,4 +1,5 @@
 import { prisma } from "@/server/db";
+import { cleanMapName } from "@/lib/utils";
 import { communityMatchStatsWhere, communityMatchWhere, individualMatchWhere } from "@/server/domain/matchClassification";
 import { calculateWeightedAdr } from "@/server/domain/adr";
 import { generateHighlights } from "@/server/services/highlights/highlights.service";
@@ -69,8 +70,12 @@ export interface DuoSummary {
 
 export interface MapSpecialist {
   mapName: string;
-  player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null };
-  rating: number;
+  cleanMapName: string;
+  player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null } | null;
+  rating: number | null;
+  wins: number;
+  matches: number;
+  winrate: number;
 }
 
 export interface PlayerMomentumEntry {
@@ -597,16 +602,18 @@ function getDuoLeaderboardFromDataset(dataset: CompetitiveDataset, take = 3): Du
 }
 
 export function getMapSpecialistsFromDataset(dataset: CompetitiveDataset): MapSpecialist[] {
-  const byMap = new Map<string, Map<string, { player: PlayerRow; ratings: number[] }>>();
+  const byMap = new Map<string, Map<string, { player: PlayerRow; matches: number; wins: number; ratings: number[] }>>();
 
   for (const s of dataset.allStats) {
     const mapName = s.match.map.name;
     const player = dataset.activePlayers.find((p) => p.id === s.playerId);
     if (!player) continue;
 
-    const playerMapStats = byMap.get(mapName) ?? new Map<string, { player: PlayerRow; ratings: number[] }>();
-    const entry = playerMapStats.get(s.playerId) ?? { player, ratings: [] };
+    const playerMapStats = byMap.get(mapName) ?? new Map<string, { player: PlayerRow; matches: number; wins: number; ratings: number[] }>();
+    const entry = playerMapStats.get(s.playerId) ?? { player, matches: 0, wins: 0, ratings: [] };
+    entry.matches += 1;
     entry.ratings.push(s.rating);
+    if (isWin(s)) entry.wins += 1;
     playerMapStats.set(s.playerId, entry);
     byMap.set(mapName, playerMapStats);
   }
@@ -614,38 +621,63 @@ export function getMapSpecialistsFromDataset(dataset: CompetitiveDataset): MapSp
   const specialists: MapSpecialist[] = [];
 
   for (const [mapName, playerMapStats] of byMap.entries()) {
-    let bestRating = 0;
-    let bestPlayer: PlayerRow | null = null;
+    const playersList = Array.from(playerMapStats.values()).map((p) => {
+      const avgRating = p.ratings.reduce((sum, r) => sum + r, 0) / p.ratings.length;
+      return {
+        ...p,
+        rawRating: avgRating,
+        avgRating: Number(avgRating.toFixed(2)),
+        rawWinrate: p.wins / p.matches,
+        winrate: Math.round((p.wins / p.matches) * 1000) / 10,
+      };
+    });
 
-    // Calcula o limite mínimo dinamicamente: 3 partidas ou 30% do jogador mais assíduo do mapa
-    const maxGamesOnMap = Math.max(...Array.from(playerMapStats.values()).map((e) => e.ratings.length));
-    const minGames = Math.max(Math.min(3, maxGamesOnMap), Math.round(maxGamesOnMap * 0.3));
+    // Elegibilidade: mínimo fixo de 3 partidas E pelo menos 1 vitória
+    const eligible = playersList.filter((p) => p.matches >= 3 && p.wins >= 1);
 
-    for (const entry of playerMapStats.values()) {
-      if (entry.ratings.length >= minGames) {
-        const avg = entry.ratings.reduce((sum, r) => sum + r, 0) / entry.ratings.length;
-        if (avg > bestRating) {
-          bestRating = avg;
-          bestPlayer = entry.player;
-        }
-      }
-    }
-
-    if (bestPlayer) {
+    if (eligible.length === 0) {
       specialists.push({
         mapName,
-        player: {
-          id: bestPlayer.id,
-          nickname: bestPlayer.nickname,
-          avatarUrl: bestPlayer.avatarUrl,
-          levelGc: bestPlayer.levelGc,
-        },
-        rating: Number(bestRating.toFixed(2)),
+        cleanMapName: cleanMapName(mapName),
+        player: null,
+        rating: null,
+        wins: 0,
+        matches: 0,
+        winrate: 0,
       });
+      continue;
     }
+
+    // Desempates: vitórias DESC -> win rate individual sem arredondamento DESC -> rating sem arredondamento DESC -> ID estável ASC
+    eligible.sort((a, b) => {
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      if (b.rawWinrate !== a.rawWinrate) return b.rawWinrate - a.rawWinrate;
+      if (b.rawRating !== a.rawRating) return b.rawRating - a.rawRating;
+      return a.player.id.localeCompare(b.player.id);
+    });
+
+    const leader = eligible[0];
+    specialists.push({
+      mapName,
+      cleanMapName: cleanMapName(mapName),
+      player: {
+        id: leader.player.id,
+        nickname: leader.player.nickname,
+        avatarUrl: leader.player.avatarUrl,
+        levelGc: leader.player.levelGc,
+      },
+      rating: leader.avgRating,
+      wins: leader.wins,
+      matches: leader.matches,
+      winrate: leader.winrate,
+    });
   }
 
-  return specialists;
+  return specialists.sort((a, b) => {
+    if (a.player && !b.player) return -1;
+    if (!a.player && b.player) return 1;
+    return b.matches - a.matches || b.wins - a.wins || a.cleanMapName.localeCompare(b.cleanMapName);
+  });
 }
 
 function getPlayerMomentumFromDataset(dataset: CompetitiveDataset, take = 3): PlayerMomentumEntry[] {
@@ -1503,48 +1535,113 @@ export function getPerformanceExtremesFromDataset(dataset: CompetitiveDataset): 
 
 export interface MapPerformanceEntry {
   map: string;
+  cleanMapName: string;
   matchesPlayed: number;
+  wins: number;
+  losses: number;
+  ties: number;
   winrate: number;
+  directMatchesExcluded: number;
 }
 
-const MIN_MATCHES_FOR_MAP_HIGHLIGHT = 5;
+const MIN_MATCHES_FOR_MAP_HIGHLIGHT = 3;
 
 /**
- * Mesmo cálculo que antes vivia em stats.service.getMapWinrates() (chamada via query
- * própria) e era refeito de novo em page.tsx (sort/find de bestMap/worstMap). Agora
- * roda sobre o mesmo dataset.allStats já carregado — zero query nova — e o bundle
- * entrega mapWinrates/bestMap/worstMap prontos, uma única fonte de verdade.
+ * Cálculo de aproveitamento coletivo por mapa sobre partidas únicas elegíveis.
+ * Partidas com jogadores monitorados em lados opostos são excluídas do cálculo
+ * coletivo para não distorcer a vitória/derrota do grupo. Empates contam no total
+ * de partidas disputadas, sem pontuar como vitória.
  */
 function getMapPerformanceFromDataset(dataset: CompetitiveDataset): {
   mapWinrates: MapPerformanceEntry[];
   bestMap: MapPerformanceEntry | null;
   worstMap: MapPerformanceEntry | null;
 } {
-  const byMap = new Map<string, { mapName: string; wins: number; appearances: number; matchIds: Set<string> }>();
+  const matchMap = new Map<string, {
+    mapId: string;
+    mapName: string;
+    scoreTeamA: number;
+    scoreTeamB: number;
+    teams: Set<string>;
+  }>();
 
   for (const s of dataset.allStats) {
-    const key = s.match.mapId;
+    let m = matchMap.get(s.match.id);
+    if (!m) {
+      m = {
+        mapId: s.match.mapId,
+        mapName: s.match.map.name,
+        scoreTeamA: s.match.scoreTeamA,
+        scoreTeamB: s.match.scoreTeamB,
+        teams: new Set<string>(),
+      };
+      matchMap.set(s.match.id, m);
+    }
+    m.teams.add(s.team);
+  }
+
+  const byMap = new Map<string, {
+    mapName: string;
+    wins: number;
+    losses: number;
+    ties: number;
+    eligibleMatches: number;
+    directMatchesExcluded: number;
+  }>();
+
+  for (const m of matchMap.values()) {
+    const key = m.mapName;
     const entry = byMap.get(key) ?? {
-      mapName: s.match.map.name,
+      mapName: m.mapName,
       wins: 0,
-      appearances: 0,
-      matchIds: new Set<string>(),
+      losses: 0,
+      ties: 0,
+      eligibleMatches: 0,
+      directMatchesExcluded: 0,
     };
-    entry.appearances += 1;
-    if (isWin(s)) entry.wins += 1;
-    entry.matchIds.add(s.match.id);
+
+    if (m.teams.size > 1) {
+      // Confronto direto entre monitorados em lados opostos: excluir do cálculo coletivo
+      entry.directMatchesExcluded += 1;
+    } else {
+      const [monitoredTeam] = Array.from(m.teams);
+      entry.eligibleMatches += 1;
+      if (m.scoreTeamA === m.scoreTeamB) {
+        entry.ties += 1;
+      } else if (
+        (monitoredTeam === "A" && m.scoreTeamA > m.scoreTeamB) ||
+        (monitoredTeam === "B" && m.scoreTeamB > m.scoreTeamA)
+      ) {
+        entry.wins += 1;
+      } else {
+        entry.losses += 1;
+      }
+    }
     byMap.set(key, entry);
   }
 
   const mapWinrates: MapPerformanceEntry[] = Array.from(byMap.values()).map((entry) => ({
     map: entry.mapName,
-    matchesPlayed: entry.matchIds.size,
-    winrate: entry.appearances > 0 ? Math.round((entry.wins / entry.appearances) * 1000) / 10 : 0,
-  }));
+    cleanMapName: cleanMapName(entry.mapName),
+    matchesPlayed: entry.eligibleMatches,
+    wins: entry.wins,
+    losses: entry.losses,
+    ties: entry.ties,
+    winrate: entry.eligibleMatches > 0 ? Math.round((entry.wins / entry.eligibleMatches) * 1000) / 10 : 0,
+    directMatchesExcluded: entry.directMatchesExcluded,
+  })).sort((a, b) => b.matchesPlayed - a.matchesPlayed || b.winrate - a.winrate);
 
-  const eligible = mapWinrates.filter((m) => m.matchesPlayed >= MIN_MATCHES_FOR_MAP_HIGHLIGHT);
-  const bestMap = [...eligible].sort((a, b) => b.winrate - a.winrate)[0] ?? null;
-  const worstMap = [...eligible].sort((a, b) => a.winrate - b.winrate)[0] ?? null;
+  const eligibleForHighlights = mapWinrates.filter((m) => m.matchesPlayed >= MIN_MATCHES_FOR_MAP_HIGHLIGHT);
+
+  // bestMap: >= 3 partidas elegíveis E winrate >= 50% (não atribuir DOMÍNIO com WR < 50%)
+  const bestMapEligible = eligibleForHighlights.filter((m) => m.winrate >= 50);
+  const bestMap = [...bestMapEligible].sort((a, b) => b.winrate - a.winrate || b.matchesPlayed - a.matchesPlayed)[0] ?? null;
+
+  // worstMap: >= 3 partidas elegíveis, diferente do bestMap se houver mais de 1 elegível
+  const worstCandidates = eligibleForHighlights.filter((m) => m.map !== bestMap?.map);
+  const worstMap = [...(worstCandidates.length > 0 ? worstCandidates : eligibleForHighlights)].sort(
+    (a, b) => a.winrate - b.winrate || a.matchesPlayed - b.matchesPlayed
+  )[0] ?? null;
 
   return { mapWinrates, bestMap, worstMap };
 }

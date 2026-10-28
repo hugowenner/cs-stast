@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Trophy, Zap, Target, Compass, Flame, Swords, Award, TrendingUp } from "lucide-react";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import { AnimatedNumber } from "@/components/motion/animated-number";
+import { cleanMapName } from "@/lib/utils";
 import type { DashboardCompetitiveBundle } from "@/server/services/competitive.service";
 
 interface MuralDaTemporadaProps {
@@ -112,7 +113,7 @@ export function MuralDaTemporada({ competitive }: MuralDaTemporadaProps) {
     .filter(Boolean);
 
   // --- Card 4: Reis dos Mapas ---
-  const mapSpecialistList = mapSpecialists.slice(0, 4);
+  const mapSpecialistList = mapSpecialists.filter((s): s is typeof s & { player: NonNullable<typeof s.player>; rating: number } => s.player !== null && s.rating !== null).slice(0, 4);
 
   // --- Card 5: Forma Atual ---
   const activeHotStreak = hotStreaks.find((s) => s.type === "hot") ?? null;

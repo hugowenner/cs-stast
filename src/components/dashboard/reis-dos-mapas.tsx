@@ -2,15 +2,14 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Crown, Flame, ShieldAlert, Crosshair, MapPin } from "lucide-react";
+import { Crown, Flame, ShieldAlert, Crosshair } from "lucide-react";
 import { mapNarratives } from "@/lib/narrator/templates";
 import { PlayerAvatar } from "@/components/players/player-avatar";
-import { AnimatedNumber } from "@/components/motion/animated-number";
 import { MapWinrateChart } from "@/components/charts/map-winrate-chart";
 import { TacticalBadge } from "@/components/ui/tactical-badge";
 import { getCleanMapImage } from "@/components/ui/map-performance-card";
 import type { MapSpecialist, MapPerformanceEntry } from "@/server/services/competitive.service";
-import { cn } from "@/lib/utils";
+import { cn, cleanMapName } from "@/lib/utils";
 
 export interface ReisDosMapaProps {
   specialists: MapSpecialist[];
@@ -26,13 +25,6 @@ export function ReisDosMapa({
   worstMap,
 }: ReisDosMapaProps) {
   if (specialists.length === 0 && mapWinrates.length === 0) return null;
-
-  // Build a lookup of specialists by normalized map name
-  const specialistMap = new Map<string, MapSpecialist>();
-  specialists.forEach((s) => {
-    const norm = s.mapName.toLowerCase().replace(/^de_/, "").trim();
-    specialistMap.set(norm, s);
-  });
 
   return (
     <div className="bg-surface-panel border border-border/70 rounded-sm overflow-hidden flex flex-col">
@@ -51,7 +43,7 @@ export function ReisDosMapa({
               </span>
             </div>
             <span className="text-[10px] font-mono text-muted-foreground/60">
-              Mínimo 3 partidas
+              Mínimo 3 partidas e 1 vitória
             </span>
           </div>
 
@@ -64,9 +56,7 @@ export function ReisDosMapa({
               {specialists.slice(0, 9).map((spec) => {
                 const mapImg = getCleanMapImage(spec.mapName);
                 const norm = spec.mapName.toLowerCase().replace(/^de_/, "").trim();
-                const wrEntry = mapWinrates.find(
-                  (m) => m.map.toLowerCase().replace(/^de_/, "").trim() === norm
-                );
+                const displayName = spec.cleanMapName || cleanMapName(spec.mapName);
                 const isDominant = bestMap?.map.toLowerCase().replace(/^de_/, "").trim() === norm;
 
                 return (
@@ -94,61 +84,85 @@ export function ReisDosMapa({
                       </div>
                     )}
 
-                    {/* Top Row: Map Name + Tag */}
+                    {/* Top Row: Map Name + Dominant Tag */}
                     <div className="relative z-10 flex items-start justify-between gap-1 mb-2">
                       <div className="min-w-0">
                         <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground/70 font-semibold block">
                           MAPA
                         </span>
                         <span className="text-xs font-mono font-black uppercase text-foreground truncate block">
-                          {spec.mapName.replace(/^de_/i, "")}
+                          {displayName}
                         </span>
                       </div>
-                      {isDominant ? (
+                      {isDominant && (
                         <TacticalBadge label="DOMÍNIO" variant="primary" size="xs" />
-                      ) : (
-                        <Crown className="size-3 text-gold/80 shrink-0 mt-0.5" />
                       )}
                     </div>
 
-                    {/* Middle Row: Specialist Player */}
-                    <div className="relative z-10 flex items-center gap-2 py-1.5 border-y border-border/30 my-1">
-                      <PlayerAvatar
-                        nickname={spec.player.nickname}
-                        avatarUrl={spec.player.avatarUrl}
-                        size="sm"
-                      />
-                      <div className="flex flex-col min-w-0">
-                        <Link
-                          href={`/players/${spec.player.id}`}
-                          className="text-xs font-bold text-foreground hover:text-primary transition-micro truncate leading-tight"
-                        >
-                          {spec.player.nickname}
-                        </Link>
-                        <span className="text-[10px] font-mono font-bold text-gold tabular-nums">
-                          {spec.rating.toFixed(2)} <span className="text-[8px] font-normal text-muted-foreground/60">RTG</span>
+                    {/* Middle Row: Leader Player or Empty State */}
+                    {spec.player ? (
+                      <div className="relative z-10 flex items-center gap-2 py-1.5 border-y border-border/30 my-1">
+                        <PlayerAvatar
+                          nickname={spec.player.nickname}
+                          avatarUrl={spec.player.avatarUrl}
+                          size="sm"
+                        />
+                        <div className="flex flex-col min-w-0 flex-1">
+                          <div className="flex items-center gap-1 min-w-0">
+                            <Link
+                              href={`/players/${spec.player.id}`}
+                              className="text-xs font-bold text-foreground hover:text-primary transition-micro truncate leading-tight"
+                            >
+                              {spec.player.nickname}
+                            </Link>
+                            <Crown className="size-3 text-gold shrink-0" aria-label="Líder em vitórias" />
+                          </div>
+                          <div className="flex items-center justify-between gap-1 mt-0.5">
+                            <span className="text-[11px] font-mono font-black text-status-good tabular-nums">
+                              {spec.wins} {spec.wins === 1 ? "vitória" : "vitórias"}
+                            </span>
+                            {spec.rating !== null && (
+                              <span className="text-[9px] font-mono text-muted-foreground/70 tabular-nums">
+                                {spec.rating.toFixed(2)} <span className="text-[8px] font-normal text-muted-foreground/50">RTG</span>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="relative z-10 flex flex-col justify-center py-2 border-y border-border/30 my-1 min-h-[52px]">
+                        <span className="text-[11px] font-mono font-bold text-muted-foreground/80">
+                          Nenhum jogador elegível
+                        </span>
+                        <span className="text-[9px] font-mono text-muted-foreground/50 leading-tight mt-0.5">
+                          Mínimo de 3 partidas e 1 vitória não atingido.
                         </span>
                       </div>
-                    </div>
+                    )}
 
-                    {/* Bottom Row: Group Winrate context */}
-                    <div className="relative z-10 flex items-center justify-between pt-1 text-[9px] font-mono text-muted-foreground/70">
-                      <span>{wrEntry ? `${wrEntry.matchesPlayed} partidas` : "—"}</span>
-                      {wrEntry && (
+                    {/* Bottom Row: Individual Performance or Placeholder */}
+                    {spec.player ? (
+                      <div className="relative z-10 flex items-center justify-between pt-1 text-[9px] font-mono text-muted-foreground/70">
+                        <span>{spec.matches} {spec.matches === 1 ? "partida" : "partidas"}</span>
                         <span
                           className={cn(
                             "font-bold tabular-nums",
-                            wrEntry.winrate >= 60
+                            spec.winrate >= 60
                               ? "text-status-good"
-                              : wrEntry.winrate < 45
+                              : spec.winrate < 45
                                 ? "text-status-critical"
                                 : "text-foreground"
                           )}
                         >
-                          {wrEntry.winrate.toFixed(0)}% WR
+                          {spec.winrate.toFixed(0)}% aproveitamento
                         </span>
-                      )}
-                    </div>
+                      </div>
+                    ) : (
+                      <div className="relative z-10 flex items-center justify-between pt-1 text-[9px] font-mono text-muted-foreground/40">
+                        <span>Sem líder consolidado</span>
+                        <span>—</span>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -179,6 +193,7 @@ export function ReisDosMapa({
           <div className="flex flex-col gap-2.5 border-t border-border/40 pt-3.5">
             {bestMap && (() => {
               const bestMapImg = getCleanMapImage(bestMap.map);
+              const displayName = bestMap.cleanMapName || cleanMapName(bestMap.map);
               return (
                 <div className="relative flex flex-col gap-1 p-3 rounded-xs bg-status-good/[0.04] border border-status-good/25 overflow-hidden group">
                   {bestMapImg && (
@@ -199,7 +214,7 @@ export function ReisDosMapa({
                       <Flame className="size-3.5" /> Território Forte
                     </span>
                     <span className="font-mono font-bold text-xs text-foreground tabular-nums">
-                      {bestMap.map.replace(/^de_/i, "")} · {bestMap.winrate.toFixed(0)}% WR
+                      {displayName} · {bestMap.winrate.toFixed(0)}% WR
                     </span>
                   </div>
                   <p className="relative z-10 text-[10px] font-mono text-muted-foreground/80 italic leading-snug mt-0.5">
@@ -211,6 +226,7 @@ export function ReisDosMapa({
 
             {worstMap && (() => {
               const worstMapImg = getCleanMapImage(worstMap.map);
+              const displayName = worstMap.cleanMapName || cleanMapName(worstMap.map);
               return (
                 <div className="relative flex flex-col gap-1 p-3 rounded-xs bg-status-critical/[0.04] border border-status-critical/25 overflow-hidden group">
                   {worstMapImg && (
@@ -231,7 +247,7 @@ export function ReisDosMapa({
                       <ShieldAlert className="size-3.5" /> Ponto Crítico
                     </span>
                     <span className="font-mono font-bold text-xs text-foreground tabular-nums">
-                      {worstMap.map.replace(/^de_/i, "")} · {worstMap.winrate.toFixed(0)}% WR
+                      {displayName} · {worstMap.winrate.toFixed(0)}% WR
                     </span>
                   </div>
                   <p className="relative z-10 text-[10px] font-mono text-muted-foreground/80 italic leading-snug mt-0.5">
