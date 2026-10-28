@@ -40,6 +40,57 @@ export interface PlayerArchetype {
   matchCount: number;
 }
 
+export interface FeaturedPlayerInfo {
+  player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null };
+  rating: number;
+  rawRating: number;
+  matchCount: number;
+  wins: number;
+  winrate: number;
+  winrateMatchesCount: number;
+  justification: string;
+  evolution: {
+    diffRating: number;
+    text: string;
+    direction: "up" | "down" | "stable";
+  } | null;
+}
+
+export type PeriodFactKind = "streak-active" | "streak-concluded" | "collective-map";
+
+export interface PeriodFactInfo {
+  kind: PeriodFactKind;
+  title: string;
+  description: string;
+  player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null } | null;
+  badgeLabel: string;
+  badgeVariant: "gold" | "info" | "neutral" | "warning";
+  detail?: string;
+  streakCount?: number;
+  mapName?: string;
+  endDate?: string;
+}
+
+export interface AttentionPointInfo {
+  player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null };
+  dropRating: number;
+  rawDiff: number;
+  previousRating: number;
+  recentRating: number;
+  previousMatchesCount: number;
+  recentMatchesCount: number;
+  explanation: string;
+}
+
+export interface GroupRadarBundle {
+  featuredPlayer: FeaturedPlayerInfo | null;
+  featuredPlayerEmptyReason: string | null;
+  periodFact: PeriodFactInfo | null;
+  periodFactEmptyReason: string | null;
+  attentionPoint: AttentionPointInfo | null;
+  attentionPointEmptyReason: string | null;
+}
+
 export interface JogadorDaSemanaInfo {
   player: { id: string; nickname: string; avatarUrl: string | null; levelGc: number | null };
   rating: number;
@@ -78,10 +129,12 @@ export interface MapSpecialistPlayer {
 export interface MapPodiumEntry {
   player: MapSpecialistPlayer;
   rating: number;
+  rawRating?: number;
   wins: number;
   matches: number;
   winrate: number;
   rawWinrate?: number;
+  wilsonScore?: number;
 }
 
 export interface MapSpecialist {
@@ -90,10 +143,12 @@ export interface MapSpecialist {
   cleanMapName: string;
   player: MapSpecialistPlayer | null;
   rating: number | null;
+  rawRating?: number;
   wins: number;
   matches: number;
   winrate: number;
   rawWinrate?: number;
+  wilsonScore?: number | null;
   minMatches: number;
   podium: MapPodiumEntry[];
 }
@@ -528,56 +583,24 @@ export function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): Pla
   });
 }
 
-function getJogadorDaSemanaFromDataset(dataset: CompetitiveDataset): JogadorDaSemanaInfo | null {
-  let bestPlayer: JogadorDaSemanaInfo | null = null;
-  let highestRecentRating = 0;
+function getJogadorDaSemanaFromDataset(
+  dataset: CompetitiveDataset,
+  featuredPlayer?: FeaturedPlayerInfo | null
+): JogadorDaSemanaInfo | null {
+  const feat =
+    featuredPlayer !== undefined
+      ? featuredPlayer
+      : getFeaturedPlayerFromDataset(dataset, getSeasonComparisonFromDataset(dataset)).player;
 
-  for (const player of dataset.activePlayers) {
-    const stats = dataset.statsByPlayer.get(player.id) ?? [];
-    const recentStats = stats.slice(0, 10);
-    if (recentStats.length < 3) continue;
+  if (!feat) return null;
 
-    const recentMatchesCount = recentStats.length;
-    const avgRatingRecent = recentStats.reduce((sum, s) => sum + s.rating, 0) / recentMatchesCount;
-
-    if (avgRatingRecent > highestRecentRating) {
-      highestRecentRating = avgRatingRecent;
-
-      const seasonRating = stats.reduce((sum, s) => sum + s.rating, 0) / stats.length;
-      const evolution = seasonRating > 0 ? ((avgRatingRecent - seasonRating) / seasonRating) * 100 : 0;
-      const evolutionRounded = Math.round(evolution);
-
-      let recentWins = 0;
-      for (const s of recentStats) if (isWin(s)) recentWins++;
-      const winrateRecent = (recentWins / recentMatchesCount) * 100;
-
-      // Classificação por rating absoluto primeiro (qualidade real), evolução só como
-      // desempate — antes o texto dependia só da variação, então um jogador estável
-      // com rating mediano podia ser rotulado "Desempenho excelente".
-      let evolutionText = "";
-      if (avgRatingRecent >= 1.2) {
-        evolutionText = "🔥 Dominando a semana";
-      } else if (avgRatingRecent >= 1.0) {
-        evolutionText = "📈 Boa fase";
-      } else if (evolutionRounded > 5) {
-        evolutionText = "🚀 Em evolução";
-      } else {
-        evolutionText = "Estável";
-      }
-
-      bestPlayer = {
-        player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl, levelGc: player.levelGc },
-        rating: Number(avgRatingRecent.toFixed(2)),
-        // Winrate agora é da mesma janela do rating (últimas 10) — antes misturava
-        // rating recente com winrate da temporada inteira na mesma UI.
-        winrate: Math.round(winrateRecent),
-        evolution: evolutionRounded,
-        evolutionText,
-      };
-    }
-  }
-
-  return bestPlayer;
+  return {
+    player: feat.player,
+    rating: feat.rating,
+    winrate: Math.round(feat.winrate),
+    evolution: feat.evolution ? Math.round(feat.evolution.diffRating * 100) : 0,
+    evolutionText: feat.evolution?.text ?? "Estável",
+  };
 }
 
 function getDuoLeaderboardFromDataset(dataset: CompetitiveDataset, take = 3): DuoSummary[] {
@@ -621,15 +644,36 @@ function getDuoLeaderboardFromDataset(dataset: CompetitiveDataset, take = 3): Du
   return duos.sort((a, b) => b.winrate - a.winrate || b.avgRating - a.avgRating).slice(0, take);
 }
 
-export const MAP_MIN_PARTICIPATION_FLOOR = 5;
-export const MAP_MIN_PARTICIPATION_RATIO = 0.5;
+export const MAP_MIN_MATCHES = 5;
 
 /**
- * Mínimo de partidas individuais exigido para concorrer ao ranking/pódio por mapa:
- * Math.max(5, Math.ceil(maxPartidasNoMapa * 0.5))
+ * Calcula o limite inferior do intervalo de confiança de Wilson (95% nominal) para a proporção de vitórias.
+ *
+ * z = 1.959963984540054 (nível de confiança de 95%)
+ * Score conservador de aproveitamento penalizando amostras muito pequenas sem favorecer
+ * desproporcionalmente casos como 5/5 frente a 14/20.
  */
-export function calculateMapMinMatches(maxMatchesOnMap: number): number {
-  return Math.max(MAP_MIN_PARTICIPATION_FLOOR, Math.ceil(maxMatchesOnMap * MAP_MIN_PARTICIPATION_RATIO));
+export function calculateWilsonScore(wins: number, matches: number): number {
+  if (!Number.isFinite(wins) || !Number.isFinite(matches) || matches <= 0 || wins <= 0) {
+    return 0;
+  }
+  const safeWins = Math.min(wins, matches);
+  const z = 1.959963984540054;
+  const p = safeWins / matches;
+  const z2 = z * z;
+
+  const score =
+    (
+      p +
+      z2 / (2 * matches) -
+      z * Math.sqrt(
+        (p * (1 - p)) / matches +
+        z2 / (4 * matches * matches)
+      )
+    ) /
+    (1 + z2 / matches);
+
+  return Number.isFinite(score) ? Math.max(0, score) : 0;
 }
 
 export function getMapSpecialistsFromDataset(dataset: CompetitiveDataset): MapSpecialist[] {
@@ -669,19 +713,20 @@ export function getMapSpecialistsFromDataset(dataset: CompetitiveDataset): MapSp
     const playersList = Array.from(mapEntry.playerStats.values()).map((p) => {
       const avgRating = p.ratings.reduce((sum, r) => sum + r, 0) / p.ratings.length;
       const rawWinrate = p.matches > 0 ? (p.wins / p.matches) * 100 : 0;
+      const wilsonScore = calculateWilsonScore(p.wins, p.matches);
       return {
         ...p,
         rawRating: avgRating,
         avgRating: Number(avgRating.toFixed(2)),
         rawWinrate,
         winrate: Math.round(rawWinrate * 10) / 10,
+        wilsonScore,
       };
     });
 
-    const maxMatchesOnMap = Math.max(0, ...playersList.map((p) => p.matches));
-    const minMatches = calculateMapMinMatches(maxMatchesOnMap);
+    const minMatches = MAP_MIN_MATCHES;
 
-    // Elegibilidade por mapa: pelo menos o mínimo calculado de partidas E pelo menos 1 vitória
+    // Elegibilidade fixa por mapa: pelo menos 5 partidas válidas E pelo menos 1 vitória
     const eligible = playersList.filter((p) => p.matches >= minMatches && p.wins >= 1);
 
     if (eligible.length === 0) {
@@ -694,18 +739,21 @@ export function getMapSpecialistsFromDataset(dataset: CompetitiveDataset): MapSp
         wins: 0,
         matches: 0,
         winrate: 0,
+        wilsonScore: null,
         minMatches,
         podium: [],
       });
       continue;
     }
 
-    // Regra de classificação:
-    // 1. Maior percentual de vitórias individual, sem arredondamento (rawWinrate DESC)
-    // 2. Maior quantidade de vitórias (wins DESC)
-    // 3. Maior rating individual, sem arredondamento (rawRating DESC)
-    // 4. ID do jogador em ordem crescente, como desempate estável (a.player.id.localeCompare(b.player.id) ASC)
+    // Regra de ordenação do Top 3:
+    // 1. Maior score de Wilson (wilsonScore DESC)
+    // 2. Maior aproveitamento bruto, sem arredondamento (rawWinrate DESC)
+    // 3. Maior quantidade de vitórias (wins DESC)
+    // 4. Maior rating individual, sem arredondamento (rawRating DESC)
+    // 5. ID do jogador em ordem crescente, como desempate estável (a.player.id.localeCompare(b.player.id) ASC)
     eligible.sort((a, b) => {
+      if (b.wilsonScore !== a.wilsonScore) return b.wilsonScore - a.wilsonScore;
       if (b.rawWinrate !== a.rawWinrate) return b.rawWinrate - a.rawWinrate;
       if (b.wins !== a.wins) return b.wins - a.wins;
       if (b.rawRating !== a.rawRating) return b.rawRating - a.rawRating;
@@ -721,10 +769,12 @@ export function getMapSpecialistsFromDataset(dataset: CompetitiveDataset): MapSp
         levelGc: item.player.levelGc,
       },
       rating: item.avgRating,
+      rawRating: item.rawRating,
       wins: item.wins,
       matches: item.matches,
       winrate: item.winrate,
       rawWinrate: item.rawWinrate,
+      wilsonScore: item.wilsonScore,
     }));
 
     specialists.push({
@@ -738,10 +788,12 @@ export function getMapSpecialistsFromDataset(dataset: CompetitiveDataset): MapSp
         levelGc: leader.player.levelGc,
       },
       rating: leader.avgRating,
+      rawRating: leader.rawRating,
       wins: leader.wins,
       matches: leader.matches,
       winrate: leader.winrate,
       rawWinrate: leader.rawWinrate,
+      wilsonScore: leader.wilsonScore,
       minMatches,
       podium,
     });
@@ -2330,6 +2382,315 @@ function getWeeklyCuriosityFromDataset(
   return winner;
 }
 
+// ─── Radar do Grupo (Destaque, Fato do Período, Ponto de Atenção) ───────────
+
+export function getFeaturedPlayerFromDataset(
+  dataset: CompetitiveDataset,
+  seasonComparison: SeasonComparisonEntry[]
+): { player: FeaturedPlayerInfo | null; emptyReason: string | null } {
+  const candidates: Array<{
+    player: PlayerRow;
+    rawRating: number;
+    matchCount: number;
+    wins: number;
+    winrate: number;
+    winrateMatchesCount: number;
+  }> = [];
+
+  for (const player of dataset.activePlayers) {
+    const stats = dataset.statsByPlayer.get(player.id) ?? [];
+    const validStats = stats.filter((s) => s.rating != null && !isNaN(s.rating));
+    if (validStats.length < 5) continue;
+
+    const matchCount = validStats.length;
+    const rawRating = validStats.reduce((sum, s) => sum + s.rating, 0) / matchCount;
+
+    let wins = 0;
+    for (const s of stats) {
+      if (isWin(s)) wins++;
+    }
+    const winrateMatchesCount = stats.length;
+    const winrate = winrateMatchesCount > 0 ? (wins / winrateMatchesCount) * 100 : 0;
+
+    candidates.push({
+      player,
+      rawRating,
+      matchCount,
+      wins,
+      winrate,
+      winrateMatchesCount,
+    });
+  }
+
+  if (candidates.length === 0) {
+    return {
+      player: null,
+      emptyReason: "São necessárias pelo menos 5 partidas com rating no período.",
+    };
+  }
+
+  candidates.sort((a, b) => {
+    if (b.rawRating !== a.rawRating) return b.rawRating - a.rawRating;
+    if (b.matchCount !== a.matchCount) return b.matchCount - a.matchCount;
+    return a.player.id.localeCompare(b.player.id);
+  });
+
+  const best = candidates[0];
+
+  // Comparação com janela anterior (seasonComparison exige 20 partidas para comparar 2 blocos de 10)
+  const sc = seasonComparison.find((entry) => entry.player.id === best.player.id);
+  let evolution: FeaturedPlayerInfo["evolution"] = null;
+
+  if (sc) {
+    const diffRating = Number(sc.rawDiff.toFixed(2));
+    const direction: "up" | "down" | "stable" =
+      diffRating > 0.02 ? "up" : diffRating < -0.02 ? "down" : "stable";
+    const sign = diffRating > 0 ? "+" : diffRating < 0 ? "−" : "";
+    const text =
+      diffRating === 0
+        ? "Rating estável vs 10 partidas anteriores"
+        : `${sign}${Math.abs(diffRating).toFixed(2).replace(".", ",")} de rating vs 10 partidas anteriores`;
+
+    evolution = {
+      diffRating,
+      text,
+      direction,
+    };
+  }
+
+  return {
+    player: {
+      player: {
+        id: best.player.id,
+        nickname: best.player.nickname,
+        avatarUrl: best.player.avatarUrl,
+        levelGc: best.player.levelGc,
+      },
+      rating: Number(best.rawRating.toFixed(2)),
+      rawRating: best.rawRating,
+      matchCount: best.matchCount,
+      wins: best.wins,
+      winrate: best.winrate,
+      winrateMatchesCount: best.winrateMatchesCount,
+      justification: "Maior rating médio entre jogadores com pelo menos 5 partidas com rating no período.",
+      evolution,
+    },
+    emptyReason: null,
+  };
+}
+
+export function getPeriodFactFromDataset(
+  dataset: CompetitiveDataset,
+  featuredPlayerId: string | null
+): { periodFact: PeriodFactInfo | null; emptyReason: string | null } {
+  // Prioridade 1: Maior sequência de vitórias (streak >= 3) iniciada ou concluída no período
+  const streakCandidates: Array<{
+    player: PlayerRow;
+    streak: number;
+    isActive: boolean;
+    endDate: Date;
+    isFeatured: boolean;
+  }> = [];
+
+  for (const player of dataset.activePlayers) {
+    const stats = dataset.statsByPlayer.get(player.id) ?? [];
+    if (stats.length === 0) continue;
+
+    let currentStreakStats: typeof stats = [];
+    let isCurrentBlockActive = true;
+
+    for (let i = 0; i < stats.length; i++) {
+      const s = stats[i];
+      if (isWin(s)) {
+        currentStreakStats.push(s);
+      } else {
+        if (currentStreakStats.length >= 3) {
+          streakCandidates.push({
+            player,
+            streak: currentStreakStats.length,
+            isActive: isCurrentBlockActive,
+            endDate: new Date(currentStreakStats[0].match.playedAt),
+            isFeatured: player.id === featuredPlayerId,
+          });
+        }
+        currentStreakStats = [];
+        isCurrentBlockActive = false;
+      }
+    }
+
+    if (currentStreakStats.length >= 3) {
+      streakCandidates.push({
+        player,
+        streak: currentStreakStats.length,
+        isActive: isCurrentBlockActive,
+        endDate: new Date(currentStreakStats[0].match.playedAt),
+        isFeatured: player.id === featuredPlayerId,
+      });
+    }
+  }
+
+  if (streakCandidates.length > 0) {
+    streakCandidates.sort((a, b) => {
+      // 1. Maior sequência primeiro
+      if (b.streak !== a.streak) return b.streak - a.streak;
+      // 2. Regra de não repetição: em caso de empate na sequência, preferir jogador diferente do destaque
+      if (a.isFeatured !== b.isFeatured) {
+        return (a.isFeatured ? 1 : 0) - (b.isFeatured ? 1 : 0);
+      }
+      // 3. Sequência encerrada mais recentemente (ou em andamento mais recente)
+      const dateDiff = b.endDate.getTime() - a.endDate.getTime();
+      if (dateDiff !== 0) return dateDiff;
+      // 4. ID estável crescente
+      return a.player.id.localeCompare(b.player.id);
+    });
+
+    const top = streakCandidates[0];
+    const day = String(top.endDate.getUTCDate()).padStart(2, "0");
+    const month = String(top.endDate.getUTCMonth() + 1).padStart(2, "0");
+    const year = top.endDate.getUTCFullYear();
+
+    if (top.isActive) {
+      return {
+        periodFact: {
+          kind: "streak-active",
+          title: "Sequência ativa",
+          description: `${top.player.nickname} está com uma sequência de ${top.streak} vitórias consecutivas em andamento.`,
+          player: {
+            id: top.player.id,
+            nickname: top.player.nickname,
+            avatarUrl: top.player.avatarUrl,
+            levelGc: top.player.levelGc,
+          },
+          badgeLabel: "EM ANDAMENTO",
+          badgeVariant: "gold",
+          detail: `${top.streak} vitórias consecutivas ativas`,
+          streakCount: top.streak,
+          endDate: top.endDate.toISOString(),
+        },
+        emptyReason: null,
+      };
+    } else {
+      return {
+        periodFact: {
+          kind: "streak-concluded",
+          title: "Sequência do período",
+          description: `${top.player.nickname} conquistou uma sequência de ${top.streak} vitórias consecutivas no período.`,
+          player: {
+            id: top.player.id,
+            nickname: top.player.nickname,
+            avatarUrl: top.player.avatarUrl,
+            levelGc: top.player.levelGc,
+          },
+          badgeLabel: "CONCLUÍDA",
+          badgeVariant: "info",
+          detail: `Encerrada em ${day}/${month}/${year}`,
+          streakCount: top.streak,
+          endDate: top.endDate.toISOString(),
+        },
+        emptyReason: null,
+      };
+    }
+  }
+
+  // Prioridade 2: Melhor mapa coletivo com >= 5 partidas válidas e winrate > 50%
+  const { mapWinrates } = getMapPerformanceFromDataset(dataset);
+  const eligibleMaps = mapWinrates.filter((m) => m.matchesPlayed >= 5 && (m.rawWinrate ?? m.winrate) > 50);
+
+  if (eligibleMaps.length > 0) {
+    eligibleMaps.sort(
+      (a, b) =>
+        (b.rawWinrate ?? b.winrate) - (a.rawWinrate ?? a.winrate) ||
+        b.matchesPlayed - a.matchesPlayed ||
+        a.map.localeCompare(b.map)
+    );
+    const bestMap = eligibleMaps[0];
+    return {
+      periodFact: {
+        kind: "collective-map",
+        title: "Domínio coletivo",
+        description: `O time tem ${bestMap.winrate.toFixed(1).replace(".", ",")}% de aproveitamento na ${bestMap.cleanMapName} (${bestMap.wins}V - ${bestMap.losses}D em ${bestMap.matchesPlayed} partidas).`,
+        player: null,
+        badgeLabel: "MAPA DO GRUPO",
+        badgeVariant: "neutral",
+        detail: `${bestMap.wins} vitórias em ${bestMap.matchesPlayed} partidas coletivas`,
+        mapName: bestMap.cleanMapName,
+      },
+      emptyReason: null,
+    };
+  }
+
+  return {
+    periodFact: null,
+    emptyReason: "Nenhum fato atende aos critérios neste período.",
+  };
+}
+
+export function getAttentionPointFromDataset(
+  seasonComparison: SeasonComparisonEntry[],
+  dataset: CompetitiveDataset
+): { attentionPoint: AttentionPointInfo | null; emptyReason: string | null } {
+  // Verificar se há qualquer jogador com pelo menos 20 partidas válidas com rating no período
+  const hasAnyPlayerWith20Matches = dataset.activePlayers.some((p) => {
+    const stats = dataset.statsByPlayer.get(p.id) ?? [];
+    return stats.filter((s) => s.rating != null && !isNaN(s.rating)).length >= 20;
+  });
+
+  if (!hasAnyPlayerWith20Matches) {
+    return {
+      attentionPoint: null,
+      emptyReason: "Dados insuficientes para comparar dois blocos de 10 partidas.",
+    };
+  }
+
+  // Filtrar quem teve queda de pelo menos 0,10 de rating
+  const drops = seasonComparison.filter((e) => e.rawDiff <= -0.10);
+
+  if (drops.length === 0) {
+    return {
+      attentionPoint: null,
+      emptyReason: "Nenhuma queda de rating de 0,10 ou mais identificada.",
+    };
+  }
+
+  // Maior queda primeiro (mais negativo -> menor rawDiff), desempate por id
+  drops.sort((a, b) => a.rawDiff - b.rawDiff || a.player.id.localeCompare(b.player.id));
+
+  const worst = drops[0];
+  const dropAbs = Math.abs(worst.rawDiff);
+
+  return {
+    attentionPoint: {
+      player: worst.player,
+      dropRating: Number(dropAbs.toFixed(2)),
+      rawDiff: worst.rawDiff,
+      previousRating: worst.season.rating,
+      recentRating: worst.recent.rating,
+      previousMatchesCount: 10,
+      recentMatchesCount: 10,
+      explanation: "A média de rating caiu entre os dois blocos de partidas.",
+    },
+    emptyReason: null,
+  };
+}
+
+export function getGroupRadarFromDataset(
+  dataset: CompetitiveDataset,
+  seasonComparison: SeasonComparisonEntry[]
+): GroupRadarBundle {
+  const featured = getFeaturedPlayerFromDataset(dataset, seasonComparison);
+  const fact = getPeriodFactFromDataset(dataset, featured.player?.player.id ?? null);
+  const attention = getAttentionPointFromDataset(seasonComparison, dataset);
+
+  return {
+    featuredPlayer: featured.player,
+    featuredPlayerEmptyReason: featured.emptyReason,
+    periodFact: fact.periodFact,
+    periodFactEmptyReason: fact.emptyReason,
+    attentionPoint: attention.attentionPoint,
+    attentionPointEmptyReason: attention.emptyReason,
+  };
+}
+
 // ─── Funcionalidade 6: Alertas Inteligentes ────────────────────────────────
 
 export type SmartAlertKind = "milestone" | "drop" | "best-map" | "worst-map";
@@ -2411,6 +2772,7 @@ export function getSmartAlerts(
 }
 
 export interface DashboardCompetitiveBundle {
+  radar: GroupRadarBundle;
   powerRanking: PowerRankingEntry[];
   momentum: PlayerMomentumEntry[];
   decisive: DecisivePlayerEntry[];
@@ -2529,13 +2891,16 @@ export async function getDashboardCompetitiveBundle(
     .sort((a, b) => a.rawDiff - b.rawDiff || a.player.id.localeCompare(b.player.id))
     .slice(0, 3);
 
+  const radar = getGroupRadarFromDataset(ds, seasonComparison);
+
   return {
+    radar,
     powerRanking: getPowerRankingFromDataset(ds, 15),
     momentum: getPlayerMomentumFromDataset(ds, 3),
     decisive,
     archetypes: getPlayerArchetypesFromDataset(ds),
     matchups: getPlayerMatchupsFromDataset(ds),
-    jogadorDaSemana: getJogadorDaSemanaFromDataset(ds),
+    jogadorDaSemana: getJogadorDaSemanaFromDataset(ds, radar.featuredPlayer),
     duos: getDuoLeaderboardFromDataset(ds, 2),
     dominantTrio: getDominantTrioFromDataset(ds),
     mapSpecialists: getMapSpecialistsFromDataset(ds),

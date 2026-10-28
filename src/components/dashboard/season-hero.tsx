@@ -2,21 +2,27 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Trophy, TrendingUp, TrendingDown, Target, Shield, Flame, Activity, Compass } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
+import { Trophy, Crown, Flame, Compass } from "lucide-react";
 import { AnimatedNumber } from "@/components/motion/animated-number";
 import { MetricDisplay } from "@/components/ui/metric-display";
 import { TacticalBadge } from "@/components/ui/tactical-badge";
-import { DeltaIndicator } from "@/components/ui/delta-indicator";
 import { getCleanMapImage } from "@/components/ui/map-performance-card";
+import {
+  calculateLeaderDiff,
+  formatLastSync,
+  formatSeasonHeader,
+  type OfficialTop3Entry,
+} from "@/lib/season-podium";
 import type { PlayerMomentumEntry, MapPerformanceEntry } from "@/server/services/competitive.service";
 import { cn } from "@/lib/utils";
 
 export interface SeasonHeroProps {
   seasonLabel: string;
   seasonStatus?: string;
+  seasonId?: string;
   totalMatches: number;
-  bestPlayer: { nickname: string; rating: number; avatarUrl?: string | null } | null;
+  top3?: OfficialTop3Entry[];
+  bestPlayer?: { nickname: string; rating: number; avatarUrl?: string | null } | null;
   communityWinrate: number;
   dominantMap: { name: string; percentage: number } | null;
   totalPlayers: number;
@@ -27,10 +33,16 @@ export interface SeasonHeroProps {
     avgKd: number;
     avgHsPercent: number;
   };
+  collectiveStats?: {
+    eligibleMatches: number;
+    eligibleWins: number;
+    winrate: number;
+  } | null;
   hottestPlayer: PlayerMomentumEntry | null;
-  coldestPlayer: PlayerMomentumEntry | null;
+  coldestPlayer?: PlayerMomentumEntry | null;
   bestMap: MapPerformanceEntry | null;
   worstMap: MapPerformanceEntry | null;
+  lastSyncAt?: Date | string | null;
   action?: React.ReactNode;
 }
 
@@ -38,17 +50,19 @@ function PlayerAvatar({
   avatarUrl,
   nickname,
   size = "size-8",
+  className,
 }: {
   avatarUrl?: string | null;
   nickname: string;
   size?: string;
+  className?: string;
 }) {
   if (avatarUrl) {
     return (
       <img
         src={avatarUrl}
         alt={nickname}
-        className={cn("rounded-sm object-cover border border-border/80 shrink-0", size)}
+        className={cn("rounded-sm object-cover border border-border/80 shrink-0", size, className)}
         onError={(e) => {
           (e.target as HTMLElement).style.display = "none";
         }}
@@ -61,7 +75,8 @@ function PlayerAvatar({
     <div
       className={cn(
         "rounded-sm bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0 font-mono font-bold text-primary text-[10px] uppercase tracking-wider select-none",
-        size
+        size,
+        className
       )}
     >
       {initial}
@@ -72,125 +87,263 @@ function PlayerAvatar({
 export function SeasonHero({
   seasonLabel,
   seasonStatus = "ACTIVE",
+  seasonId,
   totalMatches,
-  bestPlayer,
+  top3 = [],
   communityWinrate,
   dominantMap,
   totalPlayers,
   advancedStats,
+  collectiveStats,
   hottestPlayer,
-  coldestPlayer,
   bestMap,
   worstMap,
+  lastSyncAt,
   action,
 }: SeasonHeroProps) {
-  const formattedLabel = seasonLabel
-    .replace(" de ", "/")
-    .replace(/^\w/, (c) => c.toUpperCase());
+  const { title, statusBadge } = formatSeasonHeader(seasonLabel, seasonStatus, seasonId);
+  const syncText = formatLastSync(lastSyncAt);
 
-  const isActive = seasonStatus === "ACTIVE";
-  const prefersReduced = useReducedMotion();
+  // Top 3 oficial
+  const leader = top3[0] ?? null;
+  const runnerUp = top3[1] ?? null;
+  const thirdPlace = top3[2] ?? null;
+  const otherRunners = [
+    runnerUp ? { ...runnerUp, rank: 2 } : null,
+    thirdPlace ? { ...thirdPlace, rank: 3 } : null,
+  ].filter(Boolean) as Array<OfficialTop3Entry & { rank: number }>;
 
+  // Métricas coletivas
+  const effectiveWr = collectiveStats ? collectiveStats.winrate : communityWinrate;
+  const collectiveContext = collectiveStats
+    ? `${collectiveStats.eligibleWins} vitórias em ${collectiveStats.eligibleMatches} partidas elegíveis`
+    : `${totalMatches} partidas analisadas`;
+
+  // Miniaturas de mapas
   const dominantMapImg = dominantMap ? getCleanMapImage(dominantMap.name) : null;
   const bestMapImg = bestMap ? getCleanMapImage(bestMap.map) : null;
   const worstMapImg = worstMap ? getCleanMapImage(worstMap.map) : null;
 
-  const bestMapMatch = bestMap && dominantMap && (
-    bestMap.map.toLowerCase().replace(/^de_/, "").trim() === dominantMap.name.toLowerCase().replace(/^de_/, "").trim()
-  ) ? bestMap : null;
+  // Destino da classificação completa
+  const rankingsHref = seasonId && seasonId !== "all" ? `/rankings?season=${seasonId}` : "/rankings";
+
+  // Faixa inferior (máximo 3 itens úteis, sem repetições vazias)
+  const bottomItems = [
+    hottestPlayer
+      ? {
+          key: "hot",
+          type: "player" as const,
+          label: "EM ALTA",
+          entity: hottestPlayer.player.nickname,
+          avatarUrl: hottestPlayer.player.avatarUrl,
+          id: hottestPlayer.player.id,
+          metricLabel: "rating",
+          metricValue: hottestPlayer.recentRating.toFixed(2),
+          sample: "Últimas 5 partidas",
+        }
+      : null,
+    bestMap
+      ? {
+          key: "best-map",
+          type: "map" as const,
+          label: "MELHOR APROVEITAMENTO",
+          entity: bestMap.map.replace(/^de_/i, ""),
+          img: bestMapImg,
+          metricLabel: "aproveitamento",
+          metricValue: `${bestMap.winrate.toFixed(0)}%`,
+          sample: `${bestMap.matchesPlayed} partidas`,
+        }
+      : null,
+    worstMap
+      ? {
+          key: "worst-map",
+          type: "map" as const,
+          label: "MENOR APROVEITAMENTO",
+          entity: worstMap.map.replace(/^de_/i, ""),
+          img: worstMapImg,
+          metricLabel: "aproveitamento",
+          metricValue: `${worstMap.winrate.toFixed(0)}%`,
+          sample: `${worstMap.matchesPlayed} partidas`,
+        }
+      : null,
+  ].filter((item): item is NonNullable<typeof item> => item !== null);
 
   return (
     <div className="relative flex flex-col bg-surface-panel border border-border/70 rounded-sm overflow-hidden shadow-lg">
-      {/* Top Tactical Accent Bar */}
+      {/* Linha tática superior */}
       <div className="h-[2px] w-full bg-gradient-to-r from-primary via-gold to-border/40" />
 
-      {/* ─── 1. HEADER ROW: Season Identity + Status + Selector ─── */}
+      {/* ─── 1. FAIXA SUPERIOR: Título do período + Status real + Timestamp de sync + Seletor ─── */}
       <div className="flex flex-wrap items-center justify-between gap-4 p-4 sm:p-5 border-b border-border/40 bg-surface-deck/40">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="flex size-9 items-center justify-center bg-primary/10 border border-primary/25 rounded-xs shrink-0">
-            <Trophy className="size-4 text-primary" />
-          </div>
-          <div className="flex flex-col min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-[0.16em] text-muted-foreground/70">
-                Central de Inteligência
-              </span>
+        <div className="flex flex-col min-w-0">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="text-lg sm:text-xl font-black text-foreground uppercase tracking-tight truncate">
+              {title}
+            </h1>
+            {statusBadge && (
               <TacticalBadge
-                label={isActive ? "EM ANDAMENTO" : "FINALIZADA"}
-                variant={isActive ? "good" : "neutral"}
+                label={statusBadge.label}
+                variant={statusBadge.variant}
                 size="xs"
               />
-            </div>
-            <h2 className="text-lg sm:text-xl font-black text-foreground uppercase tracking-tight truncate mt-0.5">
-              {formattedLabel}
-            </h2>
+            )}
           </div>
+          {syncText && (
+            <span className="text-[11px] font-mono text-muted-foreground/75 mt-0.5">
+              {syncText}
+            </span>
+          )}
         </div>
 
         {action && <div className="shrink-0">{action}</div>}
       </div>
 
-      {/* ─── 2. MAIN TELEMETRY DECK ─── */}
+      {/* ─── 2. CONTEÚDO PRINCIPAL: Pódio Oficial (40%) + Indicadores do Grupo (60%) ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-border/40">
         
-        {/* Leader Highlight Module (5 cols) */}
-        <div className="lg:col-span-5 p-5 sm:p-6 flex flex-col justify-between gap-6 bg-gradient-to-b from-surface-elevated/20 to-transparent">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-1.5">
-                <TacticalBadge label="LÍDER OFICIAL" variant="gold" size="xs" />
-                <span className="text-[10px] font-mono text-gold font-bold">#1 DA TEMPORADA</span>
-              </div>
-              <p className="text-[11px] text-muted-foreground/70 font-medium mt-0.5">
-                Maior pontuação competitiva registrada.
-              </p>
+        {/* PÓDIO TOP 3 OFICIAL (lg:col-span-5 ~40%) */}
+        <div className="lg:col-span-5 p-5 sm:p-6 flex flex-col justify-between gap-5 bg-gradient-to-b from-surface-elevated/20 via-transparent to-transparent">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] font-mono font-bold uppercase tracking-[0.14em] text-gold/90 flex items-center gap-1.5">
+                <Crown className="size-3.5 text-gold shrink-0" />
+                Classificação Oficial
+              </span>
+              <TacticalBadge label="MODELO 3.5" variant="gold" size="xs" />
             </div>
+            <p className="text-[11px] text-muted-foreground/70 font-medium">
+              Critério oficial da temporada · Mínimo de 10 partidas
+            </p>
           </div>
 
-          {bestPlayer ? (
-            <div className="flex items-center gap-4 py-2">
-              <PlayerAvatar
-                avatarUrl={bestPlayer.avatarUrl}
-                nickname={bestPlayer.nickname}
-                size="size-14 sm:size-16"
-              />
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground/60 font-semibold">
-                  Líder Season Score
-                </span>
-                <span className="text-xl sm:text-2xl font-black text-foreground uppercase tracking-tight truncate">
-                  {bestPlayer.nickname}
-                </span>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-2xl sm:text-3xl font-mono font-black text-gold tabular-nums">
-                    <AnimatedNumber value={bestPlayer.rating} decimals={3} />
-                  </span>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-gold/80 font-bold">
-                    SEASON SCORE
+          {leader && leader.player ? (
+            <div className="flex flex-col gap-3">
+              {/* 1º Lugar em Destaque */}
+              <div className="p-4 rounded-xs border border-gold/30 bg-gradient-to-b from-gold/[0.08] via-surface-panel to-surface-panel/90 shadow-xs relative">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-gold flex items-center gap-1">
+                      <Trophy className="size-3 text-gold" />
+                      1º lugar
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-muted-foreground/70">
+                    {leader.matchesPlayed} partidas
                   </span>
                 </div>
+
+                <div className="flex items-center gap-3.5">
+                  <PlayerAvatar
+                    avatarUrl={leader.player.avatarUrl}
+                    nickname={leader.player.nickname}
+                    size="size-12 sm:size-14"
+                    className="border-2 border-gold/50"
+                  />
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <Link
+                      href={`/players/${leader.player.id}`}
+                      className="text-base sm:text-lg font-black text-foreground hover:text-primary transition-micro truncate block"
+                    >
+                      {leader.player.nickname}
+                    </Link>
+                    <div className="flex items-baseline gap-1.5 mt-0.5">
+                      <span className="text-2xl sm:text-3xl font-mono font-black text-gold tabular-nums leading-none">
+                        <AnimatedNumber value={leader.value} decimals={3} />
+                      </span>
+                      <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gold/90">
+                        pontos · Season Score
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
+
+              {/* 2º e 3º Lugares em Linhas Compactas */}
+              {otherRunners.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  {otherRunners.map((runner) => {
+                    if (!runner.player) return null;
+                    const diffResult = calculateLeaderDiff(leader.rawScore, runner.rawScore);
+
+                    return (
+                      <div
+                        key={runner.player.id}
+                        className="flex items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xs border border-border/50 bg-surface-deck/60 hover:border-border/80 transition-micro"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span
+                            className={cn(
+                              "text-[11px] font-mono font-bold shrink-0 w-5 text-center",
+                              runner.rank === 2 ? "text-muted-foreground/90" : "text-amber-500/80"
+                            )}
+                          >
+                            #{runner.rank}
+                          </span>
+                          <PlayerAvatar
+                            avatarUrl={runner.player.avatarUrl}
+                            nickname={runner.player.nickname}
+                            size="size-8"
+                          />
+                          <div className="flex flex-col min-w-0">
+                            <Link
+                              href={`/players/${runner.player.id}`}
+                              className="text-xs sm:text-sm font-bold text-foreground hover:text-primary transition-micro truncate block"
+                            >
+                              {runner.player.nickname}
+                            </Link>
+                            <span className="text-[10px] font-mono text-muted-foreground/60">
+                              {runner.matchesPlayed} partidas
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col items-end shrink-0 text-right">
+                          <span className="font-mono text-xs sm:text-sm font-bold text-foreground/90 tabular-nums">
+                            {runner.value.toFixed(3)}
+                          </span>
+                          <span
+                            className="text-[10px] font-mono text-muted-foreground/75 truncate"
+                            title={`${diffResult.diff.toFixed(3)} pontos atrás do líder`}
+                          >
+                            {diffResult.formattedDiff}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           ) : (
-            <div className="py-6 text-sm text-muted-foreground/60 font-mono">
-              Aguardando primeiras partidas oficiais.
+            <div className="p-6 rounded-xs border border-border/40 bg-surface-deck/40 flex flex-col items-center justify-center text-center gap-2 my-auto">
+              <Trophy className="size-8 text-muted-foreground/40" />
+              <span className="text-sm font-bold text-foreground/80">
+                Classificação ainda indisponível
+              </span>
+              <p className="text-xs text-muted-foreground/60 max-w-xs font-mono">
+                São necessárias pelo menos 10 partidas válidas na temporada para obter classificação oficial.
+              </p>
             </div>
           )}
 
-          <div className="flex items-center justify-between border-t border-border/30 pt-3 text-[11px] text-muted-foreground/70 font-mono">
-            <span>{totalPlayers} jogadores monitorados</span>
+          {/* Rodapé com link para tabela completa */}
+          <div className="flex items-center justify-between border-t border-border/30 pt-3 text-[11px] font-mono">
+            <span className="text-muted-foreground/70">
+              {totalPlayers} jogadores monitorados
+            </span>
             <Link
-              href="/rankings"
+              href={rankingsHref}
               className="text-primary hover:text-primary/80 font-bold uppercase tracking-wider transition-micro flex items-center gap-1"
             >
-              Ver Tabela Completa →
+              Ver classificação completa →
             </Link>
           </div>
         </div>
 
-        {/* Core Season Telemetry Matrix (7 cols) */}
+        {/* INDICADORES DO GRUPO (lg:col-span-7 ~60%) */}
         <div className="lg:col-span-7 p-5 sm:p-6 flex flex-col justify-between gap-6">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
+            {/* Principais */}
             <MetricDisplay
               label="PARTIDAS"
               value={totalMatches}
@@ -199,18 +352,11 @@ export function SeasonHero({
               accent="orange"
             />
             <MetricDisplay
-              label="TAXA DE VITÓRIA"
-              value={`${communityWinrate}%`}
-              context={communityWinrate >= 50 ? "Balanço positivo" : "Abaixo de 50%"}
-              reaction={communityWinrate >= 55 ? "positive" : communityWinrate < 45 ? "negative" : "neutral"}
+              label="APROVEITAMENTO"
+              value={`${effectiveWr}%`}
+              context={collectiveContext}
+              reaction={effectiveWr >= 55 ? "positive" : effectiveWr < 45 ? "negative" : "neutral"}
               size="md"
-            />
-            <MetricDisplay
-              label="TOTAL DE KILLS"
-              value={<AnimatedNumber value={advancedStats.totalKills} decimals={0} />}
-              context={`${advancedStats.avgAdr.toFixed(0)} ADR médio coletivo`}
-              size="md"
-              accent="muted"
             />
             <MetricDisplay
               label="K/D COLETIVO"
@@ -219,18 +365,27 @@ export function SeasonHero({
               reaction={advancedStats.avgKd >= 1.05 ? "positive" : advancedStats.avgKd < 0.95 ? "negative" : "neutral"}
               size="md"
             />
+
+            {/* Secundários */}
             <MetricDisplay
-              label="PRECISÃO HS%"
+              label="ELIMINAÇÕES"
+              value={<AnimatedNumber value={advancedStats.totalKills} decimals={0} />}
+              context={`${advancedStats.avgAdr.toFixed(0)} ADR médio coletivo`}
+              size="md"
+              accent="muted"
+            />
+            <MetricDisplay
+              label="HEADSHOTS"
               value={<AnimatedNumber value={advancedStats.avgHsPercent} decimals={0} suffix="%" />}
-              context="Taxa de tiro na cabeça"
+              context="Proporção de HS"
               size="md"
               accent="cyan"
             />
 
-            {/* Bloco MAPA DOMINANTE com miniatura compacta */}
+            {/* Mapa mais jogado */}
             <div className="flex flex-col gap-1.5 min-w-0">
               <span className="text-[11px] font-mono font-bold uppercase tracking-[0.16em] text-gold/90 truncate">
-                MAPA DOMINANTE
+                MAPA MAIS JOGADO
               </span>
               <div className="flex items-center gap-2.5 min-w-0">
                 {dominantMapImg && (
@@ -254,165 +409,116 @@ export function SeasonHero({
                 </div>
               </div>
               <span className="text-xs font-mono text-muted-foreground/80 truncate">
-                {dominantMap ? (
-                  <>
-                    <span className="font-semibold text-foreground/90">{dominantMap.percentage}%</span> das partidas
-                    {bestMapMatch ? ` · ${bestMapMatch.winrate.toFixed(0)}% WR` : ""}
-                  </>
-                ) : (
-                  "Distribuição neutra"
-                )}
+                {dominantMap ? `${dominantMap.percentage}% das partidas` : "Distribuição neutra"}
               </span>
             </div>
           </div>
 
-          {/* Quick Context Strip */}
+          {/* Faixa sutil de métricas globais */}
           <div className="border-t border-border/30 pt-3 text-[11px] text-muted-foreground/60 font-mono flex items-center justify-between">
             <span>Métricas Globais da Temporada</span>
-            <span className="text-foreground/80 font-bold uppercase">Taxa de amostragem ativa</span>
+            <span className="text-muted-foreground/80 font-mono">
+              {totalMatches} partidas registradas
+            </span>
           </div>
         </div>
       </div>
 
-      {/* ─── 3. TRAJECTORY & MOMENTUM FOOTER ─── */}
-      {(hottestPlayer || coldestPlayer || bestMap || worstMap) && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-border/30 border-t border-border/40 bg-surface-deck/70">
-          
-          {/* Em Alta */}
-          {hottestPlayer ? (
-            <div className="p-3.5 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <PlayerAvatar
-                  nickname={hottestPlayer.player.nickname}
-                  avatarUrl={hottestPlayer.player.avatarUrl}
-                  size="size-7"
-                />
-                <div className="flex flex-col min-w-0">
-                  <span className="text-[9px] font-mono uppercase tracking-wider text-status-good font-bold">
-                    EM ALTA · ÚLTIMOS JOGOS
-                  </span>
-                  <Link
-                    href={`/players/${hottestPlayer.player.id}`}
-                    className="text-xs font-bold text-foreground hover:text-primary transition-micro truncate block"
-                  >
-                    {hottestPlayer.player.nickname}
-                  </Link>
-                </div>
-              </div>
-              <span className="font-mono text-xs font-bold text-status-good shrink-0 tabular-nums">
-                {hottestPlayer.recentRating.toFixed(2)}
-              </span>
-            </div>
-          ) : (
-            <div className="p-3.5 text-[11px] text-muted-foreground/50 font-mono">Sem streak de alta</div>
+      {/* ─── 3. FAIXA INFERIOR (Máximo 3 cards úteis: Em alta, Melhor aproveitamento, Menor aproveitamento) ─── */}
+      {bottomItems.length > 0 && (
+        <div
+          className={cn(
+            "grid divide-y sm:divide-y-0 sm:divide-x divide-border/30 border-t border-border/40 bg-surface-deck/70",
+            bottomItems.length === 1 && "grid-cols-1",
+            bottomItems.length === 2 && "grid-cols-1 sm:grid-cols-2",
+            bottomItems.length >= 3 && "grid-cols-1 sm:grid-cols-3"
           )}
-
-          {/* Ponto de Atenção */}
-          {coldestPlayer ? (
-            <div className="p-3.5 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <PlayerAvatar
-                  nickname={coldestPlayer.player.nickname}
-                  avatarUrl={coldestPlayer.player.avatarUrl}
-                  size="size-7"
-                />
-                <div className="flex flex-col min-w-0">
-                  <span className="text-[9px] font-mono uppercase tracking-wider text-status-warning font-bold">
-                    PONTO DE ATENÇÃO
-                  </span>
-                  <Link
-                    href={`/players/${coldestPlayer.player.id}`}
-                    className="text-xs font-bold text-foreground hover:text-primary transition-micro truncate block"
-                  >
-                    {coldestPlayer.player.nickname}
-                  </Link>
-                </div>
-              </div>
-              <span className="font-mono text-xs font-bold text-status-warning shrink-0 tabular-nums">
-                {coldestPlayer.recentRating.toFixed(2)} ({coldestPlayer.ratingChangeText})
-              </span>
-            </div>
-          ) : (
-            <div className="p-3.5 text-[11px] text-muted-foreground/50 font-mono">Sem queda crítica</div>
-          )}
-
-          {/* Melhor Mapa */}
-          {bestMap ? (
-            <div className="p-3.5 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                {bestMapImg ? (
-                  <div className="relative size-7 rounded-sm overflow-hidden border border-border/60 shrink-0 bg-surface-panel shadow-xs">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={bestMapImg}
-                      alt={bestMap.map}
-                      className="w-full h-full object-cover object-center opacity-85"
-                      onError={(e) => {
-                        (e.target as HTMLElement).style.display = "none";
-                      }}
+        >
+          {bottomItems.map((item) => {
+            if (item.type === "player") {
+              return (
+                <div key={item.key} className="p-3.5 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <PlayerAvatar
+                      nickname={item.entity}
+                      avatarUrl={item.avatarUrl}
+                      size="size-7"
                     />
-                    <div className="absolute inset-0 bg-black/10" />
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[9px] font-mono uppercase tracking-wider text-status-good font-bold">
+                        {item.label}
+                      </span>
+                      <Link
+                        href={`/players/${item.id}`}
+                        className="text-xs font-bold text-foreground hover:text-primary transition-micro truncate block"
+                      >
+                        {item.entity}
+                      </Link>
+                    </div>
                   </div>
-                ) : (
-                  <div className="flex size-7 items-center justify-center rounded-sm bg-primary/15 text-primary border border-primary/25 shrink-0">
-                    <Flame className="size-3.5" />
+                  <div className="flex flex-col items-end shrink-0 text-right">
+                    <span className="font-mono text-xs font-bold text-status-good tabular-nums">
+                      {item.metricValue} <span className="text-[10px] font-normal text-muted-foreground/70">rating</span>
+                    </span>
+                    <span className="text-[9px] font-mono text-muted-foreground/60">
+                      {item.sample}
+                    </span>
                   </div>
-                )}
-                <div className="flex flex-col min-w-0">
-                  <span className="text-[9px] font-mono uppercase tracking-wider text-primary font-bold">
-                    MELHOR APROVEITAMENTO
-                  </span>
-                  <span className="text-xs font-bold text-foreground truncate block">
-                    {bestMap.map.replace(/^de_/i, "")}
-                  </span>
                 </div>
-              </div>
-              <span className="font-mono text-xs font-bold text-primary shrink-0 tabular-nums">
-                {bestMap.winrate.toFixed(0)}% WR
-              </span>
-            </div>
-          ) : (
-            <div className="p-3.5 text-[11px] text-muted-foreground/50 font-mono">Sem mapa destaque</div>
-          )}
+              );
+            }
 
-          {/* Pior Mapa */}
-          {worstMap ? (
-            <div className="p-3.5 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                {worstMapImg ? (
-                  <div className="relative size-7 rounded-sm overflow-hidden border border-border/60 shrink-0 bg-surface-panel shadow-xs">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={worstMapImg}
-                      alt={worstMap.map}
-                      className="w-full h-full object-cover object-center opacity-85"
-                      onError={(e) => {
-                        (e.target as HTMLElement).style.display = "none";
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-black/10" />
+            const isBest = item.label.includes("MELHOR");
+            const colorClass = isBest ? "text-primary" : "text-status-critical";
+
+            return (
+              <div key={item.key} className="p-3.5 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  {item.img ? (
+                    <div className="relative size-7 rounded-sm overflow-hidden border border-border/60 shrink-0 bg-surface-panel shadow-xs">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={item.img}
+                        alt={item.entity}
+                        className="w-full h-full object-cover object-center opacity-85"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = "none";
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black/10" />
+                    </div>
+                  ) : (
+                    <div
+                      className={cn(
+                        "flex size-7 items-center justify-center rounded-sm shrink-0",
+                        isBest
+                          ? "bg-primary/15 text-primary border border-primary/25"
+                          : "bg-status-critical/15 text-status-critical border border-status-critical/25"
+                      )}
+                    >
+                      {isBest ? <Flame className="size-3.5" /> : <Compass className="size-3.5" />}
+                    </div>
+                  )}
+                  <div className="flex flex-col min-w-0">
+                    <span className={cn("text-[9px] font-mono uppercase tracking-wider font-bold", colorClass)}>
+                      {item.label}
+                    </span>
+                    <span className="text-xs font-bold text-foreground truncate block uppercase">
+                      {item.entity}
+                    </span>
                   </div>
-                ) : (
-                  <div className="flex size-7 items-center justify-center rounded-sm bg-status-critical/15 text-status-critical border border-status-critical/25 shrink-0">
-                    <Compass className="size-3.5" />
-                  </div>
-                )}
-                <div className="flex flex-col min-w-0">
-                  <span className="text-[9px] font-mono uppercase tracking-wider text-status-critical font-bold">
-                    MAPA VULNERÁVEL
+                </div>
+                <div className="flex flex-col items-end shrink-0 text-right">
+                  <span className={cn("font-mono text-xs font-bold tabular-nums", colorClass)}>
+                    {item.metricValue}
                   </span>
-                  <span className="text-xs font-bold text-foreground truncate block">
-                    {worstMap.map.replace(/^de_/i, "")}
+                  <span className="text-[9px] font-mono text-muted-foreground/60">
+                    {item.sample}
                   </span>
                 </div>
               </div>
-              <span className="font-mono text-xs font-bold text-status-critical shrink-0 tabular-nums">
-                {worstMap.winrate.toFixed(0)}% WR
-              </span>
-            </div>
-          ) : (
-            <div className="p-3.5 text-[11px] text-muted-foreground/50 font-mono">Sem mapa crítico</div>
-          )}
+            );
+          })}
         </div>
       )}
     </div>

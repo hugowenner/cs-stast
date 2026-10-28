@@ -33,6 +33,14 @@ const SEASON_LABEL = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "nu
 );
 
 const EMPTY_COMPETITIVE_BUNDLE: competitiveService.DashboardCompetitiveBundle = {
+  radar: {
+    featuredPlayer: null,
+    featuredPlayerEmptyReason: "São necessárias pelo menos 5 partidas com rating no período.",
+    periodFact: null,
+    periodFactEmptyReason: "Nenhum fato atende aos critérios neste período.",
+    attentionPoint: null,
+    attentionPointEmptyReason: "Dados insuficientes para comparar dois blocos de 10 partidas.",
+  },
   powerRanking: [],
   momentum: [],
   decisive: [],
@@ -155,12 +163,21 @@ export default async function DashboardPage(props: {
     topRivalries = calcRivalries;
   }
 
-  const officialRanking = await safeQuery(
-    () => statsService.getSeasonScoreRanking(resolvedSeasonId, 5),
-    [],
-  );
+  const [officialRanking, lastSyncJob] = await Promise.all([
+    safeQuery(() => statsService.getSeasonScoreRanking(resolvedSeasonId, 5), []),
+    safeQuery(
+      () =>
+        prisma.syncJob.findFirst({
+          where: { status: "COMPLETED" },
+          orderBy: { completedAt: "desc" },
+          select: { completedAt: true },
+        }),
+      null,
+    ),
+  ]);
 
   const {
+    radar,
     powerRanking,
     archetypes,
     matchups,
@@ -207,6 +224,13 @@ export default async function DashboardPage(props: {
     seasonMatchesFallbackMap,
   );
 
+  const eligibleMatches = mapWinrates.reduce((sum, m) => sum + m.matchesPlayed, 0);
+  const eligibleWins = mapWinrates.reduce((sum, m) => sum + m.wins, 0);
+  const collectiveWinrate =
+    eligibleMatches > 0
+      ? Math.round((eligibleWins / eligibleMatches) * 100)
+      : summary.community.avgWinrate;
+
   return (
     <div className="flex flex-col gap-10 lg:gap-12 pb-16">
       {/* ═══ 01. TACTICAL HERO COMMAND CENTER ═══ */}
@@ -215,7 +239,9 @@ export default async function DashboardPage(props: {
           <SeasonHero
             seasonLabel={selectedSeason?.name ?? SEASON_LABEL}
             seasonStatus={selectedSeason?.status ?? "ACTIVE"}
+            seasonId={resolvedSeasonId}
             totalMatches={summary.totalMatches}
+            top3={officialRanking.slice(0, 3)}
             bestPlayer={summary.bestPlayer}
             communityWinrate={summary.community.avgWinrate}
             dominantMap={summary.dominantMap}
@@ -227,10 +253,16 @@ export default async function DashboardPage(props: {
               avgKd: summary.community.avgKd,
               avgHsPercent: summary.community.avgHsPercent,
             }}
+            collectiveStats={{
+              eligibleMatches,
+              eligibleWins,
+              winrate: collectiveWinrate,
+            }}
             hottestPlayer={hottestPlayer}
             coldestPlayer={coldestPlayer}
             bestMap={bestMap}
             worstMap={worstMap}
+            lastSyncAt={lastSyncJob?.completedAt ?? null}
             action={
               <SeasonSelect
                 seasons={allSeasons.map((s) => ({ id: s.id, name: s.name, status: s.status }))}
@@ -380,16 +412,17 @@ export default async function DashboardPage(props: {
         />
       </SectionContainer>
 
-      {/* ═══ 10. DESTAQUES & RADAR TÁTICO ═══ */}
-      {(jogadorDaSemana || weeklyCuriosity || smartAlerts.length > 0) && (
+      {/* ═══ 10. RADAR DO GRUPO ═══ */}
+      {(radar || jogadorDaSemana || weeklyCuriosity || smartAlerts.length > 0) && (
         <SectionContainer
           index={10}
-          tag="RADAR TÁTICO"
-          title="Destaques & Alertas da Semana"
-          subtitle="Jogador em evidência, alertas estatísticos e curiosidades da temporada."
+          tag="RADAR DO GRUPO"
+          title="Radar do Grupo"
+          subtitle="Destaques e pontos de atenção com base nas partidas do período selecionado."
           delay={0.11}
         >
           <RadarDaTemporada
+            radar={radar}
             jogadorDaSemana={jogadorDaSemana}
             weeklyCuriosity={weeklyCuriosity}
             smartAlerts={smartAlerts}

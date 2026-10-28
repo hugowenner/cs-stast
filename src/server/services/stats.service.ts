@@ -135,7 +135,8 @@ export async function getSeasonScoreRanking(
     .sort((a, b) => {
       if (b.rawScore !== a.rawScore) return b.rawScore - a.rawScore;
       if (b.rawRating !== a.rawRating) return b.rawRating - a.rawRating;
-      return b.matchesPlayed - a.matchesPlayed;
+      if (b.matchesPlayed !== a.matchesPlayed) return b.matchesPlayed - a.matchesPlayed;
+      return (a.player?.id ?? "").localeCompare(b.player?.id ?? "");
     })
     .slice(0, targetTake);
 }
@@ -215,7 +216,8 @@ export async function getSeasonScoreOverview(
     .sort((a, b) => {
       if (b.rawScore !== a.rawScore) return b.rawScore - a.rawScore;
       if (b.rawRating !== a.rawRating) return b.rawRating - a.rawRating;
-      return b.matchesPlayed - a.matchesPlayed;
+      if (b.matchesPlayed !== a.matchesPlayed) return b.matchesPlayed - a.matchesPlayed;
+      return (a.player?.id ?? "").localeCompare(b.player?.id ?? "");
     })
     .slice(0, targetTake);
 
@@ -224,7 +226,8 @@ export async function getSeasonScoreOverview(
     .sort((a, b) => {
       if (b.rawScore !== a.rawScore) return b.rawScore - a.rawScore;
       if (b.rawRating !== a.rawRating) return b.rawRating - a.rawRating;
-      return b.matchesPlayed - a.matchesPlayed;
+      if (b.matchesPlayed !== a.matchesPlayed) return b.matchesPlayed - a.matchesPlayed;
+      return (a.player?.id ?? "").localeCompare(b.player?.id ?? "");
     })
     .slice(0, targetTake);
 

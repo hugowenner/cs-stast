@@ -940,8 +940,8 @@ function makeMapProvider(targetMap: string): StoryProvider {
       return h(
         `map-king-${targetMap.toLowerCase().replace(/[^a-z0-9]/g, "")}`,
         "MAP_MASTER", "competitive", "map", prio, conf,
-        `Rei da ${targetMap}`, `Rating ${spec.rating.toFixed(2)} • ${wr}% WR`,
-        `${p.nickname} domina completamente a ${targetMap}: rating ${spec.rating.toFixed(2)}, ${wr}% de vitórias em ${mapStats.length} partidas nesta temporada.`,
+        `Destaque da ${targetMap}`, `Rating ${spec.rating.toFixed(2)} • ${wr}% WR`,
+        `${p.nickname} lidera em aproveitamento na ${targetMap}: rating ${spec.rating.toFixed(2)}, ${wr}% de vitórias em ${mapStats.length} partidas nesta temporada.`,
         [{ id: p.id, nickname: p.nickname, avatarUrl: p.avatarUrl }],
         [{ label: "Rating no Mapa", value: spec.rating.toFixed(2) }, { label: "Winrate", value: `${wr}%` }, { label: "Partidas", value: mapStats.length }],
         "season", evidence(mapStats),

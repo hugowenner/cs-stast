@@ -10,24 +10,63 @@ import {
   getSeasonComparisonFromDataset,
   getStreaksFromDataset,
   getMapPerformanceFromDataset,
-  calculateMapMinMatches,
+  calculateWilsonScore,
+  MAP_MIN_MATCHES,
+  getFeaturedPlayerFromDataset,
+  getPeriodFactFromDataset,
+  getAttentionPointFromDataset,
+  getGroupRadarFromDataset,
 } from "./competitive.service";
 
-describe("calculateMapMinMatches", () => {
-  it("calcula o mínimo com máximo par, ímpar, inferior a 5 e zero", () => {
-    // Máximo par
-    expect(calculateMapMinMatches(20)).toBe(10);
-    expect(calculateMapMinMatches(12)).toBe(6);
-    expect(calculateMapMinMatches(8)).toBe(5); // Math.ceil(8 * 0.5) = 4 < 5 -> 5
-    // Máximo ímpar
-    expect(calculateMapMinMatches(11)).toBe(6);
-    expect(calculateMapMinMatches(15)).toBe(8);
-    expect(calculateMapMinMatches(7)).toBe(5);
-    // Inferior a 5
-    expect(calculateMapMinMatches(4)).toBe(5);
-    expect(calculateMapMinMatches(3)).toBe(5);
-    expect(calculateMapMinMatches(1)).toBe(5);
-    expect(calculateMapMinMatches(0)).toBe(5);
+describe("calculateWilsonScore", () => {
+  it("trata entradas inválidas ou zero partidas de forma segura sem divisão por zero", () => {
+    expect(calculateWilsonScore(0, 0)).toBe(0);
+    expect(calculateWilsonScore(-1, 5)).toBe(0);
+    expect(calculateWilsonScore(5, -1)).toBe(0);
+    expect(calculateWilsonScore(NaN, 5)).toBe(0);
+    expect(calculateWilsonScore(5, NaN)).toBe(0);
+    expect(calculateWilsonScore(Infinity, 5)).toBe(0);
+    expect(calculateWilsonScore(5, Infinity)).toBe(0);
+  });
+
+  it("retorna zero para zero vitórias em qualquer quantidade de partidas", () => {
+    expect(calculateWilsonScore(0, 5)).toBe(0);
+    expect(calculateWilsonScore(0, 20)).toBe(0);
+    expect(calculateWilsonScore(0, 100)).toBe(0);
+  });
+
+  it("calcula valores de referência para 5/5, 9/10, 14/20 e 40/50", () => {
+    const s5_5 = calculateWilsonScore(5, 5);
+    const s9_10 = calculateWilsonScore(9, 10);
+    const s14_20 = calculateWilsonScore(14, 20);
+    const s40_50 = calculateWilsonScore(40, 50);
+
+    expect(s5_5).toBeCloseTo(0.5655, 4);
+    expect(s9_10).toBeCloseTo(0.5958, 4);
+    expect(s14_20).toBeCloseTo(0.4810, 4);
+    expect(s40_50).toBeCloseTo(0.6696, 4);
+
+    // 9/10 (90%) supera 5/5 (100%) porque a amostra maior reduz a incerteza
+    expect(s9_10).toBeGreaterThan(s5_5);
+  });
+
+  it("com o mesmo aproveitamento, a amostra maior possui score de Wilson superior", () => {
+    // 50% de winrate em 10 partidas vs 100 partidas
+    const smallSample = calculateWilsonScore(5, 10);
+    const largeSample = calculateWilsonScore(50, 100);
+
+    expect(smallSample).toBeCloseTo(0.2366, 4);
+    expect(largeSample).toBeCloseTo(0.4038, 4);
+    expect(largeSample).toBeGreaterThan(smallSample);
+  });
+
+  it("com o mesmo total de partidas, mais vitórias aumentam o score", () => {
+    const s5_10 = calculateWilsonScore(5, 10);
+    const s7_10 = calculateWilsonScore(7, 10);
+    const s9_10 = calculateWilsonScore(9, 10);
+
+    expect(s7_10).toBeGreaterThan(s5_10);
+    expect(s9_10).toBeGreaterThan(s7_10);
   });
 });
 
@@ -83,51 +122,11 @@ describe("getMapSpecialistsFromDataset", () => {
     return list;
   }
 
-  it("prioriza maior percentual de vitórias individual: jogador com menos vitórias fica à frente por ter maior WR", () => {
-    // Jogador A: 4 vitórias em 5 partidas (80% WR, rating 1.10)
-    // Jogador B: 6 vitórias em 10 partidas (60% WR, rating 1.30)
-    // maxMatches = 10 -> minMatches = 5. Ambos elegíveis.
-    const statsA = createMatches("playerA", "Inferno", 4, 1, 0, 1.10);
-    const statsB = createMatches("playerB", "Inferno", 6, 4, 0, 1.30);
-
-    const dataset = {
-      activePlayers: [
-        { id: "playerA", nickname: "Jogador A", avatarUrl: null, levelGc: 14 },
-        { id: "playerB", nickname: "Jogador B", avatarUrl: null, levelGc: 12 },
-      ],
-      statsByPlayer: new Map([
-        ["playerA", statsA],
-        ["playerB", statsB],
-      ]),
-      allStats: [...statsA, ...statsB],
-    };
-
-    // @ts-ignore
-    const specialists = getMapSpecialistsFromDataset(dataset);
-    expect(specialists).toHaveLength(1);
-    const inf = specialists[0];
-    expect(inf.mapName).toBe("Inferno");
-    expect(inf.minMatches).toBe(5);
-
-    // Jogador A lidera por aproveitamento (80% vs 60%), mesmo tendo menos vitórias absolutas (4 vs 6)
-    expect(inf.player?.id).toBe("playerA");
-    expect(inf.wins).toBe(4);
-    expect(inf.matches).toBe(5);
-    expect(inf.winrate).toBe(80);
-
-    // Pódio
-    expect(inf.podium).toHaveLength(2);
-    expect(inf.podium[0].player.id).toBe("playerA");
-    expect(inf.podium[0].winrate).toBe(80);
-    expect(inf.podium[1].player.id).toBe("playerB");
-    expect(inf.podium[1].winrate).toBe(60);
-  });
-
-  it("jogador com 3 vitórias em 3 partidas (100% WR) fica FORA pelo mínimo de partidas", () => {
-    // p1: 3 vitórias em 3 partidas (100% WR) - mas mínimo é 5!
-    // p2: 5 vitórias em 8 partidas (62.5% WR) - elegível!
-    const statsP1 = createMatches("p1", "Mirage", 3, 0, 0, 1.40);
-    const statsP2 = createMatches("p2", "Mirage", 5, 3, 0, 1.10);
+  it("aplica elegibilidade fixa: 4 partidas é inelegível, 5 partidas com vitória é elegível", () => {
+    // p1: 4 vitórias em 4 partidas (100% WR) -> inelegível (< 5 partidas)
+    // p2: 3 vitórias em 5 partidas (60% WR) -> elegível (>= 5 partidas)
+    const statsP1 = createMatches("p1", "Mirage", 4, 0, 0, 1.40);
+    const statsP2 = createMatches("p2", "Mirage", 3, 2, 0, 1.10);
 
     const dataset = {
       activePlayers: [
@@ -147,49 +146,13 @@ describe("getMapSpecialistsFromDataset", () => {
     const mirage = specialists[0];
     expect(mirage.minMatches).toBe(5);
 
-    // p1 não é elegível porque tem 3 partidas (< 5)
+    // p1 não é elegível porque tem 4 partidas (< 5)
     expect(mirage.player?.id).toBe("p2");
     expect(mirage.podium).toHaveLength(1);
     expect(mirage.podium[0].player.id).toBe("p2");
   });
 
-  it("verifica elegibilidade exatamente no limite", () => {
-    // maxMatches = 12 -> minMatches = 6
-    // p1: 6 partidas (5V, 1D) = 83.3% WR -> ELEGÍVEL exatamente no limite
-    // p2: 5 partidas (5V, 0D) = 100% WR -> INELEGÍVEL (5 < 6)
-    // p_max: 12 partidas (6V, 6D) = 50% WR -> ELEGÍVEL
-    const statsP1 = createMatches("p1", "Dust2", 5, 1, 0, 1.15);
-    const statsP2 = createMatches("p2", "Dust2", 5, 0, 0, 1.30);
-    const statsMax = createMatches("p_max", "Dust2", 6, 6, 0, 1.00);
-
-    const dataset = {
-      activePlayers: [
-        { id: "p1", nickname: "P1", avatarUrl: null, levelGc: 10 },
-        { id: "p2", nickname: "P2", avatarUrl: null, levelGc: 10 },
-        { id: "p_max", nickname: "Max", avatarUrl: null, levelGc: 10 },
-      ],
-      statsByPlayer: new Map([
-        ["p1", statsP1],
-        ["p2", statsP2],
-        ["p_max", statsMax],
-      ]),
-      allStats: [...statsP1, ...statsP2, ...statsMax],
-    };
-
-    // @ts-ignore
-    const specialists = getMapSpecialistsFromDataset(dataset);
-    const d2 = specialists[0];
-    expect(d2.minMatches).toBe(6);
-    expect(d2.player?.id).toBe("p1");
-    expect(d2.podium).toHaveLength(2);
-    expect(d2.podium[0].player.id).toBe("p1");
-    expect(d2.podium[1].player.id).toBe("p_max");
-    // p2 com 5 partidas ficou de fora
-    expect(d2.podium.map(p => p.player.id)).not.toContain("p2");
-  });
-
   it("exclui jogadores sem nenhuma vitória (0 vitórias)", () => {
-    // p1: 8 partidas e 0 vitórias -> inelegível
     const statsP1 = createMatches("p1", "Nuke", 0, 8, 0, 1.10);
 
     const dataset = {
@@ -206,7 +169,7 @@ describe("getMapSpecialistsFromDataset", () => {
     expect(specialists[0].minMatches).toBe(5);
   });
 
-  it("computa empates no total de partidas mas sem pontuar como vitória", () => {
+  it("computa empates no total de partidas (denominador) sem pontuar como vitória", () => {
     // p1: 5 vitórias, 1 empate, 4 derrotas em 10 partidas -> WR = 5/10 = 50%
     const statsP1 = createMatches("p1", "Overpass", 5, 4, 1, 1.10);
 
@@ -223,83 +186,121 @@ describe("getMapSpecialistsFromDataset", () => {
     expect(op.matches).toBe(10);
     expect(op.wins).toBe(5);
     expect(op.winrate).toBe(50);
+    expect(op.wilsonScore).toBeCloseTo(0.2366, 3);
   });
 
-  it("ordena por percentual de vitórias sem arredondamento", () => {
-    // Três jogadores com WRs próximos que diferem nas casas decimais:
-    // pA: 7 vitórias em 11 partidas = 63.636% (formata 63.6%)
-    // pB: 5 vitórias em 8 partidas = 62.500% (formata 62.5%)
-    // pC: 9 vitórias em 14 partidas = 64.285% (formata 64.3%)
-    // maxMatches = 14 -> minMatches = 7. Todos jogaram >= 7.
-    const statsA = createMatches("pA", "Ancient", 7, 4, 0, 1.10);
-    const statsB = createMatches("pB", "Ancient", 5, 3, 0, 1.10);
-    const statsC = createMatches("pC", "Ancient", 9, 5, 0, 1.10);
+  it("classifica pelo score de Wilson: 14/20 supera 6/8 apesar do WR nominal inferior (70% vs 75%)", () => {
+    // Caso real da Inferno:
+    // Jogador A: 14 vitórias em 20 partidas (70% WR, Wilson 48.1)
+    // Jogador B: 6 vitórias em 8 partidas (75% WR, Wilson 40.9)
+    const statsA = createMatches("playerA", "Inferno", 14, 6, 0, 1.12);
+    const statsB = createMatches("playerB", "Inferno", 6, 2, 0, 0.82);
 
     const dataset = {
       activePlayers: [
-        { id: "pA", nickname: "PA", avatarUrl: null, levelGc: 10 },
-        { id: "pB", nickname: "PB", avatarUrl: null, levelGc: 10 },
-        { id: "pC", nickname: "PC", avatarUrl: null, levelGc: 10 },
+        { id: "playerA", nickname: "Jogador A", avatarUrl: null, levelGc: 14 },
+        { id: "playerB", nickname: "Jogador B", avatarUrl: null, levelGc: 12 },
       ],
       statsByPlayer: new Map([
-        ["pA", statsA],
-        ["pB", statsB],
-        ["pC", statsC],
+        ["playerA", statsA],
+        ["playerB", statsB],
       ]),
-      allStats: [...statsA, ...statsB, ...statsC],
+      allStats: [...statsA, ...statsB],
     };
 
     // @ts-ignore
     const specialists = getMapSpecialistsFromDataset(dataset);
-    const anc = specialists[0];
-    expect(anc.podium[0].player.id).toBe("pC"); // 64.28%
-    expect(anc.podium[1].player.id).toBe("pA"); // 63.64%
-    expect(anc.podium[2].player.id).toBe("pB"); // 62.50%
+    const inf = specialists[0];
+
+    // Jogador A lidera por Wilson score (0.481 > 0.409), mesmo com WR nominal menor (70% vs 75%)
+    expect(inf.player?.id).toBe("playerA");
+    expect(inf.podium[0].player.id).toBe("playerA");
+    expect(inf.podium[1].player.id).toBe("playerB");
+    expect(inf.podium[0].wilsonScore).toBeGreaterThan(inf.podium[1].wilsonScore!);
   });
 
-  it("aplica todos os critérios de desempate determinísticos", () => {
-    // p1: 8V em 10P (80% WR, 8 vitórias, rating 1.10) -> WR = 80%, 8 vitórias
-    // p2: 4V em 5P (80% WR, 4 vitórias, rating 1.10) -> WR = 80%, mas 4 vitórias (p1 vence por vitórias)
-    // p3: 4V em 5P (80% WR, 4 vitórias, rating 1.30) -> WR = 80%, 4 vitórias, mas rating 1.30 > p2 (p3 vence p2 por rating)
-    // p4_a: 4V em 5P (80% WR, 4 vitórias, rating 1.00, ID p4_a)
-    // p4_b: 4V em 5P (80% WR, 4 vitórias, rating 1.00, ID p4_b) -> desempate por ID alfabético
-    const stats1 = createMatches("p1", "Anubis", 8, 2, 0, 1.10);
-    const stats2 = createMatches("p2", "Anubis", 4, 1, 0, 1.10);
-    const stats3 = createMatches("p3", "Anubis", 4, 1, 0, 1.30);
-    const stats4a = createMatches("p4_a", "Anubis", 4, 1, 0, 1.00);
-    const stats4b = createMatches("p4_b", "Anubis", 4, 1, 0, 1.00);
+  it("independência: adicionar partidas de outro jogador NÃO altera o score nem a elegibilidade de quem não jogou", () => {
+    // Jogador A tem 5 partidas (3V, 2D) no mapa
+    const statsA = createMatches("playerA", "Dust2", 3, 2, 0, 1.19);
+
+    const dataset1 = {
+      activePlayers: [{ id: "playerA", nickname: "Jogador A", avatarUrl: null, levelGc: 14 }],
+      statsByPlayer: new Map([["playerA", statsA]]),
+      allStats: statsA,
+    };
+
+    // @ts-ignore
+    const res1 = getMapSpecialistsFromDataset(dataset1)[0];
+    expect(res1.player?.id).toBe("playerA");
+    expect(res1.minMatches).toBe(5);
+    const wilsonA1 = res1.wilsonScore;
+
+    // Agora adicionamos um jogador B ultra ativo com 20 partidas no mesmo mapa
+    const statsB = createMatches("playerB", "Dust2", 10, 10, 0, 1.00);
+    const dataset2 = {
+      activePlayers: [
+        { id: "playerA", nickname: "Jogador A", avatarUrl: null, levelGc: 14 },
+        { id: "playerB", nickname: "Jogador B", avatarUrl: null, levelGc: 12 },
+      ],
+      statsByPlayer: new Map([
+        ["playerA", statsA],
+        ["playerB", statsB],
+      ]),
+      allStats: [...statsA, ...statsB],
+    };
+
+    // @ts-ignore
+    const res2 = getMapSpecialistsFromDataset(dataset2)[0];
+    // Jogador A continua elegível com mínimo de 5, e seu score é estritamente idêntico
+    const itemA = res2.podium.find((p) => p.player.id === "playerA");
+    expect(itemA).toBeDefined();
+    expect(itemA?.wilsonScore).toBe(wilsonA1);
+    expect(res2.minMatches).toBe(5);
+  });
+
+  it("aplica todos os critérios de desempate determinísticos sem arredondamento", () => {
+    // Empatados no score de Wilson (mesmas vitórias e partidas: 5V em 10P)
+    // p1: 5V em 10P (Wilson 0.2366, WR 50%, rating 1.10)
+    // p2: 5V em 10P (Wilson 0.2366, WR 50%, rating 1.30) -> vence p1 por rating
+    // p3_a: 5V em 10P (Wilson 0.2366, WR 50%, rating 1.00, ID p3_a)
+    // p3_b: 5V em 10P (Wilson 0.2366, WR 50%, rating 1.00, ID p3_b) -> desempate por ID alfabético
+    const stats1 = createMatches("p1", "Anubis", 5, 5, 0, 1.10);
+    const stats2 = createMatches("p2", "Anubis", 5, 5, 0, 1.30);
+    const stats3a = createMatches("p3_a", "Anubis", 5, 5, 0, 1.00);
+    const stats3b = createMatches("p3_b", "Anubis", 5, 5, 0, 1.00);
 
     const dataset = {
       activePlayers: [
         { id: "p1", nickname: "P1", avatarUrl: null, levelGc: 10 },
         { id: "p2", nickname: "P2", avatarUrl: null, levelGc: 10 },
-        { id: "p3", nickname: "P3", avatarUrl: null, levelGc: 10 },
-        { id: "p4_b", nickname: "P4_B", avatarUrl: null, levelGc: 10 },
-        { id: "p4_a", nickname: "P4_A", avatarUrl: null, levelGc: 10 },
+        { id: "p3_b", nickname: "P3_B", avatarUrl: null, levelGc: 10 },
+        { id: "p3_a", nickname: "P3_A", avatarUrl: null, levelGc: 10 },
       ],
       statsByPlayer: new Map([
         ["p1", stats1],
         ["p2", stats2],
-        ["p3", stats3],
-        ["p4_b", stats4b],
-        ["p4_a", stats4a],
+        ["p3_b", stats3b],
+        ["p3_a", stats3a],
       ]),
-      allStats: [...stats1, ...stats2, ...stats3, ...stats4a, ...stats4b],
+      allStats: [...stats1, ...stats2, ...stats3b, ...stats3a],
     };
 
     // @ts-ignore
     const specialists = getMapSpecialistsFromDataset(dataset);
     const anubis = specialists[0];
     expect(anubis.podium).toHaveLength(3); // Máximo 3
-    // #1 p1: 8 vitórias (maior quantidade de vitórias entre empatados em 80% WR)
-    expect(anubis.podium[0].player.id).toBe("p1");
-    // #2 p3: 4 vitórias, rating 1.30 (maior rating que p2)
-    expect(anubis.podium[1].player.id).toBe("p3");
-    // #3 p2: 4 vitórias, rating 1.10
-    expect(anubis.podium[2].player.id).toBe("p2");
+    // #1 p2: maior rating (1.30 vs 1.10)
+    expect(anubis.podium[0].player.id).toBe("p2");
+    // #2 p1: segundo maior rating (1.10)
+    expect(anubis.podium[1].player.id).toBe("p1");
+    // #3 p3_a: desempate alfabético frente a p3_b (rating 1.00 ambos)
+    expect(anubis.podium[2].player.id).toBe("p3_a");
+
+    // Coerência entre líder e 1º colocado do pódio
+    expect(anubis.player?.id).toBe(anubis.podium[0].player.id);
   });
 
-  it("cobre mapas com 0, 1, 2 e mais de 3 elegíveis", () => {
+  it("cobre mapas com 0, 1, 2 e mais de 3 elegíveis preservando coerência de pódio e líder", () => {
     // Mapa com 0 elegíveis (todos < 5 partidas)
     const statsMapZero = createMatches("p1", "de_zero", 2, 0, 0);
 
@@ -325,17 +326,19 @@ describe("getMapSpecialistsFromDataset", () => {
     // @ts-ignore
     const specialists = getMapSpecialistsFromDataset(dataset);
 
-    const zero = specialists.find(s => s.mapName === "de_zero");
+    const zero = specialists.find((s) => s.mapName === "de_zero");
     expect(zero?.player).toBeNull();
     expect(zero?.podium).toHaveLength(0);
 
-    const one = specialists.find(s => s.mapName === "de_one");
+    const one = specialists.find((s) => s.mapName === "de_one");
     expect(one?.player?.id).toBe("p1");
     expect(one?.podium).toHaveLength(1);
+    expect(one?.player?.id).toBe(one?.podium[0].player.id);
 
-    const two = specialists.find(s => s.mapName === "de_two");
+    const two = specialists.find((s) => s.mapName === "de_two");
     expect(two?.player?.id).toBe("p1");
     expect(two?.podium).toHaveLength(2);
+    expect(two?.player?.id).toBe(two?.podium[0].player.id);
   });
 });
 
@@ -823,5 +826,327 @@ describe("getMapPerformanceFromDataset", () => {
     expect(d2?.winrate).toBeCloseTo(66.7, 1);
   });
 });
+
+describe("Radar do Grupo - getFeaturedPlayerFromDataset", () => {
+  it("retorna estado vazio quando nenhum jogador tem pelo menos 5 partidas válidas com rating", () => {
+    const dataset = {
+      activePlayers: [
+        { id: "p1", nickname: "Player 1", avatarUrl: null, levelGc: null },
+      ],
+      statsByPlayer: new Map([
+        [
+          "p1",
+          [
+            { playerId: "p1", rating: 1.25, team: "A", match: { id: "m1", scoreTeamA: 13, scoreTeamB: 5 } },
+            { playerId: "p1", rating: 1.30, team: "A", match: { id: "m2", scoreTeamA: 13, scoreTeamB: 5 } },
+            { playerId: "p1", rating: 1.20, team: "A", match: { id: "m3", scoreTeamA: 13, scoreTeamB: 5 } },
+            { playerId: "p1", rating: 1.15, team: "A", match: { id: "m4", scoreTeamA: 13, scoreTeamB: 5 } },
+            // Apenas 4 partidas válidas
+          ],
+        ],
+      ]),
+      allStats: [],
+    };
+
+    // @ts-ignore
+    const result = getFeaturedPlayerFromDataset(dataset, []);
+    expect(result.player).toBeNull();
+    expect(result.emptyReason).toBe("São necessárias pelo menos 5 partidas com rating no período.");
+  });
+
+  it("seleciona o jogador com maior rating médio entre elegíveis (>= 5 partidas)", () => {
+    const dataset = {
+      activePlayers: [
+        { id: "p1", nickname: "Player 1", avatarUrl: null, levelGc: null },
+        { id: "p2", nickname: "Player 2", avatarUrl: null, levelGc: null },
+      ],
+      statsByPlayer: new Map([
+        [
+          "p1",
+          [
+            { playerId: "p1", rating: 1.20, team: "A", match: { id: "m1", scoreTeamA: 13, scoreTeamB: 5 } },
+            { playerId: "p1", rating: 1.20, team: "A", match: { id: "m2", scoreTeamA: 13, scoreTeamB: 5 } },
+            { playerId: "p1", rating: 1.20, team: "A", match: { id: "m3", scoreTeamA: 13, scoreTeamB: 5 } },
+            { playerId: "p1", rating: 1.20, team: "A", match: { id: "m4", scoreTeamA: 13, scoreTeamB: 5 } },
+            { playerId: "p1", rating: 1.20, team: "A", match: { id: "m5", scoreTeamA: 13, scoreTeamB: 5 } },
+          ],
+        ],
+        [
+          "p2",
+          [
+            { playerId: "p2", rating: 1.35, team: "A", match: { id: "m1", scoreTeamA: 13, scoreTeamB: 5 } },
+            { playerId: "p2", rating: 1.30, team: "A", match: { id: "m2", scoreTeamA: 13, scoreTeamB: 5 } },
+            { playerId: "p2", rating: 1.25, team: "A", match: { id: "m3", scoreTeamA: 13, scoreTeamB: 5 } },
+            { playerId: "p2", rating: 1.30, team: "A", match: { id: "m4", scoreTeamA: 13, scoreTeamB: 5 } },
+            { playerId: "p2", rating: 1.30, team: "A", match: { id: "m5", scoreTeamA: 13, scoreTeamB: 5 } },
+          ],
+        ],
+      ]),
+      allStats: [],
+    };
+
+    // @ts-ignore
+    const result = getFeaturedPlayerFromDataset(dataset, []);
+    expect(result.player).not.toBeNull();
+    expect(result.player?.player.id).toBe("p2");
+    expect(result.player?.rating).toBe(1.30);
+    expect(result.player?.matchCount).toBe(5);
+    expect(result.player?.winrate).toBe(100);
+    expect(result.player?.justification).toContain("pelo menos 5 partidas com rating");
+  });
+
+  it("desempata por rating sem arredondamento, depois contagem de partidas, depois id estável", () => {
+    const dataset = {
+      activePlayers: [
+        { id: "p_beta", nickname: "Beta", avatarUrl: null, levelGc: null },
+        { id: "p_alpha", nickname: "Alpha", avatarUrl: null, levelGc: null },
+      ],
+      statsByPlayer: new Map([
+        [
+          "p_beta",
+          [
+            { playerId: "p_beta", rating: 1.20, team: "A", match: { id: "m1", scoreTeamA: 13, scoreTeamB: 5 } },
+            { playerId: "p_beta", rating: 1.20, team: "A", match: { id: "m2", scoreTeamA: 13, scoreTeamB: 5 } },
+            { playerId: "p_beta", rating: 1.20, team: "A", match: { id: "m3", scoreTeamA: 13, scoreTeamB: 5 } },
+            { playerId: "p_beta", rating: 1.20, team: "A", match: { id: "m4", scoreTeamA: 13, scoreTeamB: 5 } },
+            { playerId: "p_beta", rating: 1.20, team: "A", match: { id: "m5", scoreTeamA: 13, scoreTeamB: 5 } },
+          ],
+        ],
+        [
+          "p_alpha",
+          [
+            { playerId: "p_alpha", rating: 1.20, team: "A", match: { id: "m1", scoreTeamA: 13, scoreTeamB: 5 } },
+            { playerId: "p_alpha", rating: 1.20, team: "A", match: { id: "m2", scoreTeamA: 13, scoreTeamB: 5 } },
+            { playerId: "p_alpha", rating: 1.20, team: "A", match: { id: "m3", scoreTeamA: 13, scoreTeamB: 5 } },
+            { playerId: "p_alpha", rating: 1.20, team: "A", match: { id: "m4", scoreTeamA: 13, scoreTeamB: 5 } },
+            { playerId: "p_alpha", rating: 1.20, team: "A", match: { id: "m5", scoreTeamA: 13, scoreTeamB: 5 } },
+          ],
+        ],
+      ]),
+      allStats: [],
+    };
+
+    // @ts-ignore
+    const result = getFeaturedPlayerFromDataset(dataset, []);
+    expect(result.player?.player.id).toBe("p_alpha"); // desempate por id crescente
+  });
+});
+
+describe("Radar do Grupo - getPeriodFactFromDataset", () => {
+  it("prioriza maior sequência de vitórias (>= 3) e informa se está ativa", () => {
+    const dataset = {
+      activePlayers: [
+        { id: "p1", nickname: "Player 1", avatarUrl: null, levelGc: null },
+      ],
+      statsByPlayer: new Map([
+        [
+          "p1",
+          [
+            // Índice 0 é mais recente -> vitórias ativas
+            { playerId: "p1", team: "A", match: { id: "m1", scoreTeamA: 13, scoreTeamB: 5, playedAt: new Date("2026-10-10") } },
+            { playerId: "p1", team: "A", match: { id: "m2", scoreTeamA: 13, scoreTeamB: 5, playedAt: new Date("2026-10-09") } },
+            { playerId: "p1", team: "A", match: { id: "m3", scoreTeamA: 13, scoreTeamB: 5, playedAt: new Date("2026-10-08") } },
+            { playerId: "p1", team: "A", match: { id: "m4", scoreTeamA: 13, scoreTeamB: 5, playedAt: new Date("2026-10-07") } },
+            { playerId: "p1", team: "A", match: { id: "m5", scoreTeamA: 5, scoreTeamB: 13, playedAt: new Date("2026-10-06") } },
+          ],
+        ],
+      ]),
+      allStats: [],
+    };
+
+    // @ts-ignore
+    const { periodFact } = getPeriodFactFromDataset(dataset, null);
+    expect(periodFact).not.toBeNull();
+    expect(periodFact?.kind).toBe("streak-active");
+    expect(periodFact?.badgeLabel).toBe("EM ANDAMENTO");
+    expect(periodFact?.streakCount).toBe(4);
+  });
+
+  it("identifica sequência concluída quando interrompida por derrota", () => {
+    const dataset = {
+      activePlayers: [
+        { id: "p1", nickname: "Player 1", avatarUrl: null, levelGc: null },
+      ],
+      statsByPlayer: new Map([
+        [
+          "p1",
+          [
+            // Índice 0 é derrota, seguido de 3 vitórias anteriores
+            { playerId: "p1", team: "A", match: { id: "m1", scoreTeamA: 5, scoreTeamB: 13, playedAt: new Date("2026-10-10") } },
+            { playerId: "p1", team: "A", match: { id: "m2", scoreTeamA: 13, scoreTeamB: 5, playedAt: new Date("2026-10-09") } },
+            { playerId: "p1", team: "A", match: { id: "m3", scoreTeamA: 13, scoreTeamB: 5, playedAt: new Date("2026-10-08") } },
+            { playerId: "p1", team: "A", match: { id: "m4", scoreTeamA: 13, scoreTeamB: 5, playedAt: new Date("2026-10-07") } },
+          ],
+        ],
+      ]),
+      allStats: [],
+    };
+
+    // @ts-ignore
+    const { periodFact } = getPeriodFactFromDataset(dataset, null);
+    expect(periodFact).not.toBeNull();
+    expect(periodFact?.kind).toBe("streak-concluded");
+    expect(periodFact?.badgeLabel).toBe("CONCLUÍDA");
+    expect(periodFact?.streakCount).toBe(3);
+    expect(periodFact?.detail).toContain("09/10/2026");
+  });
+
+  it("aplica regra de não repetição: prefere jogador diferente do destaque em caso de empate na sequência", () => {
+    const dataset = {
+      activePlayers: [
+        { id: "p_featured", nickname: "Destaque", avatarUrl: null, levelGc: null },
+        { id: "p_other", nickname: "Outro", avatarUrl: null, levelGc: null },
+      ],
+      statsByPlayer: new Map([
+        [
+          "p_featured",
+          [
+            { playerId: "p_featured", team: "A", match: { id: "m1", scoreTeamA: 13, scoreTeamB: 5, playedAt: new Date("2026-10-10") } },
+            { playerId: "p_featured", team: "A", match: { id: "m2", scoreTeamA: 13, scoreTeamB: 5, playedAt: new Date("2026-10-09") } },
+            { playerId: "p_featured", team: "A", match: { id: "m3", scoreTeamA: 13, scoreTeamB: 5, playedAt: new Date("2026-10-08") } },
+          ],
+        ],
+        [
+          "p_other",
+          [
+            { playerId: "p_other", team: "A", match: { id: "m4", scoreTeamA: 13, scoreTeamB: 5, playedAt: new Date("2026-10-09") } },
+            { playerId: "p_other", team: "A", match: { id: "m5", scoreTeamA: 13, scoreTeamB: 5, playedAt: new Date("2026-10-08") } },
+            { playerId: "p_other", team: "A", match: { id: "m6", scoreTeamA: 13, scoreTeamB: 5, playedAt: new Date("2026-10-07") } },
+          ],
+        ],
+      ]),
+      allStats: [],
+    };
+
+    // @ts-ignore
+    const { periodFact } = getPeriodFactFromDataset(dataset, "p_featured");
+    expect(periodFact?.player?.id).toBe("p_other");
+  });
+
+  it("recorre ao melhor mapa coletivo (>= 5 partidas, WR > 50%) se não houver sequência >= 3", () => {
+    const matches = [1, 2, 3, 4, 5].map((i) => ({
+      playerId: "p1",
+      team: "A",
+      match: {
+        id: `m${i}`,
+        mapId: "m_inf",
+        map: { name: "de_inferno" },
+        scoreTeamA: 13,
+        scoreTeamB: 5,
+        playedAt: new Date("2026-10-01"),
+      },
+    }));
+
+    const dataset = {
+      activePlayers: [{ id: "p1", nickname: "Player 1", avatarUrl: null, levelGc: null }],
+      statsByPlayer: new Map([["p1", []]]), // sem stats individuais consecutivas
+      allStats: matches,
+    };
+
+    // @ts-ignore
+    const { periodFact } = getPeriodFactFromDataset(dataset, null);
+    expect(periodFact).not.toBeNull();
+    expect(periodFact?.kind).toBe("collective-map");
+    expect(periodFact?.badgeLabel).toBe("MAPA DO GRUPO");
+    expect(periodFact?.mapName).toBe("Inferno");
+  });
+});
+
+describe("Radar do Grupo - getAttentionPointFromDataset", () => {
+  it("retorna estado vazio com mensagem de dados insuficientes quando ninguém tem 20 partidas", () => {
+    const dataset = {
+      activePlayers: [{ id: "p1", nickname: "Player 1", avatarUrl: null, levelGc: null }],
+      statsByPlayer: new Map([
+        [
+          "p1",
+          Array.from({ length: 15 }, (_, i) => ({
+            rating: 1.20,
+            match: { id: `m${i}` },
+          })),
+        ],
+      ]),
+      allStats: [],
+    };
+
+    // @ts-ignore
+    const result = getAttentionPointFromDataset([], dataset);
+    expect(result.attentionPoint).toBeNull();
+    expect(result.emptyReason).toBe("Dados insuficientes para comparar dois blocos de 10 partidas.");
+  });
+
+  it("retorna mensagem de nenhuma queda de 0,10 ou mais quando jogadores com 20 partidas não caíram", () => {
+    const dataset = {
+      activePlayers: [{ id: "p1", nickname: "Player 1", avatarUrl: null, levelGc: null }],
+      statsByPlayer: new Map([
+        [
+          "p1",
+          Array.from({ length: 20 }, (_, i) => ({
+            rating: 1.20,
+            match: { id: `m${i}` },
+          })),
+        ],
+      ]),
+      allStats: [],
+    };
+
+    const seasonComparison = [
+      {
+        player: { id: "p1", nickname: "Player 1", avatarUrl: null, levelGc: null },
+        season: { rating: 1.20, adr: 80, kd: 1.1, winrate: 50, matchCount: 10 },
+        recent: { rating: 1.15, adr: 78, kd: 1.05, winrate: 50, matchCount: 10 },
+        diff: { rating: -0.05, adr: -2, kd: -0.05, winrate: 0 },
+        rawDiff: -0.05,
+        recentMatches: [],
+      },
+    ];
+
+    // @ts-ignore
+    const result = getAttentionPointFromDataset(seasonComparison, dataset);
+    expect(result.attentionPoint).toBeNull();
+    expect(result.emptyReason).toBe("Nenhuma queda de rating de 0,10 ou mais identificada.");
+  });
+
+  it("seleciona a queda mais acentuada (rawDiff <= -0.10) e exibe os blocos", () => {
+    const dataset = {
+      activePlayers: [
+        { id: "p1", nickname: "Player 1", avatarUrl: null, levelGc: null },
+        { id: "p2", nickname: "Player 2", avatarUrl: null, levelGc: null },
+      ],
+      statsByPlayer: new Map([
+        ["p1", Array.from({ length: 20 }, (_, i) => ({ rating: 1.2, match: { id: `m1_${i}` } }))],
+        ["p2", Array.from({ length: 20 }, (_, i) => ({ rating: 1.2, match: { id: `m2_${i}` } }))],
+      ]),
+      allStats: [],
+    };
+
+    const seasonComparison = [
+      {
+        player: { id: "p1", nickname: "Player 1", avatarUrl: null, levelGc: null },
+        season: { rating: 1.30, adr: 85, kd: 1.2, winrate: 60, matchCount: 10 },
+        recent: { rating: 1.15, adr: 75, kd: 1.0, winrate: 40, matchCount: 10 },
+        diff: { rating: -0.15, adr: -10, kd: -0.2, winrate: -20 },
+        rawDiff: -0.15,
+        recentMatches: [],
+      },
+      {
+        player: { id: "p2", nickname: "Player 2", avatarUrl: null, levelGc: null },
+        season: { rating: 1.35, adr: 90, kd: 1.3, winrate: 70, matchCount: 10 },
+        recent: { rating: 1.04, adr: 70, kd: 0.9, winrate: 30, matchCount: 10 },
+        diff: { rating: -0.31, adr: -20, kd: -0.4, winrate: -40 },
+        rawDiff: -0.312,
+        recentMatches: [],
+      },
+    ];
+
+    // @ts-ignore
+    const result = getAttentionPointFromDataset(seasonComparison, dataset);
+    expect(result.attentionPoint).not.toBeNull();
+    expect(result.attentionPoint?.player.id).toBe("p2");
+    expect(result.attentionPoint?.dropRating).toBe(0.31);
+    expect(result.attentionPoint?.previousRating).toBe(1.35);
+    expect(result.attentionPoint?.recentRating).toBe(1.04);
+  });
+});
+
 
 

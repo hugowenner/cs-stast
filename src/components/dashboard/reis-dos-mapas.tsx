@@ -39,14 +39,14 @@ export function ReisDosMapa({
             <div className="flex items-center gap-2">
               <Crosshair className="size-3.5 text-primary" />
               <span className="text-[10px] font-mono font-bold text-foreground uppercase tracking-[0.16em]">
-                Controle de Território por Mapa
+                Destaque por Aproveitamento
               </span>
             </div>
             <span
-              className="text-[10px] font-mono text-muted-foreground/60 cursor-help"
-              title="O mínimo é de 5 partidas ou metade das partidas do jogador mais ativo neste mapa, arredondada para cima — o que for maior. A classificação prioriza aproveitamento; os desempates são vitórias e rating."
+              className="text-[9px] font-mono text-muted-foreground/80 bg-surface-base/50 border border-border/40 px-2 py-0.5 rounded-[2px] cursor-help"
+              title="A classificação equilibra percentual de vitórias e quantidade de partidas usando o limite inferior de Wilson com 95% de confiança. Históricos maiores reduzem a incerteza. Por isso, o maior percentual exibido nem sempre ocupa o primeiro lugar."
             >
-              Melhor aproveitamento · Mínimo dinâmico
+              Ranking ajustado pela amostra
             </span>
           </div>
 
@@ -122,11 +122,15 @@ export function ReisDosMapa({
                                 >
                                   {spec.player.nickname}
                                 </Link>
-                                <Crown className="size-3 text-gold shrink-0" aria-label="1º lugar (Melhor aproveitamento)" />
+                                <Crown className="size-3 text-gold shrink-0" aria-label="1º lugar (Destaque por aproveitamento)" />
                               </div>
                               {spec.rating !== null && (
                                 <span
-                                  title={`Rating no mapa: ${spec.rating.toFixed(2)}`}
+                                  title={`Rating no mapa: ${spec.rating.toFixed(2)}${
+                                    spec.wilsonScore !== null && spec.wilsonScore !== undefined
+                                      ? ` • Índice para classificação: ${(spec.wilsonScore * 100).toFixed(1)}`
+                                      : ""
+                                  }`}
                                   className="cursor-help text-[9px] font-mono text-muted-foreground/60 hover:text-foreground shrink-0 tabular-nums"
                                 >
                                   ({spec.rating.toFixed(2)})
@@ -137,7 +141,14 @@ export function ReisDosMapa({
                               <span className="text-xs font-mono font-black text-status-good tabular-nums">
                                 {spec.winrate.toFixed(0)}%
                               </span>
-                              <span className="text-[9px] font-mono text-muted-foreground/75 tabular-nums">
+                              <span
+                                className="text-[9px] font-mono text-muted-foreground/75 tabular-nums cursor-help"
+                                title={
+                                  spec.wilsonScore !== null && spec.wilsonScore !== undefined
+                                    ? `Índice para classificação: ${(spec.wilsonScore * 100).toFixed(1)}`
+                                    : undefined
+                                }
+                              >
                                 {spec.wins} {spec.wins === 1 ? "vitória" : "vitórias"} em {spec.matches} {spec.matches === 1 ? "partida" : "partidas"}
                               </span>
                             </div>
@@ -153,7 +164,11 @@ export function ReisDosMapa({
                                 <div
                                   key={runnerUp.player.id}
                                   className="flex items-center justify-between gap-1.5 py-1 px-1.5 rounded-xs bg-surface-base/30 border border-border/25 text-[10px] font-mono hover:border-border/60 transition-micro"
-                                  title={`Rating no mapa: ${runnerUp.rating.toFixed(2)}`}
+                                  title={`Rating no mapa: ${runnerUp.rating.toFixed(2)}${
+                                    runnerUp.wilsonScore !== undefined
+                                      ? ` • Índice para classificação: ${(runnerUp.wilsonScore * 100).toFixed(1)}`
+                                      : ""
+                                  }`}
                                 >
                                   <div className="flex items-center gap-1.5 min-w-0 flex-1">
                                     <span className={cn(
@@ -180,7 +195,13 @@ export function ReisDosMapa({
                                       {runnerUp.winrate.toFixed(0)}%
                                     </span>
                                     <span className="text-muted-foreground/40">·</span>
-                                    <span>
+                                    <span
+                                      title={
+                                        runnerUp.wilsonScore !== undefined
+                                          ? `Índice para classificação: ${(runnerUp.wilsonScore * 100).toFixed(1)}`
+                                          : undefined
+                                      }
+                                    >
                                       {runnerUp.wins}V em {runnerUp.matches}P
                                     </span>
                                   </div>
@@ -196,7 +217,7 @@ export function ReisDosMapa({
                           Nenhum jogador elegível
                         </span>
                         <span className="text-[9px] font-mono text-muted-foreground/50 leading-tight mt-0.5">
-                          É necessário disputar pelo menos {spec.minMatches} partidas e conquistar 1 vitória neste mapa.
+                          É necessário disputar pelo menos 5 partidas e conquistar 1 vitória neste mapa.
                         </span>
                       </div>
                     )}
@@ -205,14 +226,12 @@ export function ReisDosMapa({
                     <div className="relative z-10 flex items-center justify-between pt-1 text-[9px] font-mono text-muted-foreground/50">
                       <span
                         className="cursor-help underline decoration-dotted decoration-muted-foreground/40 hover:text-foreground transition-micro"
-                        title="O mínimo é de 5 partidas ou metade das partidas do jogador mais ativo neste mapa, arredondada para cima — o que for maior. A classificação prioriza aproveitamento; os desempates são vitórias e rating."
+                        title="A classificação equilibra percentual de vitórias e quantidade de partidas usando o limite inferior de Wilson com 95% de confiança. Históricos maiores reduzem a incerteza. Por isso, o maior percentual exibido nem sempre ocupa o primeiro lugar."
                       >
-                        Mínimo: {spec.minMatches} {spec.minMatches === 1 ? "partida" : "partidas"}
+                        Mínimo: 5 partidas
                       </span>
-                      <span>
-                        {spec.player && spec.podium && spec.podium.length > 0
-                          ? `${spec.podium.length} ${spec.podium.length === 1 ? "elegível" : "elegíveis"}`
-                          : "—"}
+                      <span className="text-[8px] font-mono text-muted-foreground/60">
+                        Ajustado pela amostra
                       </span>
                     </div>
                   </div>

@@ -20,6 +20,9 @@ export function MapSpecialistsGrid({ specialists }: Props) {
     );
   }
 
+  const WILSON_TOOLTIP =
+    "A classificação equilibra percentual de vitórias e quantidade de partidas usando o limite inferior de Wilson com 95% de confiança. Históricos maiores reduzem a incerteza. Por isso, o maior percentual exibido nem sempre ocupa o primeiro lugar.";
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
       {specialists.map((entry) => {
@@ -49,7 +52,7 @@ export function MapSpecialistsGrid({ specialists }: Props) {
                     Nenhum jogador elegível
                   </p>
                   <p className="text-[9px] text-muted-foreground/50 leading-relaxed mt-1">
-                    É necessário disputar pelo menos {entry.minMatches} partidas e conquistar 1 vitória neste mapa.
+                    É necessário disputar pelo menos 5 partidas e conquistar 1 vitória neste mapa.
                   </p>
                 </div>
               </div>
@@ -59,9 +62,9 @@ export function MapSpecialistsGrid({ specialists }: Props) {
                 <div>
                   <p
                     className="text-[7px] uppercase tracking-widest font-bold text-muted-foreground/40 cursor-help"
-                    title="O mínimo é de 5 partidas ou metade das partidas do jogador mais ativo neste mapa, arredondada para cima — o que for maior. A classificação prioriza aproveitamento; os desempates são vitórias e rating."
+                    title={WILSON_TOOLTIP}
                   >
-                    Mínimo: {entry.minMatches}P
+                    Mínimo: 5 partidas
                   </p>
                   <p className="text-[11px] font-medium text-muted-foreground/40 mt-0.5">
                     Sem líder consolidado
@@ -80,17 +83,23 @@ export function MapSpecialistsGrid({ specialists }: Props) {
             className="glass-panel rounded-2xl border border-white/[0.08] overflow-hidden flex flex-col justify-between"
           >
             <div>
-              {/* Nome do mapa */}
-              <div className="px-3 pt-3 pb-2 border-b border-white/[0.05]">
-                <div className="flex items-center gap-1.5">
+              {/* Nome do mapa + Identificação de Ranking Ajustado */}
+              <div className="px-3 pt-3 pb-2 border-b border-white/[0.05] flex items-center justify-between gap-1">
+                <div className="flex items-center gap-1.5 min-w-0">
                   <Map className="size-2.5 text-accent-cyan/70 shrink-0" />
                   <p className="text-[9px] font-black text-accent-cyan uppercase tracking-widest truncate">
                     {displayName}
                   </p>
                 </div>
+                <span
+                  className="text-[7px] font-mono text-muted-foreground/60 uppercase tracking-wider cursor-help shrink-0"
+                  title={WILSON_TOOLTIP}
+                >
+                  Ajustado
+                </span>
               </div>
 
-              {/* 1º Colocado (Destaque: Melhor Aproveitamento) */}
+              {/* 1º Colocado (Destaque por aproveitamento) */}
               <div className="px-3 py-2.5 flex items-center gap-2 border-b border-white/[0.04]">
                 <PlayerAvatar
                   nickname={player.nickname}
@@ -107,15 +116,22 @@ export function MapSpecialistsGrid({ specialists }: Props) {
                       >
                         {player.nickname}
                       </Link>
-                      <Crown className="size-3 text-gold shrink-0" aria-label="1º lugar (Melhor aproveitamento)" />
+                      <Crown className="size-3 text-gold shrink-0" aria-label="1º lugar (Destaque por aproveitamento)" />
                     </div>
                   </div>
                   <div className="flex items-baseline justify-between gap-1 mt-0.5">
                     <p className="text-[11px] font-mono font-black text-status-good tabular-nums">
                       {entry.winrate.toFixed(0)}%
                     </p>
-                    <p className="text-[8px] font-mono text-muted-foreground/70 tabular-nums">
-                      {entry.wins}V em {entry.matches}P
+                    <p
+                      className="text-[8px] font-mono text-muted-foreground/70 tabular-nums cursor-help"
+                      title={
+                        entry.wilsonScore !== null && entry.wilsonScore !== undefined
+                          ? `Índice para classificação: ${(entry.wilsonScore * 100).toFixed(1)}`
+                          : undefined
+                      }
+                    >
+                      {entry.wins} vitórias em {entry.matches} partidas
                     </p>
                   </div>
                 </div>
@@ -130,7 +146,11 @@ export function MapSpecialistsGrid({ specialists }: Props) {
                       <div
                         key={runnerUp.player.id}
                         className="flex items-center justify-between gap-1.5 text-[9px] font-mono"
-                        title={`Rating no mapa: ${runnerUp.rating.toFixed(2)}`}
+                        title={`Rating no mapa: ${runnerUp.rating.toFixed(2)}${
+                          runnerUp.wilsonScore !== undefined
+                            ? ` • Índice para classificação: ${(runnerUp.wilsonScore * 100).toFixed(1)}`
+                            : ""
+                        }`}
                       >
                         <div className="flex items-center gap-1.5 min-w-0 flex-1">
                           <span className="text-[8px] font-bold text-muted-foreground/60 shrink-0">
@@ -151,7 +171,15 @@ export function MapSpecialistsGrid({ specialists }: Props) {
                         <div className="flex items-center gap-1 shrink-0 tabular-nums text-muted-foreground/70">
                           <span className="font-bold text-white/90">{runnerUp.winrate.toFixed(0)}%</span>
                           <span>·</span>
-                          <span>{runnerUp.wins}V/{runnerUp.matches}P</span>
+                          <span
+                            title={
+                              runnerUp.wilsonScore !== undefined
+                                ? `Índice para classificação: ${(runnerUp.wilsonScore * 100).toFixed(1)}`
+                                : undefined
+                            }
+                          >
+                            {runnerUp.wins}V/{runnerUp.matches}P
+                          </span>
                         </div>
                       </div>
                     );
@@ -173,10 +201,10 @@ export function MapSpecialistsGrid({ specialists }: Props) {
                 </p>
               </div>
               <span
-                className="text-[8px] font-mono text-muted-foreground/50 cursor-help"
-                title="O mínimo é de 5 partidas ou metade das partidas do jogador mais ativo neste mapa, arredondada para cima — o que for maior. A classificação prioriza aproveitamento; os desempates são vitórias e rating."
+                className="text-[8px] font-mono text-muted-foreground/50 cursor-help underline decoration-dotted decoration-muted-foreground/30"
+                title={WILSON_TOOLTIP}
               >
-                Min: {entry.minMatches}P
+                Mínimo: 5 partidas
               </span>
             </div>
           </div>
