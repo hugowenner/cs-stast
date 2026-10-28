@@ -14,7 +14,7 @@ import {
   type OfficialTop3Entry,
 } from "@/lib/season-podium";
 import type { PlayerMomentumEntry, MapPerformanceEntry } from "@/server/services/competitive.service";
-import { cn } from "@/lib/utils";
+import { cn, cleanMapName } from "@/lib/utils";
 
 export interface SeasonHeroProps {
   seasonLabel: string;
@@ -147,7 +147,7 @@ export function SeasonHero({
           key: "best-map",
           type: "map" as const,
           label: "MELHOR APROVEITAMENTO",
-          entity: bestMap.map.replace(/^de_/i, ""),
+          entity: cleanMapName(bestMap.map),
           img: bestMapImg,
           metricLabel: "aproveitamento",
           metricValue: `${bestMap.winrate.toFixed(0)}%`,
@@ -159,7 +159,7 @@ export function SeasonHero({
           key: "worst-map",
           type: "map" as const,
           label: "MENOR APROVEITAMENTO",
-          entity: worstMap.map.replace(/^de_/i, ""),
+          entity: cleanMapName(worstMap.map),
           img: worstMapImg,
           metricLabel: "aproveitamento",
           metricValue: `${worstMap.winrate.toFixed(0)}%`,
@@ -189,7 +189,7 @@ export function SeasonHero({
             )}
           </div>
           {syncText && (
-            <span className="text-[11px] font-mono text-muted-foreground/75 mt-0.5">
+            <span className="text-xs font-mono text-muted-foreground/90 mt-0.5">
               {syncText}
             </span>
           )}
@@ -211,7 +211,7 @@ export function SeasonHero({
               </span>
               <TacticalBadge label="MODELO 3.5" variant="gold" size="xs" />
             </div>
-            <p className="text-[11px] text-muted-foreground/70 font-medium">
+            <p className="text-xs text-muted-foreground/90 font-medium">
               Critério oficial da temporada · Mínimo de 10 partidas
             </p>
           </div>
@@ -227,7 +227,7 @@ export function SeasonHero({
                       1º lugar
                     </span>
                   </div>
-                  <span className="text-[10px] font-mono text-muted-foreground/70">
+                  <span className="text-xs font-mono text-muted-foreground/90 font-semibold">
                     {leader.matchesPlayed} partidas
                   </span>
                 </div>
@@ -291,7 +291,7 @@ export function SeasonHero({
                             >
                               {runner.player.nickname}
                             </Link>
-                            <span className="text-[10px] font-mono text-muted-foreground/60">
+                            <span className="text-xs font-mono text-muted-foreground/90 font-medium">
                               {runner.matchesPlayed} partidas
                             </span>
                           </div>
@@ -299,14 +299,18 @@ export function SeasonHero({
 
                         <div className="flex flex-col items-end shrink-0 text-right">
                           <span className="font-mono text-xs sm:text-sm font-bold text-foreground/90 tabular-nums">
-                            {runner.value.toFixed(3)}
+                            {typeof runner.value === "number" && !isNaN(runner.value)
+                              ? runner.value.toFixed(3)
+                              : "—"}
                           </span>
-                          <span
-                            className="text-[10px] font-mono text-muted-foreground/75 truncate"
-                            title={`${diffResult.diff.toFixed(3)} pontos atrás do líder`}
-                          >
-                            {diffResult.formattedDiff}
-                          </span>
+                          {diffResult.formattedDiff ? (
+                            <span
+                              className="text-[11px] sm:text-xs font-mono text-muted-foreground/90 font-medium truncate max-w-[140px] sm:max-w-none"
+                              title={diffResult.formattedDiff}
+                            >
+                              {diffResult.formattedDiff}
+                            </span>
+                          ) : null}
                         </div>
                       </div>
                     );
@@ -320,15 +324,15 @@ export function SeasonHero({
               <span className="text-sm font-bold text-foreground/80">
                 Classificação ainda indisponível
               </span>
-              <p className="text-xs text-muted-foreground/60 max-w-xs font-mono">
+              <p className="text-xs text-muted-foreground/85 max-w-xs font-mono">
                 São necessárias pelo menos 10 partidas válidas na temporada para obter classificação oficial.
               </p>
             </div>
           )}
 
           {/* Rodapé com link para tabela completa */}
-          <div className="flex items-center justify-between border-t border-border/30 pt-3 text-[11px] font-mono">
-            <span className="text-muted-foreground/70">
+          <div className="flex items-center justify-between border-t border-border/30 pt-3 text-xs font-mono">
+            <span className="text-muted-foreground/85 font-medium">
               {totalPlayers} jogadores monitorados
             </span>
             <Link
@@ -393,7 +397,7 @@ export function SeasonHero({
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={dominantMapImg}
-                      alt={dominantMap ? dominantMap.name : "Mapa"}
+                      alt={dominantMap ? cleanMapName(dominantMap.name) : "Mapa"}
                       className="w-full h-full object-cover object-center opacity-85"
                       onError={(e) => {
                         (e.target as HTMLElement).style.display = "none";
@@ -403,8 +407,8 @@ export function SeasonHero({
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate block leading-tight uppercase">
-                    {dominantMap ? dominantMap.name.replace(/^de_/i, "") : "—"}
+                  <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate block leading-tight">
+                    {dominantMap ? cleanMapName(dominantMap.name) : "—"}
                   </span>
                 </div>
               </div>
@@ -415,9 +419,9 @@ export function SeasonHero({
           </div>
 
           {/* Faixa sutil de métricas globais */}
-          <div className="border-t border-border/30 pt-3 text-[11px] text-muted-foreground/60 font-mono flex items-center justify-between">
+          <div className="border-t border-border/30 pt-3 text-xs text-muted-foreground/85 font-mono flex items-center justify-between">
             <span>Métricas Globais da Temporada</span>
-            <span className="text-muted-foreground/80 font-mono">
+            <span className="text-muted-foreground/95 font-semibold font-mono">
               {totalMatches} partidas registradas
             </span>
           </div>
@@ -458,9 +462,9 @@ export function SeasonHero({
                   </div>
                   <div className="flex flex-col items-end shrink-0 text-right">
                     <span className="font-mono text-xs font-bold text-status-good tabular-nums">
-                      {item.metricValue} <span className="text-[10px] font-normal text-muted-foreground/70">rating</span>
+                      {item.metricValue} <span className="text-[10px] font-medium text-muted-foreground/85">rating</span>
                     </span>
-                    <span className="text-[9px] font-mono text-muted-foreground/60">
+                    <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground/85 font-medium">
                       {item.sample}
                     </span>
                   </div>
@@ -512,7 +516,7 @@ export function SeasonHero({
                   <span className={cn("font-mono text-xs font-bold tabular-nums", colorClass)}>
                     {item.metricValue}
                   </span>
-                  <span className="text-[9px] font-mono text-muted-foreground/60">
+                  <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground/85 font-medium">
                     {item.sample}
                   </span>
                 </div>

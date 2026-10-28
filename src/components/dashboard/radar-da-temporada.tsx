@@ -46,12 +46,12 @@ function JogadorEmDestaqueCard({
 
         <div className="py-4 text-center">
           <p className="text-sm font-bold text-foreground">Sem jogador elegível</p>
-          <p className="text-xs font-mono text-muted-foreground/80 mt-1 max-w-md mx-auto">
+          <p className="text-xs font-mono text-muted-foreground/85 mt-1 max-w-md mx-auto">
             {emptyReason ?? "São necessárias pelo menos 5 partidas com rating no período."}
           </p>
         </div>
 
-        <div className="border-t border-border/30 pt-2 text-[10px] font-mono text-muted-foreground/50 text-center">
+        <div className="border-t border-border/30 pt-2 text-xs font-mono text-muted-foreground/80 text-center">
           Critério: pelo menos 5 partidas válidas com rating no período selecionado
         </div>
       </div>
@@ -101,7 +101,7 @@ function JogadorEmDestaqueCard({
           <span className="font-mono text-xl sm:text-2xl font-black text-foreground mt-0.5 tabular-nums block">
             <AnimatedNumber value={featured.rating} decimals={2} />
           </span>
-          <span className="text-[10px] font-mono text-muted-foreground/60 block mt-0.5 truncate">
+          <span className="text-[11px] font-mono text-muted-foreground/85 block mt-0.5 truncate font-medium">
             {featured.matchCount} partidas com rating
           </span>
         </div>
@@ -114,7 +114,7 @@ function JogadorEmDestaqueCard({
           <span className="font-mono text-xl sm:text-2xl font-black text-foreground mt-0.5 tabular-nums block">
             <AnimatedNumber value={featured.winrate} decimals={1} suffix="%" />
           </span>
-          <span className="text-[10px] font-mono text-muted-foreground/60 block mt-0.5 truncate">
+          <span className="text-[11px] font-mono text-muted-foreground/85 block mt-0.5 truncate font-medium">
             {featured.wins}V em {featured.winrateMatchesCount} partidas
           </span>
         </div>
@@ -139,7 +139,7 @@ function JogadorEmDestaqueCard({
                 <AnimatedNumber value={Math.abs(featured.evolution.diffRating)} decimals={2} />
               </span>
               <span
-                className="text-[10px] font-mono text-muted-foreground/60 block mt-0.5 truncate"
+                className="text-[11px] font-mono text-muted-foreground/85 block mt-0.5 truncate font-medium"
                 title={featured.evolution.text}
               >
                 vs 10 anteriores
@@ -150,7 +150,7 @@ function JogadorEmDestaqueCard({
               <span className="font-mono text-xl sm:text-2xl font-black text-foreground mt-0.5 tabular-nums block">
                 {featured.matchCount}
               </span>
-              <span className="text-[10px] font-mono text-muted-foreground/60 block mt-0.5 truncate">
+              <span className="text-[11px] font-mono text-muted-foreground/85 block mt-0.5 truncate font-medium">
                 no período
               </span>
             </>
@@ -184,12 +184,12 @@ function FatoDoPeriodoCard({
 
         <div className="py-4 text-center">
           <p className="text-xs font-bold text-foreground">Nenhum fato em destaque</p>
-          <p className="text-[11px] font-mono text-muted-foreground/70 mt-1">
+          <p className="text-xs font-mono text-muted-foreground/85 mt-1">
             {emptyReason ?? "Nenhum fato atende aos critérios neste período."}
           </p>
         </div>
 
-        <div className="border-t border-border/30 pt-2 text-[10px] font-mono text-muted-foreground/50 text-center">
+        <div className="border-t border-border/30 pt-2 text-xs font-mono text-muted-foreground/80 text-center">
           Sequência de vitórias (≥ 3) ou mapa coletivo com aproveitamento &gt; 50%
         </div>
       </div>
@@ -245,7 +245,7 @@ function FatoDoPeriodoCard({
         </div>
       </div>
 
-      <div className="border-t border-border/30 pt-2 text-[10px] font-mono text-muted-foreground/70 truncate">
+      <div className="border-t border-border/30 pt-2 text-xs font-mono text-muted-foreground/85 truncate">
         {fact.detail ?? fact.title}
       </div>
     </div>
@@ -275,12 +275,12 @@ function PontoDeAtencaoCard({
 
         <div className="py-4 text-center">
           <p className="text-xs font-bold text-foreground">Sem pontos de atenção</p>
-          <p className="text-[11px] font-mono text-muted-foreground/70 mt-1">
+          <p className="text-xs font-mono text-muted-foreground/85 mt-1">
             {emptyReason ?? "Nenhuma queda de rating de 0,10 ou mais identificada."}
           </p>
         </div>
 
-        <div className="border-t border-border/30 pt-2 text-[10px] font-mono text-muted-foreground/50 text-center">
+        <div className="border-t border-border/30 pt-2 text-xs font-mono text-muted-foreground/80 text-center">
           Comparação entre dois blocos consecutivos de 10 partidas
         </div>
       </div>
@@ -324,7 +324,7 @@ function PontoDeAtencaoCard({
       {/* Comparação entre os dois blocos de 10 partidas */}
       <div className="grid grid-cols-2 gap-2 p-2 bg-surface-subtle/50 rounded-sm border border-border/30 text-center">
         <div>
-          <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground/60 block">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/80 block font-bold">
             10 ANTERIORES
           </span>
           <span className="font-mono text-xs font-bold text-foreground tabular-nums block mt-0.5">
@@ -332,7 +332,7 @@ function PontoDeAtencaoCard({
           </span>
         </div>
         <div className="border-l border-border/30">
-          <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground/60 block">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/80 block font-bold">
             10 MAIS RECENTES
           </span>
           <span className="font-mono text-xs font-bold text-amber-400 tabular-nums block mt-0.5">
@@ -341,7 +341,7 @@ function PontoDeAtencaoCard({
         </div>
       </div>
 
-      <div className="border-t border-border/30 pt-2 text-[10px] font-mono text-muted-foreground/70">
+      <div className="border-t border-border/30 pt-2 text-xs font-mono text-muted-foreground/85">
         {attention.explanation}
       </div>
     </div>

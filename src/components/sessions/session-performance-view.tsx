@@ -24,7 +24,7 @@ import { DeltaIndicator } from "@/components/ui/delta-indicator";
 import { Sparkline } from "@/components/ui/sparkline";
 import { SampleIndicator } from "@/components/ui/sample-indicator";
 import { getCleanMapImage } from "@/components/ui/map-performance-card";
-import { cn } from "@/lib/utils";
+import { cn, cleanMapName } from "@/lib/utils";
 import type { TimelineChartPoint } from "@/components/charts/timeline-chart";
 import type { SimpleSessionSummary, SessionsOverview } from "@/server/analytics/session.analytics";
 import type { SessionPeriod } from "@/components/sessions/session-filters";
@@ -115,7 +115,7 @@ function computePerformanceMetrics(sessions: SimpleSessionSummary[]) {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 6)
     .map(([name, count]) => ({
-      name: name.replace(/^de_/i, "").toUpperCase(),
+      name: cleanMapName(name),
       count,
       percentage: (count / n) * 100,
       subtitle: `${count} ${count === 1 ? "sessão" : "sessões"}`,

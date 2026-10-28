@@ -121,13 +121,13 @@ function RatingSparkline({ matches, color }: RatingSparklineProps) {
   return (
     <div className="flex flex-col gap-1.5 pt-2">
       {/* Header do Sparkline com Tooltip Integrado */}
-      <div className="flex items-center justify-between text-[10px] font-mono h-4">
-        <span className="text-muted-foreground/60 uppercase tracking-wider">
+      <div className="flex items-center justify-between text-[11px] font-mono h-4">
+        <span className="text-muted-foreground/85 uppercase tracking-wider font-medium">
           Últimas {matches.length} partidas (cronológico)
         </span>
         {activePoint ? (
           <span className="font-bold text-foreground truncate max-w-[190px]">
-            {formatDateBr(activePoint.match.playedAt)} · {activePoint.match.mapName} ·{" "}
+            {formatDateBr(activePoint.match.playedAt)} · {cleanMapName(activePoint.match.mapName)} ·{" "}
             <span
               className={cn(
                 "font-black",
@@ -138,7 +138,7 @@ function RatingSparkline({ matches, color }: RatingSparklineProps) {
             </span>
           </span>
         ) : (
-          <span className="text-muted-foreground/40 italic">Passe o mouse nos pontos</span>
+          <span className="text-muted-foreground/60 italic font-medium">Passe o mouse nos pontos</span>
         )}
       </div>
 
@@ -164,7 +164,7 @@ function RatingSparkline({ matches, color }: RatingSparklineProps) {
             x={width - padRight + 4}
             y={baselineY + 3}
             fill="currentColor"
-            className="text-[9px] font-mono text-muted-foreground/45 select-none"
+            className="text-[9px] font-mono text-muted-foreground/75 select-none font-bold"
           >
             1,00
           </text>
@@ -228,7 +228,7 @@ function CompactEvolutionRow({
   return (
     <div className="flex items-center justify-between gap-3 p-2 rounded-xs bg-surface-deck/60 border border-border/40 hover:border-border/80 transition-micro">
       <div className="flex items-center gap-2.5 min-w-0">
-        <span className="text-[10px] font-mono font-bold text-muted-foreground/50 w-4 text-center shrink-0">
+        <span className="text-[11px] font-mono font-bold text-muted-foreground/80 w-4 text-center shrink-0">
           #{position}
         </span>
         <PlayerAvatar
@@ -243,9 +243,9 @@ function CompactEvolutionRow({
           >
             {entry.player.nickname}
           </Link>
-          <div className="flex items-center gap-1 text-[10px] font-mono text-muted-foreground/60 tabular-nums">
+          <div className="flex items-center gap-1 text-[11px] font-mono text-muted-foreground/85 font-medium tabular-nums">
             <span>{formatRating(entry.season.rating)}</span>
-            <ArrowRight className="size-2.5 text-muted-foreground/40 shrink-0" />
+            <ArrowRight className="size-2.5 text-muted-foreground/50 shrink-0" />
             <span className={cn("font-semibold", isGood ? "text-status-good" : "text-status-critical")}>
               {formatRating(entry.recent.rating)}
             </span>
@@ -262,7 +262,7 @@ function CompactEvolutionRow({
         >
           {formatRatingDelta(entry.rawDiff)}
         </span>
-        <span className="text-[9px] font-mono text-muted-foreground/50 block">de rating</span>
+        <span className="text-[10px] font-mono text-muted-foreground/80 font-medium block">de rating</span>
       </div>
     </div>
   );
@@ -288,7 +288,7 @@ function EvolucaoCard({ gainers }: { gainers: SeasonComparisonEntry[] }) {
           <TacticalBadge label="EM ALTA" variant="good" size="xs" />
         </div>
 
-        <p className="text-[11px] text-muted-foreground/75 font-sans leading-snug">
+        <p className="text-xs text-muted-foreground/90 font-medium leading-snug">
           Últimas 10 partidas comparadas às 10 anteriores do jogador.
         </p>
 
@@ -298,7 +298,7 @@ function EvolucaoCard({ gainers }: { gainers: SeasonComparisonEntry[] }) {
             <p className="text-xs font-mono font-semibold text-foreground/80 mb-1">
               Sem evolução no período
             </p>
-            <p className="text-[11px] text-muted-foreground/60 leading-relaxed">
+            <p className="text-xs text-muted-foreground/85 leading-relaxed">
               São necessárias 20 partidas com rating no período para comparar dois blocos de 10.
             </p>
           </div>
@@ -390,7 +390,7 @@ function QuedaCard({ decliners }: { decliners: SeasonComparisonEntry[] }) {
           <TacticalBadge label="EM QUEDA" variant="critical" size="xs" />
         </div>
 
-        <p className="text-[11px] text-muted-foreground/75 font-sans leading-snug">
+        <p className="text-xs text-muted-foreground/90 font-medium leading-snug">
           Últimas 10 partidas comparadas às 10 anteriores do jogador.
         </p>
 
@@ -400,7 +400,7 @@ function QuedaCard({ decliners }: { decliners: SeasonComparisonEntry[] }) {
             <p className="text-xs font-mono font-semibold text-foreground/80 mb-1">
               Sem quedas no período
             </p>
-            <p className="text-[11px] text-muted-foreground/60 leading-relaxed">
+            <p className="text-xs text-muted-foreground/85 leading-relaxed">
               São necessárias 20 partidas com rating no período para comparar dois blocos de 10.
             </p>
           </div>
@@ -487,7 +487,7 @@ function StreakResultStrip({ results }: { results: StreakRecentMatch[] }) {
           return (
             <div
               key={r.matchId || idx}
-              title={`${isWin ? "Vitória" : isLoss ? "Derrota" : "Empate"} (${r.score}) em ${r.mapName} · ${formatDateBr(r.playedAt)}`}
+              title={`${isWin ? "Vitória" : isLoss ? "Derrota" : "Empate"} (${r.score}) em ${cleanMapName(r.mapName)} · ${formatDateBr(r.playedAt)}`}
               className={cn(
                 "relative flex-1 py-1 text-center font-mono text-[11px] font-black rounded-xs transition-micro border select-none cursor-help",
                 isWin && "bg-status-good/20 text-status-good border-status-good/40",
@@ -505,7 +505,7 @@ function StreakResultStrip({ results }: { results: StreakRecentMatch[] }) {
         })}
       </div>
 
-      <div className="flex items-center justify-between text-[9px] font-mono text-muted-foreground/50">
+      <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground/80 font-medium">
         <span>← Mais antiga</span>
         <span>Mais recente (atual) →</span>
       </div>
@@ -540,7 +540,7 @@ function SequenciasCard({
           <TacticalBadge label="MOMENTO" variant="gold" size="xs" />
         </div>
 
-        <p className="text-[11px] text-muted-foreground/75 font-sans leading-snug">
+        <p className="text-xs text-muted-foreground/90 font-medium leading-snug">
           Partidas consecutivas computadas até o último jogo de cada atleta.
         </p>
 
@@ -549,7 +549,7 @@ function SequenciasCard({
             <p className="text-xs font-mono font-semibold text-foreground/80 mb-1">
               Sem sequências ativas
             </p>
-            <p className="text-[11px] text-muted-foreground/60 leading-relaxed">
+            <p className="text-xs text-muted-foreground/85 leading-relaxed">
               Nenhum jogador possui sequência ativa de 2 ou mais partidas consecutivas.
             </p>
           </div>
@@ -584,7 +584,7 @@ function SequenciasCard({
                   <StreakResultStrip results={hot.recentResults} />
                 </>
               ) : (
-                <p className="text-[11px] font-mono text-muted-foreground/50 py-1">
+                <p className="text-xs font-mono text-muted-foreground/80 py-1">
                   Nenhuma sequência de vitórias ativa (mínimo de 2).
                 </p>
               )}
@@ -619,7 +619,7 @@ function SequenciasCard({
                   <StreakResultStrip results={cold.recentResults} />
                 </>
               ) : (
-                <p className="text-[11px] font-mono text-muted-foreground/50 py-1">
+                <p className="text-xs font-mono text-muted-foreground/80 py-1">
                   Nenhuma sequência sem vencer ativa (mínimo de 2).
                 </p>
               )}
@@ -662,7 +662,7 @@ function MapasBalancoCard({ mapWinrates }: { mapWinrates: MapPerformanceEntry[] 
           <TacticalBadge label="COLETIVO" variant="info" size="xs" />
         </div>
 
-        <p className="text-[11px] text-muted-foreground/75 font-sans leading-snug">
+        <p className="text-xs text-muted-foreground/90 font-medium leading-snug">
           Aproveitamento coletivo da equipe nos mapas com amostra de 3+ jogos.
         </p>
 
@@ -672,7 +672,7 @@ function MapasBalancoCard({ mapWinrates }: { mapWinrates: MapPerformanceEntry[] 
             <p className="text-xs font-mono font-semibold text-foreground/80 mb-1">
               Amostra insuficiente
             </p>
-            <p className="text-[11px] text-muted-foreground/60 leading-relaxed">
+            <p className="text-xs text-muted-foreground/85 leading-relaxed">
               Nenhum mapa disputado atingiu o mínimo de 3 partidas no período.
             </p>
           </div>
@@ -681,7 +681,7 @@ function MapasBalancoCard({ mapWinrates }: { mapWinrates: MapPerformanceEntry[] 
             <p className="text-xs font-mono font-semibold text-foreground/80 mb-1">
               Mapa único qualificado
             </p>
-            <p className="text-[11px] text-muted-foreground/60 leading-relaxed">
+            <p className="text-xs text-muted-foreground/85 leading-relaxed">
               Apenas <strong className="text-foreground">{cleanMapName(eligible[0].map)}</strong> tem 3+ partidas ({formatWinrate(eligible[0].winrate)}). Não há extremos distintos para comparação.
             </p>
           </div>
@@ -690,7 +690,7 @@ function MapasBalancoCard({ mapWinrates }: { mapWinrates: MapPerformanceEntry[] 
             <p className="text-xs font-mono font-semibold text-foreground/80 mb-1">
               Aproveitamento uniforme
             </p>
-            <p className="text-[11px] text-muted-foreground/60 leading-relaxed">
+            <p className="text-xs text-muted-foreground/85 leading-relaxed">
               Todos os mapas elegíveis possuem exatamente o mesmo aproveitamento ({formatWinrate(eligible[0].winrate)}). Sem extremos destacados.
             </p>
           </div>
@@ -704,14 +704,14 @@ function MapasBalancoCard({ mapWinrates }: { mapWinrates: MapPerformanceEntry[] 
                     Maior aproveitamento
                   </span>
                   <span className="text-xs font-mono font-bold text-foreground truncate block">
-                    {best.cleanMapName || cleanMapName(best.map)}
+                    {cleanMapName(best.cleanMapName || best.map)}
                   </span>
                 </div>
                 <div className="text-right shrink-0">
                   <span className="text-base font-mono font-black text-status-good tabular-nums block leading-none">
                     {formatWinrate(best.winrate)}
                   </span>
-                  <span className="text-[9px] font-mono text-muted-foreground/60 block mt-0.5">
+                  <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground/85 font-medium block mt-0.5">
                     {best.wins}V em {best.matchesPlayed} jogos
                   </span>
                 </div>
@@ -734,14 +734,14 @@ function MapasBalancoCard({ mapWinrates }: { mapWinrates: MapPerformanceEntry[] 
                     Menor aproveitamento
                   </span>
                   <span className="text-xs font-mono font-bold text-foreground truncate block">
-                    {worst.cleanMapName || cleanMapName(worst.map)}
+                    {cleanMapName(worst.cleanMapName || worst.map)}
                   </span>
                 </div>
                 <div className="text-right shrink-0">
                   <span className="text-base font-mono font-black text-status-critical tabular-nums block leading-none">
                     {formatWinrate(worst.winrate)}
                   </span>
-                  <span className="text-[9px] font-mono text-muted-foreground/60 block mt-0.5">
+                  <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground/85 font-medium block mt-0.5">
                     {worst.wins}V em {worst.matchesPlayed} jogos
                   </span>
                 </div>
@@ -759,8 +759,8 @@ function MapasBalancoCard({ mapWinrates }: { mapWinrates: MapPerformanceEntry[] 
         ) : null}
 
         {/* Rodapé explicativo sobre o cálculo coletivo */}
-        <div className="flex items-start gap-1.5 pt-2 border-t border-border/30 text-[10px] text-muted-foreground/60">
-          <Info className="size-3 text-muted-foreground/40 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-1.5 pt-2 border-t border-border/30 text-[11px] sm:text-xs text-muted-foreground/85">
+          <Info className="size-3.5 text-muted-foreground/70 shrink-0 mt-0.5" />
           <span>
             Cálculo coletivo sobre partidas únicas com ≥ 2 monitorados. Confrontos diretos entre monitorados são excluídos.
           </span>

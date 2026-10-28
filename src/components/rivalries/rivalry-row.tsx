@@ -1,4 +1,5 @@
 import { PlayerAvatar } from "@/components/players/player-avatar";
+import { cleanMapName } from "@/lib/utils";
 
 export interface RivalryRowData {
   id: string;
@@ -78,7 +79,7 @@ export function RivalryRow({ rivalry }: { rivalry: RivalryRowData }) {
       {/* Último confronto */}
       {rivalry.lastMatch && (
         <div className="flex items-center justify-between text-[10px] text-muted-foreground/70 pt-0.5">
-          <span className="capitalize">{rivalry.lastMatch.mapName}</span>
+          <span>{cleanMapName(rivalry.lastMatch.mapName)}</span>
           <span className="font-bold text-muted-foreground tabular-nums">
             {rivalry.lastMatch.scoreA}–{rivalry.lastMatch.scoreB}
           </span>

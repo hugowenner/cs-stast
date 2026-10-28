@@ -2,7 +2,7 @@ import { prisma } from "@/server/db";
 import { notFound } from "next/navigation";
 import { ArrowLeft, User, Calendar, Award, Database, RefreshCw, Swords, ShieldCheck, ShieldAlert } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { cn, cleanMapName } from "@/lib/utils";
 import { formatRelativeTime } from "@/components/admin/players/PlayersSummaryCards";
 
 interface DetailPageProps {
@@ -228,7 +228,7 @@ export default async function PlayerDetailPage({ params }: DetailPageProps) {
                         {playedAtDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                       </td>
                       <td className="px-4 py-2.5 font-medium text-foreground">
-                        {stat.match.map.name}
+                        {cleanMapName(stat.match.map.name)}
                       </td>
                       <td className="px-4 py-2.5 font-mono text-muted-foreground">
                         <span className="text-foreground font-semibold">

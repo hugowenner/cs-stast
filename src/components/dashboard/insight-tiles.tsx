@@ -2,6 +2,7 @@ import { FadeIn } from "@/components/motion/fade-in";
 import { Zap, TrendingDown, Map, AlertTriangle } from "lucide-react";
 import type { PlayerMomentumEntry, MapPerformanceEntry } from "@/server/services/competitive.service";
 import { HudBadge } from "@/components/ui/hud-badge";
+import { cleanMapName } from "@/lib/utils";
 
 interface InsightTilesProps {
   hottestPlayer: PlayerMomentumEntry | null;
@@ -70,7 +71,7 @@ export function InsightTiles({ hottestPlayer, coldestPlayer, bestMap, worstMap }
                 <HudBadge label="MAPA" variant="cyan" />
               </div>
               <div>
-                <p className="text-base font-black text-white leading-tight">{bestMap.map}</p>
+                <p className="text-base font-black text-white leading-tight">{cleanMapName(bestMap.map)}</p>
                 <p className="text-[11px] text-accent-cyan font-bold mt-1">{bestMap.winrate.toFixed(0)}% WR</p>
                 <p className="text-[10px] text-muted-foreground/55 mt-0.5">{bestMap.matchesPlayed} partidas</p>
               </div>
@@ -89,7 +90,7 @@ export function InsightTiles({ hottestPlayer, coldestPlayer, bestMap, worstMap }
                 <HudBadge label="VETO" variant="gold" />
               </div>
               <div>
-                <p className="text-base font-black text-white leading-tight">{worstMap.map}</p>
+                <p className="text-base font-black text-white leading-tight">{cleanMapName(worstMap.map)}</p>
                 <p className="text-[11px] text-status-warning font-bold mt-1">{worstMap.winrate.toFixed(0)}% WR</p>
                 <p className="text-[10px] text-muted-foreground/55 mt-0.5">{worstMap.matchesPlayed} partidas</p>
               </div>

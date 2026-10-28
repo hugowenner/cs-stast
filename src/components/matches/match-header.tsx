@@ -2,13 +2,13 @@ import Link from "next/link";
 import { Calendar, Clock, Download, ExternalLink, Shield, Swords, TrendingUp, TrendingDown } from "lucide-react";
 import { TacticalBadge } from "@/components/ui/tactical-badge";
 import { MatchTypeBadge } from "@/components/matches/match-type-badge";
-import { cn } from "@/lib/utils";
+import { cn, cleanMapName } from "@/lib/utils";
 import type { MatchMetadataDTO } from "@/server/dtos/matchDetails.dto";
 
 export function MatchHeader({ match }: { match: MatchMetadataDTO }) {
   const eloChange = match.eloChangeGroup;
   const isEloPositive = eloChange >= 0;
-  const cleanMapName = match.mapName.replace(/^de_/i, "").toUpperCase();
+  const formattedMap = cleanMapName(match.mapName);
 
   return (
     <div className="surface-panel rounded-sm border border-border/40 p-5 sm:p-6 flex flex-col gap-4">
@@ -58,7 +58,7 @@ export function MatchHeader({ match }: { match: MatchMetadataDTO }) {
               {match.scoreTeamA} <span className="text-muted-foreground/40 font-normal text-2xl">:</span> {match.scoreTeamB}
             </span>
             <span className="font-mono text-xl sm:text-2xl font-black text-primary">
-              {cleanMapName}
+              {formattedMap}
             </span>
           </div>
         </div>

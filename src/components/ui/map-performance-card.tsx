@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { Crown, Flame, ShieldAlert } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, cleanMapName } from "@/lib/utils";
 import { Sparkline } from "./sparkline";
 import { DeltaIndicator } from "./delta-indicator";
 
 const MAP_IMAGE_PATHS: Record<string, string> = {
   mirage: "/maps/mirage.png",
   dust2: "/maps/dust2.png",
+  "dust 2": "/maps/dust2.png",
+  dust_2: "/maps/dust2.png",
   inferno: "/maps/inferno.png",
   ancient: "/maps/ancient.png",
   anubis: "/maps/anubis.png",
@@ -17,7 +19,8 @@ const MAP_IMAGE_PATHS: Record<string, string> = {
 };
 
 export function getCleanMapImage(mapName: string): string | null {
-  const norm = mapName.toLowerCase().replace(/^de_/, "").trim();
+  if (!mapName) return null;
+  const norm = mapName.toLowerCase().replace(/^(de|cs)_/i, "").trim();
   return MAP_IMAGE_PATHS[norm] ?? null;
 }
 
@@ -50,7 +53,7 @@ export function MapPerformanceCard({
   className,
 }: MapPerformanceBaseProps) {
   const mapImg = getCleanMapImage(mapName);
-  const cleanName = mapName.replace(/^de_/i, "").toUpperCase();
+  const cleanName = cleanMapName(mapName);
 
   return (
     <div
@@ -69,7 +72,7 @@ export function MapPerformanceCard({
         <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
           <img
             src={mapImg}
-            alt={mapName}
+            alt={cleanName}
             className="w-full h-full object-cover object-center opacity-[0.22] grayscale-[30%] group-hover:scale-105 group-hover:opacity-[0.28] transition-all duration-300"
             onError={(e) => {
               (e.target as HTMLElement).style.display = "none";

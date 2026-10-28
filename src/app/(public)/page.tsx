@@ -133,6 +133,28 @@ export default async function DashboardPage(props: {
     recentMatches = liveRecentMatches;
     recentAchievements = liveAchievements;
     topRivalries = liveRivalries;
+
+    // Normalização / Enriquecimento de especialistas de mapa para snapshots legados
+    const isLegacySpecialists =
+      !competitive.mapSpecialists ||
+      competitive.mapSpecialists.length === 0 ||
+      competitive.mapSpecialists.some((s: any) => typeof s.winrate !== "number");
+
+    if (isLegacySpecialists) {
+      const liveDataset = await safeQuery(
+        () => competitiveService.loadCompetitiveDataset(resolvedSeasonId),
+        null,
+      );
+      const fallbackLiveSpecialists =
+        liveDataset && liveDataset.allStats.length > 0
+          ? competitiveService.getMapSpecialistsFromDataset(liveDataset)
+          : undefined;
+
+      competitive.mapSpecialists = competitiveService.normalizeLegacyMapSpecialists(
+        competitive.mapSpecialists,
+        fallbackLiveSpecialists,
+      );
+    }
   } else {
     const datasetPromise = competitiveService.loadCompetitiveDataset(resolvedSeasonId);
 
@@ -222,6 +244,7 @@ export default async function DashboardPage(props: {
   const carouselMonitoredPlayers = transformMonitoredPlayersForCarousel(
     monitoredPlayers,
     seasonMatchesFallbackMap,
+    seasonComparison,
   );
 
   const eligibleMatches = mapWinrates.reduce((sum, m) => sum + m.matchesPlayed, 0);
@@ -237,9 +260,9 @@ export default async function DashboardPage(props: {
       <section className="flex flex-col gap-3">
         <FadeIn>
           <SeasonHero
-            seasonLabel={selectedSeason?.name ?? SEASON_LABEL}
-            seasonStatus={selectedSeason?.status ?? "ACTIVE"}
-            seasonId={resolvedSeasonId}
+            seasonLabel={!selectedSeason || targetSeason === "all" ? "Carreira (Histórico)" : (selectedSeason.name ?? SEASON_LABEL)}
+            seasonStatus={!selectedSeason || targetSeason === "all" ? "ALL" : (selectedSeason.status ?? "ACTIVE")}
+            seasonId={!selectedSeason || targetSeason === "all" ? "all" : resolvedSeasonId}
             totalMatches={summary.totalMatches}
             top3={officialRanking.slice(0, 3)}
             bestPlayer={summary.bestPlayer}
@@ -293,14 +316,15 @@ export default async function DashboardPage(props: {
         index={3}
         tag="ROSTER ATIVO"
         title="Jogadores Monitorados"
-        subtitle="Desempenho recente · mínimo de 5 partidas para aparecer e 10 para disputar posições."
+        badge="Posição por rating nas últimas 10 partidas"
+        subtitle="As posições destes cards representam o desempenho recente. A classificação oficial utiliza o Score da temporada."
         href="/players"
         linkLabel="Ver todos os jogadores"
         delay={0.035}
       >
         <MonitoredPlayersCarousel
           players={carouselMonitoredPlayers}
-          isAllSeasons={!selectedSeason}
+          isAllSeasons={!selectedSeason || targetSeason === "all"}
         />
       </SectionContainer>
 

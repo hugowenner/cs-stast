@@ -5,7 +5,7 @@ import Link from "next/link";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import { AchievementTierBadge } from "./achievement-tier-badge";
 import { MapPin, ChevronDown, Award } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, cleanMapName } from "@/lib/utils";
 import type { RecentUnlock } from "@/server/services/achievement.service";
 
 function formatDayLabel(date: Date): string {
@@ -65,7 +65,7 @@ function FeedRow({ entry }: { entry: RecentUnlock }) {
           {mapName && (
             <span className="text-[10px] text-muted-foreground/60 hidden sm:inline-flex items-center gap-0.5">
               <MapPin className="size-2.5" />
-              {mapName.replace(/^de_/i, "").toUpperCase()}
+              {cleanMapName(mapName)}
             </span>
           )}
         </div>

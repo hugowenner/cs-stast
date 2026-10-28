@@ -7,7 +7,7 @@ import { MatchTypeBadge } from "@/components/matches/match-type-badge";
 import { TacticalBadge } from "@/components/ui/tactical-badge";
 import Link from "next/link";
 import type { RecentMatchCardData } from "./recent-matches-carousel";
-import { cn } from "@/lib/utils";
+import { cn, cleanMapName } from "@/lib/utils";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -146,7 +146,7 @@ function ConfrontationCard({ match }: { match: RecentMatchCardData }) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={mapImg}
-            alt=""
+            alt={cleanMapName(match.map.name)}
             className="w-full h-full object-cover object-center opacity-55 group-hover:opacity-75 group-hover:scale-105 transition-all duration-300"
             onError={(e) => {
               (e.target as HTMLElement).style.display = "none";
@@ -161,7 +161,7 @@ function ConfrontationCard({ match }: { match: RecentMatchCardData }) {
       <div className="px-3.5 py-2.5 border-b border-border/40 bg-surface-deck/80 backdrop-blur-xs flex items-center justify-between gap-2 relative z-10">
         <div className="flex items-center gap-1.5 min-w-0">
           <span className="text-xs font-mono font-black text-white uppercase tracking-wider truncate">
-            {match.map.name}
+            {cleanMapName(match.map.name)}
           </span>
           <span className="shrink-0">
             <MatchTypeBadge trackedPlayersCount={match.trackedPlayersCount} />

@@ -4,10 +4,52 @@ import Link from "next/link";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import { AnimatedNumber } from "@/components/motion/animated-number";
 import type { MapSpecialist } from "@/server/services/competitive.service";
+import { cleanMapName } from "@/lib/utils";
 import { Map, Crown } from "lucide-react";
 
 interface Props {
   specialists: MapSpecialist[];
+}
+
+function formatWinrate(winrate?: number | null): string {
+  if (typeof winrate === "number" && !isNaN(winrate)) {
+    return `${winrate.toFixed(0)}%`;
+  }
+  return "—";
+}
+
+function formatRating(rating?: number | null): string {
+  if (typeof rating === "number" && !isNaN(rating)) {
+    return rating.toFixed(2);
+  }
+  return "—";
+}
+
+function formatWilsonScore(score?: number | null): string | null {
+  if (typeof score === "number" && !isNaN(score)) {
+    return (score * 100).toFixed(1);
+  }
+  return null;
+}
+
+function formatMatchRecord(wins?: number | null, matches?: number | null): string {
+  if (typeof wins === "number" && typeof matches === "number" && matches > 0) {
+    return `${wins} vitórias em ${matches} partidas`;
+  }
+  if (typeof matches === "number" && matches === 0) {
+    return "Nenhuma partida";
+  }
+  return "Sem dados de partidas";
+}
+
+function formatCompactMatchRecord(wins?: number | null, matches?: number | null): string {
+  if (typeof wins === "number" && typeof matches === "number" && matches > 0) {
+    return `${wins}V/${matches}P`;
+  }
+  if (typeof matches === "number" && matches === 0) {
+    return "0V/0P";
+  }
+  return "—";
 }
 
 export function MapSpecialistsGrid({ specialists }: Props) {
@@ -27,7 +69,7 @@ export function MapSpecialistsGrid({ specialists }: Props) {
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
       {specialists.map((entry) => {
         const mapKey = entry.mapId ?? entry.mapName;
-        const displayName = entry.cleanMapName || entry.mapName;
+        const displayName = cleanMapName(entry.cleanMapName || entry.mapName);
 
         if (!entry.player) {
           return (
@@ -48,10 +90,10 @@ export function MapSpecialistsGrid({ specialists }: Props) {
 
                 {/* Mensagem quando player for null */}
                 <div className="px-3 py-3 flex flex-col justify-center border-b border-white/[0.04]">
-                  <p className="text-[11px] font-bold text-muted-foreground/80">
+                  <p className="text-xs font-bold text-muted-foreground/90">
                     Nenhum jogador elegível
                   </p>
-                  <p className="text-[9px] text-muted-foreground/50 leading-relaxed mt-1">
+                  <p className="text-[10px] text-muted-foreground/80 leading-relaxed mt-1">
                     É necessário disputar pelo menos 5 partidas e conquistar 1 vitória neste mapa.
                   </p>
                 </div>
@@ -61,12 +103,12 @@ export function MapSpecialistsGrid({ specialists }: Props) {
               <div className="px-3 py-2.5 flex items-center justify-between">
                 <div>
                   <p
-                    className="text-[7px] uppercase tracking-widest font-bold text-muted-foreground/40 cursor-help"
+                    className="text-[9px] uppercase tracking-widest font-bold text-muted-foreground/80 cursor-help"
                     title={WILSON_TOOLTIP}
                   >
                     Mínimo: 5 partidas
                   </p>
-                  <p className="text-[11px] font-medium text-muted-foreground/40 mt-0.5">
+                  <p className="text-[11px] font-medium text-muted-foreground/80 mt-0.5">
                     Sem líder consolidado
                   </p>
                 </div>
@@ -92,7 +134,7 @@ export function MapSpecialistsGrid({ specialists }: Props) {
                   </p>
                 </div>
                 <span
-                  className="text-[7px] font-mono text-muted-foreground/60 uppercase tracking-wider cursor-help shrink-0"
+                  className="text-[8px] font-mono text-muted-foreground/80 uppercase tracking-wider cursor-help shrink-0"
                   title={WILSON_TOOLTIP}
                 >
                   Ajustado
@@ -121,17 +163,17 @@ export function MapSpecialistsGrid({ specialists }: Props) {
                   </div>
                   <div className="flex items-baseline justify-between gap-1 mt-0.5">
                     <p className="text-[11px] font-mono font-black text-status-good tabular-nums">
-                      {entry.winrate.toFixed(0)}%
+                      {formatWinrate(entry.winrate)}
                     </p>
                     <p
-                      className="text-[8px] font-mono text-muted-foreground/70 tabular-nums cursor-help"
+                      className="text-[9px] font-mono text-muted-foreground/85 tabular-nums cursor-help font-medium"
                       title={
-                        entry.wilsonScore !== null && entry.wilsonScore !== undefined
-                          ? `Índice para classificação: ${(entry.wilsonScore * 100).toFixed(1)}`
+                        formatWilsonScore(entry.wilsonScore)
+                          ? `Índice para classificação: ${formatWilsonScore(entry.wilsonScore)}`
                           : undefined
                       }
                     >
-                      {entry.wins} vitórias em {entry.matches} partidas
+                      {formatMatchRecord(entry.wins, entry.matches)}
                     </p>
                   </div>
                 </div>
@@ -146,14 +188,14 @@ export function MapSpecialistsGrid({ specialists }: Props) {
                       <div
                         key={runnerUp.player.id}
                         className="flex items-center justify-between gap-1.5 text-[9px] font-mono"
-                        title={`Rating no mapa: ${runnerUp.rating.toFixed(2)}${
-                          runnerUp.wilsonScore !== undefined
-                            ? ` • Índice para classificação: ${(runnerUp.wilsonScore * 100).toFixed(1)}`
+                        title={`Rating no mapa: ${formatRating(runnerUp.rating)}${
+                          formatWilsonScore(runnerUp.wilsonScore)
+                            ? ` • Índice para classificação: ${formatWilsonScore(runnerUp.wilsonScore)}`
                             : ""
                         }`}
                       >
                         <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                          <span className="text-[8px] font-bold text-muted-foreground/60 shrink-0">
+                          <span className="text-[9px] font-bold text-muted-foreground/80 shrink-0">
                             #{pos}
                           </span>
                           <PlayerAvatar
@@ -168,17 +210,17 @@ export function MapSpecialistsGrid({ specialists }: Props) {
                             {runnerUp.player.nickname}
                           </Link>
                         </div>
-                        <div className="flex items-center gap-1 shrink-0 tabular-nums text-muted-foreground/70">
-                          <span className="font-bold text-white/90">{runnerUp.winrate.toFixed(0)}%</span>
+                        <div className="flex items-center gap-1 shrink-0 tabular-nums text-muted-foreground/85">
+                          <span className="font-bold text-white/90">{formatWinrate(runnerUp.winrate)}</span>
                           <span>·</span>
                           <span
                             title={
-                              runnerUp.wilsonScore !== undefined
-                                ? `Índice para classificação: ${(runnerUp.wilsonScore * 100).toFixed(1)}`
+                              formatWilsonScore(runnerUp.wilsonScore)
+                                ? `Índice para classificação: ${formatWilsonScore(runnerUp.wilsonScore)}`
                                 : undefined
                             }
                           >
-                            {runnerUp.wins}V/{runnerUp.matches}P
+                            {formatCompactMatchRecord(runnerUp.wins, runnerUp.matches)}
                           </span>
                         </div>
                       </div>
@@ -191,7 +233,7 @@ export function MapSpecialistsGrid({ specialists }: Props) {
             {/* Rating no mapa do líder + Requisito do mapa */}
             <div className="px-3 py-2.5 flex items-center justify-between">
               <div>
-                <p className="text-[7px] uppercase tracking-widest font-bold text-muted-foreground/50">Rating no Mapa (#1)</p>
+                <p className="text-[8px] uppercase tracking-widest font-bold text-muted-foreground/80">Rating no Mapa (#1)</p>
                 <p className="text-sm font-black text-white/90 tabular-nums mt-0.5">
                   {entry.rating !== null ? (
                     <AnimatedNumber value={entry.rating} decimals={2} duration={0.7} />
@@ -201,7 +243,7 @@ export function MapSpecialistsGrid({ specialists }: Props) {
                 </p>
               </div>
               <span
-                className="text-[8px] font-mono text-muted-foreground/50 cursor-help underline decoration-dotted decoration-muted-foreground/30"
+                className="text-[9px] font-mono text-muted-foreground/80 cursor-help underline decoration-dotted decoration-muted-foreground/40 font-medium"
                 title={WILSON_TOOLTIP}
               >
                 Mínimo: 5 partidas

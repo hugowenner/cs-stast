@@ -1,5 +1,6 @@
 import { Users2, Map, Swords, Flame, Calendar, Award } from "lucide-react";
 import { formatRelativeTime } from "../players/PlayersSummaryCards";
+import { cleanMapName } from "@/lib/utils";
 
 interface QuickMetricsProps {
   totalPlayers: number;
@@ -92,7 +93,7 @@ export function QuickMetrics({
             <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4 flex items-center justify-between gap-4">
               <div className="flex flex-col gap-1">
                 <span className="text-xs font-bold text-foreground">
-                  {latestMatch.map.name}
+                  {cleanMapName(latestMatch.map.name)}
                 </span>
                 <span className="text-[9px] text-muted-foreground flex items-center gap-1">
                   <Calendar className="size-3" /> {formatRelativeTime(latestMatch.playedAt)}

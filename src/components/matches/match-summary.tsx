@@ -1,5 +1,5 @@
 import { TacticalBadge } from "@/components/ui/tactical-badge";
-import { cn } from "@/lib/utils";
+import { cn, cleanMapName } from "@/lib/utils";
 import type { MatchMetadataDTO, HighlightDTO } from "@/server/dtos/matchDetails.dto";
 
 export function MatchSummary({
@@ -14,7 +14,7 @@ export function MatchSummary({
   const hs = highlights.find((h) => h.type === "hs");
   const kast = highlights.find((h) => h.type === "kast");
 
-  const cleanMapName = match.mapName.replace(/^de_/i, "").toUpperCase();
+  const formattedMap = cleanMapName(match.mapName);
 
   const outcomeText =
     match.eloChangeGroup > 0
@@ -67,7 +67,7 @@ export function MatchSummary({
             {outcomeText}
           </h2>
           <p className="text-xs font-mono text-muted-foreground/70 mt-1">
-            {cleanMapName} · {match.scoreTeamA} - {match.scoreTeamB}
+            {formattedMap} · {match.scoreTeamA} - {match.scoreTeamB}
           </p>
         </div>
       </div>

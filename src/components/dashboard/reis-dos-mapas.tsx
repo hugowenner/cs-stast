@@ -11,6 +11,47 @@ import { getCleanMapImage } from "@/components/ui/map-performance-card";
 import type { MapSpecialist, MapPerformanceEntry } from "@/server/services/competitive.service";
 import { cn, cleanMapName } from "@/lib/utils";
 
+function formatWinrate(winrate?: number | null): string {
+  if (typeof winrate === "number" && !isNaN(winrate)) {
+    return `${winrate.toFixed(0)}%`;
+  }
+  return "—";
+}
+
+function formatRating(rating?: number | null): string {
+  if (typeof rating === "number" && !isNaN(rating)) {
+    return rating.toFixed(2);
+  }
+  return "—";
+}
+
+function formatWilsonScore(score?: number | null): string | null {
+  if (typeof score === "number" && !isNaN(score)) {
+    return (score * 100).toFixed(1);
+  }
+  return null;
+}
+
+function formatMatchRecord(wins?: number | null, matches?: number | null): string {
+  if (typeof wins === "number" && typeof matches === "number" && matches > 0) {
+    return `${wins} ${wins === 1 ? "vitória" : "vitórias"} em ${matches} ${matches === 1 ? "partida" : "partidas"}`;
+  }
+  if (typeof matches === "number" && matches === 0) {
+    return "Nenhuma partida disputada";
+  }
+  return "Sem dados de partidas";
+}
+
+function formatCompactMatchRecord(wins?: number | null, matches?: number | null): string {
+  if (typeof wins === "number" && typeof matches === "number" && matches > 0) {
+    return `${wins}V em ${matches}P`;
+  }
+  if (typeof matches === "number" && matches === 0) {
+    return "0V em 0P";
+  }
+  return "—";
+}
+
 export interface ReisDosMapaProps {
   specialists: MapSpecialist[];
   mapWinrates: MapPerformanceEntry[];
@@ -43,7 +84,7 @@ export function ReisDosMapa({
               </span>
             </div>
             <span
-              className="text-[9px] font-mono text-muted-foreground/80 bg-surface-base/50 border border-border/40 px-2 py-0.5 rounded-[2px] cursor-help"
+              className="text-[10px] sm:text-[11px] font-mono font-medium text-muted-foreground/90 bg-surface-base/70 border border-border/60 px-2 py-0.5 rounded-[2px] cursor-help"
               title="A classificação equilibra percentual de vitórias e quantidade de partidas usando o limite inferior de Wilson com 95% de confiança. Históricos maiores reduzem a incerteza. Por isso, o maior percentual exibido nem sempre ocupa o primeiro lugar."
             >
               Ranking ajustado pela amostra
@@ -59,7 +100,7 @@ export function ReisDosMapa({
               {specialists.slice(0, 9).map((spec) => {
                 const mapImg = getCleanMapImage(spec.mapName);
                 const norm = spec.mapName.toLowerCase().replace(/^de_/, "").trim();
-                const displayName = spec.cleanMapName || cleanMapName(spec.mapName);
+                const displayName = cleanMapName(spec.cleanMapName || spec.mapName);
                 const isDominant = bestMap?.map.toLowerCase().replace(/^de_/, "").trim() === norm;
 
                 return (
@@ -77,7 +118,7 @@ export function ReisDosMapa({
                       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
                         <img
                           src={mapImg}
-                          alt={spec.mapName}
+                          alt={displayName}
                           className="w-full h-full object-cover object-center opacity-25 grayscale-[20%] group-hover:scale-105 group-hover:opacity-35 transition-all duration-300"
                           onError={(e) => {
                             (e.target as HTMLElement).style.display = "none";
@@ -90,7 +131,7 @@ export function ReisDosMapa({
                     {/* Top Row: Map Name + Dominant Tag */}
                     <div className="relative z-10 flex items-start justify-between gap-1 mb-2">
                       <div className="min-w-0">
-                        <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground/70 font-semibold block">
+                        <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/85 font-bold block">
                           MAPA
                         </span>
                         <span className="text-xs font-mono font-black uppercase text-foreground truncate block">
@@ -124,32 +165,32 @@ export function ReisDosMapa({
                                 </Link>
                                 <Crown className="size-3 text-gold shrink-0" aria-label="1º lugar (Destaque por aproveitamento)" />
                               </div>
-                              {spec.rating !== null && (
+                              {spec.rating !== null && spec.rating !== undefined && (
                                 <span
-                                  title={`Rating no mapa: ${spec.rating.toFixed(2)}${
-                                    spec.wilsonScore !== null && spec.wilsonScore !== undefined
-                                      ? ` • Índice para classificação: ${(spec.wilsonScore * 100).toFixed(1)}`
+                                  title={`Rating no mapa: ${formatRating(spec.rating)}${
+                                    formatWilsonScore(spec.wilsonScore)
+                                      ? ` • Índice para classificação: ${formatWilsonScore(spec.wilsonScore)}`
                                       : ""
                                   }`}
-                                  className="cursor-help text-[9px] font-mono text-muted-foreground/60 hover:text-foreground shrink-0 tabular-nums"
+                                  className="cursor-help text-[10px] font-mono font-medium text-muted-foreground/80 hover:text-foreground shrink-0 tabular-nums"
                                 >
-                                  ({spec.rating.toFixed(2)})
+                                  ({formatRating(spec.rating)})
                                 </span>
                               )}
                             </div>
                             <div className="flex items-baseline justify-between gap-1 mt-0.5">
                               <span className="text-xs font-mono font-black text-status-good tabular-nums">
-                                {spec.winrate.toFixed(0)}%
+                                {formatWinrate(spec.winrate)}
                               </span>
                               <span
-                                className="text-[9px] font-mono text-muted-foreground/75 tabular-nums cursor-help"
+                                className="text-[10px] font-mono text-muted-foreground/90 tabular-nums cursor-help font-medium"
                                 title={
-                                  spec.wilsonScore !== null && spec.wilsonScore !== undefined
-                                    ? `Índice para classificação: ${(spec.wilsonScore * 100).toFixed(1)}`
+                                  formatWilsonScore(spec.wilsonScore)
+                                    ? `Índice para classificação: ${formatWilsonScore(spec.wilsonScore)}`
                                     : undefined
                                 }
                               >
-                                {spec.wins} {spec.wins === 1 ? "vitória" : "vitórias"} em {spec.matches} {spec.matches === 1 ? "partida" : "partidas"}
+                                {formatMatchRecord(spec.wins, spec.matches)}
                               </span>
                             </div>
                           </div>
@@ -164,9 +205,9 @@ export function ReisDosMapa({
                                 <div
                                   key={runnerUp.player.id}
                                   className="flex items-center justify-between gap-1.5 py-1 px-1.5 rounded-xs bg-surface-base/30 border border-border/25 text-[10px] font-mono hover:border-border/60 transition-micro"
-                                  title={`Rating no mapa: ${runnerUp.rating.toFixed(2)}${
-                                    runnerUp.wilsonScore !== undefined
-                                      ? ` • Índice para classificação: ${(runnerUp.wilsonScore * 100).toFixed(1)}`
+                                  title={`Rating no mapa: ${formatRating(runnerUp.rating)}${
+                                    formatWilsonScore(runnerUp.wilsonScore)
+                                      ? ` • Índice para classificação: ${formatWilsonScore(runnerUp.wilsonScore)}`
                                       : ""
                                   }`}
                                 >
@@ -190,19 +231,19 @@ export function ReisDosMapa({
                                     </Link>
                                   </div>
 
-                                  <div className="flex items-center gap-1 shrink-0 tabular-nums text-[9px] text-muted-foreground/80">
+                                  <div className="flex items-center gap-1 shrink-0 tabular-nums text-[10px] text-muted-foreground/90 font-medium">
                                     <span className="font-bold text-foreground">
-                                      {runnerUp.winrate.toFixed(0)}%
+                                      {formatWinrate(runnerUp.winrate)}
                                     </span>
                                     <span className="text-muted-foreground/40">·</span>
                                     <span
                                       title={
-                                        runnerUp.wilsonScore !== undefined
-                                          ? `Índice para classificação: ${(runnerUp.wilsonScore * 100).toFixed(1)}`
+                                        formatWilsonScore(runnerUp.wilsonScore)
+                                          ? `Índice para classificação: ${formatWilsonScore(runnerUp.wilsonScore)}`
                                           : undefined
                                       }
                                     >
-                                      {runnerUp.wins}V em {runnerUp.matches}P
+                                      {formatCompactMatchRecord(runnerUp.wins, runnerUp.matches)}
                                     </span>
                                   </div>
                                 </div>
@@ -213,24 +254,24 @@ export function ReisDosMapa({
                       </div>
                     ) : (
                       <div className="relative z-10 flex flex-col justify-center py-3 border-y border-border/30 my-1 min-h-[56px]">
-                        <span className="text-[11px] font-mono font-bold text-muted-foreground/80">
+                        <span className="text-xs font-mono font-bold text-muted-foreground/90">
                           Nenhum jogador elegível
                         </span>
-                        <span className="text-[9px] font-mono text-muted-foreground/50 leading-tight mt-0.5">
+                        <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground/80 leading-snug mt-0.5">
                           É necessário disputar pelo menos 5 partidas e conquistar 1 vitória neste mapa.
                         </span>
                       </div>
                     )}
 
                     {/* Bottom Row: Individual Performance or Placeholder */}
-                    <div className="relative z-10 flex items-center justify-between pt-1 text-[9px] font-mono text-muted-foreground/50">
+                    <div className="relative z-10 flex items-center justify-between pt-1 text-[10px] font-mono text-muted-foreground/80 font-medium">
                       <span
-                        className="cursor-help underline decoration-dotted decoration-muted-foreground/40 hover:text-foreground transition-micro"
+                        className="cursor-help underline decoration-dotted decoration-muted-foreground/60 hover:text-foreground transition-micro"
                         title="A classificação equilibra percentual de vitórias e quantidade de partidas usando o limite inferior de Wilson com 95% de confiança. Históricos maiores reduzem a incerteza. Por isso, o maior percentual exibido nem sempre ocupa o primeiro lugar."
                       >
                         Mínimo: 5 partidas
                       </span>
-                      <span className="text-[8px] font-mono text-muted-foreground/60">
+                      <span className="text-[9px] font-mono text-muted-foreground/80 font-medium">
                         Ajustado pela amostra
                       </span>
                     </div>
@@ -248,7 +289,7 @@ export function ReisDosMapa({
               <span className="text-[10px] font-mono font-bold text-foreground uppercase tracking-[0.16em]">
                 Aproveitamento Coletivo (%)
               </span>
-              <span className="text-[10px] font-mono text-muted-foreground/60">
+              <span className="text-[11px] font-mono text-muted-foreground/80 font-medium">
                 Winrate da Temporada
               </span>
             </div>
@@ -264,14 +305,14 @@ export function ReisDosMapa({
           <div className="flex flex-col gap-2.5 border-t border-border/40 pt-3.5">
             {bestMap && (() => {
               const bestMapImg = getCleanMapImage(bestMap.map);
-              const displayName = bestMap.cleanMapName || cleanMapName(bestMap.map);
+              const displayName = cleanMapName(bestMap.cleanMapName || bestMap.map);
               return (
                 <div className="relative flex flex-col gap-1 p-3 rounded-xs bg-status-good/[0.04] border border-status-good/25 overflow-hidden group">
                   {bestMapImg && (
                     <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
                       <img
                         src={bestMapImg}
-                        alt={bestMap.map}
+                        alt={displayName}
                         className="w-full h-full object-cover opacity-20 group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
                           (e.target as HTMLElement).style.display = "none";
@@ -285,7 +326,7 @@ export function ReisDosMapa({
                       <Flame className="size-3.5" /> Território Forte
                     </span>
                     <span className="font-mono font-bold text-xs text-foreground tabular-nums">
-                      {displayName} · {bestMap.winrate.toFixed(0)}% WR
+                      {displayName} · {typeof bestMap.winrate === "number" && !isNaN(bestMap.winrate) ? `${bestMap.winrate.toFixed(0)}% WR` : "Sem dados"}
                     </span>
                   </div>
                   <p className="relative z-10 text-[10px] font-mono text-muted-foreground/80 italic leading-snug mt-0.5">
@@ -297,14 +338,14 @@ export function ReisDosMapa({
 
             {worstMap && (() => {
               const worstMapImg = getCleanMapImage(worstMap.map);
-              const displayName = worstMap.cleanMapName || cleanMapName(worstMap.map);
+              const displayName = cleanMapName(worstMap.cleanMapName || worstMap.map);
               return (
                 <div className="relative flex flex-col gap-1 p-3 rounded-xs bg-status-critical/[0.04] border border-status-critical/25 overflow-hidden group">
                   {worstMapImg && (
                     <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
                       <img
                         src={worstMapImg}
-                        alt={worstMap.map}
+                        alt={displayName}
                         className="w-full h-full object-cover opacity-20 group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
                           (e.target as HTMLElement).style.display = "none";
@@ -318,7 +359,7 @@ export function ReisDosMapa({
                       <ShieldAlert className="size-3.5" /> Ponto Crítico
                     </span>
                     <span className="font-mono font-bold text-xs text-foreground tabular-nums">
-                      {displayName} · {worstMap.winrate.toFixed(0)}% WR
+                      {displayName} · {typeof worstMap.winrate === "number" && !isNaN(worstMap.winrate) ? `${worstMap.winrate.toFixed(0)}% WR` : "Sem dados"}
                     </span>
                   </div>
                   <p className="relative z-10 text-[10px] font-mono text-muted-foreground/80 italic leading-snug mt-0.5">

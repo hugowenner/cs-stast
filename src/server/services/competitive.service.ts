@@ -130,9 +130,9 @@ export interface MapPodiumEntry {
   player: MapSpecialistPlayer;
   rating: number;
   rawRating?: number;
-  wins: number;
-  matches: number;
-  winrate: number;
+  wins?: number;
+  matches?: number;
+  winrate?: number;
   rawWinrate?: number;
   wilsonScore?: number;
 }
@@ -144,9 +144,9 @@ export interface MapSpecialist {
   player: MapSpecialistPlayer | null;
   rating: number | null;
   rawRating?: number;
-  wins: number;
-  matches: number;
-  winrate: number;
+  wins?: number;
+  matches?: number;
+  winrate?: number;
   rawWinrate?: number;
   wilsonScore?: number | null;
   minMatches: number;
@@ -802,7 +802,82 @@ export function getMapSpecialistsFromDataset(dataset: CompetitiveDataset): MapSp
   return specialists.sort((a, b) => {
     if (a.player && !b.player) return -1;
     if (!a.player && b.player) return 1;
-    return b.matches - a.matches || b.wins - a.wins || a.cleanMapName.localeCompare(b.cleanMapName);
+    const aMatches = typeof a.matches === "number" ? a.matches : 0;
+    const bMatches = typeof b.matches === "number" ? b.matches : 0;
+    const aWins = typeof a.wins === "number" ? a.wins : 0;
+    const bWins = typeof b.wins === "number" ? b.wins : 0;
+    return bMatches - aMatches || bWins - aWins || a.cleanMapName.localeCompare(b.cleanMapName);
+  });
+}
+
+/**
+ * Normaliza especialistas de mapa legados ou incompletos vindos de snapshots.
+ * Garante que campos ausentes não quebrem a tipagem e prioriza o recálculo via dataset quando disponível.
+ */
+export function normalizeLegacyMapSpecialists(
+  specialists: any[] | undefined,
+  fallbackSpecialists?: MapSpecialist[]
+): MapSpecialist[] {
+  if (fallbackSpecialists && fallbackSpecialists.length > 0) {
+    const hasValidWinrates = fallbackSpecialists.some((s) => typeof s.winrate === "number");
+    if (hasValidWinrates) {
+      return fallbackSpecialists;
+    }
+  }
+
+  if (!Array.isArray(specialists) || specialists.length === 0) {
+    return [];
+  }
+
+  return specialists.map((s) => {
+    const mapName = s.mapName || "Desconhecido";
+    const wins = typeof s.wins === "number" ? s.wins : (s.player ? undefined : 0);
+    const matches = typeof s.matches === "number" ? s.matches : (s.player ? undefined : 0);
+    const rawWinrate =
+      typeof s.rawWinrate === "number"
+        ? s.rawWinrate
+        : typeof s.winrate === "number"
+          ? s.winrate
+          : wins !== undefined && matches !== undefined && matches > 0
+            ? (wins / matches) * 100
+            : undefined;
+
+    const winrate = rawWinrate !== undefined ? Math.round(rawWinrate * 10) / 10 : undefined;
+    const rating = typeof s.rating === "number" ? s.rating : null;
+    const rawRating = typeof s.rawRating === "number" ? s.rawRating : (rating ?? undefined);
+
+    const podium: MapPodiumEntry[] = Array.isArray(s.podium) && s.podium.length > 0
+      ? s.podium
+      : s.player
+        ? [
+            {
+              player: s.player,
+              rating: rating ?? 0,
+              rawRating,
+              wins,
+              matches,
+              winrate,
+              rawWinrate,
+              wilsonScore: s.wilsonScore ?? undefined,
+            },
+          ]
+        : [];
+
+    return {
+      mapId: s.mapId,
+      mapName,
+      cleanMapName: cleanMapName(s.cleanMapName || mapName),
+      player: s.player ?? null,
+      rating,
+      rawRating,
+      wins,
+      matches,
+      winrate,
+      rawWinrate,
+      wilsonScore: s.wilsonScore ?? null,
+      minMatches: typeof s.minMatches === "number" ? s.minMatches : MAP_MIN_MATCHES,
+      podium,
+    };
   });
 }
 

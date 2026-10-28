@@ -20,7 +20,7 @@ import { CoachReportCard } from "@/components/ui/coach-report-card";
 import { TacticalBadge } from "@/components/ui/tactical-badge";
 import { safeQuery } from "@/server/safeQuery";
 import * as sessionService from "@/server/services/session.service";
-import { cn } from "@/lib/utils";
+import { cn, cleanMapName } from "@/lib/utils";
 
 export default async function SessionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -398,7 +398,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
                       {maps.map((map) => (
                         <tr key={map.mapName} className="hover:bg-surface-elevated/40 transition-colors">
                           <td className="px-3 py-2.5 font-mono font-bold text-foreground">
-                            {map.mapName.replace(/^de_/i, "").toUpperCase()}
+                            {cleanMapName(map.mapName)}
                           </td>
                           <td className="px-3 py-2.5 text-center font-mono tabular-nums text-muted-foreground">
                             {map.matchesPlayed}

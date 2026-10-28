@@ -2,6 +2,7 @@
 
 import { Trophy, Star, Flame, Zap } from "lucide-react";
 import { PlayerAvatar } from "@/components/players/player-avatar";
+import { cleanMapName } from "@/lib/utils";
 
 // Tipo narrower: só os campos usados pelo componente.
 // Evita acoplamento ao tipo Prisma completo e permite reutilização em páginas
@@ -57,7 +58,7 @@ export function AchievementFeedItem({
             </span>
           </div>
           {mapName && (
-            <span className="text-[9px] text-muted-foreground/40 font-medium">{mapName}</span>
+            <span className="text-[9px] text-muted-foreground/40 font-medium">{cleanMapName(mapName)}</span>
           )}
         </div>
       </div>

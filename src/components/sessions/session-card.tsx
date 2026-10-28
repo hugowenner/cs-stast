@@ -3,7 +3,7 @@ import { ChevronRight, Trophy, Swords, Clock, TrendingUp, TrendingDown, Minus } 
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import { TacticalBadge } from "@/components/ui/tactical-badge";
 import { getCleanMapImage } from "@/components/ui/map-performance-card";
-import { cn } from "@/lib/utils";
+import { cn, cleanMapName } from "@/lib/utils";
 import type { SimpleSessionSummary } from "@/server/analytics/session.analytics";
 
 interface SessionCardProps {
@@ -171,7 +171,7 @@ export function SessionCard({ session }: SessionCardProps) {
                 key={mapName}
                 className="text-[10px] font-mono font-bold text-accent-cyan/90 px-1.5 py-0.5 rounded-xs bg-accent-cyan/10 border border-accent-cyan/20 shrink-0"
               >
-                {mapName.replace(/^de_/i, "").toUpperCase()}
+                {cleanMapName(mapName)}
               </span>
             ))}
           </div>

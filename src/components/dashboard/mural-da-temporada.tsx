@@ -311,7 +311,7 @@ export function MuralDaTemporada({ competitive }: MuralDaTemporadaProps) {
               {mapSpecialistList.map((spec) => (
                 <div key={spec.mapId ?? spec.mapName} className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-2 flex flex-col justify-between">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-white/85 truncate">{spec.mapName}</span>
+                    <span className="text-[10px] font-black text-white/85 truncate">{cleanMapName(spec.cleanMapName || spec.mapName)}</span>
                     <span className="text-[10px] font-semibold text-status-warning leading-none shrink-0" aria-hidden>👑</span>
                   </div>
                   <div className="flex items-center gap-1.5 mt-2 min-w-0">

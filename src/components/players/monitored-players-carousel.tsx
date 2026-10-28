@@ -6,12 +6,95 @@ import Link from "next/link";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import { AnimatedNumber } from "@/components/motion/animated-number";
 import { FORMA_STYLE } from "@/lib/forma";
-import type { CarouselMonitoredPlayerEntry } from "@/lib/monitored-players";
-import { cn } from "@/lib/utils";
+import type {
+  CarouselMonitoredPlayerEntry,
+  CompactRatingVariation,
+} from "@/lib/monitored-players";
+import { cn, cleanMapName } from "@/lib/utils";
 
 interface Props {
   players: CarouselMonitoredPlayerEntry[];
   isAllSeasons?: boolean;
+}
+
+const VARIATION_EXPLANATION =
+  "Comparação das últimas 10 partidas com as 10 anteriores, dentro do período selecionado.";
+
+function RatingVariationBadge({ variation }: { variation: CompactRatingVariation }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const badgeRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleOutside = (e: MouseEvent | TouchEvent) => {
+      if (badgeRef.current && !badgeRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutside);
+    document.addEventListener("touchstart", handleOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener("touchstart", handleOutside);
+    };
+  }, [isOpen]);
+
+  const colorClass =
+    variation.type === "up"
+      ? "text-status-good bg-status-good/10 border-status-good/30"
+      : variation.type === "down"
+      ? "text-status-critical bg-status-critical/10 border-status-critical/30"
+      : "text-muted-foreground/90 bg-surface-deck border-border/70";
+
+  return (
+    <span
+      ref={badgeRef}
+      role="note"
+      tabIndex={0}
+      aria-label={`${variation.formatted} - ${VARIATION_EXPLANATION}`}
+      title={VARIATION_EXPLANATION}
+      onClick={(e) => {
+        // Previne navegação pelo Link pai ao clicar ou tocar na variação
+        e.preventDefault();
+        e.stopPropagation();
+        setIsOpen((prev) => !prev);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsOpen((prev) => !prev);
+        } else if (e.key === "Escape" && isOpen) {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsOpen(false);
+        }
+      }}
+      className={cn(
+        "relative inline-flex items-center px-1.5 py-0.5 rounded-2xs text-[10px] sm:text-[11px] font-mono font-bold border tabular-nums cursor-help select-none transition-micro outline-none focus-visible:ring-1 focus-visible:ring-primary",
+        colorClass
+      )}
+    >
+      <span>{variation.formatted}</span>
+
+      {/* Popover explicativo para toque e teclado, sem quebrar navegação do card */}
+      {isOpen && (
+        <span
+          role="tooltip"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          className="absolute bottom-full left-0 mb-1.5 z-50 w-52 sm:w-56 p-2 rounded-xs bg-surface-deck border border-border/80 shadow-lg text-[10px] sm:text-[11px] font-mono font-medium normal-case text-foreground leading-snug text-left animate-in fade-in zoom-in-95 duration-100"
+        >
+          {VARIATION_EXPLANATION}
+          <span className="block text-[9px] text-muted-foreground/75 mt-1 font-sans">
+            (Toque novamente para fechar)
+          </span>
+        </span>
+      )}
+    </span>
+  );
 }
 
 export function MonitoredPlayersCarousel({ players, isAllSeasons = false }: Props) {
@@ -92,7 +175,7 @@ export function MonitoredPlayersCarousel({ players, isAllSeasons = false }: Prop
           {emptyMessage}
         </p>
         <p className="text-[11px] font-mono text-muted-foreground/60 max-w-sm">
-          Mínimo de 5 partidas para aparecer e 10 para disputar posições oficiais.
+          Mínimo de 5 partidas para aparecer e 10 para disputar posições por rating.
         </p>
       </div>
     );
@@ -102,7 +185,7 @@ export function MonitoredPlayersCarousel({ players, isAllSeasons = false }: Prop
     <div className="flex flex-col gap-3">
       {/* Controles de navegação e paginação */}
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-mono text-muted-foreground/60 font-semibold tabular-nums">
+        <span className="text-xs font-mono text-muted-foreground/85 font-semibold tabular-nums">
           {currentIndex + 1} de {players.length}
         </span>
         <div className="flex items-center gap-1.5">
@@ -173,11 +256,11 @@ export function MonitoredPlayersCarousel({ players, isAllSeasons = false }: Prop
                       {entry.player.nickname}
                     </p>
                     {entry.player.levelGc ? (
-                      <p className="text-[9px] font-mono text-muted-foreground/70 font-semibold">
+                      <p className="text-[10px] font-mono text-muted-foreground/85 font-semibold">
                         GC Nível {entry.player.levelGc}
                       </p>
                     ) : (
-                      <p className="text-[9px] font-mono text-muted-foreground/50">
+                      <p className="text-[10px] font-mono text-muted-foreground/75 font-medium">
                         Jogador Ativo
                       </p>
                     )}
@@ -188,7 +271,7 @@ export function MonitoredPlayersCarousel({ players, isAllSeasons = false }: Prop
                   <div className="flex items-center gap-1">
                     {/* Badge Amostra Inicial para 5 a 9 partidas */}
                     {entry.isInitialSample && (
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-2xs text-[8px] font-mono font-bold uppercase tracking-wider border border-amber-500/30 bg-amber-500/10 text-amber-400">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-2xs text-[9px] font-mono font-bold uppercase tracking-wider border border-amber-500/40 bg-amber-500/15 text-amber-300">
                         Amostra inicial
                       </span>
                     )}
@@ -197,9 +280,11 @@ export function MonitoredPlayersCarousel({ players, isAllSeasons = false }: Prop
                       {forma.text}
                     </span>
                   </div>
-                  <span className="inline-flex items-center gap-0.5 text-[8px] font-mono text-muted-foreground/60">
-                    <Clock className="size-2" />
-                    Últimas {entry.sampleMatches} partidas
+                  <span className="inline-flex items-center gap-1 text-[9px] font-mono text-muted-foreground/85 font-medium">
+                    <Clock className="size-2.5 text-muted-foreground/70" />
+                    {entry.sampleMatches === 1
+                      ? "Última 1 partida"
+                      : `Últimas ${entry.sampleMatches} partidas`}
                   </span>
                 </div>
               </div>
@@ -207,34 +292,39 @@ export function MonitoredPlayersCarousel({ players, isAllSeasons = false }: Prop
               {/* Rating destaque */}
               <div className="px-3.5 py-3 flex items-end justify-between border-b border-border/30 bg-surface-panel relative z-10">
                 <div>
-                  <span className="text-[8px] font-mono uppercase tracking-wider text-muted-foreground/60 block font-semibold">
+                  <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground/80 block font-bold">
                     RATING 2.0
                   </span>
-                  <span className="text-2xl font-mono font-black text-foreground tabular-nums leading-none">
-                    <AnimatedNumber value={entry.rating} decimals={2} duration={0.8} />
-                  </span>
+                  <div className="flex items-baseline gap-1.5 mt-0.5">
+                    <span className="text-2xl font-mono font-black text-foreground tabular-nums leading-none">
+                      <AnimatedNumber value={entry.rating} decimals={2} duration={0.8} />
+                    </span>
+                    {entry.ratingVariation && (
+                      <RatingVariationBadge variation={entry.ratingVariation} />
+                    )}
+                  </div>
                 </div>
                 <div className="grid grid-cols-4 gap-2 text-right font-mono">
                   <div>
-                    <span className="text-[7px] uppercase tracking-wider text-muted-foreground/60 block">K/D</span>
+                    <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/85 block">K/D</span>
                     <span className="text-xs font-bold text-foreground tabular-nums">
                       <AnimatedNumber value={entry.kd} decimals={2} duration={0.7} />
                     </span>
                   </div>
                   <div>
-                    <span className="text-[7px] uppercase tracking-wider text-muted-foreground/60 block">ADR</span>
+                    <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/85 block">ADR</span>
                     <span className="text-xs font-bold text-foreground tabular-nums">
                       <AnimatedNumber value={entry.adr} decimals={0} duration={0.65} />
                     </span>
                   </div>
                   <div>
-                    <span className="text-[7px] uppercase tracking-wider text-muted-foreground/60 block">KAST</span>
+                    <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/85 block">KAST</span>
                     <span className="text-xs font-bold text-foreground tabular-nums">
                       <AnimatedNumber value={entry.kast} decimals={0} suffix="%" duration={0.6} />
                     </span>
                   </div>
                   <div>
-                    <span className="text-[7px] uppercase tracking-wider text-muted-foreground/60 block">WR</span>
+                    <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/85 block">WR</span>
                     <span className="text-xs font-bold text-foreground tabular-nums">
                       <AnimatedNumber value={entry.winrate} decimals={0} suffix="%" duration={0.6} />
                     </span>
@@ -251,7 +341,7 @@ export function MonitoredPlayersCarousel({ players, isAllSeasons = false }: Prop
                   { label: "HS%",      value: entry.hsPercent,    dec: 0, suffix: "%" },
                 ].map((s) => (
                   <div key={s.label}>
-                    <span className="text-[7px] font-bold uppercase tracking-wider text-muted-foreground/50 block">{s.label}</span>
+                    <span className="text-[8px] sm:text-[9px] font-bold uppercase tracking-wider text-muted-foreground/80 block">{s.label}</span>
                     <span className="text-xs font-bold text-foreground tabular-nums mt-0.5 block">
                       <AnimatedNumber value={s.value} decimals={s.dec} suffix={s.suffix ?? ""} />
                     </span>
@@ -261,28 +351,28 @@ export function MonitoredPlayersCarousel({ players, isAllSeasons = false }: Prop
 
               {/* Mapas + Total real de partidas no período */}
               <div className="px-3.5 py-2.5 flex items-start justify-between gap-2 mt-auto bg-surface-panel relative z-10">
-                <div className="min-w-0 flex-1 font-mono text-[9px]">
+                <div className="min-w-0 flex-1 font-mono text-[10px]">
                   {entry.bestMap && (
                     <div className="flex items-center gap-1 mb-0.5">
                       <Map className="size-2.5 text-status-good shrink-0" />
-                      <span className="text-foreground font-semibold truncate">{entry.bestMap}</span>
-                      <span className="text-[7px] text-status-good font-bold uppercase shrink-0">(forte)</span>
+                      <span className="text-foreground font-semibold truncate">{cleanMapName(entry.bestMap)}</span>
+                      <span className="text-[8px] text-status-good font-bold uppercase shrink-0">(forte)</span>
                     </div>
                   )}
                   {entry.worstMap && (
                     <div className="flex items-center gap-1">
                       <Map className="size-2.5 text-status-warning shrink-0" />
-                      <span className="text-muted-foreground font-semibold truncate">{entry.worstMap}</span>
-                      <span className="text-[7px] text-status-warning font-bold uppercase shrink-0">(revisar)</span>
+                      <span className="text-muted-foreground font-semibold truncate">{cleanMapName(entry.worstMap)}</span>
+                      <span className="text-[8px] text-status-warning font-bold uppercase shrink-0">(revisar)</span>
                     </div>
                   )}
                 </div>
                 <div className="shrink-0 text-right font-mono">
-                  <span className="text-[7px] font-bold uppercase tracking-wider text-muted-foreground/60 block">
+                  <span className="text-[8px] font-bold uppercase tracking-wider text-muted-foreground/80 block">
                     {isAllSeasons ? "NO HISTÓRICO" : "NA TEMPORADA"}
                   </span>
-                  <span className="text-[11px] font-black text-foreground tabular-nums">
-                    {entry.totalSeasonMatches} partidas
+                  <span className="text-xs font-black text-foreground tabular-nums">
+                    {entry.totalSeasonMatches} {entry.totalSeasonMatches === 1 ? "partida" : "partidas"}
                   </span>
                 </div>
               </div>

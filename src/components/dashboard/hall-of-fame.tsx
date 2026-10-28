@@ -24,7 +24,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { cn, cleanMapName } from "@/lib/utils";
 import { recordNarratives, worstRecordNarratives } from "@/lib/narrator/templates";
 import { TacticalBadge } from "@/components/ui/tactical-badge";
 
@@ -397,7 +397,7 @@ export function HallOfFame({ records, worstRecords, monitoredPlayers, variant = 
                     {meta.title}
                   </span>
                   <span className="text-[10px] font-mono text-muted-foreground/60">
-                    {record.mapName || mapName ? `Mapa ${record.mapName || mapName}` : "Temporada Geral"}
+                    {record.mapName || mapName ? `Mapa ${cleanMapName(record.mapName || mapName)}` : "Temporada Geral"}
                   </span>
                 </div>
               </div>

@@ -22,7 +22,7 @@ export function MapWinrateChart({ data }: { data: MapWinrate[] }) {
 
   const chartData = data.map((item) => ({
     ...item,
-    displayName: item.cleanMapName || cleanMapName(item.map),
+    displayName: cleanMapName(item.cleanMapName || item.map),
   }));
 
   return (

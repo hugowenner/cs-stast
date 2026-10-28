@@ -16,6 +16,7 @@ import {
   getPeriodFactFromDataset,
   getAttentionPointFromDataset,
   getGroupRadarFromDataset,
+  normalizeLegacyMapSpecialists,
 } from "./competitive.service";
 
 describe("calculateWilsonScore", () => {
@@ -1147,6 +1148,107 @@ describe("Radar do Grupo - getAttentionPointFromDataset", () => {
     expect(result.attentionPoint?.recentRating).toBe(1.04);
   });
 });
+
+describe("normalizeLegacyMapSpecialists", () => {
+  it("deve tratar entradas nulas ou vazias retornando array vazio", () => {
+    expect(normalizeLegacyMapSpecialists(undefined)).toEqual([]);
+    expect(normalizeLegacyMapSpecialists([])).toEqual([]);
+    expect(normalizeLegacyMapSpecialists(null as any)).toEqual([]);
+  });
+
+  it("deve priorizar fallbackSpecialists quando fornecidos com winrates válidos", () => {
+    const legacy = [
+      {
+        player: { id: "p1", nickname: "Old Hero", avatarUrl: null, levelGc: null },
+        rating: 1.25,
+        mapName: "Inferno",
+      },
+    ];
+
+    const liveFromDataset = [
+      {
+        mapId: "m1",
+        mapName: "Inferno",
+        cleanMapName: "Inferno",
+        player: { id: "p1", nickname: "Old Hero", avatarUrl: null, levelGc: null },
+        rating: 1.25,
+        wins: 8,
+        matches: 10,
+        winrate: 80,
+        wilsonScore: 0.5,
+        minMatches: 5,
+        podium: [],
+      },
+    ];
+
+    const result = normalizeLegacyMapSpecialists(legacy, liveFromDataset);
+    expect(result).toBe(liveFromDataset);
+    expect(result[0].winrate).toBe(80);
+    expect(result[0].wins).toBe(8);
+  });
+
+  it("deve normalizar snapshot legado preenchendo cleanMapName e tratando winrate ausente sem mascarar como 0%", () => {
+    const legacySnapshot = [
+      {
+        player: {
+          id: "cmtizic3k005801msrv22kpzr",
+          levelGc: 19,
+          nickname: "Perna Peluda",
+          avatarUrl: "https://avatar/perna.jpg",
+        },
+        rating: 1.28,
+        mapName: "de_inferno",
+      },
+      {
+        player: null,
+        rating: null,
+        mapName: "de_dust2",
+      },
+    ];
+
+    const normalized = normalizeLegacyMapSpecialists(legacySnapshot);
+
+    expect(normalized).toHaveLength(2);
+
+    // Item 1: com jogador, mas sem partidas gravadas no snapshot
+    expect(normalized[0].cleanMapName).toBe("Inferno");
+    expect(normalized[0].player?.nickname).toBe("Perna Peluda");
+    expect(normalized[0].rating).toBe(1.28);
+    // winrate não deve ser 0% se não temos dados de partidas: deve ser undefined!
+    expect(normalized[0].winrate).toBeUndefined();
+    expect(normalized[0].matches).toBeUndefined();
+    expect(normalized[0].wins).toBeUndefined();
+    expect(normalized[0].minMatches).toBe(5);
+    expect(normalized[0].podium).toHaveLength(1);
+
+    // Item 2: sem jogador elegível
+    expect(normalized[1].cleanMapName).toBe("Dust2");
+    expect(normalized[1].player).toBeNull();
+    expect(normalized[1].rating).toBeNull();
+    expect(normalized[1].winrate).toBeUndefined();
+    expect(normalized[1].matches).toBe(0);
+    expect(normalized[1].wins).toBe(0);
+  });
+
+  it("deve preservar winrate válido igual a 0% quando houver partidas disputadas e 0 vitórias", () => {
+    const zeroWinRecord = [
+      {
+        player: { id: "p0", nickname: "Unlucky", avatarUrl: null, levelGc: null },
+        rating: 0.85,
+        mapName: "Mirage",
+        wins: 0,
+        matches: 5,
+        winrate: 0,
+      },
+    ];
+
+    const normalized = normalizeLegacyMapSpecialists(zeroWinRecord);
+    expect(normalized[0].winrate).toBe(0);
+    expect(normalized[0].wins).toBe(0);
+    expect(normalized[0].matches).toBe(5);
+  });
+});
+
 
 
 

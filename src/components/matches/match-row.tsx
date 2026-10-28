@@ -2,7 +2,7 @@ import Link from "next/link";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import { MatchTypeBadge } from "@/components/matches/match-type-badge";
 import { getCleanMapImage } from "@/components/ui/map-performance-card";
-import { cn } from "@/lib/utils";
+import { cn, cleanMapName } from "@/lib/utils";
 
 export interface MatchRowData {
   id: string;
@@ -22,7 +22,7 @@ export function MatchRow({ match }: { match: MatchRowData }) {
   const won = match.scoreTeamA !== match.scoreTeamB;
   const winningTeam = match.scoreTeamA > match.scoreTeamB ? "A" : "B";
   const topPlayer = [...match.playerStats].sort((a, b) => b.rating - a.rating)[0];
-  const cleanMap = match.map.name.replace(/^de_/i, "").toUpperCase();
+  const cleanMap = cleanMapName(match.map.name);
   const mapImg = getCleanMapImage(match.map.name);
 
   return (

@@ -65,22 +65,21 @@ describe("Dashboard Header - Top 3 Oficial & Telemetria", () => {
   });
 
   describe("Cálculo e formatação de diferenças em relação ao líder", () => {
-    it("deve calcular a diferença com valores não formatados e retornar 'Menos de 1 ponto atrás' se diff < 1", () => {
+    it("deve calcular a diferença com valores numéricos de origem e formatar com 3 casas em pt-BR", () => {
       // 1.139 - 1.109 = 0.030
       const diff1 = calculateLeaderDiff(mockLeader.rawScore, mockRunner1.rawScore);
       expect(diff1.diff).toBeCloseTo(0.03, 3);
       expect(diff1.isTied).toBe(false);
-      expect(diff1.formattedDiff).toBe("Menos de 1 ponto atrás");
-      // Nunca deve exibir "0 pontos atrás"
-      expect(diff1.formattedDiff).not.toBe("0 pontos atrás do líder");
+      expect(diff1.formattedDiff).toBe("0,030 atrás do líder");
 
       // 1.139 - 1.064 = 0.075
       const diff2 = calculateLeaderDiff(mockLeader.rawScore, mockRunner2.rawScore);
       expect(diff2.diff).toBeCloseTo(0.075, 3);
-      expect(diff2.formattedDiff).toBe("Menos de 1 ponto atrás");
+      expect(diff2.isTied).toBe(false);
+      expect(diff2.formattedDiff).toBe("0,075 atrás do líder");
     });
 
-    it("deve tratar empate real em pontuação exibindo 'Empatado em pontos'", () => {
+    it("deve tratar empate real em pontuação exibindo 'Mesmo score do líder'", () => {
       const tiedRunner: OfficialTop3Entry = {
         player: { id: "p-tie", nickname: "Clone", avatarUrl: null },
         matchesPlayed: 60,
@@ -93,15 +92,18 @@ describe("Dashboard Header - Top 3 Oficial & Telemetria", () => {
       const diffTie = calculateLeaderDiff(mockLeader.rawScore, tiedRunner.rawScore);
       expect(diffTie.diff).toBe(0);
       expect(diffTie.isTied).toBe(true);
-      expect(diffTie.formattedDiff).toBe("Empatado em pontos");
+      expect(diffTie.formattedDiff).toBe("Mesmo score do líder");
     });
 
-    it("deve formatar corretamente diferenças inteiras a partir de 1 ponto", () => {
-      const diffOne = calculateLeaderDiff(10.0, 9.0);
-      expect(diffOne.formattedDiff).toBe("1 ponto atrás do líder");
+    it("deve retornar 'Menos de 0,001 atrás do líder' para diferenças positivas que arredondam para 0,000", () => {
+      const diffSmall = calculateLeaderDiff(1.139, 1.1388);
+      expect(diffSmall.formattedDiff).toBe("Menos de 0,001 atrás do líder");
+    });
 
-      const diffFiftyNine = calculateLeaderDiff(100.0, 41.0);
-      expect(diffFiftyNine.formattedDiff).toBe("59 pontos atrás do líder");
+    it("deve omitir a mensagem para pontuações ausentes ou diferenças negativas", () => {
+      expect(calculateLeaderDiff(null, mockRunner1.rawScore).formattedDiff).toBeNull();
+      expect(calculateLeaderDiff(mockLeader.rawScore, null).formattedDiff).toBeNull();
+      expect(calculateLeaderDiff(1.100, 1.139).formattedDiff).toBeNull();
     });
   });
 

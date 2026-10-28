@@ -4,7 +4,8 @@ import { cn } from "@/lib/utils";
 
 export interface SectionHeaderProps {
   title: string;
-  subtitle?: string;
+  badge?: React.ReactNode;
+  subtitle?: React.ReactNode;
   index?: string | number;
   tag?: string;
   href?: string;
@@ -14,6 +15,7 @@ export interface SectionHeaderProps {
 
 export function SectionHeader({
   title,
+  badge,
   subtitle,
   index,
   tag,
@@ -31,7 +33,7 @@ export function SectionHeader({
         {(formattedIndex || tag) && (
           <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.18em] text-primary/80">
             {formattedIndex && (
-              <span className="font-data text-muted-foreground/50">{formattedIndex}</span>
+              <span className="font-data text-muted-foreground/75 font-semibold">{formattedIndex}</span>
             )}
             {formattedIndex && tag && <span className="text-white/20">/</span>}
             {tag && <span>{tag}</span>}
@@ -39,13 +41,20 @@ export function SectionHeader({
         )}
 
         {/* Title */}
-        <h2 className="text-sm sm:text-base font-black text-white uppercase tracking-tight leading-tight">
-          {title}
-        </h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-sm sm:text-base font-black text-white uppercase tracking-tight leading-tight">
+            {title}
+          </h2>
+          {badge && (
+            <span className="text-[11px] sm:text-xs font-mono font-semibold text-muted-foreground/95 bg-surface-deck px-2 py-0.5 rounded-2xs border border-border/80 tracking-normal normal-case">
+              {badge}
+            </span>
+          )}
+        </div>
 
         {/* Subtitle / Context */}
         {subtitle && (
-          <p className="text-[11px] text-muted-foreground/60 font-medium leading-relaxed max-w-xl">
+          <p className="text-xs sm:text-[13px] text-muted-foreground/85 font-medium leading-relaxed max-w-2xl">
             {subtitle}
           </p>
         )}

@@ -16,43 +16,74 @@ export interface OfficialTop3Entry {
 }
 
 export interface LeaderDiffResult {
-  diff: number;
-  formattedDiff: string;
+  diff: number | null;
+  formattedDiff: string | null;
   isTied: boolean;
 }
 
 /**
  * Calcula a diferença de pontuação em relação ao líder oficial.
- * Valores calculados com precisão antes de qualquer arredondamento de exibição.
+ * Valores calculados com precisão direta sobre os números de origem.
  * 
  * Regras:
- * - Se diff <= 0: "Empatado em pontos"
- * - Se diff > 0 && diff < 1: "Menos de 1 ponto atrás" (nunca "0 pontos atrás")
- * - Se diff >= 1: "X pontos atrás do líder" (ou "1 ponto atrás do líder")
+ * - Se scores inválidos ou ausentes: omite a diferença (formattedDiff: null).
+ * - Se diff < 0 (runner > líder): omite a diferença (formattedDiff: null), nunca exibe distância negativa.
+ * - Se empate real (|diff| < 1e-9): "Mesmo score do líder"
+ * - Se diff > 0 e arredonda para 0,000 (ex: < 0,0005): "Menos de 0,001 atrás do líder"
+ * - Diferença padrão: 3 casas decimais com vírgula (pt-BR) + " atrás do líder" (ex: "0,030 atrás do líder")
  */
-export function calculateLeaderDiff(leaderScore: number, runnerScore: number): LeaderDiffResult {
-  const diff = Number((leaderScore - runnerScore).toFixed(6));
-
-  if (diff <= 0) {
+export function calculateLeaderDiff(
+  leaderScore?: number | null,
+  runnerScore?: number | null
+): LeaderDiffResult {
+  if (
+    leaderScore == null ||
+    runnerScore == null ||
+    typeof leaderScore !== "number" ||
+    typeof runnerScore !== "number" ||
+    Number.isNaN(leaderScore) ||
+    Number.isNaN(runnerScore)
+  ) {
     return {
-      diff: 0,
-      formattedDiff: "Empatado em pontos",
-      isTied: true,
-    };
-  }
-
-  if (diff < 1) {
-    return {
-      diff,
-      formattedDiff: "Menos de 1 ponto atrás",
+      diff: null,
+      formattedDiff: null,
       isTied: false,
     };
   }
 
-  const rounded = Math.round(diff);
+  const rawDiff = leaderScore - runnerScore;
+
+  // Empate real no score
+  if (Math.abs(rawDiff) < 1e-9) {
+    return {
+      diff: 0,
+      formattedDiff: "Mesmo score do líder",
+      isTied: true,
+    };
+  }
+
+  // Diferença negativa: inconsistência ou corredor com score superior. Nunca exibir distância negativa.
+  if (rawDiff < 0) {
+    return {
+      diff: rawDiff,
+      formattedDiff: null,
+      isTied: false,
+    };
+  }
+
+  // Diferença positiva que arredonda para 0,000 (ex.: menor que 0,0005)
+  if (Number(rawDiff.toFixed(3)) === 0) {
+    return {
+      diff: rawDiff,
+      formattedDiff: "Menos de 0,001 atrás do líder",
+      isTied: false,
+    };
+  }
+
+  const formattedNumber = rawDiff.toFixed(3).replace(".", ",");
   return {
-    diff,
-    formattedDiff: `${rounded} ${rounded === 1 ? "ponto" : "pontos"} atrás do líder`,
+    diff: rawDiff,
+    formattedDiff: `${formattedNumber} atrás do líder`,
     isTied: false,
   };
 }

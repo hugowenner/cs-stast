@@ -5,7 +5,8 @@ import { cn } from "@/lib/utils";
 
 export interface SectionContainerProps {
   title: string;
-  subtitle?: string;
+  badge?: React.ReactNode;
+  subtitle?: React.ReactNode;
   index?: string | number;
   tag?: string;
   href?: string;
@@ -17,6 +18,7 @@ export interface SectionContainerProps {
 
 export function SectionContainer({
   title,
+  badge,
   subtitle,
   index,
   tag,
@@ -31,6 +33,7 @@ export function SectionContainer({
       <FadeIn delay={delay}>
         <SectionHeader
           title={title}
+          badge={badge}
           subtitle={subtitle}
           index={index}
           tag={tag}

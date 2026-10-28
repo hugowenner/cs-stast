@@ -4,6 +4,7 @@ import { useRef, useState, useCallback, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Swords } from "lucide-react";
 import { motion } from "framer-motion";
 import { PlayerAvatar } from "@/components/players/player-avatar";
+import { cleanMapName } from "@/lib/utils";
 import type { RivalryH2HSummary } from "@/server/services/rivalry.service";
 
 interface Props {
@@ -241,7 +242,7 @@ export function RivalryCarousel({ rivalries }: Props) {
                 {rivalry.lastMatch && (
                   <div className="text-right shrink-0">
                     <p className="text-[8px] uppercase tracking-widest font-bold text-muted-foreground/45">Último mapa</p>
-                    <p className="text-[10px] text-white/75 capitalize mt-0.5">{rivalry.lastMatch.mapName}</p>
+                    <p className="text-[10px] text-white/75 mt-0.5">{cleanMapName(rivalry.lastMatch.mapName)}</p>
                     <p className="text-[10px] font-black text-white/60 tabular-nums">{rivalry.lastMatch.scoreA}–{rivalry.lastMatch.scoreB}</p>
                   </div>
                 )}

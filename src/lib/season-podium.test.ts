@@ -7,36 +7,45 @@ import {
 
 describe("season-podium domain logic", () => {
   describe("calculateLeaderDiff", () => {
-    it("deve retornar 'Empatado em pontos' quando as pontuações forem idênticas", () => {
+    it("deve retornar 'Mesmo score do líder' quando as pontuações forem idênticas (empate real)", () => {
       const result = calculateLeaderDiff(1.15, 1.15);
       expect(result.diff).toBe(0);
       expect(result.isTied).toBe(true);
-      expect(result.formattedDiff).toBe("Empatado em pontos");
+      expect(result.formattedDiff).toBe("Mesmo score do líder");
     });
 
-    it("deve retornar 'Menos de 1 ponto atrás' para diferenças decimais menores que 1 (evitando '0 pontos atrás')", () => {
-      // Caso real do banco: 1.139 vs 1.109
-      const resultReal = calculateLeaderDiff(1.139, 1.109);
-      expect(resultReal.diff).toBeCloseTo(0.03, 3);
-      expect(resultReal.isTied).toBe(false);
-      expect(resultReal.formattedDiff).toBe("Menos de 1 ponto atrás");
+    it("deve formatar a diferença real com 3 casas decimais em pt-BR (ex: 1.139 vs 1.109 -> '0,030 atrás do líder')", () => {
+      const resultRunner1 = calculateLeaderDiff(1.139, 1.109);
+      expect(resultRunner1.diff).toBeCloseTo(0.03, 3);
+      expect(resultRunner1.isTied).toBe(false);
+      expect(resultRunner1.formattedDiff).toBe("0,030 atrás do líder");
 
-      // Caso de borda: diferença de 0.4 que em arredondamento inteiro viraria 0
-      const resultSmall = calculateLeaderDiff(100.4, 100.0);
-      expect(resultSmall.formattedDiff).toBe("Menos de 1 ponto atrás");
-      expect(resultSmall.formattedDiff).not.toContain("0 pontos");
+      const resultRunner2 = calculateLeaderDiff(1.139, 1.064);
+      expect(resultRunner2.diff).toBeCloseTo(0.075, 3);
+      expect(resultRunner2.isTied).toBe(false);
+      expect(resultRunner2.formattedDiff).toBe("0,075 atrás do líder");
     });
 
-    it("deve formatar corretamente para diferenças de 1 ponto no singular", () => {
-      const result = calculateLeaderDiff(10.0, 9.0);
-      expect(result.diff).toBe(1);
-      expect(result.formattedDiff).toBe("1 ponto atrás do líder");
+    it("deve retornar 'Menos de 0,001 atrás do líder' para diferença positiva que arredonda para 0,000", () => {
+      const resultSmall = calculateLeaderDiff(1.139, 1.1389);
+      expect(resultSmall.isTied).toBe(false);
+      expect(resultSmall.formattedDiff).toBe("Menos de 0,001 atrás do líder");
+
+      const resultTiny = calculateLeaderDiff(1.139, 1.1386); // diff 0.0004
+      expect(resultTiny.formattedDiff).toBe("Menos de 0,001 atrás do líder");
     });
 
-    it("deve formatar corretamente para diferenças inteiras maiores (ex: 59 pontos atrás)", () => {
-      const result = calculateLeaderDiff(1200, 1141);
-      expect(result.diff).toBe(59);
-      expect(result.formattedDiff).toBe("59 pontos atrás do líder");
+    it("deve omitir a diferença (null) quando o score for ausente, nulo ou inválido", () => {
+      expect(calculateLeaderDiff(null, 1.109).formattedDiff).toBeNull();
+      expect(calculateLeaderDiff(1.139, null).formattedDiff).toBeNull();
+      expect(calculateLeaderDiff(undefined, 1.109).formattedDiff).toBeNull();
+      expect(calculateLeaderDiff(1.139, NaN).formattedDiff).toBeNull();
+    });
+
+    it("deve omitir a diferença (null) se a diferença for negativa (runner com score maior)", () => {
+      const resultNegative = calculateLeaderDiff(1.100, 1.150);
+      expect(resultNegative.formattedDiff).toBeNull();
+      expect(resultNegative.diff).toBeLessThan(0);
     });
   });
 

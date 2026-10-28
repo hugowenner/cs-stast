@@ -46,7 +46,7 @@ import { getPlayerCombatStats } from "@/server/services/analytics/premium/combat
 import { getPlayerDamageStats } from "@/server/services/analytics/premium/damage.analytics";
 import { winrateContext, ratingContext, adrContext, kastContext, hsContext } from "@/lib/statContext";
 import { listSeasons } from "@/server/services/season.service";
-import { cn } from "@/lib/utils";
+import { cn, cleanMapName } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -84,7 +84,7 @@ export default async function PlayerDetailPage({
     ]);
 
   const mapProgressItems = maps.map((m) => ({
-    name: m.mapName,
+    name: cleanMapName(m.mapName),
     count: m.appearances,
     percentage: m.winrate,
     subtitle: `${m.appearances} ${m.appearances === 1 ? "partida" : "partidas"}`,
@@ -524,7 +524,7 @@ export default async function PlayerDetailPage({
                   <div className="min-w-0 flex flex-col gap-0.5">
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs sm:text-sm font-bold text-foreground">
-                        {match.mapName.replace(/^de_/i, "").toUpperCase()}
+                        {cleanMapName(match.mapName)}
                       </span>
                       <span className="text-[10px] font-mono text-muted-foreground/60">
                         · {match.playedAt.toLocaleDateString("pt-BR")}

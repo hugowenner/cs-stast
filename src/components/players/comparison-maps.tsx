@@ -1,7 +1,7 @@
 import * as React from "react";
 import type { PlayerComparisonDTO } from "@/server/dtos/playerComparison.dto";
 import { getCleanMapImage } from "@/components/ui/map-performance-card";
-import { cn } from "@/lib/utils";
+import { cn, cleanMapName } from "@/lib/utils";
 
 export function ComparisonMaps({
   maps,
@@ -45,7 +45,7 @@ export function ComparisonMaps({
 
               const isABetter = wrA > wrB;
               const isBBetter = wrB > wrA;
-              const cleanMap = map.mapName.replace(/^de_/i, "").toUpperCase();
+              const cleanMap = cleanMapName(map.mapName);
 
               return (
                 <tr key={map.mapName} className="hover:bg-surface-elevated/30 transition-micro">

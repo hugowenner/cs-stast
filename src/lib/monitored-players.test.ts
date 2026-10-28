@@ -2,10 +2,11 @@ import { describe, it, expect } from "vitest";
 import {
   transformMonitoredPlayersForCarousel,
   comparePlayersDeterministic,
+  formatCompactRatingVariation,
   MIN_MATCHES_TO_SHOW,
   MIN_MATCHES_FOR_FULL_SAMPLE,
 } from "./monitored-players";
-import type { MonitoredPlayerEntry } from "@/server/services/competitive.service";
+import type { MonitoredPlayerEntry, SeasonComparisonEntry } from "@/server/services/competitive.service";
 
 function createMockPlayer(overrides: Partial<MonitoredPlayerEntry>): MonitoredPlayerEntry {
   return {
@@ -200,5 +201,105 @@ describe("transformMonitoredPlayersForCarousel", () => {
 
     expect(input[0].rank).toBe(originalRank);
     expect(input[0]).toEqual(createMockPlayer({ player: { id: "p1", nickname: "P1", avatarUrl: null, levelGc: null }, matchCount: 10, seasonMatchCount: 10, rank: 99 }));
+  });
+
+  it("atribui variação compacta de rating apenas a jogadores com dois blocos de 10 completos (seasonComparison)", () => {
+    const p1 = createMockPlayer({ player: { id: "p1", nickname: "P1", avatarUrl: null, levelGc: null }, matchCount: 10, seasonMatchCount: 20 });
+    const p2 = createMockPlayer({ player: { id: "p2", nickname: "P2", avatarUrl: null, levelGc: null }, matchCount: 10, seasonMatchCount: 14 });
+
+    const mockComparison: SeasonComparisonEntry[] = [
+      {
+        player: { id: "p1", nickname: "P1" },
+        rawDiff: 0.281,
+        season: { rating: 1.0, adr: 80, kd: 1.0, winrate: 50, matchCount: 10 },
+        recent: { rating: 1.28, adr: 95, kd: 1.3, winrate: 70, matchCount: 10 },
+        diff: { rating: 0.28, adr: 15, kd: 0.3, winrate: 20 },
+      },
+    ];
+
+    const result = transformMonitoredPlayersForCarousel([p1, p2], undefined, mockComparison);
+
+    expect(result).toHaveLength(2);
+    const resultP1 = result.find((r) => r.player.id === "p1");
+    const resultP2 = result.find((r) => r.player.id === "p2");
+
+    expect(resultP1?.ratingVariation).toEqual({
+      rawDiff: 0.281,
+      formatted: "↑ +0,28",
+      type: "up",
+      arrow: "↑",
+    });
+
+    expect(resultP2?.ratingVariation).toBeNull();
+  });
+
+  it("omite indicador de variação em temporadas históricas ou quando seasonComparison não for fornecida", () => {
+    const p1 = createMockPlayer({ player: { id: "p1", nickname: "P1", avatarUrl: null, levelGc: null }, matchCount: 10, seasonMatchCount: 25 });
+    const result = transformMonitoredPlayersForCarousel([p1], undefined, undefined);
+
+    expect(result[0].ratingVariation).toBeNull();
+  });
+});
+
+describe("formatCompactRatingVariation", () => {
+  it("formata evolução positiva corretamente com seta para cima e sinal de mais", () => {
+    const res = formatCompactRatingVariation(0.284);
+    expect(res).toEqual({
+      rawDiff: 0.284,
+      formatted: "↑ +0,28",
+      type: "up",
+      arrow: "↑",
+    });
+  });
+
+  it("formata queda negativa corretamente com seta para baixo e sinal de menos U+2212", () => {
+    const res = formatCompactRatingVariation(-0.174);
+    expect(res).toEqual({
+      rawDiff: -0.174,
+      formatted: "↓ −0,17",
+      type: "down",
+      arrow: "↓",
+    });
+  });
+
+  it("formata variação que arredonda para zero em 2 casas como neutra, sem sinal negativo ou indicação de alta/queda", () => {
+    const resZero = formatCompactRatingVariation(0);
+    expect(resZero).toEqual({
+      rawDiff: 0,
+      formatted: "→ 0,00",
+      type: "neutral",
+      arrow: "→",
+    });
+
+    const resSmallPos = formatCompactRatingVariation(0.003);
+    expect(resSmallPos).toEqual({
+      rawDiff: 0.003,
+      formatted: "→ 0,00",
+      type: "neutral",
+      arrow: "→",
+    });
+
+    const resSmallNeg = formatCompactRatingVariation(-0.004);
+    expect(resSmallNeg).toEqual({
+      rawDiff: -0.004,
+      formatted: "→ 0,00",
+      type: "neutral",
+      arrow: "→",
+    });
+  });
+
+  it("diferencia limiar de 0,005 para 0,01", () => {
+    const resPos = formatCompactRatingVariation(0.005);
+    expect(resPos?.formatted).toBe("↑ +0,01");
+    expect(resPos?.type).toBe("up");
+
+    const resNeg = formatCompactRatingVariation(-0.005);
+    expect(resNeg?.formatted).toBe("↓ −0,01");
+    expect(resNeg?.type).toBe("down");
+  });
+
+  it("retorna null para valores não numéricos ou inválidos", () => {
+    expect(formatCompactRatingVariation(NaN)).toBeNull();
+    expect(formatCompactRatingVariation(Infinity)).toBeNull();
   });
 });
