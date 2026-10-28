@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useState } from "react";
-import { Zap, Star, Trophy, ShieldCheck, Crosshair, Target, EyeOff, Flame } from "lucide-react";
+import { Zap, Star, Trophy, ShieldCheck, Crosshair, Target, EyeOff, Flame, Crown } from "lucide-react";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import Link from "next/link";
 import { TacticalTabs } from "@/components/ui/tactical-tabs";
@@ -90,66 +90,223 @@ function PerformanceTab({ stats }: { stats: AdvancedPerformanceStats }) {
 // ─── Tab: Multikills ──────────────────────────────────────────────────────────
 function MultikillsTab({ leaderboards }: { leaderboards: MultikillsLeaderboards }) {
   const categories = [
-    { key: "aces"        as const, label: "ACES (5K)",        badge: "ELITE", badgeVariant: "gold" as const,    color: "text-gold" },
-    { key: "quadKills"   as const, label: "QUAD KILLS (4K)",  badge: "4K",    badgeVariant: "warning" as const, color: "text-status-warning" },
-    { key: "tripleKills" as const, label: "TRIPLE KILLS (3K)",badge: "3K",    badgeVariant: "good" as const,    color: "text-status-good" },
-    { key: "doubleKills" as const, label: "DOUBLE KILLS (2K)",badge: "2K",    badgeVariant: "info" as const,    color: "text-cyan-400" },
+    {
+      key: "aces" as const,
+      title: "Aces",
+      badge: "5K",
+      badgeVariant: "gold" as const,
+      icon: Crown,
+      colorText: "text-gold",
+      featuredBg: "bg-gold/[0.07] border-gold/30 hover:border-gold/50",
+      barColor: "bg-gold",
+    },
+    {
+      key: "quadKills" as const,
+      title: "Quad Kills",
+      badge: "4K",
+      badgeVariant: "warning" as const,
+      icon: Flame,
+      colorText: "text-amber-400",
+      featuredBg: "bg-amber-500/[0.07] border-amber-500/30 hover:border-amber-500/50",
+      barColor: "bg-amber-400",
+    },
+    {
+      key: "tripleKills" as const,
+      title: "Triple Kills",
+      badge: "3K",
+      badgeVariant: "good" as const,
+      icon: Target,
+      colorText: "text-status-good",
+      featuredBg: "bg-status-good/[0.07] border-status-good/30 hover:border-status-good/50",
+      barColor: "bg-status-good",
+    },
+    {
+      key: "doubleKills" as const,
+      title: "Double Kills",
+      badge: "2K",
+      badgeVariant: "info" as const,
+      icon: Crosshair,
+      colorText: "text-cyan-400",
+      featuredBg: "bg-cyan-500/[0.07] border-cyan-500/30 hover:border-cyan-500/50",
+      barColor: "bg-cyan-400",
+    },
   ];
 
-  const hasData = categories.some((c) => leaderboards[c.key].length > 0);
+  const hasAnyData = categories.some((c) => leaderboards[c.key]?.length > 0);
 
-  if (!hasData) {
+  if (!hasAnyData) {
     return (
-      <p className="text-xs font-mono text-muted-foreground/60 text-center py-8">
-        Nenhuma multikill registrada nesta temporada.
-      </p>
+      <div className="py-12 text-center flex flex-col items-center justify-center gap-2">
+        <Trophy className="size-8 text-muted-foreground/30 mb-1" />
+        <p className="text-xs font-mono font-bold text-foreground">
+          Nenhuma multikill registrada nesta temporada.
+        </p>
+        <p className="text-[11px] font-mono text-muted-foreground/60 max-w-sm">
+          Acompanhe as eliminações múltiplas (2K, 3K, 4K e Aces) assim que as partidas forem disputadas.
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {categories.map(({ key, label, badge, badgeVariant, color }) => {
-        const entries = leaderboards[key];
-        if (entries.length === 0) return null;
-        return (
-          <div
-            key={key}
-            className="flex flex-col justify-between gap-3 p-3.5 bg-surface-deck border border-border/50 rounded-xs"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-[0.14em] text-foreground">
-                {label}
-              </span>
-              <TacticalBadge label={badge} variant={badgeVariant} size="xs" />
-            </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 items-stretch">
+      {categories.map((cat) => {
+        const entries = leaderboards[cat.key] ?? [];
+        const Icon = cat.icon;
 
-            <div className="flex flex-col gap-1.5 border-t border-border/30 pt-2">
-              {entries.slice(0, 5).map((p, idx) => (
-                <div key={p.playerId} className="flex items-center justify-between gap-2 text-xs">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span
-                      className={cn(
-                        "font-mono text-[10px] font-black w-3 text-center",
-                        idx === 0 ? color : "text-muted-foreground/40"
-                      )}
-                    >
-                      #{idx + 1}
-                    </span>
-                    <PlayerAvatar nickname={p.nickname} avatarUrl={p.avatarUrl} size="sm" />
-                    <span className="font-medium text-foreground/90 truncate flex-1 min-w-0">
-                      {p.nickname}
-                    </span>
-                  </div>
-                  <span
-                    className={cn(
-                      "font-mono font-bold tabular-nums shrink-0",
-                      idx === 0 ? "text-foreground font-black" : "text-muted-foreground/75"
-                    )}
-                  >
-                    {p.count}
+        // Se uma categoria não tem registros, mas outras têm dados:
+        // Mantém o card para balancear o grid 2x2, com mensagem elegante e alinhamento no topo
+        if (entries.length === 0) {
+          return (
+            <div
+              key={cat.key}
+              className="flex flex-col justify-start p-3.5 bg-surface-deck border border-border/50 rounded-xs h-full"
+            >
+              {/* Header compacto */}
+              <div className="flex items-center justify-between pb-2.5 border-b border-border/40">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Icon className={cn("size-3.5 shrink-0", cat.colorText)} />
+                  <span className="text-xs sm:text-[13px] font-mono font-bold uppercase tracking-[0.14em] text-foreground truncate">
+                    {cat.title}
                   </span>
                 </div>
-              ))}
+                <TacticalBadge label={cat.badge} variant={cat.badgeVariant} size="xs" />
+              </div>
+
+              <div className="py-8 text-center my-auto">
+                <p className="text-[11px] font-mono text-muted-foreground/60">
+                  {`Nenhum registro de ${cat.title.toLowerCase()} no período.`}
+                </p>
+              </div>
+            </div>
+          );
+        }
+
+        const maxCount = entries[0]?.count || 1;
+        const leader = entries[0];
+        const rest = entries.slice(1, 6);
+
+        return (
+          <div
+            key={cat.key}
+            className="flex flex-col justify-start p-3.5 bg-surface-deck border border-border/50 rounded-xs h-full"
+          >
+            {/* Header compacto */}
+            <div className="flex items-center justify-between pb-2.5 border-b border-border/40">
+              <div className="flex items-center gap-2 min-w-0">
+                <Icon className={cn("size-3.5 shrink-0", cat.colorText)} />
+                <span className="text-xs sm:text-[13px] font-mono font-bold uppercase tracking-[0.14em] text-foreground truncate">
+                  {cat.title}
+                </span>
+              </div>
+              <TacticalBadge label={cat.badge} variant={cat.badgeVariant} size="xs" />
+            </div>
+
+            {/* Conteúdo começando logo abaixo do cabeçalho (sem justify-between que empurre para o rodapé) */}
+            <div className="flex flex-col gap-2 pt-2.5 flex-1 justify-start">
+              {/* ─── Destaque: 1ª Linha (#1 Líder do Card) ─── */}
+              {leader && (
+                <div
+                  className={cn(
+                    "flex items-center justify-between gap-3 p-2.5 rounded-xs border transition-micro",
+                    cat.featuredBg
+                  )}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <span
+                      className={cn(
+                        "font-mono text-xs font-black w-4 text-center shrink-0 tabular-nums",
+                        cat.colorText
+                      )}
+                    >
+                      #1
+                    </span>
+                    <PlayerAvatar
+                      nickname={leader.nickname}
+                      avatarUrl={leader.avatarUrl}
+                      size="sm"
+                    />
+                    <Link
+                      href={`/players/${leader.playerId}`}
+                      className="text-xs sm:text-sm font-bold text-foreground hover:text-primary transition-micro truncate block"
+                    >
+                      {leader.nickname}
+                    </Link>
+                  </div>
+
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    {/* Barra horizontal sutil proporcional (100% no líder) */}
+                    <div className="w-14 sm:w-20 h-1.5 bg-surface-base/80 rounded-full overflow-hidden">
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-[width] duration-300 motion-reduce:transition-none opacity-85",
+                          cat.barColor
+                        )}
+                        style={{ width: "100%" }}
+                      />
+                    </div>
+                    <span
+                      className={cn(
+                        "font-mono text-sm sm:text-base font-black tabular-nums text-right min-w-[22px]",
+                        cat.colorText
+                      )}
+                    >
+                      {leader.count}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* ─── Demais Linhas (#2 em diante) ─── */}
+              {rest.length > 0 && (
+                <div className="flex flex-col gap-1 pt-0.5">
+                  {rest.map((p, idx) => {
+                    const rank = idx + 2;
+                    const ratio = Math.max(0, Math.min(1, p.count / maxCount));
+                    const percentage = Math.round(ratio * 100);
+
+                    return (
+                      <div
+                        key={p.playerId}
+                        className="flex items-center justify-between gap-2.5 px-2 py-1.5 rounded-xs hover:bg-surface-elevated/40 transition-micro"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <span className="font-mono text-[10px] font-bold text-muted-foreground/60 w-4 text-center shrink-0 tabular-nums">
+                            #{rank}
+                          </span>
+                          <PlayerAvatar
+                            nickname={p.nickname}
+                            avatarUrl={p.avatarUrl}
+                            size="xs"
+                          />
+                          <Link
+                            href={`/players/${p.playerId}`}
+                            className="text-xs font-medium text-foreground/85 hover:text-primary transition-micro truncate block"
+                          >
+                            {p.nickname}
+                          </Link>
+                        </div>
+
+                        <div className="flex items-center gap-2.5 shrink-0">
+                          {/* Barra horizontal sutil proporcional */}
+                          <div className="w-14 sm:w-20 h-1.5 bg-surface-base/80 rounded-full overflow-hidden">
+                            <div
+                              className={cn(
+                                "h-full rounded-full transition-[width] duration-300 motion-reduce:transition-none opacity-60",
+                                cat.barColor
+                              )}
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                          <span className="font-mono text-xs font-bold text-muted-foreground/90 tabular-nums text-right min-w-[22px]">
+                            {p.count}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         );
