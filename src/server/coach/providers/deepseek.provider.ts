@@ -71,6 +71,7 @@ export class DeepseekCoachProvider implements CoachProvider {
           strengths: parsed.strengths || [],
           weaknesses: parsed.weaknesses || [],
           recommendations: parsed.recommendations || [],
+          nextGoal: parsed.nextGoal || undefined,
           confidence: parsed.confidence ?? 100,
           generatedAt: new Date().toISOString(),
           provider: AIConfig.provider,

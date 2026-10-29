@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import type { CompetitiveDataset } from "@/server/services/competitive.service";
+import { cleanMapName } from "@/lib/utils";
 import { getDashboardSummary } from "@/server/services/dashboard.service";
 
 function loadTemplate(name: string): string {
@@ -8,9 +8,15 @@ function loadTemplate(name: string): string {
   return fs.readFileSync(templatePath, "utf-8");
 }
 
-function sanitizeText(str: string | null | undefined): string {
+export function sanitizeText(str: string | null | undefined): string {
   if (!str) return "N/A";
-  return String(str).replace(/[\r\n]/g, " ").trim();
+  // Remove quebras de linha e caracteres de controle para isolar os dados estritamente em uma única linha
+  let clean = String(str).replace(/[\r\n\t\x00-\x1F\x7F]/g, " ").trim();
+  // Neutraliza delimitadores markdown de bloco de código para evitar quebra estrutural do prompt
+  clean = clean.replace(/```/g, "'''");
+  // Limita tamanho para evitar inundações de contexto
+  if (clean.length > 80) clean = clean.substring(0, 80);
+  return clean;
 }
 
 export interface DashboardCoachPayload {
@@ -56,31 +62,22 @@ export interface DashboardCoachPayload {
     losses: number;
     winrate: number;
   }>;
-  bestMap: {
-    name: string;
-    cleanMapName: string;
-    matchesPlayed: number;
-    winrate: number;
-  } | null;
-  worstMap: {
-    name: string;
-    cleanMapName: string;
-    matchesPlayed: number;
-    winrate: number;
-  } | null;
   bestPlayer: {
     nickname: string;
-    rating: number;
+    seasonScore: number;
+    rawRating: number;
     matchesPlayed: number;
   } | null;
   notablePlayers: Array<{
     nickname: string;
-    rating: number;
+    rawRating: number;
     matchesPlayed: number;
   }>;
   telemetry: {
+    entryKillsTotal: number;
+    hasOpeningWinrateTelemetry: boolean;
     hasClutchTelemetry: boolean;
-    hasDuelTelemetry: boolean;
+    hasTradeTelemetry: boolean;
   };
   community?: any;
   dominantMap?: any;
@@ -92,6 +89,7 @@ export async function loadDashboardCoachPayload(
   preloadedDataset?: any
 ): Promise<DashboardCoachPayload> {
   const compService = await import("@/server/services/competitive.service").catch(() => ({} as any));
+
   const dataset =
     preloadedDataset ??
     (typeof compService?.loadCompetitiveDataset === "function"
@@ -101,10 +99,10 @@ export async function loadDashboardCoachPayload(
 
   let radar: any = null;
   try {
-    if (typeof compService.getGroupRadarFromDataset === "function" && dataset?.allStats) {
+    if (typeof compService?.getGroupRadarFromDataset === "function" && dataset?.allStats) {
       radar = compService.getGroupRadarFromDataset(dataset, [], null);
     }
-  } catch (err) {
+  } catch {
     radar = null;
   }
 
@@ -135,53 +133,77 @@ export async function loadDashboardCoachPayload(
     };
   }
 
-  let mapPerf: any = null;
-  try {
-    if (typeof compService.getMapPerformanceFromDataset === "function" && dataset?.allStats) {
-      mapPerf = compService.getMapPerformanceFromDataset(dataset);
-    }
-  } catch {
-    mapPerf = null;
-  }
-
-  if (!mapPerf) {
-    mapPerf = { mapWinrates: [], bestMap: null, worstMap: null };
-  }
-
   const allStats = Array.isArray(dataset?.allStats) ? dataset.allStats : [];
   const activePlayers = Array.isArray(dataset?.activePlayers) ? dataset.activePlayers : [];
   const statsByPlayer = dataset?.statsByPlayer instanceof Map ? dataset.statsByPlayer : new Map();
 
-  const hasClutch = allStats.some((s) => (s.clutchesWon ?? 0) > 0);
-  const hasDuel = allStats.some(
-    (s) => (s.firstKills ?? 0) > 0 || (s.firstDeaths ?? 0) > 0
-  );
+  // 1. Map Pool Coletivo Exato (calculado sobre as partidas coletivas elegíveis, mesma regra do Radar)
+  const collectiveMatchMap = new Map<string, { mapName: string; won: boolean }>();
+  for (const stat of allStats) {
+    const matchStats = allStats.filter((st: any) => st.matchId === stat.matchId);
+    const sameTeam = matchStats.filter((st: any) => st.team === stat.team);
+    const opposing = matchStats.filter((st: any) => st.team !== stat.team);
+    // Partida coletiva elegível: >= 2 monitorados no mesmo time e nenhum no time oposto
+    if (opposing.length === 0 && sameTeam.length >= 2) {
+      if (!collectiveMatchMap.has(stat.matchId)) {
+        const won =
+          (stat.team === "A" && stat.match.scoreTeamA > stat.match.scoreTeamB) ||
+          (stat.team === "B" && stat.match.scoreTeamB > stat.match.scoreTeamA);
+        collectiveMatchMap.set(stat.matchId, {
+          mapName: stat.match.map?.name ?? "Desconhecido",
+          won,
+        });
+      }
+    }
+  }
 
-  // Jogadores ativos com volume representativo (ordenados por matchesPlayed)
-  const playersSummary: Array<{ nickname: string; rating: number; matchesPlayed: number }> = [];
+  const mapCountMap = new Map<string, { total: number; wins: number }>();
+  for (const { mapName, won } of collectiveMatchMap.values()) {
+    const entry = mapCountMap.get(mapName) ?? { total: 0, wins: 0 };
+    entry.total++;
+    if (won) entry.wins++;
+    mapCountMap.set(mapName, entry);
+  }
+
+  const collectiveMapPool = Array.from(mapCountMap.entries())
+    .map(([mapName, data]) => ({
+      name: mapName,
+      cleanMapName: cleanMapName(mapName),
+      matchesPlayed: data.total,
+      wins: data.wins,
+      losses: data.total - data.wins,
+      winrate: data.total > 0 ? Math.round((data.wins / data.total) * 1000) / 10 : 0,
+    }))
+    .sort((a, b) => b.matchesPlayed - a.matchesPlayed || b.winrate - a.winrate);
+
+  // 2. Telemetria
+  let totalEntryKills = 0;
+  let totalEntryDeaths = 0;
+  let totalTrades = 0;
+  let totalClutches = 0;
+
+  for (const s of allStats) {
+    totalEntryKills += s.entryKills ?? 0;
+    totalEntryDeaths += s.entryDeaths ?? 0;
+    totalTrades += s.tradeKills ?? 0;
+    totalClutches += s.clutchesWon ?? 0;
+  }
+
+  // 3. Jogadores com volume de partidas
+  const playersSummary: Array<{ nickname: string; rawRating: number; matchesPlayed: number }> = [];
   for (const p of activePlayers) {
-    const stats = statsByPlayer.get(p.id) ?? [];
-    if (stats.length > 0) {
-      const avgRating = stats.reduce((sum: number, s: any) => sum + (s.rating ?? 0), 0) / stats.length;
+    const pStats = statsByPlayer.get(p.id) ?? [];
+    if (pStats.length > 0) {
+      const avgRawRating =
+        pStats.reduce((sum: number, s: any) => sum + (s.rating ?? 0), 0) / pStats.length;
       playersSummary.push({
         nickname: p.nickname,
-        rating: avgRating,
-        matchesPlayed: stats.length,
+        rawRating: avgRawRating,
+        matchesPlayed: pStats.length,
       });
     }
   }
   playersSummary.sort((a, b) => b.matchesPlayed - a.matchesPlayed);
-
-  const eligibleMaps = (mapPerf.mapWinrates || [])
-    .filter((m) => m.matchesPlayed >= 2)
-    .map((m) => ({
-      name: m.map,
-      cleanMapName: m.cleanMapName,
-      matchesPlayed: m.matchesPlayed,
-      wins: m.wins,
-      losses: m.losses,
-      winrate: m.winrate,
-    }));
 
   return {
     seasonId,
@@ -228,34 +250,21 @@ export async function loadDashboardCoachPayload(
         : null,
       diffPp: radar.squadMomentum.diffPp,
     },
-    mapPool: eligibleMaps,
-    bestMap: mapPerf.bestMap
-      ? {
-          name: mapPerf.bestMap.mapName,
-          cleanMapName: mapPerf.bestMap.cleanMapName,
-          matchesPlayed: mapPerf.bestMap.matchesPlayed,
-          winrate: mapPerf.bestMap.winrate,
-        }
-      : null,
-    worstMap: mapPerf.worstMap
-      ? {
-          name: mapPerf.worstMap.mapName,
-          cleanMapName: mapPerf.worstMap.cleanMapName,
-          matchesPlayed: mapPerf.worstMap.matchesPlayed,
-          winrate: mapPerf.worstMap.winrate,
-        }
-      : null,
+    mapPool: collectiveMapPool,
     bestPlayer: summary.bestPlayer
       ? {
           nickname: summary.bestPlayer.nickname,
-          rating: summary.bestPlayer.rating,
+          seasonScore: summary.bestPlayer.rating, // Season Score 3.5 ajustado/oficial
+          rawRating: summary.bestPlayer.rawRating ?? summary.bestPlayer.rating, // Rating 2.0 médio bruto
           matchesPlayed: summary.bestPlayer.matchesPlayed,
         }
       : null,
     notablePlayers: playersSummary.slice(0, 4),
     telemetry: {
-      hasClutchTelemetry: hasClutch,
-      hasDuelTelemetry: hasDuel,
+      entryKillsTotal: totalEntryKills,
+      hasOpeningWinrateTelemetry: totalEntryDeaths > 0,
+      hasClutchTelemetry: totalClutches > 0,
+      hasTradeTelemetry: totalTrades > 0,
     },
     community: summary.community,
     dominantMap: summary.dominantMap,
@@ -264,126 +273,154 @@ export async function loadDashboardCoachPayload(
 
 export function formatDashboardContextPayload(dto: any): string {
   const lines: string[] = [];
-
   const seasonLabel = sanitizeText(dto.seasonLabel || "Temporada Atual");
 
   // 1. Universo e Amostragem
-  lines.push("1. UNIVERSO DE PARTIDAS E COMPOSIÇÃO DO GRUPO:");
+  lines.push("1. UNIVERSO DE PARTIDAS E COMPOSIÇÃO:");
   lines.push(`- Temporada: ${seasonLabel}`);
 
   if (dto.universe) {
     const u = dto.universe;
-    lines.push(`- Total de partidas registradas no período: ${u.totalMatches}`);
+    lines.push(`- Universo total de partidas registradas: ${u.totalMatches} partidas.`);
     lines.push(
-      `- Composição comprovada: ${u.collectiveMatches} coletivas com 2+ monitorados no mesmo time (${u.fullTeamMatches} com 5 monitorados no mesmo time, ${u.smallTeamMatches} com 2 a 4 monitorados no mesmo time), ${u.soloMatches} partidas individuais/solo e ${u.confrontationMatches} confrontos internos entre monitorados.`
+      `- Recorte coletivo (base do radar): ${u.collectiveMatches} partidas únicas com 2+ monitorados no mesmo time (${u.fullTeamMatches} com 5 monitorados no mesmo time, ${u.smallTeamMatches} com 2 a 4 monitorados).`
     );
-    lines.push(`- População ativa: ${u.activePlayersCount} jogadores monitorados.`);
     lines.push(
-      `- Ritmo de sessões: ${u.totalSessions} sessões de jogo registradas (média de ${u.avgMatchesPerSession.toFixed(1)} partidas por sessão).`
+      `- Partidas fora do recorte coletivo: ${u.soloMatches} individuais/solo (1 monitorado) e ${u.confrontationMatches} confronto(s) direto(s) entre monitorados em lados opostos (excluídos do cálculo coletivo para evitar distorção).`
+    );
+    lines.push(`- Jogadores monitorados ativos: ${u.activePlayersCount} cadastrados.`);
+    lines.push(
+      `- Sessões da plataforma (agrupamento por data/sessão da GC, horário UTC): ${u.totalSessions} sessões (média de ${u.avgMatchesPerSession.toFixed(1)} partidas/sessão; não interpretar como noites de jogo).`
     );
   } else {
-    // Fallback legado
     lines.push(`- Total de partidas: ${dto.totalMatches ?? "N/A"}`);
     lines.push(`- Jogadores ativos: ${dto.totalPlayers ?? "N/A"}`);
     lines.push(`- Sessões registradas: ${dto.totalSessions ?? "N/A"}`);
   }
 
-  // 2. Momento Coletivo Recente (Radar)
-  lines.push("\n2. MOMENTO COLETIVO RECENTE (PARTIDAS COM 2+ MONITORADOS NO MESMO TIME):");
+  // 2. Momento Coletivo Recente
+  lines.push("\n2. MOMENTO COLETIVO RECENTE (APENAS PARTIDAS COLETIVAS COM 2+ NO MESMO TIME):");
   if (dto.squadMomentum) {
     const sm = dto.squadMomentum;
     if (sm.sampleStatus === "insufficient") {
       lines.push(
-        `- Amostra em formação: apenas ${sm.eligibleMatchesCount} partidas coletivas elegíveis registradas na temporada até o momento. Não há volume suficiente para comparação de blocos de 10 jogos. O coach deve destacar que o ciclo está em início.`
+        `- Amostra em formação: apenas ${sm.eligibleMatchesCount} partidas coletivas registradas. Amostra insuficiente para comparação estatística de blocos de 10 jogos. O coach deve destacar que o ciclo está no início.`
       );
     } else if (sm.sampleStatus === "partial" && sm.recentBlock) {
       const rb = sm.recentBlock;
+      const range = rb.formattedRange ? ` (período: ${rb.formattedRange})` : "";
       lines.push(
-        `- Últimas 10 partidas coletivas: ${rb.wins} vitórias, ${rb.ties} empates e ${rb.losses} derrotas (${rb.winrate}% de aproveitamento coletivo, saldo de rounds: ${rb.roundDiff > 0 ? `+${rb.roundDiff}` : rb.roundDiff}).`
+        `- Últimas 10 partidas coletivas${range}: ${rb.wins} vitórias, ${rb.ties} empates e ${rb.losses} derrotas (${rb.winrate}% aproveitamento, saldo de rounds: ${rb.roundDiff > 0 ? `+${rb.roundDiff}` : rb.roundDiff}).`
       );
-      lines.push("- Bloco anterior: Amostra insuficiente (< 20 partidas) para bloco comparativo anterior.");
+      lines.push("- Bloco anterior: Amostra insuficiente (< 20 partidas) para bloco comparativo.");
     } else if (sm.sampleStatus === "full" && sm.recentBlock && sm.previousBlock) {
       const rb = sm.recentBlock;
       const pb = sm.previousBlock;
+      const rangeR = rb.formattedRange ? ` (período: ${rb.formattedRange})` : "";
+      const rangeP = pb.formattedRange ? ` (período: ${pb.formattedRange})` : "";
       lines.push(
-        `- Últimas 10 partidas coletivas: ${rb.wins} vitórias, ${rb.ties} empates e ${rb.losses} derrotas (${rb.winrate}% aproveitamento, saldo de rounds: ${rb.roundDiff > 0 ? `+${rb.roundDiff}` : rb.roundDiff}).`
+        `- Últimas 10 partidas coletivas${rangeR}: ${rb.wins} vitórias, ${rb.ties} empates e ${rb.losses} derrotas (${rb.winrate}% aproveitamento, saldo de rounds: ${rb.roundDiff > 0 ? `+${rb.roundDiff}` : rb.roundDiff}).`
       );
       lines.push(
-        `- Bloco de 10 partidas anteriores: ${pb.wins} vitórias, ${pb.ties} empates e ${pb.losses} derrotas (${pb.winrate}% aproveitamento, saldo de rounds: ${pb.roundDiff > 0 ? `+${pb.roundDiff}` : pb.roundDiff}).`
+        `- Bloco de 10 partidas anteriores${rangeP}: ${pb.wins} vitórias, ${pb.ties} empates e ${pb.losses} derrotas (${pb.winrate}% aproveitamento, saldo de rounds: ${pb.roundDiff > 0 ? `+${pb.roundDiff}` : pb.roundDiff}).`
       );
       const diffStr =
         sm.diffPp !== null
           ? `${sm.diffPp > 0 ? `+${sm.diffPp}` : sm.diffPp} pontos percentuais (p.p.)`
-          : "estável";
+          : "0 p.p.";
       lines.push(
-        `- Variação entre blocos: ${diffStr} no aproveitamento. (Atenção: uma variação de pontos percentuais não deve ser qualificada automaticamente como melhora ou piora substancial sem considerar a margem da amostra).`
+        `- Variação entre blocos: ${diffStr} no aproveitamento. (Nota: saldo de rounds negativo acumulado não permite deduzir se vitórias foram apertadas ou derrotas elásticas).`
       );
     }
   } else {
-    lines.push("- Dados detalhados de blocos de momento coletivo não fornecidos.");
+    lines.push("- Dados de momento coletivo não fornecidos.");
   }
 
-  // 3. Map Pool e Aproveitamento
-  lines.push("\n3. MAP POOL E APROVEITAMENTO COLETIVO:");
+  // 3. Map Pool Coletivo
+  lines.push("\n3. MAP POOL COLETIVO (EXCLUSIVAMENTE PARTIDAS COLETIVAS COM 2+ NO MESMO TIME):");
   if (dto.mapPool && dto.mapPool.length > 0) {
-    lines.push("Mapas com amostra representativa (>= 2 partidas coletivas):");
+    const totalCollectiveMapMatches = dto.mapPool.reduce(
+      (sum: number, m: any) => sum + m.matchesPlayed,
+      0
+    );
+    lines.push(
+      `Distribuição das ${totalCollectiveMapMatches} partidas coletivas por mapa (ordenadas por volume):`
+    );
     for (const m of dto.mapPool) {
-      const isBest = dto.bestMap?.name === m.name;
-      const isWorst = dto.worstMap?.name === m.name;
-      const tag = isBest ? " [Maior aproveitamento]" : isWorst ? " [Pior aproveitamento]" : "";
+      const sampleNote =
+        m.matchesPlayed < 5
+          ? " [amostra pequena/inicial]"
+          : m.matchesPlayed >= 20
+          ? " [amostra sólida]"
+          : "";
       lines.push(
-        `- ${sanitizeText(m.cleanMapName || m.name)}: ${m.matchesPlayed} partidas (${m.wins}V - ${m.losses}D, ${m.winrate}% WR)${tag}`
+        `- ${sanitizeText(m.cleanMapName || m.name)}: ${m.matchesPlayed} partidas (${m.wins}V - ${m.losses}D, ${m.winrate}% WR)${sampleNote}`
       );
     }
+    lines.push(
+      "- Nota Metodológica: Mapas com poucas partidas (< 5) não devem receber conclusões definitivas. Winrate baixo não permite deduzir falhas específicas de bombsite ou posicionamento."
+    );
   } else if (dto.dominantMap) {
     lines.push(
       `- Mapa mais jogado: ${sanitizeText(dto.dominantMap.name)} com ${dto.dominantMap.count} partidas (${dto.dominantMap.percentage}% do total).`
     );
   } else {
-    lines.push("- Sem dados de mapas com amostragem suficiente.");
+    lines.push("- Sem registros de mapas na amostra coletiva.");
   }
 
-  // 4. Destaques Individuais (com denominadores claros)
-  lines.push("\n4. DESTAQUES INDIVIDUAIS (RESPEITANDO DENOMINADORES E AMOSTRAS):");
+  // 4. Destaques Individuais
+  lines.push("\n4. PARTICIPAÇÃO INDIVIDUAL (COM DENOMINADORES E INDICADORES CLAROS):");
   if (dto.bestPlayer) {
+    const scoreVal = dto.bestPlayer.seasonScore ?? dto.bestPlayer.rating ?? 0;
+    const rawVal = dto.bestPlayer.rawRating ?? dto.bestPlayer.rating ?? scoreVal;
     lines.push(
-      `- Líder da Temporada (Season Score oficial): ${sanitizeText(dto.bestPlayer.nickname)} — Rating ${Number(dto.bestPlayer.rating).toFixed(2)} em ${dto.bestPlayer.matchesPlayed} partidas registradas.`
+      `- Líder da classificação oficial (Season Score 3.5 com ajuste bayesiano): ${sanitizeText(dto.bestPlayer.nickname)} — Score: ${scoreVal.toFixed(2)} (Rating 2.0 médio bruto: ${rawVal.toFixed(2)} em ${dto.bestPlayer.matchesPlayed} partidas).`
     );
   }
   if (dto.notablePlayers && dto.notablePlayers.length > 0) {
-    lines.push("Outros jogadores com participação relevante no período:");
+    lines.push("Outros jogadores com volume elevado de partidas no período:");
     for (const p of dto.notablePlayers) {
       if (p.nickname !== dto.bestPlayer?.nickname) {
+        const rawVal = p.rawRating ?? p.rating ?? 0;
         lines.push(
-          `- ${sanitizeText(p.nickname)}: Rating médio ${p.rating.toFixed(2)} em ${p.matchesPlayed} partidas.`
+          `- ${sanitizeText(p.nickname)}: Rating 2.0 médio bruto ${rawVal.toFixed(2)} em ${p.matchesPlayed} partidas.`
         );
       }
     }
   }
   lines.push(
-    "- Nota Metodológica: O coach NÃO deve focar a análise inteira apenas no líder de Rating, nem julgar jogadores com amostras pequenas (< 3 partidas)."
+    "- Nota Metodológica: O volume de partidas é individual. Os jogadores atuam em grupos variáveis e NÃO formam uma escalação fixa. Rating médio mede desempenho agregado, não regularidade."
   );
 
-  // 5. Disponibilidade e Limitações de Telemetria
+  // 5. Telemetria e Cobertura
   lines.push("\n5. DISPONIBILIDADE E LIMITAÇÕES DE TELEMETRIA:");
-  const hasClutch = dto.telemetry?.hasClutchTelemetry ?? false;
-  if (!hasClutch) {
+  const entryKills = dto.telemetry?.entryKillsTotal ?? 0;
+  if (entryKills > 0) {
     lines.push(
-      "- Clutches (1vX): Dados NÃO disponíveis/zerados na telemetria deste período. É expressamente PROIBIDO afirmar que o grupo falha em clutches."
+      `- First Kills (Aberturas): ${entryKills} eliminações de abertura registradas na temporada (campo disponível).`
     );
   } else {
-    lines.push("- Clutches (1vX): Dados presentes na telemetria.");
+    lines.push("- First Kills (Aberturas): Zero ou não coletado no período.");
   }
 
-  const hasDuel = dto.telemetry?.hasDuelTelemetry ?? false;
-  if (!hasDuel) {
+  if (!dto.telemetry?.hasOpeningWinrateTelemetry) {
     lines.push(
-      "- Duelos de abertura / First Kills: Telemetria ausente ou não parseada neste período. NÃO faça afirmações sobre opening duels."
+      "- Opening Winrate (% vitórias em duelos de abertura): INDISPONÍVEL. As mortes de abertura (First Deaths) não foram coletadas nas súmulas, impossibilitando calcular taxa de conversão de aberturas."
     );
+  }
+
+  if (!dto.telemetry?.hasClutchTelemetry) {
+    lines.push(
+      "- Clutches (1vX): Eventos de 1vX zerados/não registrados nas súmulas GC deste período. NÃO inferir incapacidade do grupo em clutches."
+    );
+  }
+
+  if (!dto.telemetry?.hasTradeTelemetry) {
+    lines.push("- Trade Kills: Eventos de trade zerados/não registrados nas súmulas deste período.");
   }
 
   lines.push(
-    "- Utilitárias e Comunicação: Dados de granadas (smokes, flashes, molotovs) e comunicação de voz NÃO constam nas súmulas GC. É PROIBIDO presumir falhas de utilitária, mira ou comunicação sem evidência de demo."
+    "- Utilitárias e Comunicação: Dados de granadas e áudio NÃO constam em súmulas. É estritamente proibido presumir falhas de utilitária, mira ou comunicação sem evidência de demo."
   );
 
   return lines.join("\n");
@@ -391,6 +428,9 @@ export function formatDashboardContextPayload(dto: any): string {
 
 export function buildDashboardPrompt(dto: any): string {
   const template = loadTemplate("dashboard");
+  const vocabulary = loadTemplate("vocabulary");
   const contextPayload = formatDashboardContextPayload(dto);
-  return template.replace("{{contextPayload}}", contextPayload);
+  return template
+    .replace("{{contextPayload}}", contextPayload)
+    .replace("{{VOCABULARY}}", vocabulary);
 }

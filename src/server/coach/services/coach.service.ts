@@ -17,15 +17,34 @@ function stableStringify(obj: any): string {
   return "{" + parts.join(",") + "}";
 }
 
+let cachedTemplateHash: string | null = null;
+export function getTemplatesHash(): string {
+  if (cachedTemplateHash) return cachedTemplateHash;
+  try {
+    const templatesDir = path.join(process.cwd(), "src/server/coach/templates");
+    if (fs.existsSync(templatesDir)) {
+      const files = fs.readdirSync(templatesDir).sort();
+      const contents = files.map((f) => fs.readFileSync(path.join(templatesDir, f), "utf-8")).join("||");
+      cachedTemplateHash = crypto.createHash("sha256").update(contents).digest("hex").slice(0, 16);
+      return cachedTemplateHash;
+    }
+  } catch {
+    // fallback
+  }
+  return "default";
+}
+
 export function calculateCacheKey(dto: any): string {
   const canonical = stableStringify(dto);
-  const dataToHash = `${canonical}|${AIConfig.provider}|${AIConfig.model}|${AIConfig.promptVersion}`;
+  const tmplHash = getTemplatesHash();
+  const dataToHash = `${canonical}|${AIConfig.provider}|${AIConfig.model}|${AIConfig.promptVersion}|${tmplHash}`;
   return crypto.createHash("sha256").update(dataToHash).digest("hex");
 }
 
 const CACHE_DIR = path.join(process.cwd(), "tmp", "coach-cache");
 
 export function invalidateCoachCache() {
+  cachedTemplateHash = null;
   if (fs.existsSync(CACHE_DIR)) {
     fs.rmSync(CACHE_DIR, { recursive: true, force: true });
   }
