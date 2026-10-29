@@ -183,7 +183,7 @@ export async function createSnapshot(seasonId: string) {
   const { getDashboardSummary } = await import("@/server/services/dashboard.service");
   const { loadCompetitiveDataset, getDashboardCompetitiveBundle } = await import("@/server/services/competitive.service");
   const { getCoachReport } = await import("@/server/coach/services/coach.service");
-  const { buildDashboardPrompt } = await import("@/server/coach/builders/dashboard.builder");
+  const { buildDashboardPrompt, loadDashboardCoachPayload } = await import("@/server/coach/builders/dashboard.builder");
 
   const season = await prisma.season.findUnique({
     where: { id: seasonId },
@@ -196,7 +196,7 @@ export async function createSnapshot(seasonId: string) {
   const summary = await getDashboardSummary(seasonId, dataset);
   const competitive = await getDashboardCompetitiveBundle(dataset);
   const coachReport = await getCoachReport(
-    { ...summary, seasonLabel: season.name },
+    await loadDashboardCoachPayload(seasonId, season.name, dataset),
     buildDashboardPrompt,
     "dashboard:season",
     seasonId

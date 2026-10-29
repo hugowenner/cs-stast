@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getDashboardSummary } from "@/server/services/dashboard.service";
 import { getCoachReport, peekCoachReport } from "@/server/coach/services/coach.service";
-import { buildDashboardPrompt } from "@/server/coach/builders/dashboard.builder";
+import { buildDashboardPrompt, loadDashboardCoachPayload } from "@/server/coach/builders/dashboard.builder";
 import { prisma } from "@/server/db";
 import { resolveSeasonId } from "@/server/services/season.service";
 
@@ -36,11 +36,10 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const summary = await getDashboardSummary(resolvedSeasonId);
-    const detail = {
-      ...summary,
-      seasonLabel: seasonRecord?.name || SEASON_LABEL,
-    };
+    const detail = await loadDashboardCoachPayload(
+      resolvedSeasonId,
+      seasonRecord?.name || SEASON_LABEL
+    );
 
     const status = peekCoachReport(detail, "dashboard:season", resolvedSeasonId);
     return NextResponse.json(status);
@@ -80,11 +79,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(coach);
     }
 
-    const summary = await getDashboardSummary(resolvedSeasonId);
-    const detail = {
-      ...summary,
-      seasonLabel: seasonRecord?.name || SEASON_LABEL,
-    };
+    const detail = await loadDashboardCoachPayload(
+      resolvedSeasonId,
+      seasonRecord?.name || SEASON_LABEL
+    );
 
     const report = await getCoachReport(detail, buildDashboardPrompt, "dashboard:season", resolvedSeasonId);
     return NextResponse.json(report);
