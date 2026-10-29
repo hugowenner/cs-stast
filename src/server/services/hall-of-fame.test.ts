@@ -253,10 +253,14 @@ describe("Hall of Fame - Records da Temporada & Anomalias", () => {
     const makeMatch = (id: string, dateStr: string, won: boolean) => ({
       id,
       playedAt: new Date(dateStr),
-      map: { name: "de_dust2" },
+      map: { id: "map-1", name: "de_dust2", imageUrl: null },
+      session: { id: "sess-1", name: "Sessão 1", date: new Date(dateStr), createdAt: new Date(dateStr) },
+      seasonId: "season-1",
+      sessionId: "sess-1",
+      trackedPlayersCount: 5,
       scoreTeamA: won ? 13 : 8,
       scoreTeamB: won ? 8 : 13,
-    });
+    } as any);
 
     const p1Matches = [
       // 6 vitórias seguidas de 05/10 a 10/10, depois 1 derrota
@@ -293,8 +297,8 @@ describe("Hall of Fame - Records da Temporada & Anomalias", () => {
       allStats: [...p1Stats, ...p2Stats],
     } as unknown as CompetitiveDataset;
 
-    dataset.statsByPlayer.set("p1", p1Stats);
-    dataset.statsByPlayer.set("p2", p2Stats);
+    dataset.statsByPlayer.set("p1", p1Stats as any);
+    dataset.statsByPlayer.set("p2", p2Stats as any);
 
     const records = getHallOfFameRecordsFromDataset(dataset);
     const streakRecord = records.find((r) => r.id === "elite-win-streak");

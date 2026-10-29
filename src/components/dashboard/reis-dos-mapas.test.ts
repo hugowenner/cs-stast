@@ -146,6 +146,9 @@ describe("ReisDosMapa Component - Resiliência e Formatação", () => {
       cleanMapName: "Vertigo",
       matchesPlayed: 0,
       wins: 0,
+      losses: 0,
+      ties: 0,
+      directMatchesExcluded: 0,
       winrate: undefined as any,
     };
 

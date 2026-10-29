@@ -79,13 +79,15 @@ export interface DashboardCoachPayload {
     hasClutchTelemetry: boolean;
     hasTradeTelemetry: boolean;
   };
+  bestMap?: { name: string; cleanMapName: string; matchesPlayed: number; winrate: number } | null;
+  worstMap?: { name: string; cleanMapName: string; matchesPlayed: number; winrate: number } | null;
   community?: any;
   dominantMap?: any;
 }
 
 export async function loadDashboardCoachPayload(
   seasonId: string,
-  seasonLabel: string,
+  seasonLabel?: string,
   preloadedDataset?: any
 ): Promise<DashboardCoachPayload> {
   const compService = await import("@/server/services/competitive.service").catch(() => ({} as any));
@@ -207,7 +209,7 @@ export async function loadDashboardCoachPayload(
 
   return {
     seasonId,
-    seasonLabel,
+    seasonLabel: seasonLabel || "Temporada Atual",
     universe: {
       totalMatches: radar.matchComposition.totalUniverse,
       collectiveMatches: radar.matchComposition.teamCount,

@@ -209,11 +209,12 @@ describe("transformMonitoredPlayersForCarousel", () => {
 
     const mockComparison: SeasonComparisonEntry[] = [
       {
-        player: { id: "p1", nickname: "P1" },
+        player: { id: "p1", nickname: "P1", avatarUrl: null, levelGc: null },
         rawDiff: 0.281,
         season: { rating: 1.0, adr: 80, kd: 1.0, winrate: 50, matchCount: 10 },
         recent: { rating: 1.28, adr: 95, kd: 1.3, winrate: 70, matchCount: 10 },
         diff: { rating: 0.28, adr: 15, kd: 0.3, winrate: 20 },
+        recentMatches: [],
       },
     ];
 
