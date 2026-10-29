@@ -160,10 +160,10 @@ function MultikillsTab({ leaderboards }: { leaderboards: MultikillsLeaderboards 
           return (
             <div
               key={cat.key}
-              className="flex flex-col justify-start p-3.5 bg-surface-deck border border-border/50 rounded-xs h-full"
+              className="flex flex-col justify-start p-3 sm:p-3.5 bg-surface-deck border border-border/50 rounded-xs h-full min-w-0"
             >
               {/* Header compacto */}
-              <div className="flex items-center justify-between pb-2.5 border-b border-border/40">
+              <div className="flex items-center justify-between pb-2 sm:pb-2.5 border-b border-border/40">
                 <div className="flex items-center gap-2 min-w-0">
                   <Icon className={cn("size-3.5 shrink-0", cat.colorText)} />
                   <span className="text-xs sm:text-[13px] font-mono font-bold uppercase tracking-[0.14em] text-foreground truncate">
@@ -189,10 +189,10 @@ function MultikillsTab({ leaderboards }: { leaderboards: MultikillsLeaderboards 
         return (
           <div
             key={cat.key}
-            className="flex flex-col justify-start p-3.5 bg-surface-deck border border-border/50 rounded-xs h-full"
+            className="flex flex-col justify-start p-3 sm:p-3.5 bg-surface-deck border border-border/50 rounded-xs h-full min-w-0"
           >
             {/* Header compacto */}
-            <div className="flex items-center justify-between pb-2.5 border-b border-border/40">
+            <div className="flex items-center justify-between pb-2 sm:pb-2.5 border-b border-border/40">
               <div className="flex items-center gap-2 min-w-0">
                 <Icon className={cn("size-3.5 shrink-0", cat.colorText)} />
                 <span className="text-xs sm:text-[13px] font-mono font-bold uppercase tracking-[0.14em] text-foreground truncate">
@@ -208,11 +208,11 @@ function MultikillsTab({ leaderboards }: { leaderboards: MultikillsLeaderboards 
               {leader && (
                 <div
                   className={cn(
-                    "flex items-center justify-between gap-3 p-2.5 rounded-xs border transition-micro",
+                    "flex items-center justify-between gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-xs border transition-micro",
                     cat.featuredBg
                   )}
                 >
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
                     <span
                       className={cn(
                         "font-mono text-xs font-black w-4 text-center shrink-0 tabular-nums",
@@ -234,9 +234,9 @@ function MultikillsTab({ leaderboards }: { leaderboards: MultikillsLeaderboards 
                     </Link>
                   </div>
 
-                  <div className="flex items-center gap-2.5 shrink-0">
+                  <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
                     {/* Barra horizontal sutil proporcional (100% no líder) */}
-                    <div className="w-14 sm:w-20 h-1.5 bg-surface-base/80 rounded-full overflow-hidden">
+                    <div className="w-12 sm:w-20 h-1.5 bg-surface-base/80 rounded-full overflow-hidden">
                       <div
                         className={cn(
                           "h-full rounded-full transition-[width] duration-300 motion-reduce:transition-none opacity-85",
@@ -247,7 +247,7 @@ function MultikillsTab({ leaderboards }: { leaderboards: MultikillsLeaderboards 
                     </div>
                     <span
                       className={cn(
-                        "font-mono text-sm sm:text-base font-black tabular-nums text-right min-w-[22px]",
+                        "font-mono text-xs sm:text-base font-black tabular-nums text-right min-w-[20px] sm:min-w-[22px]",
                         cat.colorText
                       )}
                     >
@@ -268,9 +268,9 @@ function MultikillsTab({ leaderboards }: { leaderboards: MultikillsLeaderboards 
                     return (
                       <div
                         key={p.playerId}
-                        className="flex items-center justify-between gap-2.5 px-2 py-1.5 rounded-xs hover:bg-surface-elevated/40 transition-micro"
+                        className="flex items-center justify-between gap-2 sm:gap-2.5 px-1.5 sm:px-2 py-1.5 rounded-xs hover:bg-surface-elevated/40 transition-micro"
                       >
-                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
                           <span className="font-mono text-[10px] font-bold text-muted-foreground/60 w-4 text-center shrink-0 tabular-nums">
                             #{rank}
                           </span>
@@ -287,9 +287,9 @@ function MultikillsTab({ leaderboards }: { leaderboards: MultikillsLeaderboards 
                           </Link>
                         </div>
 
-                        <div className="flex items-center gap-2.5 shrink-0">
+                        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
                           {/* Barra horizontal sutil proporcional */}
-                          <div className="w-14 sm:w-20 h-1.5 bg-surface-base/80 rounded-full overflow-hidden">
+                          <div className="w-12 sm:w-20 h-1.5 bg-surface-base/80 rounded-full overflow-hidden">
                             <div
                               className={cn(
                                 "h-full rounded-full transition-[width] duration-300 motion-reduce:transition-none opacity-60",
@@ -298,7 +298,7 @@ function MultikillsTab({ leaderboards }: { leaderboards: MultikillsLeaderboards 
                               style={{ width: `${percentage}%` }}
                             />
                           </div>
-                          <span className="font-mono text-xs font-bold text-muted-foreground/90 tabular-nums text-right min-w-[22px]">
+                          <span className="font-mono text-xs font-bold text-muted-foreground/90 tabular-nums text-right min-w-[20px] sm:min-w-[22px]">
                             {p.count}
                           </span>
                         </div>
@@ -464,15 +464,15 @@ export function PerformanceGcSection({
   ];
 
   return (
-    <div className="bg-surface-panel border border-border/60 rounded-sm overflow-hidden flex flex-col">
-      <div className="p-3 border-b border-border/40 bg-surface-deck/40">
+    <div className="bg-surface-panel border border-border/60 rounded-sm overflow-hidden flex flex-col w-full min-w-0">
+      <div className="p-3 border-b border-border/40 bg-surface-deck/40 overflow-x-auto no-scrollbar">
         <TacticalTabs
           tabs={tabs}
           activeTab={activeTab}
           onChange={setActiveTab}
         />
       </div>
-      <div className="p-5">
+      <div className="p-3 sm:p-5">
         {activeTab === "multikills"  && <MultikillsTab leaderboards={multikillsLeaderboards} />}
         {activeTab === "clutches"    && <ClutchesTab clutches={clutchesBundle} />}
         {activeTab === "combate"     && <CombatTab combat={combatBundle} />}

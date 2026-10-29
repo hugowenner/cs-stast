@@ -34,6 +34,47 @@ const SEASON_LABEL = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "nu
 
 const EMPTY_COMPETITIVE_BUNDLE: competitiveService.DashboardCompetitiveBundle = {
   radar: {
+    squadMomentum: {
+      eligibleMatchesCount: 0,
+      recentBlock: null,
+      previousBlock: null,
+      diffPp: null,
+      hasComparison: false,
+      sampleStatus: "insufficient",
+      emptyReason: "Nenhuma partida coletiva com monitorados no mesmo time registrada no período.",
+    },
+    sessionPace: {
+      totalEligibleSessions: 0,
+      totalEligibleMatches: 0,
+      averageMatchesPerSession: 0,
+      latestSession: null,
+      emptyReason: "Nenhuma sessão com partidas coletivas no mesmo time registrada.",
+    },
+    matchComposition: {
+      totalUniverse: 0,
+      soloCount: 0,
+      soloPercentage: 0,
+      smallTeamCount: 0,
+      smallTeamPercentage: 0,
+      fullTeamCount: 0,
+      fullTeamPercentage: 0,
+      confrontationCount: 0,
+      confrontationPercentage: 0,
+      otherCount: 0,
+      teamCount: 0,
+      teamPercentage: 0,
+      emptyReason: "Nenhuma partida registrada no universo do período selecionado.",
+    },
+    recentParticipation: {
+      windowDays: 7,
+      windowStartDate: "",
+      windowEndDate: "",
+      activeCount: 0,
+      totalActiveMonitored: 0,
+      latestMatchPlayedAt: null,
+      participatingPlayers: [],
+      emptyReason: "Nenhum jogador monitorado ativo no período.",
+    },
     featuredPlayer: null,
     featuredPlayerEmptyReason: "São necessárias pelo menos 5 partidas com rating no período.",
     periodFact: null,
@@ -171,7 +212,7 @@ export default async function DashboardPage(props: {
         }),
         safeQuery(() => matchService.listRecentMatches(10, resolvedSeasonId), []),
         safeQuery(
-          async () => competitiveService.getDashboardCompetitiveBundle(await datasetPromise),
+          async () => competitiveService.getDashboardCompetitiveBundle(await datasetPromise, selectedSeason),
           EMPTY_COMPETITIVE_BUNDLE,
         ),
         safeQuery(() => achievementService.listRecent(4), []),
@@ -398,6 +439,8 @@ export default async function DashboardPage(props: {
           powerRanking={powerRanking}
           decisive={decisive}
           archetypes={archetypes}
+          isHistoricalSnapshot={Boolean(snapshot && selectedSeason?.status === "CLOSED")}
+          seasonName={selectedSeason?.name}
         />
       </SectionContainer>
 
@@ -442,7 +485,7 @@ export default async function DashboardPage(props: {
           index={10}
           tag="RADAR DO GRUPO"
           title="Radar do Grupo"
-          subtitle="Destaques e pontos de atenção com base nas partidas do período selecionado."
+          subtitle="Momento coletivo, sessões e participação no período selecionado."
           delay={0.11}
         >
           <RadarDaTemporada
@@ -494,19 +537,17 @@ export default async function DashboardPage(props: {
         linkLabel="Ver todas as conquistas"
         delay={0.14}
       >
-        <div className="bg-surface-panel border border-border/60 rounded-sm overflow-hidden">
-          {recentAchievements.length === 0 ? (
-            <p className="text-muted-foreground/60 py-8 text-center text-xs font-mono">
-              Nenhuma conquista recente registrada.
-            </p>
-          ) : (
-            <div className="divide-y divide-border/30">
-              {recentAchievements.map((entry, i) => (
-                <AchievementFeedItem key={entry.id} entry={entry} index={i} />
-              ))}
-            </div>
-          )}
-        </div>
+        {recentAchievements.length === 0 ? (
+          <div className="bg-surface-panel border border-border/60 rounded-sm p-8 text-center text-xs font-mono text-muted-foreground/60">
+            Nenhuma conquista recente registrada nesta temporada.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            {recentAchievements.map((entry, i) => (
+              <AchievementFeedItem key={entry.id} entry={entry} index={i} />
+            ))}
+          </div>
+        )}
       </SectionContainer>
     </div>
   );

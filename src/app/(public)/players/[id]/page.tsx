@@ -474,7 +474,7 @@ export default async function PlayerDetailPage({
             ) : (
               <div className="flex flex-col divide-y divide-border/30">
                 {achievements.slice(0, 5).map((entry) => (
-                  <AchievementFeedItem key={entry.id} entry={{ ...entry, player }} />
+                  <AchievementFeedItem key={entry.id} entry={{ ...entry, player }} variant="row" />
                 ))}
               </div>
             )}

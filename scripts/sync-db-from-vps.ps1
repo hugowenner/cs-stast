@@ -1,4 +1,4 @@
-﻿# scripts/sync-db-from-vps.ps1
+# scripts/sync-db-from-vps.ps1
 # Sincroniza o PostgreSQL DEV local (Docker, localhost:5432) com os dados reais
 # da VPS via SSH tunnel (localhost:5433).
 #
@@ -194,6 +194,45 @@ try {
 
     Write-Host "  [3/4] Conectando a VPS via SSH Tunnel (somente leitura)..." -ForegroundColor White
 
+    # Valida se a porta local 5433 ja esta em uso para evitar conflitos
+    $portCheck = Get-NetTCPConnection -LocalPort $LOCAL_PORT -ErrorAction SilentlyContinue
+    if ($portCheck) {
+        Write-Host ""
+        Write-Host "  [X] ERRO: A porta local $LOCAL_PORT ja esta ocupada por outro processo." -ForegroundColor Red
+        Write-Host "      Encerre instancias anteriores ou tuneis SSH residuais antes de continuar." -ForegroundColor Yellow
+        Write-Host ""
+        exit 1
+    }
+
+    # Tenta obter o IP do container PostgreSQL dinamicamente na VPS para prevenir falhas por realocacao de IP no Docker
+    $dynamicIp = ""
+    try {
+        $inspectCmd = "docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' cs2-stats-postgres 2>/dev/null"
+        $probeArgs = @(
+            "-p", $VPS_SSH_PORT,
+            "-o", "BatchMode=yes",
+            "-o", "StrictHostKeyChecking=accept-new",
+            "-o", "ConnectTimeout=5",
+            "${VPS_SSH_USER}@${VPS_SSH_HOST}",
+            $inspectCmd
+        )
+        $dynamicIp = (& ssh @probeArgs 2>$null)
+        if ($dynamicIp) { $dynamicIp = $dynamicIp.Trim() }
+    } catch {
+        $dynamicIp = ""
+    }
+
+    if ($dynamicIp -match '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$') {
+        if ($dynamicIp -ne $VPS_PG_INTERNAL_IP) {
+            Write-Host "  [i] IP do PostgreSQL na VPS resolvido dinamicamente: $dynamicIp (configurado: $VPS_PG_INTERNAL_IP)" -ForegroundColor Cyan
+        } else {
+            Write-Host "  [i] IP do PostgreSQL na VPS confirmado: $dynamicIp" -ForegroundColor DarkGray
+        }
+        $VPS_PG_INTERNAL_IP = $dynamicIp
+    } else {
+        Write-Host "  [!] Nao foi possivel consultar o IP dinamicamente via SSH. Utilizando IP configurado: $VPS_PG_INTERNAL_IP" -ForegroundColor Yellow
+    }
+
     $tmpDir = Join-Path $ROOT "tmp"
     if (-not (Test-Path $tmpDir)) {
         New-Item -ItemType Directory -Path $tmpDir -Force | Out-Null
@@ -207,6 +246,8 @@ try {
         "-p", $VPS_SSH_PORT,
         "-o", "StrictHostKeyChecking=accept-new",
         "-o", "ExitOnForwardFailure=yes",
+        "-o", "ServerAliveInterval=15",
+        "-o", "ServerAliveCountMax=3",
         "${VPS_SSH_USER}@${VPS_SSH_HOST}"
     )
 

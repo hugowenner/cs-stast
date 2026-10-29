@@ -113,10 +113,33 @@ function validateVpsSource(sourceUrl: string): void {
   }
 }
 
-async function countAll(client: AnyClient): Promise<Record<ModelName, number>> {
+async function testConnection(client: unknown, label: string): Promise<void> {
+  try {
+    const rawClient = client as { $queryRawUnsafe: (query: string) => Promise<unknown> };
+    await rawClient.$queryRawUnsafe("SELECT 1;");
+  } catch (err: unknown) {
+    const error = err as Error;
+    throw new Error(
+      `Falha de conexão com ${label}: ${error.message ?? error}. ` +
+        `Operação abortada preventivamente antes de qualquer alteração no DEV local.`,
+    );
+  }
+}
+
+async function countAll(
+  client: AnyClient,
+  dbLabel: "VPS (Origem)" | "DEV (Destino)",
+): Promise<Record<ModelName, number>> {
   const counts = {} as Record<ModelName, number>;
   for (const model of MODELS_IN_ORDER) {
-    counts[model] = await client[model].count();
+    try {
+      counts[model] = await client[model].count();
+    } catch (err: unknown) {
+      const error = err as Error;
+      throw new Error(
+        `Falha ao contar registros do modelo '${model}' em ${dbLabel}: ${error.message ?? error}`,
+      );
+    }
   }
   return counts;
 }
@@ -126,7 +149,16 @@ async function copyModel(
   source: AnyClient,
   target: AnyClient,
 ): Promise<number> {
-  const rows = await source[model].findMany();
+  let rows: Record<string, unknown>[];
+  try {
+    rows = await source[model].findMany();
+  } catch (err: unknown) {
+    const error = err as Error;
+    throw new Error(
+      `Falha ao consultar dados do modelo '${model}' na VPS (Origem): ${error.message ?? error}`,
+    );
+  }
+
   if (rows.length === 0) {
     console.log(`  [sync] ${model.padEnd(20)}: 0 registros na VPS (ignorado)`);
     return 0;
@@ -134,7 +166,14 @@ async function copyModel(
 
   for (let i = 0; i < rows.length; i += BATCH_SIZE) {
     const batch = rows.slice(i, i + BATCH_SIZE);
-    await target[model].createMany({ data: batch });
+    try {
+      await target[model].createMany({ data: batch });
+    } catch (err: unknown) {
+      const error = err as Error;
+      throw new Error(
+        `Falha ao inserir lote no modelo '${model}' no DEV local (Destino) (registros ${i + 1}-${Math.min(i + BATCH_SIZE, rows.length)}): ${error.message ?? error}`,
+      );
+    }
   }
 
   console.log(`  [sync] ${model.padEnd(20)}: ${rows.length} registros copiados com sucesso.`);
@@ -175,9 +214,16 @@ async function main() {
   }) as unknown as AnyClient;
 
   try {
+    // 0. Preflight: Testar conectividade ativa com ambos os bancos antes de qualquer ação
+    console.log("  [0/4] Testando conectividade com Origem (VPS) e Destino (DEV)...");
+    await testConnection(source, "Origem (VPS / porta 5433 via túnel SSH)");
+    console.log("    ✓ Conexão com VPS (Origem) validada com sucesso.");
+    await testConnection(target, "Destino (DEV local / porta 5432)");
+    console.log("    ✓ Conexão com DEV local (Destino) validada com sucesso.\n");
+
     // 1. Inspecionar contagens da VPS (Origem)
     console.log("  [1/4] Lendo contagens da VPS de Produção...");
-    const vpsCounts = await countAll(source);
+    const vpsCounts = await countAll(source, "VPS (Origem)");
     const totalVpsRows = Object.values(vpsCounts).reduce((a, b) => a + b, 0);
 
     if (totalVpsRows === 0) {
@@ -192,8 +238,15 @@ async function main() {
     // 2. Limpar DEV local na ordem estrita de FK (filho antes do pai)
     console.log("\n  [2/4] Limpando dados do DEV local (ordem reversa de Foreign Keys)...");
     for (const model of MODELS_REVERSE) {
-      await target[model].deleteMany();
-      console.log(`    ✓ Limpeza concluída: ${model}`);
+      try {
+        await target[model].deleteMany();
+        console.log(`    ✓ Limpeza concluída: ${model}`);
+      } catch (err: unknown) {
+        const error = err as Error;
+        throw new Error(
+          `Falha ao limpar modelo '${model}' no DEV local (Destino): ${error.message ?? error}`,
+        );
+      }
     }
 
     // 3. Copiar dados da VPS para DEV na ordem estrita de FK (pai antes do filho)
@@ -204,7 +257,7 @@ async function main() {
 
     // 4. Verificação e Auditoria de Integridade Referencial
     console.log("\n  [4/4] Validando integridade e contagens finais...");
-    const devCounts = await countAll(target);
+    const devCounts = await countAll(target, "DEV (Destino)");
     const mismatches: string[] = [];
 
     console.log("\n  Relatório de Sincronização:");
@@ -226,12 +279,21 @@ async function main() {
       console.log("\n  ✓ Sincronização 100% íntegra! Todas as tabelas e relacionamentos conferem.");
     }
   } finally {
-    await (source as unknown as { $disconnect: () => Promise<void> }).$disconnect();
-    await (target as unknown as { $disconnect: () => Promise<void> }).$disconnect();
+    await Promise.allSettled([
+      (source as unknown as { $disconnect?: () => Promise<void> }).$disconnect?.(),
+      (target as unknown as { $disconnect?: () => Promise<void> }).$disconnect?.(),
+    ]);
   }
 }
 
-main().catch((err) => {
-  console.error("\n  Erro durante a sincronização:", err.message ?? err);
-  process.exitCode = 1;
-});
+const isDirectExecution =
+  process.argv[1] &&
+  (process.argv[1].endsWith("sync-from-vps-to-pg.ts") ||
+    process.argv[1].endsWith("sync-from-vps-to-pg.js"));
+
+if (isDirectExecution) {
+  main().catch((err) => {
+    console.error("\n  Erro durante a sincronização:", err.message ?? err);
+    process.exitCode = 1;
+  });
+}

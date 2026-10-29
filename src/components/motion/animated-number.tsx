@@ -5,7 +5,7 @@ import { animate, useReducedMotion } from "framer-motion";
 
 export function AnimatedNumber({
   value,
-  duration = 0.85,
+  duration = 0.2,
   decimals = 0,
   suffix = "",
   locale = "pt-BR",
@@ -17,7 +17,7 @@ export function AnimatedNumber({
   locale?: string;
 }) {
   const prefersReduced = useReducedMotion();
-  const [display, setDisplay] = useState(0);
+  const [display, setDisplay] = useState(value);
   // Tracks the last rendered value so updates animate from current → new, not 0 → new
   const displayRef = useRef(0);
   const isFirstMount = useRef(true);

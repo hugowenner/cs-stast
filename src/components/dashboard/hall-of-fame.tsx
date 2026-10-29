@@ -1,9 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useId } from "react";
 import Link from "next/link";
 import { PlayerAvatar } from "@/components/players/player-avatar";
-import type { HallOfFameRecord, MonitoredPlayerEntry } from "@/server/services/competitive.service";
+import type {
+  HallOfFameRecord,
+  MonitoredPlayerEntry,
+  RecordHolderContext,
+} from "@/server/services/competitive.service";
 import {
   Trophy,
   Flame,
@@ -22,6 +26,11 @@ import {
   Ghost,
   Activity,
   ArrowRight,
+  Calendar,
+  Users,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn, cleanMapName } from "@/lib/utils";
@@ -46,98 +55,98 @@ interface RecordMeta {
 
 const BEST_METADATA_BY_CATEGORY: Record<string, RecordMeta> = {
   "Recorde de Rating": {
-    title: "Maior Rating",
+    title: "Maior Rating em Jogo",
     shortLabel: "Rating",
     icon: Trophy,
-    description: "Maior pontuação de Rating 2.0 individual em um único confronto.",
+    description: "Maior pontuação de Rating individual (escala 2.0) registrada em um único confronto.",
     iconColor: "text-gold",
     accentColor: "text-gold",
   },
   "Maior K/D em Jogo": {
-    title: "Maior K/D",
+    title: "Maior K/D em Jogo",
     shortLabel: "K/D",
     icon: Swords,
-    description: "Melhor proporção de eliminações por morte em uma partida.",
+    description: "Melhor proporção de eliminações por morte (K/D) registrada em um único confronto.",
     iconColor: "text-status-good",
     accentColor: "text-status-good",
   },
   "Maior ADR em Jogo": {
-    title: "Maior ADR",
+    title: "Maior ADR em Jogo",
     shortLabel: "ADR",
     icon: Flame,
-    description: "Recorde de dano médio por round registrado na temporada.",
+    description: "Maior média de dano causado por round (Average Damage per Round) registrada em uma partida.",
     iconColor: "text-primary",
     accentColor: "text-primary",
   },
   "Recorde de Kills": {
-    title: "Mais Kills",
+    title: "Mais Kills em Jogo",
     shortLabel: "Kills",
     icon: Swords,
-    description: "Maior quantidade de eliminações registradas em uma partida.",
+    description: "Maior número absoluto de eliminações registradas por um jogador em uma única partida.",
     iconColor: "text-status-good",
     accentColor: "text-status-good",
   },
   "Maior HS% em Jogo": {
-    title: "Maior HS%",
+    title: "Maior HS% em Jogo",
     shortLabel: "HS%",
     icon: Star,
-    description: "Maior porcentagem de precisão em disparos na cabeça.",
+    description: "Maior taxa de tiros na cabeça em eliminações (mínimo de 10 kills para relevância).",
     iconColor: "text-cyan-400",
     accentColor: "text-cyan-400",
   },
   "Maior Sequência de Vitórias": {
-    title: "Maior Sequência",
+    title: "Maior Sequência de Vitórias",
     shortLabel: "Sequência",
     icon: Star,
-    description: "Maior número de vitórias consecutivas nesta temporada.",
+    description: "Maior número consecutivo de vitórias nesta temporada. Derrota ou empate encerram a contagem.",
     iconColor: "text-gold",
     accentColor: "text-gold",
   },
   "Pico de Rating do Hub": {
-    title: "Pico de Rating",
-    shortLabel: "Pico Rtg",
+    title: "Maior ELO GC registrado",
+    shortLabel: "ELO GC",
     icon: TrendingUp,
-    description: "Maior pico de pontuação individual alcançado.",
+    description: "Maior pontuação de ELO Gamers Club registrada após uma partida durante o período da temporada.",
     iconColor: "text-cyan-400",
     accentColor: "text-cyan-400",
   },
   "Maior Impacto em Jogo": {
-    title: "Maior Impacto",
+    title: "Maior índice combinado de Rating e ADR",
     shortLabel: "Impacto",
     icon: Brain,
-    description: "Maior índice de jogadas decisivas e abertura de espaço.",
+    description: "Índice combinado calculado por (Rating × 100) + ADR em uma única partida. Mede impacto simultâneo.",
     iconColor: "text-primary",
     accentColor: "text-primary",
   },
   "Mais MultiKills na Temporada": {
-    title: "Mais MultiKills",
+    title: "Mais MultiKills na Temporada",
     shortLabel: "MultiKills",
     icon: Skull,
-    description: "Líder agregado de rodadas com 2K, 3K, 4K e 5K.",
+    description: "Soma total de rodadas com multikills (2K, 3K, 4K e Aces) acumuladas em partidas da temporada.",
     iconColor: "text-status-good",
     accentColor: "text-status-good",
   },
   "Maior Dano em Jogo": {
-    title: "Maior Dano Total",
+    title: "Maior Dano em Jogo",
     shortLabel: "Dano",
     icon: Bomb,
-    description: "Volume bruto absoluto de dano causado em uma partida.",
+    description: "Volume absoluto de dano causado por um jogador ao longo de uma única partida.",
     iconColor: "text-primary",
     accentColor: "text-primary",
   },
   "Maior Clutch na Temporada": {
-    title: "Maior Clutch",
-    shortLabel: "Clutch",
+    title: "Mais Clutches na Temporada",
+    shortLabel: "Clutches",
     icon: ShieldAlert,
-    description: "Maior quantidade de situações 1vX vencidas sob pressão.",
+    description: "Maior quantidade de situações 1vX vencidas sob pressão durante a temporada.",
     iconColor: "text-status-good",
     accentColor: "text-status-good",
   },
   "Maior Consistência na Temporada": {
-    title: "Maior Consistência",
-    shortLabel: "Consist.",
+    title: "Maior Consistência na Temporada",
+    shortLabel: "Consistência",
     icon: BarChart2,
-    description: "Maior regularidade de atuações com rating acima da média.",
+    description: "Índice de consistência = Rating Médio × (1 + % partidas com Rating ≥ 1.00). Amostra mínima de 3 partidas.",
     iconColor: "text-cyan-400",
     accentColor: "text-cyan-400",
   },
@@ -145,74 +154,74 @@ const BEST_METADATA_BY_CATEGORY: Record<string, RecordMeta> = {
 
 const WORST_METADATA_BY_CATEGORY: Record<string, RecordMeta> = {
   "Pior Rating em Jogo": {
-    title: "Menor Rating",
+    title: "Menor Rating em Jogo",
     shortLabel: "Rating",
     icon: TrendingDown,
-    description: "Menor pontuação individual registrada em uma partida.",
+    description: "Menor pontuação individual de Rating registrada em uma partida com participação substancial.",
     iconColor: "text-status-critical",
     accentColor: "text-status-critical",
   },
   "Pior K/D em Jogo": {
-    title: "Pior K/D",
+    title: "Menor K/D em Jogo",
     shortLabel: "K/D",
     icon: Swords,
-    description: "Pior relação entre eliminações e mortes em um confronto.",
+    description: "Pior relação entre eliminações e mortes em um confronto com participação substancial.",
     iconColor: "text-status-critical",
     accentColor: "text-status-critical",
   },
   "Menor ADR em Jogo": {
-    title: "Menor ADR",
+    title: "Menor ADR em Jogo",
     shortLabel: "ADR",
     icon: Flame,
-    description: "Menor média de dano por round registrado.",
+    description: "Menor média de dano por round registrada em um confronto com participação substancial.",
     iconColor: "text-status-warning",
     accentColor: "text-status-warning",
   },
   "Mais Mortes em Jogo": {
-    title: "Mais Mortes",
+    title: "Mais Mortes em Jogo",
     shortLabel: "Mortes",
     icon: Skull,
-    description: "Maior quantidade de quedas em uma única partida.",
+    description: "Maior quantidade de mortes sofridas em uma única partida (incluindo prorrogações).",
     iconColor: "text-status-critical",
     accentColor: "text-status-critical",
   },
   "Menor HS% em Jogo": {
-    title: "Menor HS%",
+    title: "Menor HS% em Jogo",
     shortLabel: "HS%",
     icon: Star,
-    description: "Menor aproveitamento em disparos na cabeça.",
+    description: "Menor porcentagem de eliminações por tiro na cabeça (mínimo de 10 kills para relevância).",
     iconColor: "text-status-warning",
     accentColor: "text-status-warning",
   },
   "Maior Sequência de Derrotas": {
-    title: "Sequência de Derrotas",
+    title: "Maior Sequência de Derrotas",
     shortLabel: "Derrotas",
     icon: AlertTriangle,
-    description: "Maior sequência consecutiva de resultados negativos.",
+    description: "Maior sequência consecutiva de partidas sem vitória (derrotas e empates) na temporada.",
     iconColor: "text-status-critical",
     accentColor: "text-status-critical",
   },
   "Pior Momento no Ranking": {
-    title: "Pior Momento no Ranking",
-    shortLabel: "Ranking",
+    title: "Menor ELO GC registrado",
+    shortLabel: "ELO GC",
     icon: TrendingDown,
-    description: "Menor pontuação atingida no ranking da temporada.",
+    description: "Menor pontuação de ELO Gamers Club registrada após uma partida durante o período da temporada.",
     iconColor: "text-status-warning",
     accentColor: "text-status-warning",
   },
   "Partida Fantasma": {
-    title: "Partida Fantasma",
+    title: "Menor índice combinado de Rating e ADR",
     shortLabel: "Fantasma",
     icon: Ghost,
-    description: "Pior combinação combinada de Rating + ADR em jogo.",
+    description: "Menor índice combinado calculado por (Rating × 100) + ADR em partida com participação substancial.",
     iconColor: "text-muted-foreground",
     accentColor: "text-muted-foreground",
   },
   "Maior Inconsistência na Temporada": {
-    title: "Maior Inconsistência",
-    shortLabel: "Consist.",
+    title: "Maior Inconsistência na Temporada",
+    shortLabel: "Inconsistência",
     icon: Activity,
-    description: "Maior volume de partidas abaixo de 1.00 de rating.",
+    description: "Menor índice de consistência entre jogadores com ao menos 3 partidas na temporada.",
     iconColor: "text-status-warning",
     accentColor: "text-status-warning",
   },
@@ -258,10 +267,17 @@ function extractMapName(detail: string): string | null {
   return match ? match[1] : null;
 }
 
-export function HallOfFame({ records, worstRecords, monitoredPlayers, variant = "best" }: HallOfFameProps) {
+export function HallOfFame({
+  records,
+  worstRecords,
+  monitoredPlayers,
+  variant = "best",
+}: HallOfFameProps) {
   const hasBoth = Boolean(worstRecords && worstRecords.length > 0 && records.length > 0);
   const [mode, setMode] = useState<"best" | "worst">(variant);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeCategoryId, setActiveCategoryId] = useState<string>("");
+  const [isExpandedHolders, setIsExpandedHolders] = useState(false);
+  const tabListId = useId();
 
   const isWorst = mode === "worst";
   const list = isWorst ? (worstRecords ?? records) : records;
@@ -269,36 +285,93 @@ export function HallOfFame({ records, worstRecords, monitoredPlayers, variant = 
   const defaultMeta = isWorst ? DEFAULT_WORST_META : DEFAULT_META;
   const allNarratives = isWorst ? worstRecordNarratives : recordNarratives;
 
+  // Sincroniza activeCategoryId quando muda o modo
   useEffect(() => {
-    setActiveIndex(0);
-  }, [mode]);
-
-  useEffect(() => {
-    if (list.length <= 1) return;
-    const t = setInterval(() => setActiveIndex((i) => (i + 1) % list.length), 8000);
-    return () => clearInterval(t);
-  }, [list.length]);
+    if (list.length > 0) {
+      setActiveCategoryId(list[0].id ?? list[0].category);
+      setIsExpandedHolders(false);
+    }
+  }, [mode, list]);
 
   if (list.length === 0) return null;
 
+  // Localiza record ativo com suporte determinístico a fallback
+  const activeIndex = Math.max(
+    0,
+    list.findIndex((r) => (r.id ? r.id === activeCategoryId : r.category === activeCategoryId))
+  );
   const record = list[activeIndex] ?? list[0];
   if (!record) return null;
 
   const meta = categoryMetadata[record.category] ?? defaultMeta;
+  const displayTitle = record.title ?? meta.title;
+  const displayExplanation = record.explanation ?? meta.description;
   const IconComponent = meta.icon;
-  const mapName = extractMapName(record.detail);
-  const mapImgUrl = record.matchId ? getMapImage(record.mapName || mapName) : null;
+  const mapNameFromDetail = extractMapName(record.detail);
+  const primaryMapName = record.holders?.[0]?.mapName ?? record.mapName ?? mapNameFromDetail;
+  const mapImgUrl = record.matchId || record.holders?.[0]?.matchId ? getMapImage(primaryMapName) : null;
 
-  const matchedPlayer = monitoredPlayers.find(
-    (mp) => mp.player.nickname.toLowerCase() === record.playerName.toLowerCase()
-  )?.player;
+  // Normalização de detentores com retrocompatibilidade para snapshots históricos
+  const isLegacySnapshot = !record.holders || record.holders.length === 0;
+  const holders: RecordHolderContext[] =
+    record.holders && record.holders.length > 0
+      ? record.holders
+      : [
+          {
+            player: {
+              id: monitoredPlayers.find(
+                (mp) => mp.player.nickname.toLowerCase() === record.playerName.toLowerCase()
+              )?.player.id ?? "historical",
+              nickname: record.playerName,
+              avatarUrl:
+                monitoredPlayers.find(
+                  (mp) => mp.player.nickname.toLowerCase() === record.playerName.toLowerCase()
+                )?.player.avatarUrl ?? null,
+            },
+            matchId: record.matchId,
+            mapName: record.mapName,
+            cleanMapName: record.mapName ? cleanMapName(record.mapName) : undefined,
+          },
+        ];
 
-  const handlePrev = () => setActiveIndex((i) => (i - 1 + list.length) % list.length);
-  const handleNext = () => setActiveIndex((i) => (i + 1) % list.length);
+  const isShared = (record.isShared ?? holders.length > 1) && holders.length > 1;
+  const sharedCount = record.sharedCount ?? holders.length;
+  const isUnavailable = record.availability === "unavailable";
+
+  // Navegação manual (sem timer automático)
+  const handlePrev = () => {
+    const nextIdx = (activeIndex - 1 + list.length) % list.length;
+    setActiveCategoryId(list[nextIdx].id ?? list[nextIdx].category);
+    setIsExpandedHolders(false);
+  };
+
+  const handleNext = () => {
+    const nextIdx = (activeIndex + 1) % list.length;
+    setActiveCategoryId(list[nextIdx].id ?? list[nextIdx].category);
+    setIsExpandedHolders(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      handlePrev();
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      handleNext();
+    }
+  };
+
+  const availableCount = list.filter((r) => r.availability !== "unavailable").length;
+  const unavailableCount = list.length - availableCount;
 
   return (
-    <div className="bg-surface-panel border border-border/70 rounded-sm overflow-hidden flex flex-col shadow-sm">
-      {/* Top Bar: Selector if both exist + Title */}
+    <div
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      aria-label="Painel de Recordes da Temporada"
+      className="bg-surface-panel border border-border/70 rounded-sm overflow-hidden flex flex-col shadow-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
+    >
+      {/* Barra Superior de Navegação */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4 border-b border-border/40 bg-surface-deck/50">
         <div className="flex items-center gap-2">
           <TacticalBadge
@@ -306,15 +379,20 @@ export function HallOfFame({ records, worstRecords, monitoredPlayers, variant = 
             variant={isWorst ? "critical" : "gold"}
             size="xs"
           />
-          <span className="text-[10px] font-mono text-muted-foreground/60 hidden sm:inline">
-            {list.length} marcas registradas
+          <span className="text-[10px] font-mono text-muted-foreground/70 hidden sm:inline">
+            {availableCount} marcas disponíveis
+            {unavailableCount > 0 ? ` · ${unavailableCount} indisponível` : ""}
           </span>
+          {isLegacySnapshot && (
+            <TacticalBadge label="REGISTRO HISTÓRICO" variant="neutral" size="xs" />
+          )}
         </div>
 
         {hasBoth && (
           <div className="flex items-center gap-1 bg-surface-panel border border-border/60 p-0.5 rounded-xs">
             <button
               onClick={() => setMode("best")}
+              aria-pressed={!isWorst}
               className={cn(
                 "px-2.5 py-1 text-[10px] font-mono font-bold uppercase rounded-xs transition-micro cursor-pointer",
                 !isWorst
@@ -326,6 +404,7 @@ export function HallOfFame({ records, worstRecords, monitoredPlayers, variant = 
             </button>
             <button
               onClick={() => setMode("worst")}
+              aria-pressed={isWorst}
               className={cn(
                 "px-2.5 py-1 text-[10px] font-mono font-bold uppercase rounded-xs transition-micro cursor-pointer",
                 isWorst
@@ -339,13 +418,14 @@ export function HallOfFame({ records, worstRecords, monitoredPlayers, variant = 
         )}
       </div>
 
-      {/* Main Content: Hero Deck (Col 8) + Category Grid (Col 4) */}
+      {/* Conteúdo Principal: Hero Deck (8 cols) + Seletor de Categorias (4 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-border/40 relative">
         
-        {/* Left / Hero Record Showcase (8 cols) */}
+        {/* Painel Esquerdo: Hero Record Showcase (8 cols) */}
         <div className="lg:col-span-8 p-5 sm:p-6 flex flex-col justify-between gap-6 relative overflow-hidden">
-          {/* Subtle Map Background overlay if present */}
-          {mapImgUrl && (
+          
+          {/* Imagem de Fundo Sutil do Mapa se aplicável */}
+          {mapImgUrl && !isUnavailable && (
             <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
               <img
                 src={mapImgUrl}
@@ -359,105 +439,365 @@ export function HallOfFame({ records, worstRecords, monitoredPlayers, variant = 
             </div>
           )}
 
-          {/* Progress Strip */}
+          {/* Barra de Progresso / Indicador Visual de Marca */}
           {list.length > 1 && (
-            <div className="flex gap-1 relative z-10">
-              {list.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setActiveIndex(idx)}
-                  className={cn(
-                    "h-0.5 flex-1 rounded-none transition-colors duration-200 cursor-pointer",
-                    idx === activeIndex
-                      ? isWorst ? "bg-status-critical" : "bg-gold"
-                      : "bg-border/60 hover:bg-border"
-                  )}
-                  aria-label={`Ir para marca ${idx + 1}`}
-                />
-              ))}
+            <div className="flex gap-1 relative z-10" aria-hidden="true">
+              {list.map((r, idx) => {
+                const isActive = idx === activeIndex;
+                const isItemUnavailable = r.availability === "unavailable";
+                return (
+                  <button
+                    key={r.id ?? r.category}
+                    onClick={() => {
+                      setActiveCategoryId(r.id ?? r.category);
+                      setIsExpandedHolders(false);
+                    }}
+                    title={r.title ?? r.category}
+                    className={cn(
+                      "h-1 flex-1 rounded-none transition-colors duration-200 cursor-pointer",
+                      isActive
+                        ? isWorst
+                          ? "bg-status-critical"
+                          : "bg-gold"
+                        : isItemUnavailable
+                        ? "bg-border/30 hover:bg-border/60"
+                        : "bg-border/60 hover:bg-border"
+                    )}
+                  />
+                );
+              })}
             </div>
           )}
 
           <AnimatePresence mode="wait">
             <motion.div
-              key={`${mode}-${activeIndex}`}
+              key={`${mode}-${record.id ?? record.category}`}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
               className="flex flex-col gap-4 relative z-10"
             >
-              {/* Category Header */}
-              <div className="flex items-center gap-2">
-                <div className={cn("flex size-7 items-center justify-center rounded-xs border shrink-0", isWorst ? "bg-status-critical/10 border-status-critical/30 text-status-critical" : "bg-gold/10 border-gold/30 text-gold")}>
-                  <IconComponent className="size-4" />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className={cn("text-xs font-mono font-bold uppercase tracking-wider", meta.accentColor)}>
-                    {meta.title}
-                  </span>
-                  <span className="text-[10px] font-mono text-muted-foreground/60">
-                    {record.mapName || mapName ? `Mapa ${cleanMapName(record.mapName || mapName)}` : "Temporada Geral"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Player & Value Matrix */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-y border-border/30 py-4">
-                <div className="flex items-center gap-3.5 min-w-0">
-                  <PlayerAvatar
-                    nickname={matchedPlayer?.nickname ?? record.playerName}
-                    avatarUrl={matchedPlayer?.avatarUrl ?? null}
-                    size="lg"
-                  />
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/60">
-                      Detentor da Marca
-                    </span>
-                    {matchedPlayer ? (
-                      <Link
-                        href={`/players/${matchedPlayer.id}`}
-                        className="text-lg sm:text-xl font-black tracking-tight text-foreground hover:text-primary transition-colors uppercase truncate"
-                      >
-                        {matchedPlayer.nickname}
-                      </Link>
-                    ) : (
-                      <span className="text-lg sm:text-xl font-black tracking-tight text-foreground uppercase truncate">
-                        {record.playerName}
-                      </span>
+              {/* Cabeçalho da Categoria */}
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div
+                    className={cn(
+                      "flex size-7 items-center justify-center rounded-xs border shrink-0",
+                      isWorst
+                        ? "bg-status-critical/10 border-status-critical/30 text-status-critical"
+                        : "bg-gold/10 border-gold/30 text-gold"
                     )}
+                  >
+                    <IconComponent className="size-4" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className={cn("text-xs font-mono font-bold uppercase tracking-wider truncate", meta.accentColor)}>
+                      {displayTitle}
+                    </span>
+                    <span className="text-[10px] font-mono text-muted-foreground/70">
+                      {record.scopeLabel ?? (record.scope === "streak" ? "Sequência" : record.scope === "season_cumulative" ? "Acumulado da Temporada" : "Em uma partida")}
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:items-end">
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/60">
-                    Valor Registrado
-                  </span>
-                  <span className={cn("text-3xl sm:text-4xl font-mono font-black tabular-nums leading-tight", isWorst ? "text-status-critical" : "text-gold")}>
-                    {record.value}
-                  </span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {isShared && (
+                    <TacticalBadge
+                      label={`RECORDE COMPARTILHADO · ${sharedCount} JOGADORES`}
+                      variant={isWorst ? "critical" : "gold"}
+                      size="xs"
+                    />
+                  )}
+                  {isUnavailable && (
+                    <TacticalBadge label="TELEMETRIA INDISPONÍVEL" variant="neutral" size="xs" />
+                  )}
                 </div>
               </div>
 
-              {/* Narrativa ou Descrição Técnica */}
-              {allNarratives[record.category] ? (
-                <div className="border-l-2 border-border/80 pl-3 py-0.5">
-                  <p className={cn("text-xs font-mono font-bold", meta.accentColor)}>
-                    {allNarratives[record.category].headline}
-                  </p>
-                  <p className="text-[11px] font-mono text-muted-foreground/70 italic mt-0.5">
-                    &ldquo;{allNarratives[record.category].quote}&rdquo;
+              {/* Corpo da Marca: Disponível vs Indisponível */}
+              {isUnavailable ? (
+                <div className="flex flex-col items-center justify-center p-6 sm:p-8 border border-border/40 rounded-xs bg-surface-deck/40 text-center gap-2.5">
+                  <ShieldAlert className="size-8 text-muted-foreground/60" />
+                  <span className="text-xs font-mono font-bold uppercase text-foreground">
+                    Dados Indisponíveis no Período
+                  </span>
+                  <p className="text-[11px] font-mono text-muted-foreground/80 max-w-md leading-relaxed">
+                    {record.unavailableReason ??
+                      "Nenhum evento registrado nesta categoria na telemetria sincronizada das partidas da temporada."}
                   </p>
                 </div>
+              ) : isShared ? (
+                /* Detentores Compartilhados (Multi-holder) */
+                <div className="flex flex-col gap-4 border-y border-border/30 py-4">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70">
+                      Marca Registrada
+                    </span>
+                    <span
+                      className={cn(
+                        "text-3xl sm:text-4xl font-mono font-black tabular-nums leading-tight",
+                        isWorst ? "text-status-critical" : "text-gold"
+                      )}
+                    >
+                      {record.value}
+                    </span>
+                  </div>
+
+                  {/* Grade de Detentores (exibe até 3 ou todos se expandido) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {(isExpandedHolders ? holders : holders.slice(0, 3)).map((holder, hIdx) => {
+                      const playerEntry = monitoredPlayers.find(
+                        (mp) => mp.player.id === holder.player.id
+                      )?.player;
+                      const outcomeColor =
+                        holder.outcome === "win"
+                          ? "text-status-good"
+                          : holder.outcome === "loss"
+                          ? "text-status-critical"
+                          : "text-muted-foreground";
+
+                      return (
+                        <div
+                          key={`${holder.player.id}-${holder.matchId ?? hIdx}`}
+                          className="flex flex-col gap-2.5 p-3 rounded-xs border border-border/50 bg-surface-panel/90 shadow-2xs"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <PlayerAvatar
+                              nickname={holder.player.nickname}
+                              avatarUrl={playerEntry?.avatarUrl ?? holder.player.avatarUrl}
+                              size="md"
+                            />
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground/60">
+                                #{hIdx + 1} Detentor
+                              </span>
+                              {playerEntry?.id ? (
+                                <Link
+                                  href={`/players/${playerEntry.id}`}
+                                  className="text-sm font-black tracking-tight text-foreground hover:text-primary transition-colors uppercase truncate"
+                                >
+                                  {holder.player.nickname}
+                                </Link>
+                              ) : (
+                                <span className="text-sm font-black tracking-tight text-foreground uppercase truncate">
+                                  {holder.player.nickname}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Contexto Específico do Detentor */}
+                          <div className="flex flex-col gap-1 border-t border-border/30 pt-2 text-[10px] font-mono text-muted-foreground/80">
+                            {holder.mapName && (
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="text-muted-foreground/60">Mapa:</span>
+                                <span className="font-bold text-foreground">
+                                  {holder.cleanMapName ?? cleanMapName(holder.mapName)}
+                                </span>
+                              </div>
+                            )}
+
+                            {holder.scoreFormatted && (
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="text-muted-foreground/60">Placar:</span>
+                                <span className={cn("font-bold", outcomeColor)}>
+                                  {holder.scoreFormatted}
+                                </span>
+                              </div>
+                            )}
+
+                            {holder.playedAtFormatted && (
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="text-muted-foreground/60">Data:</span>
+                                <span>{holder.playedAtFormatted}</span>
+                              </div>
+                            )}
+
+                            {holder.participationContext && (
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="text-muted-foreground/60">Contexto:</span>
+                                <span className="truncate">{holder.participationContext}</span>
+                              </div>
+                            )}
+
+                            {holder.individualStreak?.formattedRange && (
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="text-muted-foreground/60">Período:</span>
+                                <span>{holder.individualStreak.formattedRange}</span>
+                              </div>
+                            )}
+
+                            {holder.individualStreak?.endedReason && (
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="text-muted-foreground/60">Status:</span>
+                                <span className="text-status-warning">
+                                  {holder.individualStreak.endedReason}
+                                </span>
+                              </div>
+                            )}
+
+                            {holder.individualCumulative?.breakdown && (
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="text-muted-foreground/60">Volume:</span>
+                                <span className="truncate">{holder.individualCumulative.breakdown}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {holder.matchId && (
+                            <Link
+                              href={`/matches/${holder.matchId}`}
+                              className="mt-1 inline-flex items-center justify-center gap-1 py-1 px-2 rounded-xs border border-primary/30 bg-primary/5 hover:bg-primary/15 text-primary text-[10px] font-mono font-bold uppercase transition-colors"
+                            >
+                              <span>Ver Partida</span>
+                              <ExternalLink className="size-2.5" />
+                            </Link>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {holders.length > 3 && (
+                    <button
+                      onClick={() => setIsExpandedHolders((v) => !v)}
+                      className="self-center inline-flex items-center gap-1.5 text-[10px] font-mono font-bold text-muted-foreground hover:text-foreground uppercase transition-colors py-1 px-2 rounded-xs border border-border/50"
+                    >
+                      <span>
+                        {isExpandedHolders
+                          ? "Recolher detentores"
+                          : `+ Ver todos os ${holders.length} detentores`}
+                      </span>
+                      {isExpandedHolders ? (
+                        <ChevronUp className="size-3" />
+                      ) : (
+                        <ChevronDown className="size-3" />
+                      )}
+                    </button>
+                  )}
+                </div>
               ) : (
-                <p className="text-xs font-mono text-muted-foreground/70">
-                  {meta.description}
-                </p>
+                /* Detentor Único */
+                <div className="flex flex-col gap-4 border-y border-border/30 py-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <PlayerAvatar
+                        nickname={holders[0]?.player.nickname ?? record.playerName}
+                        avatarUrl={
+                          monitoredPlayers.find(
+                            (mp) =>
+                              mp.player.id === holders[0]?.player.id ||
+                              mp.player.nickname.toLowerCase() ===
+                                (holders[0]?.player.nickname ?? record.playerName).toLowerCase()
+                          )?.player.avatarUrl ?? holders[0]?.player.avatarUrl
+                        }
+                        size="lg"
+                      />
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/60">
+                          Detentor da Marca
+                        </span>
+                        {holders[0]?.player.id && holders[0].player.id !== "historical" ? (
+                          <Link
+                            href={`/players/${holders[0].player.id}`}
+                            className="text-lg sm:text-xl font-black tracking-tight text-foreground hover:text-primary transition-colors uppercase truncate"
+                          >
+                            {holders[0].player.nickname}
+                          </Link>
+                        ) : (
+                          <span className="text-lg sm:text-xl font-black tracking-tight text-foreground uppercase truncate">
+                            {holders[0]?.player.nickname ?? record.playerName}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:items-end">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/60">
+                        Valor Registrado
+                      </span>
+                      <span
+                        className={cn(
+                          "text-3xl sm:text-4xl font-mono font-black tabular-nums leading-tight",
+                          isWorst ? "text-status-critical" : "text-gold"
+                        )}
+                      >
+                        {record.value}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Contexto Técnico de Enriquecimento (Mapa, Placar, Data, Participação) */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-border/20 text-[10px] font-mono">
+                    <div className="flex flex-col gap-0.5 p-2 rounded-xs bg-surface-deck/40 border border-border/30">
+                      <span className="text-muted-foreground/60 uppercase">Mapa</span>
+                      <span className="font-bold text-foreground truncate">
+                        {holders[0]?.cleanMapName ?? (record.mapName ? cleanMapName(record.mapName) : "Geral da Temporada")}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col gap-0.5 p-2 rounded-xs bg-surface-deck/40 border border-border/30">
+                      <span className="text-muted-foreground/60 uppercase">Resultado</span>
+                      <span
+                        className={cn(
+                          "font-bold truncate",
+                          holders[0]?.outcome === "win"
+                            ? "text-status-good"
+                            : holders[0]?.outcome === "loss"
+                            ? "text-status-critical"
+                            : "text-foreground"
+                        )}
+                      >
+                        {holders[0]?.scoreFormatted ?? "Registrado"}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col gap-0.5 p-2 rounded-xs bg-surface-deck/40 border border-border/30">
+                      <span className="text-muted-foreground/60 uppercase">Data / Período</span>
+                      <span className="text-muted-foreground truncate">
+                        {holders[0]?.playedAtFormatted ??
+                          holders[0]?.individualStreak?.formattedRange ??
+                          record.sequenceContext?.formattedRange ??
+                          "—"}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col gap-0.5 p-2 rounded-xs bg-surface-deck/40 border border-border/30">
+                      <span className="text-muted-foreground/60 uppercase">Participação</span>
+                      <span className="text-muted-foreground truncate">
+                        {holders[0]?.participationContext ??
+                          (record.cumulativeContext?.matchesPlayed
+                            ? `${record.cumulativeContext.matchesPlayed} partidas`
+                            : "Amostra oficial")}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               )}
+
+              {/* Explicação Técnica e Narrativa */}
+              <div className="flex flex-col gap-2">
+                {allNarratives[record.category] && !isUnavailable && (
+                  <div className="border-l-2 border-border/80 pl-3 py-0.5">
+                    <p className={cn("text-xs font-mono font-bold", meta.accentColor)}>
+                      {allNarratives[record.category].headline}
+                    </p>
+                    <p className="text-[11px] font-mono text-muted-foreground/70 italic mt-0.5">
+                      &ldquo;{allNarratives[record.category].quote}&rdquo;
+                    </p>
+                  </div>
+                )}
+
+                <p className="text-[11px] font-mono text-muted-foreground/75 leading-relaxed">
+                  <span className="text-muted-foreground/50 uppercase font-bold mr-1.5">Regra:</span>
+                  {displayExplanation}
+                </p>
+              </div>
             </motion.div>
           </AnimatePresence>
 
-          {/* Footer Controls */}
+          {/* Rodapé: Controles de Navegação e Link para Partida */}
           <div className="flex items-center justify-between border-t border-border/30 pt-3 relative z-10">
             <div className="flex items-center gap-2">
               <button
@@ -468,7 +808,7 @@ export function HallOfFame({ records, worstRecords, monitoredPlayers, variant = 
                 <ChevronLeft className="size-3.5" />
               </button>
               <span className="text-[10px] font-mono text-muted-foreground font-bold tabular-nums">
-                {activeIndex + 1} / {list.length}
+                {activeIndex + 1} de {list.length}
               </span>
               <button
                 onClick={handleNext}
@@ -479,9 +819,10 @@ export function HallOfFame({ records, worstRecords, monitoredPlayers, variant = 
               </button>
             </div>
 
-            {record.matchId && (
+            {/* Link para Partida (se detentor único possuir matchId) */}
+            {!isShared && (holders[0]?.matchId || record.matchId) && (
               <Link
-                href={`/matches/${record.matchId}`}
+                href={`/matches/${holders[0]?.matchId ?? record.matchId}`}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xs border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-mono font-bold uppercase transition-colors"
               >
                 <span>Ver Partida</span>
@@ -491,39 +832,64 @@ export function HallOfFame({ records, worstRecords, monitoredPlayers, variant = 
           </div>
         </div>
 
-        {/* Right / Category Selector Grid (4 cols) */}
-        <div className="lg:col-span-4 p-3 sm:p-4 bg-surface-deck/40 flex flex-col gap-2">
+        {/* Painel Direito: Seletor de Categorias (4 cols) */}
+        <div
+          id={tabListId}
+          role="tablist"
+          aria-label="Categorias de Recordes"
+          className="lg:col-span-4 p-3 sm:p-4 bg-surface-deck/40 flex flex-col gap-2"
+        >
           <div className="flex items-center justify-between px-1 mb-1">
             <span className="text-[9px] font-mono uppercase tracking-widest font-bold text-muted-foreground/70">
               Categorias
             </span>
-            <span className="text-[9px] font-mono text-muted-foreground/50">{list.length} itens</span>
+            <span className="text-[9px] font-mono text-muted-foreground/50">
+              {list.length} itens
+            </span>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-1 gap-1.5 max-h-[340px] overflow-y-auto no-scrollbar pr-0.5">
+          <div className="grid grid-cols-2 lg:grid-cols-1 gap-1.5 max-h-[420px] overflow-y-auto no-scrollbar pr-0.5">
             {list.map((r, idx) => {
               const m = categoryMetadata[r.category] ?? defaultMeta;
               const Icon = m.icon;
-              const isActive = idx === activeIndex;
+              const isItemActive = idx === activeIndex;
+              const isItemUnavailable = r.availability === "unavailable";
+              const label = r.shortLabel ?? m.shortLabel;
+
               return (
                 <button
-                  key={r.category}
-                  onClick={() => setActiveIndex(idx)}
+                  key={r.id ?? r.category}
+                  role="tab"
+                  aria-selected={isItemActive}
+                  onClick={() => {
+                    setActiveCategoryId(r.id ?? r.category);
+                    setIsExpandedHolders(false);
+                  }}
                   className={cn(
                     "flex items-center gap-2.5 p-2 rounded-xs border text-left transition-micro cursor-pointer",
-                    isActive
+                    isItemActive
                       ? isWorst
                         ? "bg-status-critical/10 border-status-critical/40 text-status-critical"
                         : "bg-gold/10 border-gold/40 text-gold"
-                      : "bg-surface-panel border-border/40 text-muted-foreground hover:text-foreground hover:border-border"
+                      : "bg-surface-panel border-border/40 text-muted-foreground hover:text-foreground hover:border-border",
+                    isItemUnavailable && !isItemActive && "opacity-60"
                   )}
                 >
-                  <Icon className={cn("size-3.5 shrink-0", isActive ? (isWorst ? "text-status-critical" : "text-gold") : "text-muted-foreground/60")} />
+                  <Icon
+                    className={cn(
+                      "size-3.5 shrink-0",
+                      isItemActive
+                        ? isWorst
+                          ? "text-status-critical"
+                          : "text-gold"
+                        : "text-muted-foreground/60"
+                    )}
+                  />
                   <span className="text-[10px] font-mono font-bold uppercase truncate flex-1">
-                    {m.shortLabel}
+                    {label}
                   </span>
-                  <span className="text-[10px] font-mono tabular-nums font-bold opacity-70">
-                    {r.value}
+                  <span className="text-[10px] font-mono tabular-nums font-bold opacity-80 shrink-0">
+                    {isItemUnavailable ? "—" : r.value}
                   </span>
                 </button>
               );

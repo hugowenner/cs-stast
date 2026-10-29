@@ -17,6 +17,13 @@ export interface PowerRankingEntry {
   matchCount: number;
   forma: string;
   hsPercent: number;
+  rawRating?: number;
+  rawImpact?: number;
+  rawKast?: number;
+  rawWinrate?: number;
+  rawAdr?: number;
+  rawKd?: number;
+  rawHsPercent?: number;
 }
 
 export interface PlayerEvolutionEntry {
@@ -38,6 +45,8 @@ export interface PlayerArchetype {
    * "impact", só nunca tinha sido exposto no retorno. */
   rating: number;
   matchCount: number;
+  isForming?: boolean;
+  dataUnavailable?: boolean;
 }
 
 export interface FeaturedPlayerInfo {
@@ -82,13 +91,89 @@ export interface AttentionPointInfo {
   explanation: string;
 }
 
+export interface SquadMomentumBlock {
+  matchesCount: number;
+  wins: number;
+  losses: number;
+  ties: number;
+  winrate: number;
+  roundsFor: number;
+  roundsAgainst: number;
+  roundDiff: number;
+  startDate: string;
+  endDate: string;
+}
+
+export interface SquadMomentumInfo {
+  eligibleMatchesCount: number;
+  recentBlock: SquadMomentumBlock | null;
+  previousBlock: SquadMomentumBlock | null;
+  diffPp: number | null;
+  hasComparison: boolean;
+  sampleStatus: "full" | "partial" | "insufficient";
+  emptyReason: string | null;
+}
+
+export interface SessionPaceInfo {
+  totalEligibleSessions: number;
+  totalEligibleMatches: number;
+  averageMatchesPerSession: number;
+  latestSession: {
+    id: string;
+    name: string;
+    date: string;
+    eligibleMatchesCount: number;
+    latestMatchPlayedAt: string;
+    latestMatchTimeFormatted: string;
+  } | null;
+  emptyReason: string | null;
+}
+
+export interface MatchCompositionInfo {
+  totalUniverse: number;
+  soloCount: number;
+  soloPercentage: number;
+  smallTeamCount: number;
+  smallTeamPercentage: number;
+  fullTeamCount: number;
+  fullTeamPercentage: number;
+  confrontationCount: number;
+  confrontationPercentage: number;
+  otherCount: number;
+  teamCount: number;
+  teamPercentage: number;
+  emptyReason: string | null;
+}
+
+export interface RecentParticipationInfo {
+  windowDays: number;
+  windowStartDate: string;
+  windowEndDate: string;
+  activeCount: number;
+  totalActiveMonitored: number;
+  latestMatchPlayedAt: string | null;
+  participatingPlayers: Array<{
+    id: string;
+    nickname: string;
+    avatarUrl: string | null;
+    matchesCount: number;
+  }>;
+  emptyReason: string | null;
+}
+
 export interface GroupRadarBundle {
-  featuredPlayer: FeaturedPlayerInfo | null;
-  featuredPlayerEmptyReason: string | null;
-  periodFact: PeriodFactInfo | null;
-  periodFactEmptyReason: string | null;
-  attentionPoint: AttentionPointInfo | null;
-  attentionPointEmptyReason: string | null;
+  squadMomentum: SquadMomentumInfo;
+  sessionPace: SessionPaceInfo;
+  matchComposition: MatchCompositionInfo;
+  recentParticipation: RecentParticipationInfo;
+
+  // Legado mantido para retrocompatibilidade e snapshots históricos
+  featuredPlayer?: FeaturedPlayerInfo | null;
+  featuredPlayerEmptyReason?: string | null;
+  periodFact?: PeriodFactInfo | null;
+  periodFactEmptyReason?: string | null;
+  attentionPoint?: AttentionPointInfo | null;
+  attentionPointEmptyReason?: string | null;
 }
 
 export interface JogadorDaSemanaInfo {
@@ -176,6 +261,16 @@ export interface DecisivePlayerEntry {
   tradeEfficiency: number;
   clutchWins: number;
   hideTradesAndClutches: boolean; // Oculta se os dados de toda a comunidade forem 0
+  matchCount?: number;
+  totalRounds?: number;
+  totalDeaths?: number;
+  totalOpeningDuels?: number;
+  rawOpeningWinrate?: number;
+  rawTradeEfficiency?: number;
+  rawImpactPercent?: number;
+  hasOpeningDeathsTelemetry?: boolean;
+  hasTradeTelemetry?: boolean;
+  hasClutchTelemetry?: boolean;
 }
 
 export interface TrioSummary {
@@ -200,13 +295,67 @@ export interface PlayerMatchupSummary {
   } | null;
 }
 
+export interface RecordHolderContext {
+  player: {
+    id: string;
+    nickname: string;
+    avatarUrl: string | null;
+  };
+  matchId?: string;
+  mapName?: string;
+  cleanMapName?: string;
+  playedAt?: string;
+  playedAtFormatted?: string;
+  scoreFor?: number;
+  scoreAgainst?: number;
+  scoreFormatted?: string;
+  outcome?: "win" | "loss" | "tie";
+  isOvertime?: boolean;
+  participationContext?: string;
+  individualStreak?: RecordSequenceContext;
+  individualCumulative?: RecordCumulativeContext;
+}
+
+export interface RecordSequenceContext {
+  count: number;
+  startDate?: string;
+  endDate?: string;
+  formattedRange?: string;
+  status: "active" | "ended";
+  endedReason?: string;
+  activeStreakCount?: number;
+}
+
+export interface RecordCumulativeContext {
+  total: number;
+  matchesPlayed: number;
+  averagePerMatch: number;
+  breakdown?: string;
+}
+
 export interface HallOfFameRecord {
+  // Campos legados mantidos para retrocompatibilidade
   category: string;
   playerName: string;
   value: string;
   detail: string;
   matchId?: string;
   mapName?: string;
+
+  // Campos estruturados enriquecidos (Fase 11)
+  id?: string;
+  title?: string;
+  shortLabel?: string;
+  scope?: "match" | "season_cumulative" | "streak";
+  scopeLabel?: string;
+  explanation?: string;
+  isShared?: boolean;
+  sharedCount?: number;
+  holders?: RecordHolderContext[];
+  sequenceContext?: RecordSequenceContext;
+  cumulativeContext?: RecordCumulativeContext;
+  availability?: "available" | "unavailable" | "unknown";
+  unavailableReason?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -236,17 +385,17 @@ export async function loadCompetitiveDataset(seasonId?: string | "all") {
   });
 
   let allStats;
+  let targetSeasonId = seasonId;
   if (seasonId === "all") {
     allStats = await prisma.playerMatchStats.findMany({
       where: {
         playerId: { in: activePlayers.map((p) => p.id) },
         match: individualMatchWhere(),
       },
-      include: { match: { include: { map: true } } },
+      include: { match: { include: { map: true, session: true } } },
       orderBy: { match: { playedAt: "desc" } },
     });
   } else {
-    let targetSeasonId = seasonId;
     if (!targetSeasonId) {
       const activeSeason = await getActiveSeason();
       targetSeasonId = activeSeason?.id;
@@ -260,7 +409,7 @@ export async function loadCompetitiveDataset(seasonId?: string | "all") {
           ...individualMatchWhere(),
         },
       },
-      include: { match: { include: { map: true } } },
+      include: { match: { include: { map: true, session: true } } },
       orderBy: { match: { playedAt: "desc" } },
     });
   }
@@ -271,7 +420,7 @@ export async function loadCompetitiveDataset(seasonId?: string | "all") {
     statsByPlayer.get(s.playerId)?.push(s);
   }
 
-  return { activePlayers, statsByPlayer, allStats };
+  return { activePlayers, statsByPlayer, allStats, seasonId: targetSeasonId };
 }
 
 export type CompetitiveDataset = Awaited<ReturnType<typeof loadCompetitiveDataset>>;
@@ -305,12 +454,12 @@ function computeForma(stats: CompetitiveDataset["allStats"]): string {
 
 const MIN_MATCHES_FOR_RANKING = 3;
 
-function getPowerRankingFromDataset(dataset: CompetitiveDataset, take = 5): PowerRankingEntry[] {
+export function getPowerRankingFromDataset(dataset: CompetitiveDataset, take?: number): PowerRankingEntry[] {
   const entries: PowerRankingEntry[] = [];
 
   for (const player of dataset.activePlayers) {
     const stats = dataset.statsByPlayer.get(player.id) ?? [];
-    if (stats.length < MIN_MATCHES_FOR_RANKING) continue;
+    if (stats.length === 0) continue;
 
     const totalMatches = stats.length;
     const avgRating = stats.reduce((sum, s) => sum + s.rating, 0) / totalMatches;
@@ -341,10 +490,28 @@ function getPowerRankingFromDataset(dataset: CompetitiveDataset, take = 5): Powe
       matchCount: totalMatches,
       forma,
       hsPercent: Math.round(hsPercent),
+      rawRating: avgRating,
+      rawImpact: avgImpact,
+      rawKast: avgKast,
+      rawWinrate: winrate,
+      rawAdr: avgAdr,
+      rawKd: kd,
+      rawHsPercent: hsPercent,
     });
   }
 
-  return entries.sort((a, b) => b.rating - a.rating).slice(0, take);
+  entries.sort((a, b) => {
+    const valA = a.rawRating ?? a.rating;
+    const valB = b.rawRating ?? b.rating;
+    const diff = valB - valA;
+    if (Math.abs(diff) > 1e-9) return diff;
+    if (b.matchCount !== a.matchCount) return b.matchCount - a.matchCount;
+    const nickDiff = a.player.nickname.localeCompare(b.player.nickname);
+    if (nickDiff !== 0) return nickDiff;
+    return a.player.id.localeCompare(b.player.id);
+  });
+
+  return take !== undefined ? entries.slice(0, take) : entries;
 }
 
 function getPlayerEvolutionsFromDataset(
@@ -478,12 +645,13 @@ export function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): Pla
       return {
         player: item.player,
         archetype: "tactician" as const,
-        label: "Curinga/Tático",
-        metricLabel: "Partidas jogadas",
+        label: "Perfil em formação",
+        metricLabel: "Amostra em consolidação",
         metricValue: `${item.totalMatches} partidas`,
-        rankText: "Dados insuficientes",
+        rankText: "Mínimo de 10 partidas para definição de perfil",
         rating: Math.round(item.avgRating * 100) / 100,
         matchCount: item.totalMatches,
+        isForming: true,
       };
     }
 
@@ -508,6 +676,36 @@ export function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): Pla
 
     // Se o maior percentil for menor que 60%, ele é classificado como Curinga/Tático
     const archetype = best.score >= 60 ? best.type : ("tactician" as const);
+
+    // Amostra inicial (< 10 partidas): identifica o arquétipo internamente mas expõe como "Perfil em formação"
+    if (item.totalMatches < 10) {
+      return {
+        player: item.player,
+        archetype,
+        label: "Perfil em formação",
+        metricLabel: "Amostra em consolidação",
+        metricValue: `${item.totalMatches} partidas`,
+        rankText: "Mínimo de 10 partidas para definição de perfil",
+        rating: Math.round(item.avgRating * 100) / 100,
+        matchCount: item.totalMatches,
+        isForming: true,
+      };
+    }
+
+    // Caso a temporada não tenha dados da métrica associada (ex: clutch ausente em súmula GC sem demo)
+    if (archetype === "clutch" && allClutch.every((v) => v === 0)) {
+      return {
+        player: item.player,
+        archetype,
+        label: "Perfil Indeterminado",
+        metricLabel: "Telemetria ausente",
+        metricValue: "—",
+        rankText: "Dados insuficientes para definir o perfil",
+        rating: Math.round(item.avgRating * 100) / 100,
+        matchCount: item.totalMatches,
+        dataUnavailable: true,
+      };
+    }
 
     let label = "Curinga/Tático";
     let metricLabel = "Presença no lobby";
@@ -579,6 +777,7 @@ export function getPlayerArchetypesFromDataset(dataset: CompetitiveDataset): Pla
       rankText,
       rating: Math.round(item.avgRating * 100) / 100,
       matchCount: item.totalMatches,
+      isForming: false,
     };
   });
 }
@@ -937,9 +1136,9 @@ function getPlayerMomentumFromDataset(dataset: CompetitiveDataset, take = 3): Pl
   return entries.sort((a, b) => (b.recentRating - b.priorRating) - (a.recentRating - a.priorRating)).slice(0, take);
 }
 
-async function getDecisivePlayersFromDataset(
+export async function getDecisivePlayersFromDataset(
   dataset: CompetitiveDataset,
-  take = 3
+  take?: number
 ): Promise<DecisivePlayerEntry[]> {
   // Check global (todo o banco, não só jogadores ativos) se clutches/trades estão populados —
   // mantido como query separada e leve para preservar o escopo original desse sanity-check.
@@ -973,6 +1172,28 @@ async function getDecisivePlayersFromDataset(
     tradedDeathsByPlayer.set(group.victimId, group._count.id);
   }
 
+  // Detecção de cobertura real de telemetria no dataset
+  const totalEntryDeathsInDataset = dataset.allStats.reduce((sum, s) => sum + s.entryDeaths, 0);
+  const totalTradeKillsInDataset = dataset.allStats.reduce((sum, s) => sum + s.tradeKills, 0);
+  const totalClutchesInDataset = dataset.allStats.reduce(
+    (sum, s) =>
+      sum +
+      Math.max(
+        s.clutchesWon,
+        (s.clutch1v1Wins || 0) +
+          (s.clutch1v2Wins || 0) +
+          (s.clutch1v3Wins || 0) +
+          (s.clutch1v4Wins || 0) +
+          (s.clutch1v5Wins || 0),
+      ),
+    0,
+  );
+  const totalTradedDeathsInDataset = Array.from(tradedDeathsByPlayer.values()).reduce((a, b) => a + b, 0);
+
+  const hasOpeningDeathsTelemetry = totalEntryDeathsInDataset > 0;
+  const hasTradeTelemetry = totalTradeKillsInDataset > 0 || totalTradedDeathsInDataset > 0;
+  const hasClutchTelemetry = totalClutchesInDataset > 0;
+
   const entries: DecisivePlayerEntry[] = [];
 
   for (const player of dataset.activePlayers) {
@@ -985,7 +1206,8 @@ async function getDecisivePlayersFromDataset(
     const entryKills = stats.reduce((sum, s) => sum + s.entryKills, 0);
     const entryDeaths = stats.reduce((sum, s) => sum + s.entryDeaths, 0);
     const totalOpeningDuels = entryKills + entryDeaths;
-    const openingWinrate = totalOpeningDuels > 0 ? Math.round((entryKills / totalOpeningDuels) * 100) : 0;
+    const rawOpeningWinrate = totalOpeningDuels > 0 ? (entryKills / totalOpeningDuels) * 100 : 0;
+    const openingWinrate = Math.round(rawOpeningWinrate);
 
     const tradeKills = stats.reduce((sum, s) => sum + s.tradeKills, 0);
     const totalDeaths = stats.reduce((sum, s) => sum + s.deaths, 0);
@@ -994,32 +1216,40 @@ async function getDecisivePlayersFromDataset(
     const tradedDeaths = tradedDeathsByPlayer.get(player.id) ?? 0;
 
     // Trade Efficiency (taxa de conversão de mortes em re-trade de equipe)
-    // Se há telemetria de demo com eventos de trade, calcula (tradedDeaths / totalDeaths * 100).
-    // Caso a temporada não tenha telemetria de demos mas tenha tradeKills da GC, calcula a eficiência de trade kills por morte.
-    let tradeEfficiency = 0;
+    let rawTradeEfficiency = 0;
     if (totalDeaths > 0) {
       if (tradedDeaths > 0) {
-        tradeEfficiency = Math.round((tradedDeaths / totalDeaths) * 100);
+        rawTradeEfficiency = (tradedDeaths / totalDeaths) * 100;
       } else if (tradeKills > 0) {
-        tradeEfficiency = Math.round((tradeKills / totalDeaths) * 100);
+        rawTradeEfficiency = (tradeKills / totalDeaths) * 100;
       }
     }
+    const tradeEfficiency = Math.round(rawTradeEfficiency);
 
     const clutchWins = stats.reduce(
       (sum, s) =>
-        sum + Math.max(s.clutchesWon, s.clutch1v1Wins + s.clutch1v2Wins + s.clutch1v3Wins + s.clutch1v4Wins + s.clutch1v5Wins),
-      0
+        sum +
+        Math.max(
+          s.clutchesWon,
+          (s.clutch1v1Wins || 0) +
+            (s.clutch1v2Wins || 0) +
+            (s.clutch1v3Wins || 0) +
+            (s.clutch1v4Wins || 0) +
+            (s.clutch1v5Wins || 0),
+        ),
+      0,
     );
 
     const impactedRounds = entryKills + (hideTradesAndClutches ? 0 : tradeKills + clutchWins);
     // Entry/trade/clutch não são mutuamente exclusivos por round (podem ocorrer no
     // mesmo round), então a soma pode superar totalRounds — sem o cap, o percentual
     // exibido poderia passar de 100%, o que não faz sentido para o usuário.
-    const impactPercent = Math.min(100, (impactedRounds / totalRounds) * 100);
+    const rawImpactPercent = Math.min(100, (impactedRounds / totalRounds) * 100);
+    const impactPercent = Math.round(rawImpactPercent);
 
     entries.push({
       player: { id: player.id, nickname: player.nickname, avatarUrl: player.avatarUrl },
-      impactPercent: Math.round(impactPercent),
+      impactPercent,
       entryKills,
       entryDeaths,
       openingWinrate,
@@ -1028,10 +1258,29 @@ async function getDecisivePlayersFromDataset(
       tradeEfficiency,
       clutchWins,
       hideTradesAndClutches,
+      matchCount: stats.length,
+      totalRounds,
+      totalDeaths,
+      totalOpeningDuels,
+      rawOpeningWinrate,
+      rawTradeEfficiency,
+      rawImpactPercent,
+      hasOpeningDeathsTelemetry,
+      hasTradeTelemetry,
+      hasClutchTelemetry,
     });
   }
 
-  return entries.sort((a, b) => b.impactPercent - a.impactPercent).slice(0, take);
+  entries.sort((a, b) => {
+    const diff = (b.rawImpactPercent ?? b.impactPercent) - (a.rawImpactPercent ?? a.impactPercent);
+    if (Math.abs(diff) > 1e-9) return diff;
+    if ((b.matchCount ?? 0) !== (a.matchCount ?? 0)) return (b.matchCount ?? 0) - (a.matchCount ?? 0);
+    const nickDiff = a.player.nickname.localeCompare(b.player.nickname);
+    if (nickDiff !== 0) return nickDiff;
+    return a.player.id.localeCompare(b.player.id);
+  });
+
+  return take !== undefined ? entries.slice(0, take) : entries;
 }
 
 function getDominantTrioFromDataset(dataset: CompetitiveDataset): TrioSummary | null {
@@ -1151,109 +1400,554 @@ function getPlayerMatchupsFromDataset(dataset: CompetitiveDataset): PlayerMatchu
   return summaries;
 }
 
-function getHallOfFameRecordsFromDataset(
+function formatDateTimeSP(d?: Date | string | null): string | undefined {
+  if (!d) return undefined;
+  const dateObj = typeof d === "string" ? new Date(d) : d;
+  if (isNaN(dateObj.getTime())) return undefined;
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "America/Sao_Paulo",
+  }).format(dateObj);
+}
+
+function formatDateRangeSP(startDate?: Date | string | null, endDate?: Date | string | null): string | undefined {
+  if (!startDate) return undefined;
+  const dStart = typeof startDate === "string" ? new Date(startDate) : startDate;
+  const dEnd = endDate ? (typeof endDate === "string" ? new Date(endDate) : endDate) : dStart;
+  if (isNaN(dStart.getTime())) return undefined;
+
+  const fmtDayMonth = new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "America/Sao_Paulo",
+  });
+  const startStr = fmtDayMonth.format(dStart);
+  const endStr = fmtDayMonth.format(dEnd);
+  const yearStr = new Intl.DateTimeFormat("pt-BR", {
+    year: "numeric",
+    timeZone: "America/Sao_Paulo",
+  }).format(dEnd);
+
+  if (startStr === endStr) {
+    return `${startStr}/${yearStr}`;
+  }
+  return `${startStr} a ${endStr}/${yearStr}`;
+}
+
+function getMatchParticipationContext(
+  matchId: string,
+  playerTeam: string,
+  allStats: CompetitiveDataset["allStats"]
+): string {
+  const matchStats = allStats.filter((st) => st.matchId === matchId);
+  if (matchStats.length <= 1) {
+    return "1 monitorado na partida";
+  }
+  const sameTeamCount = matchStats.filter((st) => st.team === playerTeam).length;
+  const opposingTeamCount = matchStats.filter((st) => st.team !== playerTeam).length;
+
+  if (opposingTeamCount > 0) {
+    return "Monitorados nos dois times";
+  }
+  if (sameTeamCount === 1) {
+    return "1 monitorado na partida";
+  }
+  return `${sameTeamCount} monitorados no mesmo time`;
+}
+
+function buildHolderContextFromStat(
+  stat: CompetitiveDataset["allStats"][number],
+  player: { id: string; nickname: string; avatarUrl: string | null },
+  allStats: CompetitiveDataset["allStats"]
+): RecordHolderContext {
+  const scoreFor = stat.team === "A" ? stat.match.scoreTeamA : stat.match.scoreTeamB;
+  const scoreAgainst = stat.team === "A" ? stat.match.scoreTeamB : stat.match.scoreTeamA;
+  const outcome: "win" | "loss" | "tie" =
+    scoreFor > scoreAgainst ? "win" : scoreFor < scoreAgainst ? "loss" : "tie";
+  const outcomeLabel = outcome === "win" ? "Vitória" : outcome === "loss" ? "Derrota" : "Empate";
+  const isOvertime = stat.match.scoreTeamA + stat.match.scoreTeamB > 24;
+  const scoreFormatted = `${scoreFor}x${scoreAgainst} (${outcomeLabel}${isOvertime ? " OT" : ""})`;
+  const mapName = stat.match.map?.name ?? "Desconhecido";
+  const cMap = cleanMapName(mapName);
+  const playedAtIso = stat.match.playedAt
+    ? typeof stat.match.playedAt === "string"
+      ? stat.match.playedAt
+      : stat.match.playedAt.toISOString()
+    : undefined;
+
+  return {
+    player: {
+      id: player.id,
+      nickname: player.nickname,
+      avatarUrl: player.avatarUrl,
+    },
+    matchId: stat.match.id,
+    mapName,
+    cleanMapName: cMap,
+    playedAt: playedAtIso,
+    playedAtFormatted: formatDateTimeSP(stat.match.playedAt),
+    scoreFor,
+    scoreAgainst,
+    scoreFormatted,
+    outcome,
+    isOvertime,
+    participationContext: getMatchParticipationContext(stat.matchId, stat.team, allStats),
+  };
+}
+
+function findExtremeMatchHolders(
+  stats: CompetitiveDataset["allStats"],
+  activePlayers: PlayerRow[],
+  allUniverseStats: CompetitiveDataset["allStats"],
+  getValue: (s: CompetitiveDataset["allStats"][number]) => number | null,
+  mode: "max" | "min",
+  tolerance: number = 0.0001
+): { holders: RecordHolderContext[]; extremeValue: number | null; extremeStats: CompetitiveDataset["allStats"][number][] } {
+  let extreme: number | null = null;
+  for (const s of stats) {
+    const v = getValue(s);
+    if (v === null || isNaN(v)) continue;
+    if (extreme === null) {
+      extreme = v;
+    } else if (mode === "max" && v > extreme) {
+      extreme = v;
+    } else if (mode === "min" && v < extreme) {
+      extreme = v;
+    }
+  }
+
+  if (extreme === null) return { holders: [], extremeValue: null, extremeStats: [] };
+
+  const matchingStats = stats.filter((s) => {
+    const v = getValue(s);
+    if (v === null || isNaN(v)) return false;
+    return Math.abs(v - extreme!) <= tolerance;
+  });
+
+  // Agrupar por jogador (se o mesmo jogador atingir a marca em múltiplas partidas, seleciona a mais recente)
+  const statByPlayer = new Map<string, CompetitiveDataset["allStats"][number]>();
+  for (const s of matchingStats) {
+    if (!statByPlayer.has(s.playerId)) {
+      statByPlayer.set(s.playerId, s);
+    }
+  }
+
+  const holders: RecordHolderContext[] = [];
+  for (const [playerId, s] of statByPlayer.entries()) {
+    const p = activePlayers.find((ap) => ap.id === playerId) ?? {
+      id: playerId,
+      nickname: "Jogador",
+      avatarUrl: null,
+      levelGc: null,
+    };
+    holders.push(buildHolderContextFromStat(s, p, allUniverseStats));
+  }
+
+  // Ordenação determinística: nickname ASC, id ASC
+  holders.sort((a, b) =>
+    a.player.nickname.localeCompare(b.player.nickname) || a.player.id.localeCompare(b.player.id)
+  );
+
+  return { holders, extremeValue: extreme, extremeStats: matchingStats };
+}
+
+function formatHoldersPlayerName(holders: RecordHolderContext[]): string {
+  if (holders.length === 0) return "N/A";
+  if (holders.length === 1) return holders[0].player.nickname;
+  if (holders.length === 2) return `${holders[0].player.nickname} e ${holders[1].player.nickname}`;
+  return `${holders[0].player.nickname}, ${holders[1].player.nickname} e +${holders.length - 2}`;
+}
+
+export function getHallOfFameRecordsFromDataset(
   dataset: CompetitiveDataset,
   statsOverride?: typeof dataset.allStats
 ): HallOfFameRecord[] {
   const statsToUse = statsOverride ?? dataset.allStats;
+  const allUniverseStats = dataset.allStats;
+  const activePlayers = dataset.activePlayers;
+  const records: HallOfFameRecord[] = [];
 
-  const findBestBy = <K extends "rating" | "kills" | "adr" | "eloAfter">(key: K) => {
-    let best: (typeof dataset.allStats)[number] | null = null;
-    for (const s of statsToUse) {
-      if (!best || s[key] > best[key]) best = s;
-    }
-    return best;
-  };
-
-  const maxRating = findBestBy("rating");
-  const maxKills = findBestBy("kills");
-  const maxAdr = findBestBy("adr");
-  const eloLeader = findBestBy("eloAfter");
-
-  // Maior K/D
-  let maxKdStat: (typeof dataset.allStats)[number] | null = null;
-  let maxKdVal = 0;
-  for (const s of statsToUse) {
-    if (s.deaths === 0 && s.kills === 0) continue;
-    const kd = s.deaths > 0 ? s.kills / s.deaths : s.kills;
-    if (!maxKdStat || kd > maxKdVal) {
-      maxKdStat = s;
-      maxKdVal = kd;
-    }
+  // 1. Recorde de Rating (Maior Rating em Jogo)
+  const ratingRes = findExtremeMatchHolders(
+    statsToUse,
+    activePlayers,
+    allUniverseStats,
+    (s) => s.rating,
+    "max"
+  );
+  if (ratingRes.holders.length > 0 && ratingRes.extremeValue !== null) {
+    const primary = ratingRes.holders[0];
+    const isShared = ratingRes.holders.length > 1;
+    records.push({
+      id: "elite-rating",
+      category: "Recorde de Rating",
+      title: "Maior Rating em Jogo",
+      shortLabel: "Rating",
+      scope: "match",
+      scopeLabel: "Em uma partida",
+      explanation: "Maior pontuação de Rating 2.0 individual registrada em um único confronto.",
+      playerName: formatHoldersPlayerName(ratingRes.holders),
+      value: ratingRes.extremeValue.toFixed(2),
+      detail: isShared
+        ? `Recorde compartilhado por ${ratingRes.holders.length} jogadores`
+        : `Registrado no mapa ${primary.cleanMapName ?? primary.mapName} (${primary.scoreFormatted})`,
+      matchId: primary.matchId,
+      mapName: primary.mapName,
+      isShared,
+      sharedCount: ratingRes.holders.length,
+      holders: ratingRes.holders,
+      availability: "available",
+    });
   }
 
-  // Maior HS% (mínimo de 10 kills para relevância)
-  let maxHsStat: (typeof dataset.allStats)[number] | null = null;
-  let maxHsVal = 0;
-  for (const s of statsToUse) {
-    if (s.kills >= 10) {
-      const hs = (s.headshots / s.kills) * 100;
-      if (!maxHsStat || hs > maxHsVal) {
-        maxHsStat = s;
-        maxHsVal = hs;
-      }
-    }
-  }
-  if (!maxHsStat) {
-    for (const s of statsToUse) {
-      if (s.kills > 0) {
-        const hs = (s.headshots / s.kills) * 100;
-        if (!maxHsStat || hs > maxHsVal) {
-          maxHsStat = s;
-          maxHsVal = hs;
-        }
-      }
-    }
+  // 2. Maior K/D em Jogo
+  const kdRes = findExtremeMatchHolders(
+    statsToUse.filter((s) => s.deaths > 0 || s.kills > 0),
+    activePlayers,
+    allUniverseStats,
+    (s) => (s.deaths > 0 ? s.kills / s.deaths : s.kills),
+    "max",
+    0.0001
+  );
+  if (kdRes.holders.length > 0 && kdRes.extremeValue !== null) {
+    const primary = kdRes.holders[0];
+    const isShared = kdRes.holders.length > 1;
+    records.push({
+      id: "elite-kd",
+      category: "Maior K/D em Jogo",
+      title: "Maior K/D em Jogo",
+      shortLabel: "K/D",
+      scope: "match",
+      scopeLabel: "Em uma partida",
+      explanation: "Melhor proporção de eliminações por morte (K/D) registrada em um único confronto.",
+      playerName: formatHoldersPlayerName(kdRes.holders),
+      value: `${kdRes.extremeValue.toFixed(2)} K/D`,
+      detail: isShared
+        ? `Recorde compartilhado por ${kdRes.holders.length} jogadores`
+        : `Registrado no mapa ${primary.cleanMapName ?? primary.mapName} (${primary.scoreFormatted})`,
+      matchId: primary.matchId,
+      mapName: primary.mapName,
+      isShared,
+      sharedCount: kdRes.holders.length,
+      holders: kdRes.holders,
+      availability: "available",
+    });
   }
 
-  let maxStreak = 0;
-  let maxStreakPlayer = "N/A";
+  // 3. Maior ADR em Jogo
+  const adrRes = findExtremeMatchHolders(
+    statsToUse,
+    activePlayers,
+    allUniverseStats,
+    (s) => s.adr,
+    "max",
+    0.05
+  );
+  if (adrRes.holders.length > 0 && adrRes.extremeValue !== null) {
+    const primary = adrRes.holders[0];
+    const isShared = adrRes.holders.length > 1;
+    records.push({
+      id: "elite-adr",
+      category: "Maior ADR em Jogo",
+      title: "Maior ADR em Jogo",
+      shortLabel: "ADR",
+      scope: "match",
+      scopeLabel: "Em uma partida",
+      explanation: "Maior média de dano causado por round (Average Damage per Round) registrada em uma partida.",
+      playerName: formatHoldersPlayerName(adrRes.holders),
+      value: `${adrRes.extremeValue.toFixed(1)} ADR`,
+      detail: isShared
+        ? `Recorde compartilhado por ${adrRes.holders.length} jogadores`
+        : `Dano médio por round na ${primary.cleanMapName ?? primary.mapName} (${primary.scoreFormatted})`,
+      matchId: primary.matchId,
+      mapName: primary.mapName,
+      isShared,
+      sharedCount: adrRes.holders.length,
+      holders: adrRes.holders,
+      availability: "available",
+    });
+  }
 
-  for (const player of dataset.activePlayers) {
+  // 4. Recorde de Kills (Mais Kills em Jogo)
+  const killsRes = findExtremeMatchHolders(
+    statsToUse,
+    activePlayers,
+    allUniverseStats,
+    (s) => s.kills,
+    "max",
+    0
+  );
+  if (killsRes.holders.length > 0 && killsRes.extremeValue !== null) {
+    const primary = killsRes.holders[0];
+    const isShared = killsRes.holders.length > 1;
+    records.push({
+      id: "elite-kills",
+      category: "Recorde de Kills",
+      title: "Mais Kills em Jogo",
+      shortLabel: "Kills",
+      scope: "match",
+      scopeLabel: "Em uma partida",
+      explanation: "Maior número absoluto de eliminações registradas por um jogador em uma única partida.",
+      playerName: formatHoldersPlayerName(killsRes.holders),
+      value: `${killsRes.extremeValue} kills`,
+      detail: isShared
+        ? `Recorde compartilhado por ${killsRes.holders.length} jogadores`
+        : `Partida no mapa ${primary.cleanMapName ?? primary.mapName} (${primary.scoreFormatted})`,
+      matchId: primary.matchId,
+      mapName: primary.mapName,
+      isShared,
+      sharedCount: killsRes.holders.length,
+      holders: killsRes.holders,
+      availability: "available",
+    });
+  }
+
+  // 5. Maior HS% em Jogo (mínimo de 10 kills para relevância de amostragem)
+  let hsEligibleStats = statsToUse.filter((s) => s.kills >= 10);
+  if (hsEligibleStats.length === 0) {
+    hsEligibleStats = statsToUse.filter((s) => s.kills > 0);
+  }
+  const hsRes = findExtremeMatchHolders(
+    hsEligibleStats,
+    activePlayers,
+    allUniverseStats,
+    (s) => (s.kills > 0 ? (s.headshots / s.kills) * 100 : 0),
+    "max",
+    0.05
+  );
+  if (hsRes.holders.length > 0 && hsRes.extremeValue !== null) {
+    const primary = hsRes.holders[0];
+    const isShared = hsRes.holders.length > 1;
+    records.push({
+      id: "elite-hs",
+      category: "Maior HS% em Jogo",
+      title: "Maior HS% em Jogo",
+      shortLabel: "HS%",
+      scope: "match",
+      scopeLabel: "Em uma partida",
+      explanation: "Maior taxa de tiros na cabeça em eliminações (mínimo de 10 kills para relevância estatística).",
+      playerName: formatHoldersPlayerName(hsRes.holders),
+      value: `${hsRes.extremeValue.toFixed(0)}% HS`,
+      detail: isShared
+        ? `Recorde compartilhado por ${hsRes.holders.length} jogadores`
+        : `Registrado no mapa ${primary.cleanMapName ?? primary.mapName} (${primary.scoreFormatted})`,
+      matchId: primary.matchId,
+      mapName: primary.mapName,
+      isShared,
+      sharedCount: hsRes.holders.length,
+      holders: hsRes.holders,
+      availability: "available",
+    });
+  }
+
+  // 6. Maior Sequência de Vitórias
+  interface PlayerStreakCalc {
+    player: PlayerRow;
+    maxStreak: number;
+    streakMatches: typeof statsToUse;
+    startDate?: string;
+    endDate?: string;
+    formattedRange?: string;
+    status: "active" | "ended";
+    endedReason?: string;
+  }
+  const streakCalcs: PlayerStreakCalc[] = [];
+
+  for (const player of activePlayers) {
     const rawPlayerStats = dataset.statsByPlayer.get(player.id) ?? [];
     const playerStats = statsOverride
       ? rawPlayerStats.filter((s) => statsOverride.some((so) => so.matchId === s.matchId))
       : rawPlayerStats;
-    const stats = [...playerStats].reverse();
-    let currentStreak = 0;
-    let playerMaxStreak = 0;
-    for (const stat of stats) {
+
+    // Ordem cronológica ascendente
+    const chronological = [...playerStats].reverse();
+    let currentStreak: typeof playerStats = [];
+    let bestStreak: typeof playerStats = [];
+    let bestStreakEndIndex = -1;
+
+    for (let i = 0; i < chronological.length; i++) {
+      const stat = chronological[i];
       if (isWin(stat)) {
-        currentStreak++;
-        if (currentStreak > playerMaxStreak) playerMaxStreak = currentStreak;
+        currentStreak.push(stat);
+        if (currentStreak.length > bestStreak.length) {
+          bestStreak = [...currentStreak];
+          bestStreakEndIndex = i;
+        }
       } else {
-        currentStreak = 0;
+        currentStreak = [];
       }
     }
-    if (playerMaxStreak > maxStreak) {
-      maxStreak = playerMaxStreak;
-      maxStreakPlayer = player.nickname;
+
+    if (bestStreak.length > 0) {
+      const startMatch = bestStreak[0];
+      const endMatch = bestStreak[bestStreak.length - 1];
+      const isStillActive = bestStreakEndIndex === chronological.length - 1;
+      let endedReason: string | undefined = undefined;
+      if (!isStillActive && bestStreakEndIndex + 1 < chronological.length) {
+        const nextMatch = chronological[bestStreakEndIndex + 1];
+        const isTie = nextMatch.match.scoreTeamA === nextMatch.match.scoreTeamB;
+        endedReason = isTie ? "Encerrada por empate" : "Encerrada por derrota";
+      }
+
+      streakCalcs.push({
+        player,
+        maxStreak: bestStreak.length,
+        streakMatches: bestStreak,
+        startDate: startMatch.match.playedAt ? new Date(startMatch.match.playedAt).toISOString() : undefined,
+        endDate: endMatch.match.playedAt ? new Date(endMatch.match.playedAt).toISOString() : undefined,
+        formattedRange: formatDateRangeSP(startMatch.match.playedAt, endMatch.match.playedAt),
+        status: isStillActive ? "active" : "ended",
+        endedReason,
+      });
     }
   }
 
-  const playerName = (s: (typeof dataset.allStats)[number] | null) =>
-    dataset.activePlayers.find((p) => p.id === s?.playerId)?.nickname ?? "N/A";
+  const maxStreakVal = streakCalcs.length > 0 ? Math.max(...streakCalcs.map((c) => c.maxStreak)) : 0;
+  if (maxStreakVal > 0) {
+    const tiedStreaks = streakCalcs
+      .filter((c) => c.maxStreak === maxStreakVal)
+      .sort((a, b) => a.player.nickname.localeCompare(b.player.nickname) || a.player.id.localeCompare(b.player.id));
 
-  // 8. Maior Impacto em Jogo
-  let maxImpactStat: (typeof dataset.allStats)[number] | null = null;
-  let maxImpactScore = 0;
-  for (const s of statsToUse) {
-    const score = s.rating * 100 + s.adr;
-    if (!maxImpactStat || score > maxImpactScore) {
-      maxImpactStat = s;
-      maxImpactScore = score;
-    }
+    const streakHolders: RecordHolderContext[] = tiedStreaks.map((c) => {
+      const lastStat = c.streakMatches[c.streakMatches.length - 1];
+      const baseHolder = buildHolderContextFromStat(lastStat, c.player, allUniverseStats);
+      return {
+        ...baseHolder,
+        individualStreak: {
+          count: c.maxStreak,
+          startDate: c.startDate,
+          endDate: c.endDate,
+          formattedRange: c.formattedRange,
+          status: c.status,
+          endedReason: c.endedReason,
+        },
+      };
+    });
+
+    const isShared = streakHolders.length > 1;
+    const primary = streakHolders[0];
+    records.push({
+      id: "elite-win-streak",
+      category: "Maior Sequência de Vitórias",
+      title: "Maior Sequência de Vitórias",
+      shortLabel: "Sequência",
+      scope: "streak",
+      scopeLabel: "Sequência",
+      explanation: "Maior número consecutivo de vitórias nesta temporada. Derrota ou empate encerram a contagem.",
+      playerName: formatHoldersPlayerName(streakHolders),
+      value: `${maxStreakVal} vitórias`,
+      detail: isShared
+        ? `Recorde compartilhado por ${streakHolders.length} jogadores`
+        : primary.individualStreak?.formattedRange
+        ? `Período: ${primary.individualStreak.formattedRange}`
+        : "Sequência invicta da temporada",
+      matchId: primary.matchId,
+      mapName: primary.mapName,
+      isShared,
+      sharedCount: streakHolders.length,
+      holders: streakHolders,
+      sequenceContext: {
+        count: maxStreakVal,
+        startDate: primary.individualStreak?.startDate,
+        endDate: primary.individualStreak?.endDate,
+        formattedRange: primary.individualStreak?.formattedRange,
+        status: primary.individualStreak?.status ?? "ended",
+        endedReason: primary.individualStreak?.endedReason,
+      },
+      availability: "available",
+    });
+  }
+
+  // 7. Maior ELO GC registrado (antes "Pico de Rating do Hub")
+  const eloRes = findExtremeMatchHolders(
+    statsToUse,
+    activePlayers,
+    allUniverseStats,
+    (s) => s.eloAfter ?? null,
+    "max",
+    0
+  );
+  if (eloRes.holders.length > 0 && eloRes.extremeValue !== null) {
+    const primary = eloRes.holders[0];
+    const isShared = eloRes.holders.length > 1;
+    records.push({
+      id: "elite-elo",
+      category: "Pico de Rating do Hub",
+      title: "Maior ELO GC registrado",
+      shortLabel: "ELO GC",
+      scope: "match",
+      scopeLabel: "Em uma partida",
+      explanation: "Maior pontuação de ELO Gamers Club registrada após uma partida durante o período da temporada.",
+      playerName: formatHoldersPlayerName(eloRes.holders),
+      value: `${eloRes.extremeValue} pts GC`,
+      detail: isShared
+        ? `Recorde compartilhado por ${eloRes.holders.length} jogadores`
+        : `Registrado após confronto na ${primary.cleanMapName ?? primary.mapName} (${primary.scoreFormatted})`,
+      matchId: primary.matchId,
+      mapName: primary.mapName,
+      isShared,
+      sharedCount: eloRes.holders.length,
+      holders: eloRes.holders,
+      availability: "available",
+    });
+  }
+
+  // 8. Maior índice combinado de Rating e ADR (antes "Maior Impacto em Jogo")
+  const impactRes = findExtremeMatchHolders(
+    statsToUse,
+    activePlayers,
+    allUniverseStats,
+    (s) => s.rating * 100 + s.adr,
+    "max",
+    0.01
+  );
+  if (impactRes.holders.length > 0 && impactRes.extremeStats.length > 0) {
+    const primaryStat = impactRes.extremeStats[0];
+    const primary = impactRes.holders[0];
+    const isShared = impactRes.holders.length > 1;
+    records.push({
+      id: "elite-combined-impact",
+      category: "Maior Impacto em Jogo",
+      title: "Maior índice combinado de Rating e ADR",
+      shortLabel: "Impacto",
+      scope: "match",
+      scopeLabel: "Em uma partida",
+      explanation: "Índice combinado calculado por (Rating × 100) + ADR em uma única partida. Mede o impacto simultâneo extremo de pontuação e dano.",
+      playerName: formatHoldersPlayerName(impactRes.holders),
+      value: `${primaryStat.rating.toFixed(2)} Rating / ${primaryStat.adr.toFixed(1)} ADR`,
+      detail: isShared
+        ? `Recorde compartilhado por ${impactRes.holders.length} jogadores`
+        : `Performance dominante no mapa ${primary.cleanMapName ?? primary.mapName} (${primary.scoreFormatted})`,
+      matchId: primary.matchId,
+      mapName: primary.mapName,
+      isShared,
+      sharedCount: impactRes.holders.length,
+      holders: impactRes.holders,
+      availability: "available",
+    });
   }
 
   // 9. Mais MultiKills na Temporada
-  let bestMultiKillPlayer = "N/A";
-  let maxMultiKills = 0;
-  let bestMultiKillDetail = "";
-  for (const player of dataset.activePlayers) {
+  interface PlayerMultiKillCalc {
+    player: PlayerRow;
+    total: number;
+    matchesPlayed: number;
+    averagePerMatch: number;
+    breakdown: string;
+    latestStat: (typeof statsToUse)[number] | null;
+  }
+  const multiKillCalcs: PlayerMultiKillCalc[] = [];
+
+  for (const player of activePlayers) {
     const rawPlayerStats = dataset.statsByPlayer.get(player.id) ?? [];
     const playerStats = statsOverride
       ? rawPlayerStats.filter((s) => statsOverride.some((so) => so.matchId === s.matchId))
       : rawPlayerStats;
+
     let doubleSum = 0;
     let tripleSum = 0;
     let quadSum = 0;
@@ -1265,32 +1959,121 @@ function getHallOfFameRecordsFromDataset(
       aceSum += s.aces ?? 0;
     }
     const total = doubleSum + tripleSum + quadSum + aceSum;
-    if (total > maxMultiKills) {
-      maxMultiKills = total;
-      bestMultiKillPlayer = player.nickname;
-      bestMultiKillDetail = `${doubleSum}x 2K, ${tripleSum}x 3K, ${quadSum}x 4K` + (aceSum > 0 ? `, ${aceSum}x Ace` : "");
+    if (total > 0) {
+      const breakdown = `${doubleSum}x 2K, ${tripleSum}x 3K, ${quadSum}x 4K` + (aceSum > 0 ? `, ${aceSum}x Ace` : "");
+      multiKillCalcs.push({
+        player,
+        total,
+        matchesPlayed: playerStats.length,
+        averagePerMatch: playerStats.length > 0 ? total / playerStats.length : 0,
+        breakdown,
+        latestStat: playerStats[0] ?? null,
+      });
     }
+  }
+
+  const maxMultiVal = multiKillCalcs.length > 0 ? Math.max(...multiKillCalcs.map((c) => c.total)) : 0;
+  if (maxMultiVal > 0) {
+    const tiedMultis = multiKillCalcs
+      .filter((c) => c.total === maxMultiVal)
+      .sort((a, b) => a.player.nickname.localeCompare(b.player.nickname) || a.player.id.localeCompare(b.player.id));
+
+    const multiHolders: RecordHolderContext[] = tiedMultis.map((c) => {
+      const baseHolder = c.latestStat
+        ? buildHolderContextFromStat(c.latestStat, c.player, allUniverseStats)
+        : {
+            player: { id: c.player.id, nickname: c.player.nickname, avatarUrl: c.player.avatarUrl },
+          };
+      return {
+        ...baseHolder,
+        individualCumulative: {
+          total: c.total,
+          matchesPlayed: c.matchesPlayed,
+          averagePerMatch: c.averagePerMatch,
+          breakdown: c.breakdown,
+        },
+      };
+    });
+
+    const isShared = multiHolders.length > 1;
+    const primary = multiHolders[0];
+    records.push({
+      id: "elite-multikills",
+      category: "Mais MultiKills na Temporada",
+      title: "Mais MultiKills na Temporada",
+      shortLabel: "MultiKills",
+      scope: "season_cumulative",
+      scopeLabel: "Acumulado da temporada",
+      explanation: "Soma total de rodadas com multikills (2K, 3K, 4K e Aces) acumuladas em partidas elegíveis da temporada.",
+      playerName: formatHoldersPlayerName(multiHolders),
+      value: `${maxMultiVal} multikills`,
+      detail: isShared
+        ? `Recorde compartilhado por ${multiHolders.length} jogadores`
+        : `${primary.individualCumulative?.breakdown} (${primary.individualCumulative?.averagePerMatch.toFixed(1)} por partida)`,
+      isShared,
+      sharedCount: multiHolders.length,
+      holders: multiHolders,
+      cumulativeContext: {
+        total: maxMultiVal,
+        matchesPlayed: primary.individualCumulative?.matchesPlayed ?? 0,
+        averagePerMatch: primary.individualCumulative?.averagePerMatch ?? 0,
+        breakdown: primary.individualCumulative?.breakdown,
+      },
+      availability: "available",
+    });
   }
 
   // 10. Maior Dano em Jogo
-  let maxDamageStat: (typeof dataset.allStats)[number] | null = null;
-  for (const s of statsToUse) {
-    if (s.damage !== null && s.damage !== undefined) {
-      if (!maxDamageStat || s.damage > (maxDamageStat.damage ?? 0)) {
-        maxDamageStat = s;
-      }
-    }
+  const damageRes = findExtremeMatchHolders(
+    statsToUse.filter((s) => s.damage !== null && s.damage !== undefined),
+    activePlayers,
+    allUniverseStats,
+    (s) => s.damage ?? null,
+    "max",
+    0
+  );
+  if (damageRes.holders.length > 0 && damageRes.extremeValue !== null) {
+    const primary = damageRes.holders[0];
+    const isShared = damageRes.holders.length > 1;
+    records.push({
+      id: "elite-damage",
+      category: "Maior Dano em Jogo",
+      title: "Maior Dano em Jogo",
+      shortLabel: "Dano",
+      scope: "match",
+      scopeLabel: "Em uma partida",
+      explanation: "Volume absoluto de dano causado por um jogador ao longo de uma única partida.",
+      playerName: formatHoldersPlayerName(damageRes.holders),
+      value: `${damageRes.extremeValue} DMG`,
+      detail: isShared
+        ? `Recorde compartilhado por ${damageRes.holders.length} jogadores`
+        : `Dano bruto na ${primary.cleanMapName ?? primary.mapName} (${primary.scoreFormatted})`,
+      matchId: primary.matchId,
+      mapName: primary.mapName,
+      isShared,
+      sharedCount: damageRes.holders.length,
+      holders: damageRes.holders,
+      availability: "available",
+    });
   }
 
-  // 11. Maior Clutch na Temporada
-  let bestClutchPlayer = "N/A";
-  let maxClutches = 0;
-  let clutchDetail = "Decisivo nos momentos críticos";
-  for (const player of dataset.activePlayers) {
+  // 11. Mais Clutches na Temporada (Maior Clutch na Temporada)
+  interface PlayerClutchCalc {
+    player: PlayerRow;
+    total: number;
+    matchesPlayed: number;
+    averagePerMatch: number;
+    breakdown: string;
+    latestStat: (typeof statsToUse)[number] | null;
+  }
+  const clutchCalcs: PlayerClutchCalc[] = [];
+
+  for (const player of activePlayers) {
     const rawPlayerStats = dataset.statsByPlayer.get(player.id) ?? [];
     const playerStats = statsOverride
       ? rawPlayerStats.filter((s) => statsOverride.some((so) => so.matchId === s.matchId))
       : rawPlayerStats;
+
     let totalClutches = 0;
     let c1v1 = 0, c1v2 = 0, c1v3 = 0, c1v4 = 0, c1v5 = 0;
     for (const s of playerStats) {
@@ -1301,21 +2084,90 @@ function getHallOfFameRecordsFromDataset(
       c1v4 += s.clutch1v4Wins ?? 0;
       c1v5 += s.clutch1v5Wins ?? 0;
     }
-    if (totalClutches > maxClutches) {
-      maxClutches = totalClutches;
-      bestClutchPlayer = player.nickname;
-      clutchDetail = `${c1v1}x 1v1, ${c1v2}x 1v2, ${c1v3}x 1v3` + (c1v4 + c1v5 > 0 ? `, ${c1v4 + c1v5}x 1v4+` : "");
+    if (totalClutches > 0) {
+      const breakdown = `${c1v1}x 1v1, ${c1v2}x 1v2, ${c1v3}x 1v3` + (c1v4 + c1v5 > 0 ? `, ${c1v4 + c1v5}x 1v4+` : "");
+      clutchCalcs.push({
+        player,
+        total: totalClutches,
+        matchesPlayed: playerStats.length,
+        averagePerMatch: playerStats.length > 0 ? totalClutches / playerStats.length : 0,
+        breakdown,
+        latestStat: playerStats[0] ?? null,
+      });
     }
   }
 
-  // 12. Maior Consistência na Temporada
-  let bestConsistencyPlayer = "N/A";
-  let maxConsistencyScore = 0;
-  let consistencyValue = "1.00 Rating";
-  let consistencyDetail = "Regularidade durante a temporada";
+  const maxClutchVal = clutchCalcs.length > 0 ? Math.max(...clutchCalcs.map((c) => c.total)) : 0;
+  if (maxClutchVal > 0) {
+    const tiedClutches = clutchCalcs
+      .filter((c) => c.total === maxClutchVal)
+      .sort((a, b) => a.player.nickname.localeCompare(b.player.nickname) || a.player.id.localeCompare(b.player.id));
 
+    const clutchHolders: RecordHolderContext[] = tiedClutches.map((c) => {
+      const baseHolder = c.latestStat
+        ? buildHolderContextFromStat(c.latestStat, c.player, allUniverseStats)
+        : {
+            player: { id: c.player.id, nickname: c.player.nickname, avatarUrl: c.player.avatarUrl },
+          };
+      return {
+        ...baseHolder,
+        individualCumulative: {
+          total: c.total,
+          matchesPlayed: c.matchesPlayed,
+          averagePerMatch: c.averagePerMatch,
+          breakdown: c.breakdown,
+        },
+      };
+    });
+
+    const isShared = clutchHolders.length > 1;
+    const primary = clutchHolders[0];
+    records.push({
+      id: "elite-clutch",
+      category: "Maior Clutch na Temporada",
+      title: "Mais Clutches na Temporada",
+      shortLabel: "Clutches",
+      scope: "season_cumulative",
+      scopeLabel: "Acumulado da temporada",
+      explanation: "Maior quantidade de situações 1vX vencidas sob pressão durante a temporada.",
+      playerName: formatHoldersPlayerName(clutchHolders),
+      value: `${maxClutchVal} clutches`,
+      detail: isShared
+        ? `Recorde compartilhado por ${clutchHolders.length} jogadores`
+        : primary.individualCumulative?.breakdown ?? "Decisivo nos momentos críticos",
+      isShared,
+      sharedCount: clutchHolders.length,
+      holders: clutchHolders,
+      cumulativeContext: {
+        total: maxClutchVal,
+        matchesPlayed: primary.individualCumulative?.matchesPlayed ?? 0,
+        averagePerMatch: primary.individualCumulative?.averagePerMatch ?? 0,
+        breakdown: primary.individualCumulative?.breakdown,
+      },
+      availability: "available",
+    });
+  } else {
+    // Telemetria de clutches ausente ou sem registros na temporada
+    records.push({
+      id: "elite-clutch",
+      category: "Maior Clutch na Temporada",
+      title: "Mais Clutches na Temporada",
+      shortLabel: "Clutches",
+      scope: "season_cumulative",
+      scopeLabel: "Acumulado da temporada",
+      explanation: "Maior quantidade de situações 1vX vencidas sob pressão durante a temporada.",
+      playerName: "N/A",
+      value: "Indisponível",
+      detail: "Sem registros de clutches na telemetria deste período",
+      availability: "unavailable",
+      unavailableReason: "Dados de clutches indisponíveis na telemetria deste período",
+      holders: [],
+    });
+  }
+
+  // 12. Maior Consistência na Temporada
   let minMatches = 3;
-  let candidatePlayers = dataset.activePlayers.filter(p => {
+  let candidatePlayers = activePlayers.filter((p) => {
     const stats = dataset.statsByPlayer.get(p.id) ?? [];
     const statsToCount = statsOverride
       ? stats.filter((s) => statsOverride.some((so) => so.matchId === s.matchId))
@@ -1325,7 +2177,7 @@ function getHallOfFameRecordsFromDataset(
 
   if (candidatePlayers.length === 0) {
     minMatches = 1;
-    candidatePlayers = dataset.activePlayers.filter(p => {
+    candidatePlayers = activePlayers.filter((p) => {
       const stats = dataset.statsByPlayer.get(p.id) ?? [];
       const statsToCount = statsOverride
         ? stats.filter((s) => statsOverride.some((so) => so.matchId === s.matchId))
@@ -1333,6 +2185,17 @@ function getHallOfFameRecordsFromDataset(
       return statsToCount.length >= minMatches;
     });
   }
+
+  interface PlayerConsistencyCalc {
+    player: PlayerRow;
+    score: number;
+    avgRating: number;
+    aboveBaselineCount: number;
+    totalMatches: number;
+    aboveBaselinePct: number;
+    latestStat: (typeof statsToUse)[number] | null;
+  }
+  const consistencyCalcs: PlayerConsistencyCalc[] = [];
 
   for (const player of candidatePlayers) {
     const rawPlayerStats = dataset.statsByPlayer.get(player.id) ?? [];
@@ -1345,337 +2208,527 @@ function getHallOfFameRecordsFromDataset(
 
     const totalRating = playerStats.reduce((sum, s) => sum + s.rating, 0);
     const avgRating = totalRating / totalMatches;
-    const aboveBaselineCount = playerStats.filter(s => s.rating >= 1.0).length;
+    const aboveBaselineCount = playerStats.filter((s) => s.rating >= 1.0).length;
     const aboveBaselinePct = aboveBaselineCount / totalMatches;
 
     const score = avgRating * (1 + aboveBaselinePct);
-    if (score > maxConsistencyScore) {
-      maxConsistencyScore = score;
-      bestConsistencyPlayer = player.nickname;
-      consistencyValue = `${avgRating.toFixed(2)} Rating`;
-      consistencyDetail = `${aboveBaselineCount} de ${totalMatches} partidas com rating ≥ 1.0`;
-    }
+    consistencyCalcs.push({
+      player,
+      score,
+      avgRating,
+      aboveBaselineCount,
+      totalMatches,
+      aboveBaselinePct,
+      latestStat: playerStats[0] ?? null,
+    });
   }
 
-  const records: HallOfFameRecord[] = [];
+  const maxConsScore = consistencyCalcs.length > 0 ? Math.max(...consistencyCalcs.map((c) => c.score)) : 0;
+  if (maxConsScore > 0) {
+    const tiedCons = consistencyCalcs
+      .filter((c) => Math.abs(c.score - maxConsScore) <= 0.001)
+      .sort((a, b) => a.player.nickname.localeCompare(b.player.nickname) || a.player.id.localeCompare(b.player.id));
 
-  if (maxRating) {
-    records.push({
-      category: "Recorde de Rating",
-      playerName: playerName(maxRating),
-      value: maxRating.rating.toFixed(2),
-      detail: `Registrado no mapa ${maxRating.match.map.name}`,
-      matchId: maxRating.match.id,
-      mapName: maxRating.match.map.name,
+    const consHolders: RecordHolderContext[] = tiedCons.map((c) => {
+      const baseHolder = c.latestStat
+        ? buildHolderContextFromStat(c.latestStat, c.player, allUniverseStats)
+        : {
+            player: { id: c.player.id, nickname: c.player.nickname, avatarUrl: c.player.avatarUrl },
+          };
+      return {
+        ...baseHolder,
+        individualCumulative: {
+          total: c.aboveBaselineCount,
+          matchesPlayed: c.totalMatches,
+          averagePerMatch: c.avgRating,
+          breakdown: `${c.aboveBaselineCount} de ${c.totalMatches} partidas com rating ≥ 1.0`,
+        },
+      };
     });
-  }
-  if (maxKdStat) {
-    const calculatedKd = maxKdStat.deaths > 0 ? maxKdStat.kills / maxKdStat.deaths : maxKdStat.kills;
+
+    const isShared = consHolders.length > 1;
+    const primaryCalc = tiedCons[0];
     records.push({
-      category: "Maior K/D em Jogo",
-      playerName: playerName(maxKdStat),
-      value: `${calculatedKd.toFixed(2)} K/D`,
-      detail: `Registrado no mapa ${maxKdStat.match.map.name}`,
-      matchId: maxKdStat.match.id,
-      mapName: maxKdStat.match.map.name,
-    });
-  }
-  if (maxAdr) {
-    records.push({
-      category: "Maior ADR em Jogo",
-      playerName: playerName(maxAdr),
-      value: `${maxAdr.adr.toFixed(1)} ADR`,
-      detail: `Dano médio por round na ${maxAdr.match.map.name}`,
-      matchId: maxAdr.match.id,
-      mapName: maxAdr.match.map.name,
-    });
-  }
-  if (maxKills) {
-    records.push({
-      category: "Recorde de Kills",
-      playerName: playerName(maxKills),
-      value: `${maxKills.kills} kills`,
-      detail: `Partida no mapa ${maxKills.match.map.name}`,
-      matchId: maxKills.match.id,
-      mapName: maxKills.match.map.name,
-    });
-  }
-  if (maxHsStat) {
-    const calculatedHs = maxHsStat.kills > 0 ? (maxHsStat.headshots / maxHsStat.kills) * 100 : 0;
-    records.push({
-      category: "Maior HS% em Jogo",
-      playerName: playerName(maxHsStat),
-      value: `${calculatedHs.toFixed(0)}% HS`,
-      detail: `Registrado no mapa ${maxHsStat.match.map.name}`,
-      matchId: maxHsStat.match.id,
-      mapName: maxHsStat.match.map.name,
-    });
-  }
-  if (maxStreak > 0) {
-    records.push({
-      category: "Maior Sequência de Vitórias",
-      playerName: maxStreakPlayer,
-      value: `${maxStreak} vitórias`,
-      detail: "Sequência invicta da temporada",
-    });
-  }
-  if (eloLeader) {
-    records.push({
-      category: "Pico de Rating do Hub",
-      playerName: playerName(eloLeader),
-      value: `${eloLeader.eloAfter} pontos`,
-      detail: "Ranking interno CS2 Stats Hub",
-      matchId: eloLeader.match.id,
-      mapName: eloLeader.match.map.name,
-    });
-  }
-  if (maxImpactStat) {
-    records.push({
-      category: "Maior Impacto em Jogo",
-      playerName: playerName(maxImpactStat),
-      value: `${maxImpactStat.rating.toFixed(2)} Rating / ${maxImpactStat.adr.toFixed(1)} ADR`,
-      detail: "Performance mais dominante em uma partida",
-      matchId: maxImpactStat.match.id,
-      mapName: maxImpactStat.match.map.name,
-    });
-  }
-  if (maxMultiKills > 0) {
-    records.push({
-      category: "Mais MultiKills na Temporada",
-      playerName: bestMultiKillPlayer,
-      value: `${maxMultiKills} multikills`,
-      detail: bestMultiKillDetail,
-    });
-  }
-  if (maxDamageStat && maxDamageStat.damage) {
-    records.push({
-      category: "Maior Dano em Jogo",
-      playerName: playerName(maxDamageStat),
-      value: `${maxDamageStat.damage} DMG`,
-      detail: `Dano bruto causado na ${maxDamageStat.match.map.name}`,
-      matchId: maxDamageStat.match.id,
-      mapName: maxDamageStat.match.map.name,
-    });
-  }
-  if (maxClutches > 0) {
-    records.push({
-      category: "Maior Clutch na Temporada",
-      playerName: bestClutchPlayer,
-      value: `${maxClutches} clutches`,
-      detail: clutchDetail,
-    });
-  }
-  if (maxConsistencyScore > 0) {
-    records.push({
+      id: "elite-consistency",
       category: "Maior Consistência na Temporada",
-      playerName: bestConsistencyPlayer,
-      value: consistencyValue,
-      detail: consistencyDetail,
+      title: "Maior Consistência na Temporada",
+      shortLabel: "Consistência",
+      scope: "season_cumulative",
+      scopeLabel: "Acumulado da temporada",
+      explanation: `Índice de consistência = Rating Médio × (1 + % de partidas com Rating ≥ 1.00). Amostra mínima de ${minMatches} partidas.`,
+      playerName: formatHoldersPlayerName(consHolders),
+      value: `${primaryCalc.avgRating.toFixed(2)} Rating`,
+      detail: isShared
+        ? `Recorde compartilhado por ${consHolders.length} jogadores`
+        : `${primaryCalc.aboveBaselineCount} de ${primaryCalc.totalMatches} partidas (${Math.round(primaryCalc.aboveBaselinePct * 100)}%) com rating ≥ 1.0`,
+      isShared,
+      sharedCount: consHolders.length,
+      holders: consHolders,
+      cumulativeContext: {
+        total: primaryCalc.aboveBaselineCount,
+        matchesPlayed: primaryCalc.totalMatches,
+        averagePerMatch: primaryCalc.avgRating,
+        breakdown: `${primaryCalc.aboveBaselineCount} de ${primaryCalc.totalMatches} partidas com rating ≥ 1.0`,
+      },
+      availability: "available",
     });
   }
 
   return records;
 }
 
-export function getWorstRecordsFromDataset(dataset: CompetitiveDataset): HallOfFameRecord[] {
-  const statsToUse = dataset.allStats;
+export function getWorstRecordsFromDataset(
+  dataset: CompetitiveDataset,
+  statsOverride?: typeof dataset.allStats
+): HallOfFameRecord[] {
+  const statsToUse = statsOverride ?? dataset.allStats;
+  const allUniverseStats = dataset.allStats;
+  const activePlayers = dataset.activePlayers;
+  const records: HallOfFameRecord[] = [];
 
-  const playerName = (s: (typeof dataset.allStats)[number] | null) =>
-    dataset.activePlayers.find((p) => p.id === s?.playerId)?.nickname ?? "N/A";
-
-  // Participação substancial: jogador completou a partida (evita subs com 0-2 mortes ou abandono precoce)
-  const isEligibleWorst = (s: (typeof dataset.allStats)[number]) =>
+  // Critério de elegibilidade para marcas negativas:
+  // Participação substancial no jogo (evita substitutos imediatos ou desistências com 0-2 mortes)
+  const isEligibleWorst = (s: CompetitiveDataset["allStats"][number]) =>
     s.deaths >= 10 || (s.kills >= 3 && s.deaths >= 8);
 
-  // 1. Pior Rating em Jogo
-  let minRatingStat: (typeof dataset.allStats)[number] | null = null;
-  for (const s of statsToUse) {
-    if (!isEligibleWorst(s)) continue;
-    if (!minRatingStat || s.rating < minRatingStat.rating) minRatingStat = s;
+  const eligibleStats = statsToUse.filter(isEligibleWorst);
+
+  // 1. Pior Rating em Jogo (Menor Rating em Jogo)
+  const ratingRes = findExtremeMatchHolders(
+    eligibleStats,
+    activePlayers,
+    allUniverseStats,
+    (s) => s.rating,
+    "min"
+  );
+  if (ratingRes.holders.length > 0 && ratingRes.extremeValue !== null) {
+    const primary = ratingRes.holders[0];
+    const isShared = ratingRes.holders.length > 1;
+    records.push({
+      id: "worst-rating",
+      category: "Pior Rating em Jogo",
+      title: "Menor Rating em Jogo",
+      shortLabel: "Rating",
+      scope: "match",
+      scopeLabel: "Em uma partida",
+      explanation: "Menor pontuação individual de Rating registrada em uma partida com participação substancial.",
+      playerName: formatHoldersPlayerName(ratingRes.holders),
+      value: ratingRes.extremeValue.toFixed(2),
+      detail: isShared
+        ? `Marca compartilhada por ${ratingRes.holders.length} jogadores`
+        : `Registrado no mapa ${primary.cleanMapName ?? primary.mapName} (${primary.scoreFormatted})`,
+      matchId: primary.matchId,
+      mapName: primary.mapName,
+      isShared,
+      sharedCount: ratingRes.holders.length,
+      holders: ratingRes.holders,
+      availability: "available",
+    });
   }
 
-  // 2. Pior K/D em Jogo
-  let minKdStat: (typeof dataset.allStats)[number] | null = null;
-  let minKdVal = Infinity;
-  for (const s of statsToUse) {
-    if (!isEligibleWorst(s)) continue;
-    const kd = s.deaths > 0 ? s.kills / s.deaths : s.kills;
-    if (kd < minKdVal) { minKdStat = s; minKdVal = kd; }
+  // 2. Pior K/D em Jogo (Menor K/D em Jogo)
+  const kdRes = findExtremeMatchHolders(
+    eligibleStats,
+    activePlayers,
+    allUniverseStats,
+    (s) => (s.deaths > 0 ? s.kills / s.deaths : s.kills),
+    "min",
+    0.0001
+  );
+  if (kdRes.holders.length > 0 && kdRes.extremeValue !== null) {
+    const primary = kdRes.holders[0];
+    const isShared = kdRes.holders.length > 1;
+    records.push({
+      id: "worst-kd",
+      category: "Pior K/D em Jogo",
+      title: "Menor K/D em Jogo",
+      shortLabel: "K/D",
+      scope: "match",
+      scopeLabel: "Em uma partida",
+      explanation: "Pior relação entre eliminações e mortes em um confronto com participação substancial.",
+      playerName: formatHoldersPlayerName(kdRes.holders),
+      value: `${kdRes.extremeValue.toFixed(2)} K/D`,
+      detail: isShared
+        ? `Marca compartilhada por ${kdRes.holders.length} jogadores`
+        : `Registrado no mapa ${primary.cleanMapName ?? primary.mapName} (${primary.scoreFormatted})`,
+      matchId: primary.matchId,
+      mapName: primary.mapName,
+      isShared,
+      sharedCount: kdRes.holders.length,
+      holders: kdRes.holders,
+      availability: "available",
+    });
   }
 
   // 3. Menor ADR em Jogo
-  let minAdrStat: (typeof dataset.allStats)[number] | null = null;
-  for (const s of statsToUse) {
-    if (!isEligibleWorst(s)) continue;
-    if (!minAdrStat || s.adr < minAdrStat.adr) minAdrStat = s;
+  const adrRes = findExtremeMatchHolders(
+    eligibleStats,
+    activePlayers,
+    allUniverseStats,
+    (s) => s.adr,
+    "min",
+    0.05
+  );
+  if (adrRes.holders.length > 0 && adrRes.extremeValue !== null) {
+    const primary = adrRes.holders[0];
+    const isShared = adrRes.holders.length > 1;
+    records.push({
+      id: "worst-adr",
+      category: "Menor ADR em Jogo",
+      title: "Menor ADR em Jogo",
+      shortLabel: "ADR",
+      scope: "match",
+      scopeLabel: "Em uma partida",
+      explanation: "Menor média de dano por round registrada em um confronto com participação substancial.",
+      playerName: formatHoldersPlayerName(adrRes.holders),
+      value: `${adrRes.extremeValue.toFixed(1)} ADR`,
+      detail: isShared
+        ? `Marca compartilhada por ${adrRes.holders.length} jogadores`
+        : `Dano médio por round na ${primary.cleanMapName ?? primary.mapName} (${primary.scoreFormatted})`,
+      matchId: primary.matchId,
+      mapName: primary.mapName,
+      isShared,
+      sharedCount: adrRes.holders.length,
+      holders: adrRes.holders,
+      availability: "available",
+    });
   }
 
   // 4. Mais Mortes em Jogo
-  let maxDeathsStat: (typeof dataset.allStats)[number] | null = null;
-  for (const s of statsToUse) {
-    if (!isEligibleWorst(s)) continue;
-    if (!maxDeathsStat || s.deaths > maxDeathsStat.deaths) maxDeathsStat = s;
+  const deathsRes = findExtremeMatchHolders(
+    eligibleStats,
+    activePlayers,
+    allUniverseStats,
+    (s) => s.deaths,
+    "max",
+    0
+  );
+  if (deathsRes.holders.length > 0 && deathsRes.extremeValue !== null) {
+    const primary = deathsRes.holders[0];
+    const isShared = deathsRes.holders.length > 1;
+    records.push({
+      id: "worst-deaths",
+      category: "Mais Mortes em Jogo",
+      title: "Mais Mortes em Jogo",
+      shortLabel: "Mortes",
+      scope: "match",
+      scopeLabel: "Em uma partida",
+      explanation: "Maior quantidade de mortes sofridas em uma única partida (incluindo prorrogações).",
+      playerName: formatHoldersPlayerName(deathsRes.holders),
+      value: `${deathsRes.extremeValue} mortes`,
+      detail: isShared
+        ? `Marca compartilhada por ${deathsRes.holders.length} jogadores`
+        : `Partida no mapa ${primary.cleanMapName ?? primary.mapName} (${primary.scoreFormatted})`,
+      matchId: primary.matchId,
+      mapName: primary.mapName,
+      isShared,
+      sharedCount: deathsRes.holders.length,
+      holders: deathsRes.holders,
+      availability: "available",
+    });
   }
 
-  // 5. Menor HS% em Jogo (mínimo 10 kills para haver significância estatística em headshots)
-  let minHsStat: (typeof dataset.allStats)[number] | null = null;
-  let minHsVal = Infinity;
-  for (const s of statsToUse) {
-    if (s.kills < 10) continue;
-    const hs = (s.headshots / s.kills) * 100;
-    if (hs < minHsVal) { minHsStat = s; minHsVal = hs; }
+  // 5. Menor HS% em Jogo (mínimo de 10 kills para haver relevância estatística)
+  const hsEligible = eligibleStats.filter((s) => s.kills >= 10);
+  if (hsEligible.length > 0) {
+    const hsRes = findExtremeMatchHolders(
+      hsEligible,
+      activePlayers,
+      allUniverseStats,
+      (s) => (s.kills > 0 ? (s.headshots / s.kills) * 100 : 0),
+      "min",
+      0.05
+    );
+    if (hsRes.holders.length > 0 && hsRes.extremeValue !== null) {
+      const primary = hsRes.holders[0];
+      const isShared = hsRes.holders.length > 1;
+      records.push({
+        id: "worst-hs",
+        category: "Menor HS% em Jogo",
+        title: "Menor HS% em Jogo",
+        shortLabel: "HS%",
+        scope: "match",
+        scopeLabel: "Em uma partida",
+        explanation: "Menor porcentagem de eliminações por tiro na cabeça (mínimo de 10 kills para significância).",
+        playerName: formatHoldersPlayerName(hsRes.holders),
+        value: `${hsRes.extremeValue.toFixed(0)}% HS`,
+        detail: isShared
+          ? `Marca compartilhada por ${hsRes.holders.length} jogadores`
+          : `Registrado no mapa ${primary.cleanMapName ?? primary.mapName} (${primary.scoreFormatted})`,
+        matchId: primary.matchId,
+        mapName: primary.mapName,
+        isShared,
+        sharedCount: hsRes.holders.length,
+        holders: hsRes.holders,
+        availability: "available",
+      });
+    }
   }
 
   // 6. Maior Sequência de Derrotas
-  let maxLossStreak = 0;
-  let maxLossStreakPlayer = "N/A";
-  for (const player of dataset.activePlayers) {
-    const playerStats = dataset.statsByPlayer.get(player.id) ?? [];
-    const stats = [...playerStats].reverse();
-    let currentStreak = 0;
-    let playerMaxStreak = 0;
-    for (const stat of stats) {
+  interface PlayerLossStreakCalc {
+    player: PlayerRow;
+    maxStreak: number;
+    streakMatches: typeof statsToUse;
+    startDate?: string;
+    endDate?: string;
+    formattedRange?: string;
+    status: "active" | "ended";
+    endedReason?: string;
+  }
+  const lossStreakCalcs: PlayerLossStreakCalc[] = [];
+
+  for (const player of activePlayers) {
+    const rawPlayerStats = dataset.statsByPlayer.get(player.id) ?? [];
+    const playerStats = statsOverride
+      ? rawPlayerStats.filter((s) => statsOverride.some((so) => so.matchId === s.matchId))
+      : rawPlayerStats;
+
+    const chronological = [...playerStats].reverse();
+    let currentStreak: typeof playerStats = [];
+    let bestStreak: typeof playerStats = [];
+    let bestStreakEndIndex = -1;
+
+    for (let i = 0; i < chronological.length; i++) {
+      const stat = chronological[i];
       if (!isWin(stat)) {
-        currentStreak++;
-        if (currentStreak > playerMaxStreak) playerMaxStreak = currentStreak;
+        currentStreak.push(stat);
+        if (currentStreak.length > bestStreak.length) {
+          bestStreak = [...currentStreak];
+          bestStreakEndIndex = i;
+        }
       } else {
-        currentStreak = 0;
+        currentStreak = [];
       }
     }
-    if (playerMaxStreak > maxLossStreak) {
-      maxLossStreak = playerMaxStreak;
-      maxLossStreakPlayer = player.nickname;
+
+    if (bestStreak.length > 0) {
+      const startMatch = bestStreak[0];
+      const endMatch = bestStreak[bestStreak.length - 1];
+      const isStillActive = bestStreakEndIndex === chronological.length - 1;
+
+      lossStreakCalcs.push({
+        player,
+        maxStreak: bestStreak.length,
+        streakMatches: bestStreak,
+        startDate: startMatch.match.playedAt ? new Date(startMatch.match.playedAt).toISOString() : undefined,
+        endDate: endMatch.match.playedAt ? new Date(endMatch.match.playedAt).toISOString() : undefined,
+        formattedRange: formatDateRangeSP(startMatch.match.playedAt, endMatch.match.playedAt),
+        status: isStillActive ? "active" : "ended",
+        endedReason: isStillActive ? undefined : "Encerrada por vitória",
+      });
     }
   }
 
-  // 7. Pior Momento no Ranking (min eloAfter)
-  let minEloStat: (typeof dataset.allStats)[number] | null = null;
-  for (const s of statsToUse) {
-    if (!minEloStat || s.eloAfter < minEloStat.eloAfter) minEloStat = s;
+  const maxLossStreakVal = lossStreakCalcs.length > 0 ? Math.max(...lossStreakCalcs.map((c) => c.maxStreak)) : 0;
+  if (maxLossStreakVal > 0) {
+    const tiedLossStreaks = lossStreakCalcs
+      .filter((c) => c.maxStreak === maxLossStreakVal)
+      .sort((a, b) => a.player.nickname.localeCompare(b.player.nickname) || a.player.id.localeCompare(b.player.id));
+
+    const lossHolders: RecordHolderContext[] = tiedLossStreaks.map((c) => {
+      const lastStat = c.streakMatches[c.streakMatches.length - 1];
+      const baseHolder = buildHolderContextFromStat(lastStat, c.player, allUniverseStats);
+      return {
+        ...baseHolder,
+        individualStreak: {
+          count: c.maxStreak,
+          startDate: c.startDate,
+          endDate: c.endDate,
+          formattedRange: c.formattedRange,
+          status: c.status,
+          endedReason: c.endedReason,
+        },
+      };
+    });
+
+    const isShared = lossHolders.length > 1;
+    const primary = lossHolders[0];
+    records.push({
+      id: "worst-loss-streak",
+      category: "Maior Sequência de Derrotas",
+      title: "Maior Sequência de Derrotas",
+      shortLabel: "Derrotas",
+      scope: "streak",
+      scopeLabel: "Sequência",
+      explanation: "Maior sequência consecutiva de partidas sem vitória (derrotas e empates) na temporada.",
+      playerName: formatHoldersPlayerName(lossHolders),
+      value: `${maxLossStreakVal} derrotas`,
+      detail: isShared
+        ? `Marca compartilhada por ${lossHolders.length} jogadores`
+        : primary.individualStreak?.formattedRange
+        ? `Período: ${primary.individualStreak.formattedRange}`
+        : "Sequência de resultados negativos na temporada",
+      matchId: primary.matchId,
+      mapName: primary.mapName,
+      isShared,
+      sharedCount: lossHolders.length,
+      holders: lossHolders,
+      sequenceContext: {
+        count: maxLossStreakVal,
+        startDate: primary.individualStreak?.startDate,
+        endDate: primary.individualStreak?.endDate,
+        formattedRange: primary.individualStreak?.formattedRange,
+        status: primary.individualStreak?.status ?? "ended",
+        endedReason: primary.individualStreak?.endedReason,
+      },
+      availability: "available",
+    });
   }
 
-  // 8. Partida Fantasma (min rating*100 + adr — mesma fórmula do impacto)
-  let minImpactStat: (typeof dataset.allStats)[number] | null = null;
-  let minImpactScore = Infinity;
-  for (const s of statsToUse) {
-    if (!isEligibleWorst(s)) continue;
-    const score = s.rating * 100 + s.adr;
-    if (score < minImpactScore) { minImpactStat = s; minImpactScore = score; }
+  // 7. Menor ELO GC registrado (antes "Pior Momento no Ranking")
+  const eloRes = findExtremeMatchHolders(
+    statsToUse,
+    activePlayers,
+    allUniverseStats,
+    (s) => s.eloAfter ?? null,
+    "min",
+    0
+  );
+  if (eloRes.holders.length > 0 && eloRes.extremeValue !== null) {
+    const primary = eloRes.holders[0];
+    const isShared = eloRes.holders.length > 1;
+    records.push({
+      id: "worst-elo",
+      category: "Pior Momento no Ranking",
+      title: "Menor ELO GC registrado",
+      shortLabel: "ELO GC",
+      scope: "match",
+      scopeLabel: "Em uma partida",
+      explanation: "Menor pontuação de ELO Gamers Club registrada após uma partida durante o período da temporada.",
+      playerName: formatHoldersPlayerName(eloRes.holders),
+      value: `${eloRes.extremeValue} pts GC`,
+      detail: isShared
+        ? `Marca compartilhada por ${eloRes.holders.length} jogadores`
+        : `Menor pontuação registrada na ${primary.cleanMapName ?? primary.mapName} (${primary.scoreFormatted})`,
+      matchId: primary.matchId,
+      mapName: primary.mapName,
+      isShared,
+      sharedCount: eloRes.holders.length,
+      holders: eloRes.holders,
+      availability: "available",
+    });
   }
 
-  // 9. Maior Inconsistência na Temporada (inverso do score de consistência)
-  let worstConsistencyPlayer = "N/A";
-  let minConsistencyScore = Infinity;
-  let inconsistencyValue = "0.00 Rating";
-  let inconsistencyDetail = "Variação alta durante a temporada";
+  // 8. Menor índice combinado de Rating e ADR (antes "Partida Fantasma")
+  const ghostRes = findExtremeMatchHolders(
+    eligibleStats,
+    activePlayers,
+    allUniverseStats,
+    (s) => s.rating * 100 + s.adr,
+    "min",
+    0.01
+  );
+  if (ghostRes.holders.length > 0 && ghostRes.extremeStats.length > 0) {
+    const primaryStat = ghostRes.extremeStats[0];
+    const primary = ghostRes.holders[0];
+    const isShared = ghostRes.holders.length > 1;
+    records.push({
+      id: "worst-ghost",
+      category: "Partida Fantasma",
+      title: "Menor índice combinado de Rating e ADR",
+      shortLabel: "Fantasma",
+      scope: "match",
+      scopeLabel: "Em uma partida",
+      explanation: "Menor índice combinado calculado por (Rating × 100) + ADR em uma partida com participação substancial.",
+      playerName: formatHoldersPlayerName(ghostRes.holders),
+      value: `${primaryStat.rating.toFixed(2)} Rating / ${primaryStat.adr.toFixed(1)} ADR`,
+      detail: isShared
+        ? `Marca compartilhada por ${ghostRes.holders.length} jogadores`
+        : `Performance apagada no mapa ${primary.cleanMapName ?? primary.mapName} (${primary.scoreFormatted})`,
+      matchId: primary.matchId,
+      mapName: primary.mapName,
+      isShared,
+      sharedCount: ghostRes.holders.length,
+      holders: ghostRes.holders,
+      availability: "available",
+    });
+  }
 
-  const candidatePlayers = dataset.activePlayers.filter((p) => {
+  // 9. Maior Inconsistência na Temporada
+  const candidatePlayers = activePlayers.filter((p) => {
     const stats = dataset.statsByPlayer.get(p.id) ?? [];
     return stats.length >= 3;
   });
 
+  interface PlayerInconsistencyCalc {
+    player: PlayerRow;
+    score: number;
+    avgRating: number;
+    belowCount: number;
+    totalMatches: number;
+    latestStat: (typeof statsToUse)[number] | null;
+  }
+  const inconsistencyCalcs: PlayerInconsistencyCalc[] = [];
+
   for (const player of candidatePlayers) {
     const playerStats = dataset.statsByPlayer.get(player.id) ?? [];
     if (playerStats.length === 0) continue;
+
     const avgRating = playerStats.reduce((sum, s) => sum + s.rating, 0) / playerStats.length;
     const aboveBaselineCount = playerStats.filter((s) => s.rating >= 1.0).length;
     const aboveBaselinePct = aboveBaselineCount / playerStats.length;
     const belowCount = playerStats.length - aboveBaselineCount;
     const score = avgRating * (1 + aboveBaselinePct);
-    if (score < minConsistencyScore) {
-      minConsistencyScore = score;
-      worstConsistencyPlayer = player.nickname;
-      inconsistencyValue = `${avgRating.toFixed(2)} Rating`;
-      inconsistencyDetail = `${belowCount} de ${playerStats.length} partidas com rating < 1.0`;
-    }
+
+    inconsistencyCalcs.push({
+      player,
+      score,
+      avgRating,
+      belowCount,
+      totalMatches: playerStats.length,
+      latestStat: playerStats[0] ?? null,
+    });
   }
 
-  const records: HallOfFameRecord[] = [];
+  const minConsScore = inconsistencyCalcs.length > 0 ? Math.min(...inconsistencyCalcs.map((c) => c.score)) : Infinity;
+  if (minConsScore < Infinity) {
+    const tiedIncons = inconsistencyCalcs
+      .filter((c) => Math.abs(c.score - minConsScore) <= 0.001)
+      .sort((a, b) => a.player.nickname.localeCompare(b.player.nickname) || a.player.id.localeCompare(b.player.id));
 
-  if (minRatingStat) {
-    records.push({
-      category: "Pior Rating em Jogo",
-      playerName: playerName(minRatingStat),
-      value: minRatingStat.rating.toFixed(2),
-      detail: `Registrado no mapa ${minRatingStat.match.map.name}`,
-      matchId: minRatingStat.match.id,
-      mapName: minRatingStat.match.map.name,
+    const inconsHolders: RecordHolderContext[] = tiedIncons.map((c) => {
+      const baseHolder = c.latestStat
+        ? buildHolderContextFromStat(c.latestStat, c.player, allUniverseStats)
+        : {
+            player: { id: c.player.id, nickname: c.player.nickname, avatarUrl: c.player.avatarUrl },
+          };
+      return {
+        ...baseHolder,
+        individualCumulative: {
+          total: c.belowCount,
+          matchesPlayed: c.totalMatches,
+          averagePerMatch: c.avgRating,
+          breakdown: `${c.belowCount} de ${c.totalMatches} partidas com rating < 1.0`,
+        },
+      };
     });
-  }
-  if (minKdStat) {
+
+    const isShared = inconsHolders.length > 1;
+    const primaryCalc = tiedIncons[0];
     records.push({
-      category: "Pior K/D em Jogo",
-      playerName: playerName(minKdStat),
-      value: `${minKdVal.toFixed(2)} K/D`,
-      detail: `Registrado no mapa ${minKdStat.match.map.name}`,
-      matchId: minKdStat.match.id,
-      mapName: minKdStat.match.map.name,
-    });
-  }
-  if (minAdrStat) {
-    records.push({
-      category: "Menor ADR em Jogo",
-      playerName: playerName(minAdrStat),
-      value: `${minAdrStat.adr.toFixed(1)} ADR`,
-      detail: `Dano médio por round na ${minAdrStat.match.map.name}`,
-      matchId: minAdrStat.match.id,
-      mapName: minAdrStat.match.map.name,
-    });
-  }
-  if (maxDeathsStat) {
-    records.push({
-      category: "Mais Mortes em Jogo",
-      playerName: playerName(maxDeathsStat),
-      value: `${maxDeathsStat.deaths} mortes`,
-      detail: `Partida no mapa ${maxDeathsStat.match.map.name}`,
-      matchId: maxDeathsStat.match.id,
-      mapName: maxDeathsStat.match.map.name,
-    });
-  }
-  if (minHsStat) {
-    records.push({
-      category: "Menor HS% em Jogo",
-      playerName: playerName(minHsStat),
-      value: `${minHsVal.toFixed(0)}% HS`,
-      detail: `Registrado no mapa ${minHsStat.match.map.name}`,
-      matchId: minHsStat.match.id,
-      mapName: minHsStat.match.map.name,
-    });
-  }
-  if (maxLossStreak > 0) {
-    records.push({
-      category: "Maior Sequência de Derrotas",
-      playerName: maxLossStreakPlayer,
-      value: `${maxLossStreak} derrotas`,
-      detail: "Sequência consecutiva de derrotas na temporada",
-    });
-  }
-  if (minEloStat) {
-    records.push({
-      category: "Pior Momento no Ranking",
-      playerName: playerName(minEloStat),
-      value: `${minEloStat.eloAfter} pontos`,
-      detail: "Menor pontuação registrada no ranking interno",
-      matchId: minEloStat.match.id,
-      mapName: minEloStat.match.map.name,
-    });
-  }
-  if (minImpactStat) {
-    records.push({
-      category: "Partida Fantasma",
-      playerName: playerName(minImpactStat),
-      value: `${minImpactStat.rating.toFixed(2)} Rating / ${minImpactStat.adr.toFixed(1)} ADR`,
-      detail: "Performance mais apagada registrada em uma partida",
-      matchId: minImpactStat.match.id,
-      mapName: minImpactStat.match.map.name,
-    });
-  }
-  if (minConsistencyScore < Infinity) {
-    records.push({
+      id: "worst-inconsistency",
       category: "Maior Inconsistência na Temporada",
-      playerName: worstConsistencyPlayer,
-      value: inconsistencyValue,
-      detail: inconsistencyDetail,
+      title: "Maior Inconsistência na Temporada",
+      shortLabel: "Inconsistência",
+      scope: "season_cumulative",
+      scopeLabel: "Acumulado da temporada",
+      explanation: "Menor índice de consistência entre jogadores com ao menos 3 partidas: Rating Médio × (1 + % partidas com Rating ≥ 1.00).",
+      playerName: formatHoldersPlayerName(inconsHolders),
+      value: `${primaryCalc.avgRating.toFixed(2)} Rating`,
+      detail: isShared
+        ? `Marca compartilhada por ${inconsHolders.length} jogadores`
+        : `${primaryCalc.belowCount} de ${primaryCalc.totalMatches} partidas (${Math.round((primaryCalc.belowCount / primaryCalc.totalMatches) * 100)}%) com rating < 1.0`,
+      isShared,
+      sharedCount: inconsHolders.length,
+      holders: inconsHolders,
+      cumulativeContext: {
+        total: primaryCalc.belowCount,
+        matchesPlayed: primaryCalc.totalMatches,
+        averagePerMatch: primaryCalc.avgRating,
+        breakdown: `${primaryCalc.belowCount} de ${primaryCalc.totalMatches} partidas com rating < 1.0`,
+      },
+      availability: "available",
     });
   }
 
@@ -2750,13 +3803,348 @@ export function getAttentionPointFromDataset(
 
 export function getGroupRadarFromDataset(
   dataset: CompetitiveDataset,
-  seasonComparison: SeasonComparisonEntry[]
+  seasonComparison: SeasonComparisonEntry[],
+  seasonBounds?: { startDate?: Date | string | null; endDate?: Date | string | null; status?: string | null } | null,
 ): GroupRadarBundle {
   const featured = getFeaturedPlayerFromDataset(dataset, seasonComparison);
   const fact = getPeriodFactFromDataset(dataset, featured.player?.player.id ?? null);
   const attention = getAttentionPointFromDataset(seasonComparison, dataset);
 
+  // 1. Deduplicar partidas únicas a partir de dataset.allStats
+  const uniqueMatchesMap = new Map<
+    string,
+    {
+      matchId: string;
+      playedAt: Date;
+      scoreTeamA: number;
+      scoreTeamB: number;
+      sessionId: string | null;
+      sessionName: string | null;
+      sessionDate: Date | null;
+      trackedPlayersCount: number;
+      monitoredStats: Array<{
+        playerId: string;
+        team: string;
+        nickname: string;
+      }>;
+    }
+  >();
+
+  for (const s of dataset.allStats) {
+    if (!uniqueMatchesMap.has(s.matchId)) {
+      uniqueMatchesMap.set(s.matchId, {
+        matchId: s.matchId,
+        playedAt: new Date(s.match.playedAt),
+        scoreTeamA: s.match.scoreTeamA,
+        scoreTeamB: s.match.scoreTeamB,
+        sessionId: s.match.sessionId ?? null,
+        sessionName: (s.match as any).session?.name ?? null,
+        sessionDate: (s.match as any).session?.date ? new Date((s.match as any).session.date) : null,
+        trackedPlayersCount: s.match.trackedPlayersCount,
+        monitoredStats: [],
+      });
+    }
+    const matchRecord = uniqueMatchesMap.get(s.matchId)!;
+    matchRecord.monitoredStats.push({
+      playerId: s.playerId,
+      team: s.team,
+      nickname: (s as any).player?.nickname ?? "",
+    });
+  }
+
+  const uniqueMatches = Array.from(uniqueMatchesMap.values()).map((m) => {
+    const teams = new Set(m.monitoredStats.map((st) => st.team));
+    const isDirectConfrontation = teams.size > 1;
+    const isSameTeam = teams.size === 1;
+    const monitoredTeam = isSameTeam ? Array.from(teams)[0] : null;
+
+    let isWin = false;
+    let isLoss = false;
+    let isTie = false;
+    let roundsFor = 0;
+    let roundsAgainst = 0;
+
+    if (isSameTeam && monitoredTeam) {
+      if (m.scoreTeamA === m.scoreTeamB) {
+        isTie = true;
+      } else if (
+        (monitoredTeam === "A" && m.scoreTeamA > m.scoreTeamB) ||
+        (monitoredTeam === "B" && m.scoreTeamB > m.scoreTeamA)
+      ) {
+        isWin = true;
+      } else {
+        isLoss = true;
+      }
+      roundsFor = monitoredTeam === "A" ? m.scoreTeamA : m.scoreTeamB;
+      roundsAgainst = monitoredTeam === "A" ? m.scoreTeamB : m.scoreTeamA;
+    }
+
+    return {
+      ...m,
+      isDirectConfrontation,
+      isSameTeam,
+      monitoredTeam,
+      isWin,
+      isLoss,
+      isTie,
+      roundsFor,
+      roundsAgainst,
+    };
+  });
+
+  // Ordenação determinística: playedAt desc -> matchId desc
+  uniqueMatches.sort(
+    (a, b) => b.playedAt.getTime() - a.playedAt.getTime() || b.matchId.localeCompare(a.matchId)
+  );
+
+  // ─── Bloco 1: Momento Coletivo ──────────────────────────────────────────
+  // Partidas com pelo menos 2 monitorados no mesmo time, sem confrontos internos
+  const eligibleCollective = uniqueMatches.filter((m) => m.monitoredStats.length >= 2 && m.isSameTeam);
+  const eligibleMatchesCount = eligibleCollective.length;
+
+  let squadMomentum: SquadMomentumInfo;
+
+  if (eligibleMatchesCount === 0) {
+    squadMomentum = {
+      eligibleMatchesCount: 0,
+      recentBlock: null,
+      previousBlock: null,
+      diffPp: null,
+      hasComparison: false,
+      sampleStatus: "insufficient",
+      emptyReason: "Nenhuma partida coletiva com monitorados no mesmo time registrada no período.",
+    };
+  } else {
+    const formatBlockDates = (matches: typeof eligibleCollective) => {
+      if (matches.length === 0) return { startDate: "", endDate: "" };
+      const mostRecent = matches[0].playedAt;
+      const oldest = matches[matches.length - 1].playedAt;
+      const fmt = (d: Date) =>
+        new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", timeZone: "America/Sao_Paulo" }).format(d);
+      return {
+        startDate: fmt(oldest),
+        endDate: fmt(mostRecent),
+      };
+    };
+
+    const buildBlock = (matches: typeof eligibleCollective): SquadMomentumBlock => {
+      const wins = matches.filter((m) => m.isWin).length;
+      const losses = matches.filter((m) => m.isLoss).length;
+      const ties = matches.filter((m) => m.isTie).length;
+      const winrate = matches.length > 0 ? (wins / matches.length) * 100 : 0;
+      const roundsFor = matches.reduce((acc, m) => acc + m.roundsFor, 0);
+      const roundsAgainst = matches.reduce((acc, m) => acc + m.roundsAgainst, 0);
+      const { startDate, endDate } = formatBlockDates(matches);
+      return {
+        matchesCount: matches.length,
+        wins,
+        losses,
+        ties,
+        winrate: Number(winrate.toFixed(1)),
+        roundsFor,
+        roundsAgainst,
+        roundDiff: roundsFor - roundsAgainst,
+        startDate,
+        endDate,
+      };
+    };
+
+    if (eligibleMatchesCount < 10) {
+      squadMomentum = {
+        eligibleMatchesCount,
+        recentBlock: buildBlock(eligibleCollective),
+        previousBlock: null,
+        diffPp: null,
+        hasComparison: false,
+        sampleStatus: "insufficient",
+        emptyReason: null,
+      };
+    } else if (eligibleMatchesCount < 20) {
+      squadMomentum = {
+        eligibleMatchesCount,
+        recentBlock: buildBlock(eligibleCollective.slice(0, 10)),
+        previousBlock: null,
+        diffPp: null,
+        hasComparison: false,
+        sampleStatus: "partial",
+        emptyReason: null,
+      };
+    } else {
+      const recentBlock = buildBlock(eligibleCollective.slice(0, 10));
+      const previousBlock = buildBlock(eligibleCollective.slice(10, 20));
+      const diffPp = Number((recentBlock.winrate - previousBlock.winrate).toFixed(1));
+      squadMomentum = {
+        eligibleMatchesCount,
+        recentBlock,
+        previousBlock,
+        diffPp,
+        hasComparison: true,
+        sampleStatus: "full",
+        emptyReason: null,
+      };
+    }
+  }
+
+  // ─── Bloco 2: Ritmo de Sessões ──────────────────────────────────────────
+  const eligibleSessionsMap = new Map<string, { id: string; name: string; date: Date | null; matchesCount: number }>();
+  for (const m of eligibleCollective) {
+    if (m.sessionId) {
+      if (!eligibleSessionsMap.has(m.sessionId)) {
+        eligibleSessionsMap.set(m.sessionId, {
+          id: m.sessionId,
+          name: m.sessionName ?? `Sessão ${m.sessionId.slice(-6)}`,
+          date: m.sessionDate,
+          matchesCount: 0,
+        });
+      }
+      eligibleSessionsMap.get(m.sessionId)!.matchesCount++;
+    }
+  }
+
+  const totalEligibleSessions = eligibleSessionsMap.size;
+  const averageMatchesPerSession =
+    totalEligibleSessions > 0 ? Number((eligibleMatchesCount / totalEligibleSessions).toFixed(1)) : 0;
+
+  let latestSessionInfo: SessionPaceInfo["latestSession"] = null;
+  if (eligibleCollective.length > 0 && eligibleCollective[0].sessionId) {
+    const latestMatch = eligibleCollective[0];
+    const sessionObj = eligibleSessionsMap.get(latestMatch.sessionId!);
+    if (sessionObj) {
+      const timeFmt = new Intl.DateTimeFormat("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "America/Sao_Paulo",
+      }).format(latestMatch.playedAt);
+
+      latestSessionInfo = {
+        id: sessionObj.id,
+        name: sessionObj.name,
+        date: sessionObj.date?.toISOString() ?? latestMatch.playedAt.toISOString(),
+        eligibleMatchesCount: sessionObj.matchesCount,
+        latestMatchPlayedAt: latestMatch.playedAt.toISOString(),
+        latestMatchTimeFormatted: `${timeFmt} (Horário de Brasília)`,
+      };
+    }
+  }
+
+  const sessionPace: SessionPaceInfo = {
+    totalEligibleSessions,
+    totalEligibleMatches: eligibleMatchesCount,
+    averageMatchesPerSession,
+    latestSession: latestSessionInfo,
+    emptyReason: totalEligibleSessions === 0 ? "Nenhuma sessão com partidas coletivas no mesmo time registrada." : null,
+  };
+
+  // ─── Bloco 3: Composição das Partidas ────────────────────────────────────
+  const totalUniverse = uniqueMatches.length;
+  let matchComposition: MatchCompositionInfo;
+
+  if (totalUniverse === 0) {
+    matchComposition = {
+      totalUniverse: 0,
+      soloCount: 0,
+      soloPercentage: 0,
+      smallTeamCount: 0,
+      smallTeamPercentage: 0,
+      fullTeamCount: 0,
+      fullTeamPercentage: 0,
+      confrontationCount: 0,
+      confrontationPercentage: 0,
+      otherCount: 0,
+      teamCount: 0,
+      teamPercentage: 0,
+      emptyReason: "Nenhuma partida registrada no universo do período selecionado.",
+    };
+  } else {
+    const soloCount = uniqueMatches.filter((m) => m.monitoredStats.length === 1).length;
+    const smallTeamCount = uniqueMatches.filter(
+      (m) => m.monitoredStats.length >= 2 && m.monitoredStats.length <= 4 && m.isSameTeam
+    ).length;
+    const fullTeamCount = uniqueMatches.filter((m) => m.monitoredStats.length === 5 && m.isSameTeam).length;
+    const confrontationCount = uniqueMatches.filter((m) => m.isDirectConfrontation).length;
+    const otherCount = totalUniverse - (soloCount + smallTeamCount + fullTeamCount + confrontationCount);
+
+    const teamCount = smallTeamCount + fullTeamCount;
+    const teamPercentage = Number(((teamCount / totalUniverse) * 100).toFixed(1));
+
+    const soloPercentage = Number(((soloCount / totalUniverse) * 100).toFixed(1));
+    const smallTeamPercentage = Number(((smallTeamCount / totalUniverse) * 100).toFixed(1));
+    const fullTeamPercentage = Number(((fullTeamCount / totalUniverse) * 100).toFixed(1));
+    const confrontationPercentage = Number(((confrontationCount / totalUniverse) * 100).toFixed(1));
+
+    matchComposition = {
+      totalUniverse,
+      soloCount,
+      soloPercentage,
+      smallTeamCount,
+      smallTeamPercentage,
+      fullTeamCount,
+      fullTeamPercentage,
+      confrontationCount,
+      confrontationPercentage,
+      otherCount,
+      teamCount,
+      teamPercentage,
+      emptyReason: null,
+    };
+  }
+
+  // ─── Bloco 4: Participação Recente (7 dias) ──────────────────────────────
+  const now = new Date();
+  const seasonStart = seasonBounds?.startDate ? new Date(seasonBounds.startDate) : null;
+  const seasonEnd = seasonBounds?.endDate ? new Date(seasonBounds.endDate) : null;
+
+  // Se a temporada estiver encerrada (endDate < now), a âncora é endDate; caso contrário now
+  const windowEnd = seasonEnd && seasonEnd < now ? seasonEnd : now;
+  const rawWindowStart = new Date(windowEnd.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const windowStart = seasonStart && seasonStart > rawWindowStart ? seasonStart : rawWindowStart;
+
+  const matchesInWindow = uniqueMatches.filter((m) => m.playedAt >= windowStart && m.playedAt <= windowEnd);
+
+  // Jogadores ativos no dataset que jogaram pelo menos uma partida na janela
+  const participatingPlayersList: RecentParticipationInfo["participatingPlayers"] = [];
+  for (const player of dataset.activePlayers) {
+    const matchesCount = matchesInWindow.filter((m) =>
+      m.monitoredStats.some((st) => st.playerId === player.id)
+    ).length;
+    if (matchesCount > 0) {
+      participatingPlayersList.push({
+        id: player.id,
+        nickname: player.nickname,
+        avatarUrl: player.avatarUrl,
+        matchesCount,
+      });
+    }
+  }
+
+  participatingPlayersList.sort((a, b) => b.matchesCount - a.matchesCount || a.nickname.localeCompare(b.nickname));
+
+  const fmtDate = (d: Date) =>
+    new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", timeZone: "America/Sao_Paulo" }).format(d);
+
+  const latestMatchPlayedAt = uniqueMatches.length > 0 ? uniqueMatches[0].playedAt.toISOString() : null;
+
+  const recentParticipation: RecentParticipationInfo = {
+    windowDays: 7,
+    windowStartDate: `${fmtDate(windowStart)}`,
+    windowEndDate: `${fmtDate(windowEnd)}`,
+    activeCount: participatingPlayersList.length,
+    totalActiveMonitored: dataset.activePlayers.length,
+    latestMatchPlayedAt,
+    participatingPlayers: participatingPlayersList,
+    emptyReason:
+      dataset.activePlayers.length === 0
+        ? "Nenhum jogador monitorado cadastrado."
+        : participatingPlayersList.length === 0
+        ? "Nenhum jogador monitorado participou de partidas nos últimos 7 dias."
+        : null,
+  };
+
   return {
+    squadMomentum,
+    sessionPace,
+    matchComposition,
+    recentParticipation,
     featuredPlayer: featured.player,
     featuredPlayerEmptyReason: featured.emptyReason,
     periodFact: fact.periodFact,
@@ -2947,10 +4335,19 @@ export interface AdvancedPerformanceStats {
  */
 export async function getDashboardCompetitiveBundle(
   dataset?: CompetitiveDataset,
+  seasonBounds?: { startDate?: Date | string | null; endDate?: Date | string | null; status?: string | null } | null,
 ): Promise<DashboardCompetitiveBundle> {
   const ds = dataset ?? (await loadCompetitiveDataset());
 
-  const decisive = await getDecisivePlayersFromDataset(ds, 3);
+  let resolvedSeason = seasonBounds;
+  if (!resolvedSeason && (ds as any).seasonId) {
+    resolvedSeason = await prisma.season.findUnique({ where: { id: (ds as any).seasonId } });
+  }
+  if (!resolvedSeason) {
+    resolvedSeason = await getActiveSeason();
+  }
+
+  const decisive = await getDecisivePlayersFromDataset(ds);
 
   const extremes = getPerformanceExtremesFromDataset(ds);
   const mapPerformance = getMapPerformanceFromDataset(ds);
@@ -2966,11 +4363,11 @@ export async function getDashboardCompetitiveBundle(
     .sort((a, b) => a.rawDiff - b.rawDiff || a.player.id.localeCompare(b.player.id))
     .slice(0, 3);
 
-  const radar = getGroupRadarFromDataset(ds, seasonComparison);
+  const radar = getGroupRadarFromDataset(ds, seasonComparison, resolvedSeason);
 
   return {
     radar,
-    powerRanking: getPowerRankingFromDataset(ds, 15),
+    powerRanking: getPowerRankingFromDataset(ds),
     momentum: getPlayerMomentumFromDataset(ds, 3),
     decisive,
     archetypes: getPlayerArchetypesFromDataset(ds),
