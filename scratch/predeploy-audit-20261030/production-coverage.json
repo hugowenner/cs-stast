@@ -1,0 +1,95 @@
+{
+  "at": "2026-10-30T17:17:10.392Z",
+  "coverage": [
+    {
+      "seasonId": "cmsaesdby0001a8wp6g0e0pvp",
+      "community": 77,
+      "demo_urls": 77,
+      "fk_matches": 49,
+      "raw_received": 51,
+      "raw_processed": 51,
+      "trade_matches": 49
+    },
+    {
+      "seasonId": "cmubajalk1m6c01rxsylu5syr",
+      "community": 6,
+      "demo_urls": 6,
+      "fk_matches": 0,
+      "raw_received": 0,
+      "raw_processed": 0,
+      "trade_matches": 0
+    },
+    {
+      "seasonId": "cmubawjgq1nhx01rx480u0286",
+      "community": 7,
+      "demo_urls": 7,
+      "fk_matches": 0,
+      "raw_received": 0,
+      "raw_processed": 0,
+      "trade_matches": 0
+    },
+    {
+      "seasonId": "cmubanrt81mi601rx8gnyputt",
+      "community": 7,
+      "demo_urls": 7,
+      "fk_matches": 0,
+      "raw_received": 0,
+      "raw_processed": 0,
+      "trade_matches": 0
+    },
+    {
+      "seasonId": "season-sep-2026",
+      "community": 84,
+      "demo_urls": 84,
+      "fk_matches": 78,
+      "raw_received": 80,
+      "raw_processed": 80,
+      "trade_matches": 78
+    },
+    {
+      "seasonId": "default-season",
+      "community": 97,
+      "demo_urls": 30,
+      "fk_matches": 0,
+      "raw_received": 18,
+      "raw_processed": 18,
+      "trade_matches": 0
+    },
+    {
+      "seasonId": "cmuow54kq223v01rxwlfgd6o9",
+      "community": 116,
+      "demo_urls": 116,
+      "fk_matches": 116,
+      "raw_received": 116,
+      "raw_processed": 116,
+      "trade_matches": 116
+    }
+  ],
+  "download_lease_cohorts": [
+    {
+      "n": 22,
+      "status": "SENT_TO_WORKER",
+      "abandoned": true,
+      "payload_state": "PROCESSED"
+    },
+    {
+      "n": 39,
+      "status": "SENT_TO_WORKER",
+      "abandoned": true,
+      "payload_state": null
+    },
+    {
+      "n": 34,
+      "status": "COMPLETED",
+      "abandoned": null,
+      "payload_state": "PROCESSED"
+    },
+    {
+      "n": 516,
+      "status": "COMPLETED",
+      "abandoned": true,
+      "payload_state": "PROCESSED"
+    }
+  ],
+  "runtime": "Prisma.prismaVersion = {\n  client: \"7.8.0\",\n  engine: \"3c6e192761c0362d496ed980de936e2f3cebcd3a\"\n}\n{\"raio\":[],\"ingest\":[\"/api/internal/ingest/match/route\"],\"build\":\"zWyMN785mGn1kZBEDRqXm\"}\n"
+}

@@ -12,9 +12,10 @@ import { grantAchievements } from "@/server/services/achievement.service";
 import type { MatchTeam, Prisma } from "@/generated/prisma";
 
 export async function enrichMatchWithDemo(
-  payload: any,
+  payload: unknown,
   sourceMatchId: string,
-  createdAt: Date
+  createdAt: Date,
+  options: { preserveGcData?: boolean } = {}
 ): Promise<{ success: boolean; error?: string }> {
   // 1. Normaliza e valida estritamente usando o DTO de contrato
   const rawNormalized = normalizeParserMatch(payload, sourceMatchId, createdAt);
@@ -36,15 +37,15 @@ export async function enrichMatchWithDemo(
   // 3. Upsert de jogadores que estão na demo
   const players = await Promise.all(
     input.players.map((p) =>
-      playerRepo.upsertPlayerBySteamId({
-        steamId: p.steamId,
-        nickname: p.nickname,
-      })
+      options.preserveGcData
+        ? prisma.player.findUnique({ where: { steamId: p.steamId } }).then(existing => existing ??
+          playerRepo.upsertPlayerBySteamId({ steamId: p.steamId, nickname: p.nickname }))
+        : playerRepo.upsertPlayerBySteamId({ steamId: p.steamId, nickname: p.nickname })
     )
   );
 
   // Vincula tracked_players
-  for (const player of players) {
+  for (const player of options.preserveGcData ? [] : players) {
     if (player.gamersClubId) {
       await playerRepo.linkTrackedPlayer(player.gamersClubId, player.id);
     }
@@ -141,15 +142,15 @@ export async function enrichMatchWithDemo(
       playerStats: playerStatsInput,
       events: [],
       demoUrl: input.demoUrl ?? null,
-      roundsJson: input.roundsJson !== undefined ? (input.roundsJson as any) : undefined,
+      roundsJson: input.roundsJson !== undefined ? (input.roundsJson as Prisma.InputJsonValue) : undefined,
     });
-  } else {
+  } else if (!options.preserveGcData) {
     // Fluxo Padrão: Enriquecimento Incremental Não-Destrutivo (GC Sync já existe)
     // Atualiza metadados do Match
     await matchRepo.updateMatchMetadata(match.id, {
       durationSeconds: input.durationSeconds,
       demoUrl: input.demoUrl ?? match.demoUrl,
-      roundsJson: input.roundsJson !== undefined ? (input.roundsJson as any) : undefined,
+      roundsJson: input.roundsJson !== undefined ? (input.roundsJson as Prisma.InputJsonValue) : undefined,
     });
 
     // Atualiza apenas os campos autorizados da demo no PlayerMatchStats
@@ -290,6 +291,10 @@ export async function enrichMatchWithDemo(
   if (timelineEvents.length > 0) {
     await prisma.event.createMany({ data: timelineEvents });
   }
+
+  // Durable ingest keeps GC aggregates and their official derived grants intact.
+  // Reconciliation of those projections belongs to the later statistical phase.
+  if (options.preserveGcData) return { success: true };
 
   // 5. Rebuild de Rivalidades como projeção (Agregado Reconstruível Direcionado)
   await rebuildRivalriesForPlayers(Array.from(playerBySteamId.values()).map((p) => p.id));

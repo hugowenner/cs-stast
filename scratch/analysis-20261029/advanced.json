@@ -1,0 +1,406 @@
+{
+  "validMatches": 110,
+  "rounds": 2437,
+  "side": {
+    "CT": [
+      628,
+      593
+    ],
+    "TR": [
+      588,
+      628
+    ]
+  },
+  "invalid": [
+    "cmvr7yjks008l01pbx6vyj4dm",
+    "cmv4aluq3075z01lg4v1dgp6s",
+    "cmuq8i8z400n201qx1psxz86h"
+  ],
+  "close": [
+    {
+      "id": "cmvsu1g3t00is01mcm09txe16",
+      "gc": "28182055",
+      "map": "Anubis",
+      "score": [
+        11,
+        13
+      ],
+      "date": "2026-10-29T03:08:00.000Z"
+    },
+    {
+      "id": "cmvrgiikf01xn01pbs2i4ezgz",
+      "gc": "28176403",
+      "map": "Overpass",
+      "score": [
+        14,
+        16
+      ],
+      "date": "2026-10-28T03:48:00.000Z"
+    },
+    {
+      "id": "cmvre7juj01o501pb0u9zg8t0",
+      "gc": "28175571",
+      "map": "Inferno",
+      "score": [
+        11,
+        13
+      ],
+      "date": "2026-10-28T02:51:00.000Z"
+    },
+    {
+      "id": "cmvr7hr4x005101pbli3tjoq8",
+      "gc": "28173909",
+      "map": "Ancient",
+      "score": [
+        14,
+        16
+      ],
+      "date": "2026-10-27T23:55:00.000Z"
+    },
+    {
+      "id": "cmvpz02pm1bg801lgfng57t9y",
+      "gc": "28169033",
+      "map": "Inferno",
+      "score": [
+        14,
+        16
+      ],
+      "date": "2026-10-26T23:47:00.000Z"
+    },
+    {
+      "id": "cmvmjg97y18cf01lgz6y4r7wh",
+      "gc": "28150791",
+      "map": "Overpass",
+      "score": [
+        11,
+        13
+      ],
+      "date": "2026-10-24T14:28:00.000Z"
+    },
+    {
+      "id": "cmvit4yhz15f601lg786q52lw",
+      "gc": "28133971",
+      "map": "Nuke",
+      "score": [
+        13,
+        11
+      ],
+      "date": "2026-10-21T23:54:00.000Z"
+    },
+    {
+      "id": "cmvhc9bdc11qh01lg4gy1pty8",
+      "gc": "28126974",
+      "map": "Ancient",
+      "score": [
+        14,
+        16
+      ],
+      "date": "2026-10-20T22:59:00.000Z"
+    },
+    {
+      "id": "cmvfy9saf10kg01lg35p7p2mq",
+      "gc": "28120889",
+      "map": "Inferno",
+      "score": [
+        11,
+        13
+      ],
+      "date": "2026-10-19T23:47:00.000Z"
+    },
+    {
+      "id": "cmvbomcmb0vkx01lgdobq52cy",
+      "gc": "28097714",
+      "map": "Anubis",
+      "score": [
+        14,
+        16
+      ],
+      "date": "2026-10-16T23:52:00.000Z"
+    },
+    {
+      "id": "cmva6ao600s7s01lgs4f59iy2",
+      "gc": "28090486",
+      "map": "Inferno",
+      "score": [
+        11,
+        13
+      ],
+      "date": "2026-10-15T22:34:00.000Z"
+    },
+    {
+      "id": "cmv7ga33x0r2v01lgwv5hi7u8",
+      "gc": "28079473",
+      "map": "de_cache",
+      "score": [
+        11,
+        13
+      ],
+      "date": "2026-10-14T01:03:00.000Z"
+    },
+    {
+      "id": "cmv6w6i5l0ozw01lgpslkk1ba",
+      "gc": "28066534",
+      "map": "Anubis",
+      "score": [
+        17,
+        19
+      ],
+      "date": "2026-10-12T17:20:00.000Z"
+    },
+    {
+      "id": "cmv5ehq9j07wg01lguelv9je0",
+      "gc": "28065521",
+      "map": "Inferno",
+      "score": [
+        11,
+        13
+      ],
+      "date": "2026-10-12T14:37:00.000Z"
+    },
+    {
+      "id": "cmuyus44k017901pf6hkf9gki",
+      "gc": "28032920",
+      "map": "Nuke",
+      "score": [
+        11,
+        13
+      ],
+      "date": "2026-10-08T00:45:00.000Z"
+    },
+    {
+      "id": "cmuyqjqib005r01pfi3it481e",
+      "gc": "28031611",
+      "map": "de_cache",
+      "score": [
+        13,
+        11
+      ],
+      "date": "2026-10-07T22:43:00.000Z"
+    },
+    {
+      "id": "cmuvsexiu049101qxtztsha8q",
+      "gc": "28017405",
+      "map": "Ancient",
+      "score": [
+        11,
+        13
+      ],
+      "date": "2026-10-05T21:12:00.000Z"
+    },
+    {
+      "id": "cmuq7gbk800ai01qxq4qgggx2",
+      "gc": "27989051",
+      "map": "Mirage",
+      "score": [
+        11,
+        13
+      ],
+      "date": "2026-10-01T23:23:00.000Z"
+    }
+  ],
+  "leadLoss": [
+    "cmvsvvmc300z901mc1s8entxr",
+    "cmvsu1g3t00is01mcm09txe16",
+    "cmvre7juj01o501pb0u9zg8t0",
+    "cmvpwlv101b1c01lg2qmmk0yu",
+    "cmvmjg97y18cf01lgz6y4r7wh",
+    "cmvhc9bdc11qh01lg4gy1pty8",
+    "cmvfy9saf10kg01lg35p7p2mq",
+    "cmvb4q5f70ula01lgd7276nhv",
+    "cmv7ga33x0r2v01lgwv5hi7u8",
+    "cmv6w6i5l0ozw01lgpslkk1ba",
+    "cmv5ehq9j07wg01lguelv9je0",
+    "cmvb4ri010uyi01lg204dylio",
+    "cmuvsexiu049101qxtztsha8q",
+    "cmuq7gbk800ai01qxq4qgggx2"
+  ],
+  "pairs": [
+    [
+      "Flp + PERNA PELUDA",
+      {
+        "n": 51,
+        "w": 21
+      }
+    ],
+    [
+      "Flp + TG.",
+      {
+        "n": 43,
+        "w": 18
+      }
+    ],
+    [
+      "PERNA PELUDA + TG.",
+      {
+        "n": 35,
+        "w": 14
+      }
+    ],
+    [
+      "Flp + TRAVIS SCOUTTT",
+      {
+        "n": 31,
+        "w": 15
+      }
+    ],
+    [
+      "TG. + TRAVIS SCOUTTT",
+      {
+        "n": 29,
+        "w": 14
+      }
+    ],
+    [
+      "PERNA PELUDA + TRAVIS SCOUTTT",
+      {
+        "n": 28,
+        "w": 13
+      }
+    ]
+  ],
+  "trios": [
+    [
+      "Flp + PERNA PELUDA + TG.",
+      {
+        "n": 25,
+        "w": 8
+      }
+    ],
+    [
+      "Flp + PERNA PELUDA + TRAVIS SCOUTTT",
+      {
+        "n": 24,
+        "w": 10
+      }
+    ],
+    [
+      "Flp + TG. + TRAVIS SCOUTTT",
+      {
+        "n": 21,
+        "w": 9
+      }
+    ],
+    [
+      "PERNA PELUDA + TG. + TRAVIS SCOUTTT",
+      {
+        "n": 20,
+        "w": 8
+      }
+    ],
+    [
+      "Bago Direito + Flp + PERNA PELUDA",
+      {
+        "n": 17,
+        "w": 7
+      }
+    ]
+  ],
+  "zeroRatings": [
+    {
+      "name": "Crals",
+      "id": "cmuyta3az00u301pfj5lo8b9l",
+      "matchId": "cmuyta3aq00tt01pfp8eiu1ir",
+      "playerId": "cmtizi9xm001y01ms9bskfiwx",
+      "team": "B",
+      "kills": 3,
+      "deaths": 15,
+      "assists": 1,
+      "headshots": 1,
+      "adr": 22.76,
+      "rating": 0,
+      "kast": 24,
+      "impact": -0.01,
+      "damage": 387,
+      "gcRating": 0,
+      "doubleKills": 0,
+      "tripleKills": 0,
+      "quadKills": 0,
+      "aces": 0,
+      "entryKills": 1,
+      "entryDeaths": 0,
+      "tradeKills": 0,
+      "clutchesWon": 0,
+      "flashAssists": 0,
+      "clutch1v1Attempts": 0,
+      "clutch1v1Wins": 0,
+      "clutch1v2Attempts": 0,
+      "clutch1v2Wins": 0,
+      "clutch1v3Attempts": 0,
+      "clutch1v3Wins": 0,
+      "clutch1v4Attempts": 0,
+      "clutch1v4Wins": 0,
+      "clutch1v5Attempts": 0,
+      "clutch1v5Wins": 0,
+      "levelGc": 12,
+      "eloBefore": 918,
+      "eloAfter": 913
+    }
+  ],
+  "firstkills": [
+    {
+      "name": "LorD",
+      "n": 46,
+      "fk": 85
+    },
+    {
+      "name": "Flp",
+      "n": 89,
+      "fk": 266
+    },
+    {
+      "name": "Crals",
+      "n": 11,
+      "fk": 16
+    },
+    {
+      "name": "PERNA PELUDA",
+      "n": 68,
+      "fk": 159
+    },
+    {
+      "name": "GentulioNargas",
+      "n": 18,
+      "fk": 22
+    },
+    {
+      "name": "TG.",
+      "n": 68,
+      "fk": 100
+    },
+    {
+      "name": "Bago Direito",
+      "n": 32,
+      "fk": 58
+    },
+    {
+      "name": "Maop Bonham",
+      "n": 45,
+      "fk": 74
+    },
+    {
+      "name": "Tuf Tuf",
+      "n": 34,
+      "fk": 71
+    },
+    {
+      "name": "TRAVIS SCOUTTT",
+      "n": 71,
+      "fk": 188
+    },
+    {
+      "name": "hupEE",
+      "n": 1,
+      "fk": 1
+    },
+    {
+      "name": "aln",
+      "n": 0,
+      "fk": 0
+    },
+    {
+      "name": "Zeny",
+      "n": 7,
+      "fk": 10
+    }
+  ]
+}

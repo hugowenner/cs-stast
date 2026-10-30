@@ -18,6 +18,9 @@
     "db:studio": "prisma studio",
     "db:sync-from-vps": "powershell -ExecutionPolicy Bypass -File scripts/sync-db-from-vps.ps1",
     "db:sync-pg": "tsx scripts/sync-from-vps-to-pg.ts",
+    "db:verify-snapshot": "tsx scripts/verify-dev-snapshot.ts",
+    "normalizer": "tsx scripts/run-normalizer.ts",
+    "normalizer:build": "node src/server/ingest/build-consumer.mjs",
     "db:sync-dev-to-vps": "powershell -ExecutionPolicy Bypass -File scripts/sync-dev-to-vps.ps1",
     "db:sync-dev-to-vps:import": "powershell -ExecutionPolicy Bypass -File scripts/sync-dev-to-vps.ps1 -Import",
     "db:sync-pg-dev-to-vps": "tsx scripts/sync-dev-to-vps.ts",
@@ -55,6 +58,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "esbuild": "0.28.1",
     "@prisma/adapter-better-sqlite3": "^7.8.0",
     "@tailwindcss/postcss": "^4",
     "@types/better-sqlite3": "^7.6.13",

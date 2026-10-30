@@ -1,0 +1,631 @@
+{
+  "ratingMismatches": 0,
+  "leads": [
+    {
+      "id": "cmvszufu202dh01mc3z2dfrnf",
+      "won": true
+    },
+    {
+      "id": "cmvsvvmc300z901mc1s8entxr",
+      "won": false
+    },
+    {
+      "id": "cmvsu1g3t00is01mcm09txe16",
+      "won": false
+    },
+    {
+      "id": "cmvss940e003u01mcdn2oy1km",
+      "won": true
+    },
+    {
+      "id": "cmvss8yu4000b01mcrmdaz74n",
+      "won": true
+    },
+    {
+      "id": "cmvre7juj01o501pb0u9zg8t0",
+      "won": false
+    },
+    {
+      "id": "cmvrc7jwi01fs01pbzv7agkbv",
+      "won": true
+    },
+    {
+      "id": "cmvr9cndb00l601pbe9c654fp",
+      "won": true
+    },
+    {
+      "id": "cmvq0w5gc1bsl01lgqgne20a5",
+      "won": true
+    },
+    {
+      "id": "cmvpwlv101b1c01lg2qmmk0yu",
+      "won": false
+    },
+    {
+      "id": "cmvmukyee19f701lghxt5gajn",
+      "won": true
+    },
+    {
+      "id": "cmvmt9y4r192t01lg5yuurzas",
+      "won": true
+    },
+    {
+      "id": "cmvmrtuas18yp01lgw86e9cz7",
+      "won": true
+    },
+    {
+      "id": "cmvmjg97y18cf01lgz6y4r7wh",
+      "won": false
+    },
+    {
+      "id": "cmvllzw0p17gi01lgmm97zgsc",
+      "won": true
+    },
+    {
+      "id": "cmvk66k27172x01lgv4y6qfyh",
+      "won": true
+    },
+    {
+      "id": "cmviuyi7r15tb01lg3t9tcuqj",
+      "won": true
+    },
+    {
+      "id": "cmvit4yhz15f601lg786q52lw",
+      "won": true
+    },
+    {
+      "id": "cmvipqr44146601lgrtj7084v",
+      "won": true
+    },
+    {
+      "id": "cmvio4wd713pi01lgsdkm6e51",
+      "won": true
+    },
+    {
+      "id": "cmvhgvhh412rv01lgorw8ypoz",
+      "won": true
+    },
+    {
+      "id": "cmvhfgots12d501lgwqff9mf6",
+      "won": true
+    },
+    {
+      "id": "cmvhe0mfo11za01lgxu62vni2",
+      "won": true
+    },
+    {
+      "id": "cmvhc9bdc11qh01lg4gy1pty8",
+      "won": false
+    },
+    {
+      "id": "cmvfy9saf10kg01lg35p7p2mq",
+      "won": false
+    },
+    {
+      "id": "cmvfvis1j0zo201lgxbeuevi9",
+      "won": true
+    },
+    {
+      "id": "cmveme2oo0ynt01lgslhkaq3d",
+      "won": true
+    },
+    {
+      "id": "cmvdxoqe00xsv01lg3pee1xk1",
+      "won": true
+    },
+    {
+      "id": "cmvd9knxd0xd501lghcz0tmsx",
+      "won": true
+    },
+    {
+      "id": "cmvd7jdpz0wr801lg2ulw4343",
+      "won": true
+    },
+    {
+      "id": "cmvckhuca0wac01lgqgp48kn2",
+      "won": true
+    },
+    {
+      "id": "cmvbmaia60vdd01lg2miqa2m0",
+      "won": true
+    },
+    {
+      "id": "cmvbb93st0v3c01lgrhwl5jq5",
+      "won": true
+    },
+    {
+      "id": "cmva8x7d80sl701lgbtliik61",
+      "won": true
+    },
+    {
+      "id": "cmv8r9nao0rsl01lgd5ui5zx1",
+      "won": true
+    },
+    {
+      "id": "cmvb4q5f70ula01lgd7276nhv",
+      "won": false
+    },
+    {
+      "id": "cmv7ga33x0r2v01lgwv5hi7u8",
+      "won": false
+    },
+    {
+      "id": "cmv7bk4rm0pi501lgqs6qaqbv",
+      "won": true
+    },
+    {
+      "id": "cmv6w6i5l0ozw01lgpslkk1ba",
+      "won": false
+    },
+    {
+      "id": "cmv5hqr8f088j01lgyqod8pzm",
+      "won": true
+    },
+    {
+      "id": "cmv5g6aj1084x01lghfgcyv29",
+      "won": true
+    },
+    {
+      "id": "cmv5ehq9j07wg01lguelv9je0",
+      "won": false
+    },
+    {
+      "id": "cmv5cta0n07fg01lg9aw2pb1u",
+      "won": true
+    },
+    {
+      "id": "cmvb4ri010uyi01lg204dylio",
+      "won": false
+    },
+    {
+      "id": "cmv419l0306tj01lgf262s2lw",
+      "won": true
+    },
+    {
+      "id": "cmv3vmhpc05rt01lg7oqcpck1",
+      "won": true
+    },
+    {
+      "id": "cmv3u4r0s05kv01lguzad6q6p",
+      "won": true
+    },
+    {
+      "id": "cmv2vtlc205dl01lgtjeolhkd",
+      "won": true
+    },
+    {
+      "id": "cmv2t0ucp04f501lg0t0uvwal",
+      "won": true
+    },
+    {
+      "id": "cmv2rfd7504ap01lg5wdd31aq",
+      "won": true
+    },
+    {
+      "id": "cmv1v9ztc032s01lgpbx80m9f",
+      "won": true
+    },
+    {
+      "id": "cmv1tgkw402vt01lg1fz35rm3",
+      "won": true
+    },
+    {
+      "id": "cmv1kzuff02rf01lgowkh4ifm",
+      "won": true
+    },
+    {
+      "id": "cmv03safr00y801lguyrzb0dv",
+      "won": true
+    },
+    {
+      "id": "cmv024fx000bt01lg67wzi2ke",
+      "won": true
+    },
+    {
+      "id": "cmv00stzs002001lg5xva5o40",
+      "won": true
+    },
+    {
+      "id": "cmuyrxwo2009a01pf80musr8o",
+      "won": true
+    },
+    {
+      "id": "cmuyqjqib005r01pfi3it481e",
+      "won": true
+    },
+    {
+      "id": "cmuxhdk7i084m01qxsueo18kv",
+      "won": true
+    },
+    {
+      "id": "cmuxezee606ho01qxitp4m61c",
+      "won": true
+    },
+    {
+      "id": "cmuxdfgja063n01qx2erfujb4",
+      "won": true
+    },
+    {
+      "id": "cmuvtwajf04d601qxxase3jgo",
+      "won": true
+    },
+    {
+      "id": "cmuvsexiu049101qxtztsha8q",
+      "won": false
+    },
+    {
+      "id": "cmusldi98036o01qx89lozsd7",
+      "won": true
+    },
+    {
+      "id": "cmuq7gbk800ai01qxq4qgggx2",
+      "won": false
+    }
+  ],
+  "periods": [
+    {
+      "name": "LorD",
+      "last": [
+        "cmvr9cndb00l601pbe9c654fp",
+        "cmvpwlv101b1c01lg2qmmk0yu",
+        "cmvojedk019vn01lgbftguxa6",
+        "cmvo9m3ty19tr01lg9jciaw0j",
+        "cmvs6962m008z01pg8dtnvz37",
+        "cmvmukyee19f701lghxt5gajn",
+        "cmvmt9y4r192t01lg5yuurzas",
+        "cmvmrtuas18yp01lgw86e9cz7",
+        "cmvmjg97y18cf01lgz6y4r7wh",
+        "cmvk66k27172x01lgv4y6qfyh"
+      ],
+      "prev": [
+        "cmvipqr44146601lgrtj7084v",
+        "cmvio4wd713pi01lgsdkm6e51",
+        "cmvfvis1j0zo201lgxbeuevi9",
+        "cmvftw9440z9501lg05yvbihk",
+        "cmvebfw6l0ybk01lgfebiw0g1",
+        "cmve0g3830y7j01lgdgvxmsat",
+        "cmvd9knxd0xd501lghcz0tmsx",
+        "cmvd7jdpz0wr801lg2ulw4343",
+        "cmvckhuca0wac01lgqgp48kn2",
+        "cmvbqezwk0vow01lgtdrievow"
+      ],
+      "rangeLast": [
+        "22/10/2026, 19:44:00",
+        "27/10/2026, 21:59:00"
+      ],
+      "rangePrev": [
+        "16/10/2026, 22:05:00",
+        "21/10/2026, 19:15:00"
+      ]
+    },
+    {
+      "name": "Flp",
+      "last": [
+        "cmvsx41po01rs01mco3a22hnv",
+        "cmvsvvmc300z901mc1s8entxr",
+        "cmvsu1g3t00is01mcm09txe16",
+        "cmvss940e003u01mcdn2oy1km",
+        "cmvrgiikf01xn01pbs2i4ezgz",
+        "cmvre7juj01o501pb0u9zg8t0",
+        "cmvraqsya017701pbovplhpi7",
+        "cmvr9cndb00l601pbe9c654fp",
+        "cmvr7yjks008l01pbx6vyj4dm",
+        "cmvq0w5gc1bsl01lgqgne20a5"
+      ],
+      "prev": [
+        "cmvq25t8g1coz01lg4hfak9ts",
+        "cmvpwlv101b1c01lg2qmmk0yu",
+        "cmvpz02pm1bg801lgfng57t9y",
+        "cmvptqyjy1ari01lge3138syr",
+        "cmvojedk019vn01lgbftguxa6",
+        "cmvn4gg4119o501lg094w0lec",
+        "cmvn23kpa19n701lgegwjrvca",
+        "cmvlnthle17s201lgdd5w5cqv",
+        "cmvllzw0p17gi01lgmm97zgsc",
+        "cmvk66k27172x01lgv4y6qfyh"
+      ],
+      "rangeLast": [
+        "27/10/2026, 00:58:00",
+        "29/10/2026, 01:49:00"
+      ],
+      "rangePrev": [
+        "22/10/2026, 19:44:00",
+        "26/10/2026, 22:47:00"
+      ]
+    },
+    {
+      "name": "Crals",
+      "last": [
+        "cmvk4032h16r501lgx74qpk1u",
+        "cmvhc9bdc11qh01lg4gy1pty8",
+        "cmv79mprx0p7r01lgx860x1a5",
+        "cmv5cta0n07fg01lg9aw2pb1u",
+        "cmv3xfyif068l01lggd3y7uxb",
+        "cmv3vmhpc05rt01lg7oqcpck1",
+        "cmv1kzuff02rf01lgowkh4ifm",
+        "cmuyta3aq00tt01pfp8eiu1ir",
+        "cmuyrxwo2009a01pf80musr8o",
+        "cmuvw1flv04qx01qxozfwjog9"
+      ],
+      "prev": [
+        "cmuvtwajf04d601qxxase3jgo"
+      ],
+      "rangeLast": [
+        "05/10/2026, 19:48:00",
+        "22/10/2026, 18:48:00"
+      ],
+      "rangePrev": null
+    },
+    {
+      "name": "PERNA PELUDA",
+      "last": [
+        "cmvszufu202dh01mc3z2dfrnf",
+        "cmvsx41po01rs01mco3a22hnv",
+        "cmvsvvmc300z901mc1s8entxr",
+        "cmvsu1g3t00is01mcm09txe16",
+        "cmvss940e003u01mcdn2oy1km",
+        "cmvss8yu4000b01mcrmdaz74n",
+        "cmvrgiikf01xn01pbs2i4ezgz",
+        "cmvre7juj01o501pb0u9zg8t0",
+        "cmvrc7jwi01fs01pbzv7agkbv",
+        "cmvraqsya017701pbovplhpi7"
+      ],
+      "prev": [
+        "cmvr9cndb00l601pbe9c654fp",
+        "cmvr7yjks008l01pbx6vyj4dm",
+        "cmvr7hr4x005101pbli3tjoq8",
+        "cmvq0w5gc1bsl01lgqgne20a5",
+        "cmvq25t8g1coz01lg4hfak9ts",
+        "cmvpwlv101b1c01lg2qmmk0yu",
+        "cmvpz02pm1bg801lgfng57t9y",
+        "cmvptqyjy1ari01lge3138syr",
+        "cmvk66k27172x01lgv4y6qfyh",
+        "cmvk4032h16r501lgx74qpk1u"
+      ],
+      "rangeLast": [
+        "27/10/2026, 22:31:00",
+        "29/10/2026, 03:01:00"
+      ],
+      "rangePrev": [
+        "22/10/2026, 18:48:00",
+        "27/10/2026, 21:59:00"
+      ]
+    },
+    {
+      "name": "GentulioNargas",
+      "last": [
+        "cmvrc7jwi01fs01pbzv7agkbv",
+        "cmvmjg97y18cf01lgz6y4r7wh",
+        "cmvmhr6i8185f01lgwukho1im",
+        "cmvlnthle17s201lgdd5w5cqv",
+        "cmvllzw0p17gi01lgmm97zgsc",
+        "cmvebfw6l0ybk01lgfebiw0g1",
+        "cmve0g3830y7j01lgdgvxmsat",
+        "cmvdxoqe00xsv01lg3pee1xk1",
+        "cmvbomcmb0vkx01lgdobq52cy",
+        "cmvbmaia60vdd01lg2miqa2m0"
+      ],
+      "prev": [
+        "cmv6w6i5l0ozw01lgpslkk1ba",
+        "cmv5hqr8f088j01lgyqod8pzm",
+        "cmv5ehq9j07wg01lguelv9je0",
+        "cmv5cta0n07fg01lg9aw2pb1u",
+        "cmvb4ri010uyi01lg204dylio",
+        "cmv2jiqgk03mv01lgp9kt5uk4",
+        "cmuvw1flv04qx01qxozfwjog9",
+        "cmuu5nfle03px01qx1gpvogme"
+      ],
+      "rangeLast": [
+        "16/10/2026, 20:14:00",
+        "27/10/2026, 23:12:00"
+      ],
+      "rangePrev": null
+    },
+    {
+      "name": "TG.",
+      "last": [
+        "cmvszufu202dh01mc3z2dfrnf",
+        "cmvsx41po01rs01mco3a22hnv",
+        "cmvsvvmc300z901mc1s8entxr",
+        "cmvsu1g3t00is01mcm09txe16",
+        "cmvrgiikf01xn01pbs2i4ezgz",
+        "cmvre7juj01o501pb0u9zg8t0",
+        "cmvrc7jwi01fs01pbzv7agkbv",
+        "cmvraqsya017701pbovplhpi7",
+        "cmvq0w5gc1bsl01lgqgne20a5",
+        "cmvq25t8g1coz01lg4hfak9ts"
+      ],
+      "prev": [
+        "cmvpwlv101b1c01lg2qmmk0yu",
+        "cmvpz02pm1bg801lgfng57t9y",
+        "cmvojedk019vn01lgbftguxa6",
+        "cmvs6962m008z01pg8dtnvz37",
+        "cmvmukyee19f701lghxt5gajn",
+        "cmvmt9y4r192t01lg5yuurzas",
+        "cmvmrtuas18yp01lgw86e9cz7",
+        "cmvirkcil14lk01lg43cklci5",
+        "cmvipqr44146601lgrtj7084v",
+        "cmvhi8dqi133c01lgtyl5vw2o"
+      ],
+      "rangeLast": [
+        "26/10/2026, 22:47:00",
+        "29/10/2026, 03:01:00"
+      ],
+      "rangePrev": [
+        "20/10/2026, 23:04:00",
+        "26/10/2026, 22:27:00"
+      ]
+    },
+    {
+      "name": "Bago Direito",
+      "last": [
+        "cmvrgiikf01xn01pbs2i4ezgz",
+        "cmvre7juj01o501pb0u9zg8t0",
+        "cmvrc7jwi01fs01pbzv7agkbv",
+        "cmvraqsya017701pbovplhpi7",
+        "cmvr9cndb00l601pbe9c654fp",
+        "cmvr7yjks008l01pbx6vyj4dm",
+        "cmvq0w5gc1bsl01lgqgne20a5",
+        "cmvq25t8g1coz01lg4hfak9ts",
+        "cmvpwlv101b1c01lg2qmmk0yu",
+        "cmvpz02pm1bg801lgfng57t9y"
+      ],
+      "prev": [
+        "cmvptqyjy1ari01lge3138syr",
+        "cmvk66k27172x01lgv4y6qfyh",
+        "cmvk4032h16r501lgx74qpk1u",
+        "cmvcicvvs0w5o01lg4pvbtc5m",
+        "cmvbqezwk0vow01lgtdrievow",
+        "cmv7d0ttd0pyf01lg8dsn88j3",
+        "cmv7bk4rm0pi501lgqs6qaqbv",
+        "cmv79mprx0p7r01lgx860x1a5",
+        "cmv5ehq9j07wg01lguelv9je0",
+        "cmv5cta0n07fg01lg9aw2pb1u"
+      ],
+      "rangeLast": [
+        "26/10/2026, 20:47:00",
+        "28/10/2026, 00:48:00"
+      ],
+      "rangePrev": [
+        "12/10/2026, 11:00:00",
+        "26/10/2026, 18:40:00"
+      ]
+    },
+    {
+      "name": "Maop Bonham",
+      "last": [
+        "cmvs6962m008z01pg8dtnvz37",
+        "cmvmukyee19f701lghxt5gajn",
+        "cmvmt9y4r192t01lg5yuurzas",
+        "cmvmrtuas18yp01lgw86e9cz7",
+        "cmvmjg97y18cf01lgz6y4r7wh",
+        "cmvmhr6i8185f01lgwukho1im",
+        "cmvlnthle17s201lgdd5w5cqv",
+        "cmvllzw0p17gi01lgmm97zgsc",
+        "cmvk66k27172x01lgv4y6qfyh",
+        "cmvit4yhz15f601lg786q52lw"
+      ],
+      "prev": [
+        "cmvipqr44146601lgrtj7084v",
+        "cmvio4wd713pi01lgsdkm6e51",
+        "cmvhc9bdc11qh01lg4gy1pty8",
+        "cmvfvis1j0zo201lgxbeuevi9",
+        "cmvebfw6l0ybk01lgfebiw0g1",
+        "cmve0g3830y7j01lgdgvxmsat",
+        "cmvd9knxd0xd501lghcz0tmsx",
+        "cmvd7jdpz0wr801lg2ulw4343",
+        "cmvckhuca0wac01lgqgp48kn2",
+        "cmvcj59me0w9e01lgfyd10t8q"
+      ],
+      "rangeLast": [
+        "21/10/2026, 20:54:00",
+        "25/10/2026, 18:32:00"
+      ],
+      "rangePrev": [
+        "17/10/2026, 11:27:00",
+        "21/10/2026, 19:15:00"
+      ]
+    },
+    {
+      "name": "Tuf Tuf",
+      "last": [
+        "cmvszufu202dh01mc3z2dfrnf",
+        "cmvsx41po01rs01mco3a22hnv",
+        "cmvsvvmc300z901mc1s8entxr",
+        "cmvsu1g3t00is01mcm09txe16",
+        "cmvss940e003u01mcdn2oy1km",
+        "cmvss8yu4000b01mcrmdaz74n",
+        "cmvraqsya017701pbovplhpi7",
+        "cmvr9cndb00l601pbe9c654fp",
+        "cmvr7yjks008l01pbx6vyj4dm",
+        "cmvr7hr4x005101pbli3tjoq8"
+      ],
+      "prev": [
+        "cmvmukyee19f701lghxt5gajn",
+        "cmvmt9y4r192t01lg5yuurzas",
+        "cmvmrtuas18yp01lgw86e9cz7",
+        "cmvmkocnz18tn01lg9h2t4smd",
+        "cmvmjg97y18cf01lgz6y4r7wh",
+        "cmvlnthle17s201lgdd5w5cqv",
+        "cmvit4yhz15f601lg786q52lw",
+        "cmvirkcil14lk01lg43cklci5",
+        "cmvipqr44146601lgrtj7084v",
+        "cmvio4wd713pi01lgsdkm6e51"
+      ],
+      "rangeLast": [
+        "27/10/2026, 20:55:00",
+        "29/10/2026, 03:01:00"
+      ],
+      "rangePrev": [
+        "21/10/2026, 18:23:00",
+        "24/10/2026, 16:54:00"
+      ]
+    },
+    {
+      "name": "TRAVIS SCOUTTT",
+      "last": [
+        "cmvsx41po01rs01mco3a22hnv",
+        "cmvsvvmc300z901mc1s8entxr",
+        "cmvsu1g3t00is01mcm09txe16",
+        "cmvss940e003u01mcdn2oy1km",
+        "cmvrgiikf01xn01pbs2i4ezgz",
+        "cmvre7juj01o501pb0u9zg8t0",
+        "cmvrc7jwi01fs01pbzv7agkbv",
+        "cmvq0w5gc1bsl01lgqgne20a5",
+        "cmvq25t8g1coz01lg4hfak9ts",
+        "cmvpz02pm1bg801lgfng57t9y"
+      ],
+      "prev": [
+        "cmvppqagz1apf01lgq6squo30",
+        "cmvppsqba1aqf01lgql2zftkf",
+        "cmvpln0nh1amm01lgii20yi55",
+        "cmvpk88j11alr01lgvwa4nspm",
+        "cmvplvo821aof01lg5xdyyla6",
+        "cmvoq08tx1agy01lgxbuvvm7r",
+        "cmvmjg97y18cf01lgz6y4r7wh",
+        "cmvmhr6i8185f01lgwukho1im",
+        "cmvllzw0p17gi01lgmm97zgsc",
+        "cmviuyi7r15tb01lg3t9tcuqj"
+      ],
+      "rangeLast": [
+        "26/10/2026, 20:47:00",
+        "29/10/2026, 01:49:00"
+      ],
+      "rangePrev": [
+        "21/10/2026, 21:40:00",
+        "26/10/2026, 16:46:00"
+      ]
+    },
+    {
+      "name": "hupEE",
+      "last": [
+        "cmvss940e003u01mcdn2oy1km"
+      ],
+      "prev": [],
+      "rangeLast": [
+        "28/10/2026, 23:22:00",
+        "28/10/2026, 23:22:00"
+      ],
+      "rangePrev": null
+    },
+    {
+      "name": "Zeny",
+      "last": [
+        "cmvojedk019vn01lgbftguxa6",
+        "cmv8r9nao0rsl01lgd5ui5zx1",
+        "cmv2ktoev043601lgkixdrgde",
+        "cmv03safr00y801lguyrzb0dv",
+        "cmv024fx000bt01lg67wzi2ke",
+        "cmv03xxn001a001lg31rpfi39",
+        "cmv03zdl301bi01lgfrajt1s5"
+      ],
+      "prev": [],
+      "rangeLast": [
+        "07/10/2026, 23:24:00",
+        "26/10/2026, 00:02:00"
+      ],
+      "rangePrev": null
+    }
+  ],
+  "allChecks": "passed"
+}

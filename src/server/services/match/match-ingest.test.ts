@@ -5,7 +5,14 @@ import { enrichMatchWithDemo } from "@/server/services/enrichment/demo-enrichmen
 import { rebuildAllRivalries } from "@/server/services/rivalry/rivalry.service";
 import { syncMatchSchema } from "@/server/dtos/sync.dto";
 
-describe.sequential("Match Ingest & Enrichment Integration Tests", () => {
+const isolatedLegacyIntegration = process.env.CS2_LEGACY_INGEST_INTEGRATION === "1";
+if (isolatedLegacyIntegration) {
+  const url = new URL(process.env.DATABASE_URL!);
+  if (!["localhost", "127.0.0.1"].includes(url.hostname) || !url.pathname.startsWith("/cs2_stats_test_")) {
+    throw new Error("Legacy integration tests may only write to a disposable local test database");
+  }
+}
+(isolatedLegacyIntegration ? describe.sequential : describe.skip)("Match Ingest & Enrichment Integration Tests", () => {
   const matchId = "test-match-123";
 
   // Mock de um jogador válido que já está no banco de dados (usamos um de teste ou criamos)

@@ -1,0 +1,2198 @@
+{
+  "at": "2026-10-30T17:09:34.764Z",
+  "head": "2d3227ce29ea1857a1f0bc8742b33a7b6b0dbd61",
+  "files": [
+    {
+      "file": "docker-compose.normalizer.yml",
+      "sha256": "f72701f08a2962f2539e4a790a8cfe984593785fc9da04231eb1f8f8f133f2e8"
+    },
+    {
+      "file": "docs/integrity-pending-20261030.md",
+      "sha256": "f6f3c4f752b85156df8cb8f0a55506c3792490d5bad799c44295419d4712cdd7"
+    },
+    {
+      "file": "docs/phase0-snapshot-result-20261030.md",
+      "sha256": "c61cf78f22b12855a84d5c80291582b3beee33f5411350d783b7a396431f1ca0"
+    },
+    {
+      "file": "docs/snapshot-sync.md",
+      "sha256": "cc4f667ea5aef79a87d83dd20365a4ec473da4c36d602937ffe641787c823029"
+    },
+    {
+      "file": "docs/stabilization-phases-1-2.md",
+      "sha256": "c294a58190030894a748d01223aad2ef15f40df6f56a3be535ea8a91a76ffaff"
+    },
+    {
+      "file": "prisma/migrations/20261030150000_durable_ingest/migration.sql",
+      "sha256": "183fe3895d85ee04422659d2b0ed38fa7b31ba46b3ddb90e5edb1340a9ea476f"
+    },
+    {
+      "file": "scratch/analysis-20261029/advanced.cjs",
+      "sha256": "a825ec5d3dce58e40638ee4c6d7a8554e9acb1caf2dd5c309974730d305981de"
+    },
+    {
+      "file": "scratch/analysis-20261029/advanced.json",
+      "sha256": "aa005d2dbfa895377e4b4bbabf3d83b1e6f50e932b6c718827ab99140edd5681"
+    },
+    {
+      "file": "scratch/analysis-20261029/analyze.cjs",
+      "sha256": "634871ae07636b61684c08b4e84b82f593dbd6632cdefbf0394a9e50015d4a95"
+    },
+    {
+      "file": "scratch/analysis-20261029/capture.cjs",
+      "sha256": "07c3fb7969d15915ad8e3105c5269811af740d8deb8763919008ee5069d2db57"
+    },
+    {
+      "file": "scratch/analysis-20261029/relatorio.md",
+      "sha256": "7d26cb98b67880d5a2c3a348b11acbfcafb2bb0d2134d212c77730a5cd05a1d2"
+    },
+    {
+      "file": "scratch/analysis-20261029/report.cjs",
+      "sha256": "24341210b4c02b5ae75677433efb9f375c275f685b1447c00eda3e5022deeb71"
+    },
+    {
+      "file": "scratch/analysis-20261029/results.json",
+      "sha256": "cbfbc0d91c2a66e46649171aa46a51eae32e60318653f5ea00499248db6c862c"
+    },
+    {
+      "file": "scratch/analysis-20261029/snapshot.json",
+      "sha256": "76ea19ca2e48e31b4d490d361c72953ac9604917d1ac6ffa66e06c643659d2a7"
+    },
+    {
+      "file": "scratch/analysis-20261029/verification.json",
+      "sha256": "efb97cd9340ff196524f99166bc5b72935440710945e9ec4fc709af7c5ece67e"
+    },
+    {
+      "file": "scratch/analysis-20261029/verify.cjs",
+      "sha256": "2b93f7dc30724d283cc425fb9055da4eeebe1490cb8b4cf3b1e5460c70f4a92e"
+    },
+    {
+      "file": "scratch/audit_october_ids.ts",
+      "sha256": "457501d25c99717b0a32405c1ec1179ccd6def3f67af76858d2f2bbbbdba3bc4"
+    },
+    {
+      "file": "scratch/audit_raio_x_payloads.ts",
+      "sha256": "d3db9aef557ea07fff4f8d1bd320bcd3b18a40df5a7c9abd234f0c0b2680ab98"
+    },
+    {
+      "file": "scratch/check_c4_outcomes.ts",
+      "sha256": "c469cdd99afe4a1ecaac6bf654b102180b3cb18688b73531739e01df25c1b7e5"
+    },
+    {
+      "file": "scratch/check_c4_post_plant_outcomes.ts",
+      "sha256": "889318bd0564d234c2f7ac403db1fea71a283e861e5795a7585ef9c292e644c3"
+    },
+    {
+      "file": "scratch/check_october.ts",
+      "sha256": "9b8de921af25383cd894eef0dfd965a7c3bbc2ae6f5fae910dd6285d665df7d6"
+    },
+    {
+      "file": "scratch/check_prod_db.ts",
+      "sha256": "f97d0234ea02c3542cbed33bdaffaae04197d4a97ce63bf5ef790f022cffd777"
+    },
+    {
+      "file": "scratch/check_round_props.ts",
+      "sha256": "8c13f47bb0e526374536af7d4a8ca5e01201e77ff3995edcbcd6109f41e12070"
+    },
+    {
+      "file": "scratch/check_team_sides.ts",
+      "sha256": "3e73b80a9ce25f99bf01843e77bd980594abb301749e8377f63cc8470051b562"
+    },
+    {
+      "file": "scratch/diagnose_raio_x_full.ts",
+      "sha256": "567ba40c5709c91b07032330c0e6402c579498a9ce6dd5e395f3912cef7d6a1e"
+    },
+    {
+      "file": "scratch/full_payload_matrix.ts",
+      "sha256": "0a544b9a01fdbeb9e0721cd4514fb848ee1a165fffdd4af1f9fb27ea0e58011d"
+    },
+    {
+      "file": "scratch/inspect_economy_and_blinds.ts",
+      "sha256": "a14bb127cb29a4aa3c5145716e37eab03f2bb29d2034ff63c9d72f166d901ac4"
+    },
+    {
+      "file": "scratch/inspect_payload_details.ts",
+      "sha256": "4e29228c8cd68feebedcf4ee4a4d7d7036907502740fb10022d968c911c09286"
+    },
+    {
+      "file": "scratch/inspect_payload_keys.ts",
+      "sha256": "49cd5ff6e6f59d7953317a6900dcab61f1a96101af873e2bbdbb0588ed18906b"
+    },
+    {
+      "file": "scratch/inspect_rounds.ts",
+      "sha256": "bb5f732fec2c6df5c45419834ac2797479b30527c2d5ba83e2b293dc9263c4a1"
+    },
+    {
+      "file": "scratch/inspect_rounds_json.ts",
+      "sha256": "716dead10b0c8057f693fc6ee6d3010dbc328a0f23dca80e8c8ebdbddcf43c73"
+    },
+    {
+      "file": "scratch/pre-integration-main.patch",
+      "sha256": "90ab1579a43b1a4806431ce6517312f4185f191d5ef7a291549fc27c1718fe8f"
+    },
+    {
+      "file": "scratch/predeploy-audit-20261030.cjs",
+      "sha256": "47a180fcb16be966f793014a677a7b2fd380e740e52a6b3a63b49cfa569c6a5d"
+    },
+    {
+      "file": "scratch/predeploy-audit-20261030/dev-metadata.json",
+      "sha256": "5534c8a04e2a10597327dacec369d772bec9b0cf890bef06c638247608a8afc4"
+    },
+    {
+      "file": "scratch/predeploy-audit-20261030/production-metadata.json",
+      "sha256": "a2d7d36b7c81b947f9b85eeec32f1930864f34f99700d9d04f276a14bccb009f"
+    },
+    {
+      "file": "scratch/prototype_raio_x_calculation.ts",
+      "sha256": "8ae9834a61fe1d4cb4641c59400aa5caf7342f47c0e0f9f939ba21ac721b10b5"
+    },
+    {
+      "file": "scratch/stabilization/integrity-classified.json",
+      "sha256": "81993f5b814235472f13e688812c7267ee60969147664aca76a0ff97481f3586"
+    },
+    {
+      "file": "scratch/stabilization/integrity-evidence-extra.json",
+      "sha256": "70cbb8f30c1d72931fe832f69829679bac5c3f3fd37a1055f52446bece4caca8"
+    },
+    {
+      "file": "scratch/stabilization/integrity-readonly.json",
+      "sha256": "91d8a876635cd68d9ab5babdbe71832140371fe5a591d067f89d4c5cd9fb94fa"
+    },
+    {
+      "file": "scratch/stabilization/validate-build.cjs",
+      "sha256": "8c173abefcd677443ac403c54d3d1437ce37f28acbe2b1beb5557e52bc18371d"
+    },
+    {
+      "file": "scratch/test_card1_data.ts",
+      "sha256": "bac809b03e3b2f3ecbf63d3207610ef9e9d08f667de941955738e884252a672c"
+    },
+    {
+      "file": "scratch/test_card9_data.ts",
+      "sha256": "60fb241f2d6b1f67cc4ae108391ee518e1ce9d82bb0cf5a5aeeb962901ff971b"
+    },
+    {
+      "file": "scratch/test_side_swap.ts",
+      "sha256": "7e6452092fcf3294b83fd3affb2a47ea2c89ca745845a276d1058cd79f34e34f"
+    },
+    {
+      "file": "scripts/run-normalizer.ts",
+      "sha256": "42115ee83d09201c077db5894e205f318a8c57cb60b5b355440e1f531abb0fa0"
+    },
+    {
+      "file": "scripts/verify-dev-snapshot.ts",
+      "sha256": "02c28caf6623e62040a98b8558ac41354cf3464541361617fb867e9e81ebdec0"
+    },
+    {
+      "file": "src/app/(public)/raio-x/page.tsx",
+      "sha256": "1665b5acae6124cd62e1c76e08a26266a48e710164cdf2806629bdc73a26507a"
+    },
+    {
+      "file": "src/app/api/internal/ingest/capabilities/route.ts",
+      "sha256": "bfd1b6422541eb33d2c4fa2d3953d83343a155937f1ba418ff71cb4b93945209"
+    },
+    {
+      "file": "src/app/api/internal/ingest/metrics/route.ts",
+      "sha256": "8acb8b13d93b6efe99b54839791ebfef4f4c89b1c27382e237efee78972632e9"
+    },
+    {
+      "file": "src/app/api/internal/ingest/status/[id]/route.ts",
+      "sha256": "43dbdd6ac520dda936934dd6e9ffecac5158d5c388684d4fe5f274296dea21de"
+    },
+    {
+      "file": "src/app/api/internal/ingest/status/route.ts",
+      "sha256": "374deba7681802b848c89dfe5f319388159e5f455d3b7389ec618b5ecdb72514"
+    },
+    {
+      "file": "src/components/dashboard/raio-x/economia-desastre-card.tsx",
+      "sha256": "e9e2da59893eb937e467efb4973061a1c53a59071937418e5c962d6ffc167f7f"
+    },
+    {
+      "file": "src/components/dashboard/raio-x/entregamos-5v4-card.tsx",
+      "sha256": "ede84dce457e965e286c3468ac5b7446fde2ad6dd8c53c13fce333834693189a"
+    },
+    {
+      "file": "src/components/dashboard/raio-x/especialista-armas-card.tsx",
+      "sha256": "decdcc7b11b25eafe6f9b176c58c9333a083ba3e488be087233f192ff2c33ff9"
+    },
+    {
+      "file": "src/components/dashboard/raio-x/matador-eco-card.tsx",
+      "sha256": "696523af41b84909690199da3cdf8fcf4994ed90dcebf88ee64cfc37b937e99e"
+    },
+    {
+      "file": "src/components/dashboard/raio-x/melhor-dupla-card.tsx",
+      "sha256": "2c6076e88d11630bd723f22ec53f00385c3d20a7c8073336487c0868676cba3a"
+    },
+    {
+      "file": "src/components/dashboard/raio-x/parceiros-card.tsx",
+      "sha256": "4fa920d8cddddeb112e65ce108b58c7e66d66a191f86b222fc0b49a7da0620ba"
+    },
+    {
+      "file": "src/components/dashboard/raio-x/plantou-ganhou-card.tsx",
+      "sha256": "315f8084f98425247a22819360c4ca00cf2556232f9ab596e754afd059a2ef40"
+    },
+    {
+      "file": "src/components/dashboard/raio-x/raio-x-card-frame.tsx",
+      "sha256": "b88274bc8c2c1bfed756f607ad04fb791a008bb2167d45e643384b46e6eabd71"
+    },
+    {
+      "file": "src/components/dashboard/raio-x/raio-x-compact-summary.tsx",
+      "sha256": "4247e2fd4da9675b4f5f7ed455352cabf47cf3279ce4bad99ef1f154b1a4c975"
+    },
+    {
+      "file": "src/components/dashboard/raio-x/raio-x-section.tsx",
+      "sha256": "0b7b2f6e09d789c78b684b6adbba416e581ad90b1a3ce880db0fd7eb75ca1a68"
+    },
+    {
+      "file": "src/components/dashboard/raio-x/rei-rounds-decisivos-card.tsx",
+      "sha256": "ee0b795e556041021edf968482a379bc8e871874163b75865a66897d2602c626"
+    },
+    {
+      "file": "src/components/dashboard/raio-x/terror-dos-amigos-card.tsx",
+      "sha256": "edb32f0600aa94db0954a98ff9a61778886ec2794f535a6e54b9335ecc14f47d"
+    },
+    {
+      "file": "src/lib/decisive-categories.ts",
+      "sha256": "ba9a2b1af8bf49f4b66f5c80a598cd34d3b0cbeb0e221f28857615c30aa8fdde"
+    },
+    {
+      "file": "src/lib/raio-x-types.ts",
+      "sha256": "f2afd83fc878646f293db5db7f356f71ba991e047dc4510ffab845b54791138d"
+    },
+    {
+      "file": "src/server/ingest/auth.ts",
+      "sha256": "8e2bfd2723f3e417d1a3b037bc486b50f0eb71f7e307606f4fb6687fae1841c1"
+    },
+    {
+      "file": "src/server/ingest/build-consumer.mjs",
+      "sha256": "d0af115add14b95be296bd04f7a62b8647c01e9bf2b91063078bf010bf0b8aa4"
+    },
+    {
+      "file": "src/server/ingest/pipeline.integration.test.ts",
+      "sha256": "9f4845179dfb6b5f054d3d0be2d6220bdd702a5c46ba604b3de134b0d4d6ca25"
+    },
+    {
+      "file": "src/server/ingest/processor.ts",
+      "sha256": "fa6570485e38ca0e4f1af9806239f07a582af57ac63b330d6b687062d66c3adc"
+    },
+    {
+      "file": "src/server/ingest/queue.ts",
+      "sha256": "9de4e4385c899a80d0ad37dbe250fad759fd3c1b55172b5858620e330ae8e8ce"
+    },
+    {
+      "file": "src/server/ingest/run.ts",
+      "sha256": "c53acd7f8e9d6a8c93c365b8206126681d11c8d8aa828f71e2fdb7e4d5e152c2"
+    },
+    {
+      "file": "src/server/operations/snapshot-copy.integration.test.ts",
+      "sha256": "22725feb708a0561a7135a997403b6944867e7b5669d7e199d5ee31c0fe1be83"
+    },
+    {
+      "file": "src/server/operations/snapshot-copy.test.ts",
+      "sha256": "b5883c7b8a3ab76cbc6dbfb8a527c6a1ce6bc9d858a983250ae6075a1ba3b804"
+    },
+    {
+      "file": "src/server/operations/snapshot-copy.ts",
+      "sha256": "cceb2c9686ffe2427beece41a218c71bf08ffa2a2176902997c4ad6321d89a7e"
+    },
+    {
+      "file": "src/server/operations/snapshot-integrity.ts",
+      "sha256": "bff2ad0306e12245ec06458dc8b1d0a8924fdf0c8b4fcdcef476bf05eac36293"
+    },
+    {
+      "file": "src/server/services/decisive-players.test.ts",
+      "sha256": "b1eb524ac6c9c53356021a10371598ce83da4f15563ba248e8f66440ddc2aeb7"
+    },
+    {
+      "file": "src/server/services/raio-x.service.ts",
+      "sha256": "8691c110fc31e0bb03a45aea05006cefab603f1e1400164214fb8f2b4b2dc882"
+    },
+    {
+      "file": "src/server/services/raio-x.test.ts",
+      "sha256": "1096dc0894b89d5dfe5541f0dd37e0c60aac4897ec4eb241a30bb3f48fbd7dac"
+    },
+    {
+      "file": ".agents/skills/cs2-stats-design/SKILL.md",
+      "sha256": "3a2154da43803f38009cca7815c2bbe35924653067c032b836a551d491f96348"
+    },
+    {
+      "file": ".claude/launch.json",
+      "sha256": "6d513ea52862f52f60d2732ecd6ffd17a6749730f8d55b3eff3895526f498ad0"
+    },
+    {
+      "file": ".dockerignore",
+      "sha256": "a28b01483173e0c35869f8e03f7f49534057533c2b93b45f2d0ddae8388f4a22"
+    },
+    {
+      "file": ".env.example",
+      "sha256": "900ec06b0961ac8730ad39dbd89807e64d9e2bbd174cd733f871730716482a95"
+    },
+    {
+      "file": ".env.vps-sync.example",
+      "sha256": "9e7f90594e3517dfc6f944b6955beea06aefdb09c671a7f97ce4d95602809599"
+    },
+    {
+      "file": ".gitignore",
+      "sha256": "43f25ffaa64c69af16699eb6c961aa5e2f299bfd249901e422924a71adfb55b1"
+    },
+    {
+      "file": ".prettierignore",
+      "sha256": "2c87fe923ef4f9880ba01bfa71f3cd5055cdfc1909cf962facc07fdcb931102a"
+    },
+    {
+      "file": ".prettierrc.json",
+      "sha256": "ceb0884ac5d5199600e73fa80fe88fdc690dd39e919ce35dd59fe4d9bae4dc51"
+    },
+    {
+      "file": "AGENTS.md",
+      "sha256": "9e81a1ab1fd0839525c1ba76445642e916b31d27c9dd7f305de91e9d11e25c2c"
+    },
+    {
+      "file": "CLAUDE.md",
+      "sha256": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49"
+    },
+    {
+      "file": "Dockerfile",
+      "sha256": "66955d85b547d3cc8624b4647e92b131289ff4aa1f1bd07dbfa4f12af7ebc76d"
+    },
+    {
+      "file": "README.md",
+      "sha256": "eceeaa497441589960a440fde1000c1ab3a548db38077da422ecd444165e3f2c"
+    },
+    {
+      "file": "audit-matches-report.json",
+      "sha256": "2e7af7d38f9bacc7c09d3a22f70e851ba54225ac6f139c4b7401f6e5e592bdb6"
+    },
+    {
+      "file": "components.json",
+      "sha256": "7f89b1e9e3995be8620be3162df8e08b7dd512f894fb0accb559193138fdc390"
+    },
+    {
+      "file": "crop_1440_test.png",
+      "sha256": "40796b842770234b0cbf364837c7dbf366f01392f389e22f84b1ec6b97e0a427"
+    },
+    {
+      "file": "crop_1440_test2.png",
+      "sha256": "ebed3b0795c7f3dc748ea4472d18b1253dd712fe7f81957fd18d2268e2273e8e"
+    },
+    {
+      "file": "crop_1440_test3.png",
+      "sha256": "22a586b76156b5568bcd4b4b99457ab58bb5eb7427dc5d064d7d30db1b2368e0"
+    },
+    {
+      "file": "docker-compose.dev.yml",
+      "sha256": "1af481971609971077c3957ca1694a79977d7c796b8ff7db2cd4f19a59dbbcbe"
+    },
+    {
+      "file": "docker-compose.yml",
+      "sha256": "4251bc9e8d8a2df5a3a52fffbd8b3e107380e1ffaf57da65eb15c2ee764b5d50"
+    },
+    {
+      "file": "docs/API.md",
+      "sha256": "18f476079ade848b899b184750cafe1da849077e9b7962a18d510a640c81148e"
+    },
+    {
+      "file": "docs/ARCHITECTURE.md",
+      "sha256": "fb05798c141be0077f6c88afa51dd6c38acedc426e78893e90503a129021a01c"
+    },
+    {
+      "file": "docs/COMPANION.md",
+      "sha256": "db2362dc29d748d4d239b5da076b4b538c380c187d7364b0a8bc7b516a3cbe71"
+    },
+    {
+      "file": "docs/DATABASE.md",
+      "sha256": "a5278f7a0d1ecb956709f604baa4a0f502f8c94bf0bcec71980a23856e89d4ef"
+    },
+    {
+      "file": "docs/DEMO.md",
+      "sha256": "be9e49b1f7328687db3aaf7ee77bf89958eb67175670811d9cfd4c6eafdc1476"
+    },
+    {
+      "file": "docs/FEATURES.md",
+      "sha256": "0aa778d6915f94b02a1e35c91335cbc1da5da1b5f91bcdee7cfed03415b7fc0f"
+    },
+    {
+      "file": "docs/INSTALL.md",
+      "sha256": "85b13961e9acc9504a9b57874f725de122c2ebc9bb113d37cfc7530960de6101"
+    },
+    {
+      "file": "docs/ROADMAP.md",
+      "sha256": "49052991e947fd6f9f9e304ebe172218de8de9b1e843ac010a1544072f335291"
+    },
+    {
+      "file": "docs/seasons-operation.md",
+      "sha256": "c8305ae8b522d0b8bb32b0b077ba5897cad14324bd163808f48bfb8888a23781"
+    },
+    {
+      "file": "eslint.config.mjs",
+      "sha256": "67d0542ade3f4078a4c00046fce57da67a4e194db3ef3db575f32d0f5a1c2ef2"
+    },
+    {
+      "file": "full_1440.png",
+      "sha256": "8a4cf6633ac9a952abff6b521ab1b133a387ce04352ee9a1c3af7f9049901660"
+    },
+    {
+      "file": "full_390.png",
+      "sha256": "b9f7115fb2b878b44efcdd0e7c1648a5ee54aa7c39dfc4ee03d061df931396df"
+    },
+    {
+      "file": "next.config.ts",
+      "sha256": "190a9676da9025a11b1ecf0e1edf34d58ab786fdec5af6e20d9935e095774b45"
+    },
+    {
+      "file": "package-lock.json",
+      "sha256": "f2d177627fce6658ee39b34477cfbefe3534681f2b6cd750c0018935b065dc15"
+    },
+    {
+      "file": "package.json",
+      "sha256": "befb6e69a57133cdf9245f3bee6216be7a986a8fdd9d8c430834d7668a353ce5"
+    },
+    {
+      "file": "postcss.config.mjs",
+      "sha256": "dfac7ac2d86d326a0e5adb024e7943c181393ed17a5fcb8f0315b24c7da6ddde"
+    },
+    {
+      "file": "prisma.config.ts",
+      "sha256": "a6863b170cbc5f508697680fa2dc4088e64a9ac47fbd38098b71693a26908d15"
+    },
+    {
+      "file": "prisma/README.md",
+      "sha256": "bc90d06966b3ba0c7801ef3f7d3d56f35c4cbcb6168564c246d73f7b85c99a18"
+    },
+    {
+      "file": "prisma/migrations/20260716173246_init/migration.sql",
+      "sha256": "fdb10bac21fd39ccfeefd0c6201b700c237a196bccceb7e9c183e14be9bcd2f2"
+    },
+    {
+      "file": "prisma/migrations/20260722194621_add_level_gc/migration.sql",
+      "sha256": "090c0865054a3f05cc5f9cfdc42fe78be46d191cbf5824b15df4c1cd781558d0"
+    },
+    {
+      "file": "prisma/migrations/20260723181823_add_steam_profile_fields/migration.sql",
+      "sha256": "d323a75149feb634a49f529f741c57dcf41d58b9eec7794e42097513378d362a"
+    },
+    {
+      "file": "prisma/migrations/20260727000000_add_match_tracked_players_count/migration.sql",
+      "sha256": "4452f85dee9c3d0ba19d4d38be918bc08e9afcd4b942ec096960f98ce71902ed"
+    },
+    {
+      "file": "prisma/migrations/20260727131202_add_sprint_metrics/migration.sql",
+      "sha256": "a9a492c4bbb852d3531617079a09b499974a46f88d3f680971e8c3b24ee77073"
+    },
+    {
+      "file": "prisma/migrations/20260727194719_add_gc_stats_phase1/migration.sql",
+      "sha256": "57b6a8d1f5630405f7a9bbc06c3d75575876d2f303fcf485ce0ac6260e625bc7"
+    },
+    {
+      "file": "prisma/migrations/20260729114015_add_seasons_models/migration.sql",
+      "sha256": "c2d2b130d69d9d9ea4b9363a7a5a163ffe86bf42caf4068938a6ae151651b524"
+    },
+    {
+      "file": "prisma/migrations/20260729180328_add_team_balance/migration.sql",
+      "sha256": "6f79c9366dcacfd39bca82f3dc73c5c9eac7670484cb310029e6d213ba86842a"
+    },
+    {
+      "file": "prisma/migrations/20260729181626_change_relation_to_player/migration.sql",
+      "sha256": "95d7f4cea81da28b12fdc4dfdf41001b09eef69cb10cae627e5914a4255cfcd3"
+    },
+    {
+      "file": "prisma/migrations/20260901120000_add_missing_models/migration.sql",
+      "sha256": "6ffd5f40dec0108bb5cd0717f41c6a7f44e430724bc925e11ee7e568dc09f67f"
+    },
+    {
+      "file": "prisma/migrations/migration_lock.toml",
+      "sha256": "99836963713b4f5b269ad49af0ed3d7b0b2e336115c2f92dc9ac683d139d0900"
+    },
+    {
+      "file": "prisma/schema.prisma",
+      "sha256": "15cd145400feca9d69d17ce53bef4a11d9ec598e2b937976ba5ce68f648d00d0"
+    },
+    {
+      "file": "prisma/seed.ts",
+      "sha256": "27435537ffb90c108807d005a1349b0ef4b8e0b54f92c1865b3d541424067476"
+    },
+    {
+      "file": "public/arma/arma01.png",
+      "sha256": "67825b5b234ddd32624c82c9bfd1eed53a729c490208e231f060b3d7b72987f8"
+    },
+    {
+      "file": "public/arma/arma02.png",
+      "sha256": "67825b5b234ddd32624c82c9bfd1eed53a729c490208e231f060b3d7b72987f8"
+    },
+    {
+      "file": "public/arma/arma03.png",
+      "sha256": "67825b5b234ddd32624c82c9bfd1eed53a729c490208e231f060b3d7b72987f8"
+    },
+    {
+      "file": "public/arma/arma04.png",
+      "sha256": "67825b5b234ddd32624c82c9bfd1eed53a729c490208e231f060b3d7b72987f8"
+    },
+    {
+      "file": "public/arma/video_gun.mp4",
+      "sha256": "78e3d88bc939c20a6ec5e964ee4a8b44ee3c24f31fc62fb8946c2800e36ba8b9"
+    },
+    {
+      "file": "public/maps/ancient.png",
+      "sha256": "0e9641c87b02fa0f98b3eab319585bd9791ddff1fa598569a635c8a18b1f17a2"
+    },
+    {
+      "file": "public/maps/anubis.png",
+      "sha256": "bec725ce96c242a02fc75419bdc749f9a853615b8081e47c2b97ab792ca7a157"
+    },
+    {
+      "file": "public/maps/backgroud.jpg",
+      "sha256": "83d2bca589c322c9a8628c39cac7e2895fd48e1deb4f429e3e101889cd389f66"
+    },
+    {
+      "file": "public/maps/cache.png",
+      "sha256": "d3c50983b3de11867a26eea58443d4816e48fe7751eaaa765146a4b51a219f44"
+    },
+    {
+      "file": "public/maps/dust2.png",
+      "sha256": "0fe87ba3a70ea6ce3daea20f112c999a04580473c6a79bc7139c0166f1d1910b"
+    },
+    {
+      "file": "public/maps/inferno.png",
+      "sha256": "6b2c2e0a937a9d4730f1ffde0915324cbdbe1f7938f7e30be2cc81f45fca7a9b"
+    },
+    {
+      "file": "public/maps/mirage.png",
+      "sha256": "272f990f98124a1370887ae09f9b691de97ddf7a0cc418c594e97bf2c4520442"
+    },
+    {
+      "file": "public/maps/nuke.png",
+      "sha256": "83d2579064f67898633b063c7e591024285f1dc4a0e760f98cf62438576dae48"
+    },
+    {
+      "file": "public/maps/overpass.png",
+      "sha256": "23043dbaccc2476d97f4c5abdcf2be41fb7769ad63d87cae69e5c153dacec930"
+    },
+    {
+      "file": "public/maps/primeirocard.jpg",
+      "sha256": "6df83ffc1e4ae51923d459fe77996d5b7b04373af3880bcedc266def1b9b85d1"
+    },
+    {
+      "file": "public/video/videocapa.mp4",
+      "sha256": "865a59cff7547da6b9852e0c27d11f0674df05a6f700b9c4ac72f7de96ede8ff"
+    },
+    {
+      "file": "scratch/verify_etapa6_dev.ts",
+      "sha256": "8df0f4321fa6d9682a2181e7c47eb7a61c870d9abc9f547147001dd9c264d910"
+    },
+    {
+      "file": "scripts/audit-all-match-dates.ts",
+      "sha256": "bec824026e2574225d24716a68c949f9c163ea50c4bacda165a709d884731f0b"
+    },
+    {
+      "file": "scripts/audit-june-season.ts",
+      "sha256": "1810099756b369cd858beb6fec1892029a604194ce0720ee225b037349042698"
+    },
+    {
+      "file": "scripts/audit-match-dates.ts",
+      "sha256": "511b83f49f7982f9f524a8857aaa38485edc28957acdec4c1e1fb73f7902fe96"
+    },
+    {
+      "file": "scripts/audit-player-names.ts",
+      "sha256": "c6a56cfc1937a65bb5d84528a38ee38281ba2755bcc867b4bb72a28c23a0b66d"
+    },
+    {
+      "file": "scripts/audit-season-stats.ts",
+      "sha256": "5ddb82eaf8c5b49f3ca6c9d0f9c023c7ed503e3f66c099fc0c80ac3eba44db39"
+    },
+    {
+      "file": "scripts/audit-system-integrity.ts",
+      "sha256": "a446949353fc5547d9dde2c7f0a0a4ee33844e24e6e3a25d092d7a7cc7f50ee9"
+    },
+    {
+      "file": "scripts/check-chronology.ts",
+      "sha256": "12cc64fd1c748a9ed17032f185ab5ed6d3ea8540e80094fe882dbb8f3d307959"
+    },
+    {
+      "file": "scripts/deep-audit-summary.ts",
+      "sha256": "6a5979accbbbc1566fbae6c5e6e2aafd4c0b24cfe02dc649ceaf71acfabeff39"
+    },
+    {
+      "file": "scripts/demo/generate-sqlite-schema.mjs",
+      "sha256": "08540976c224d0eaae94d59afa66b653b69a433fe631f2fc6a066b6c8e90c22d"
+    },
+    {
+      "file": "scripts/demo/reset-demo.mjs",
+      "sha256": "22cc7e3192d0b5a235227a548e631befe46dc8266616d7ffe4dab26a62ca3cc8"
+    },
+    {
+      "file": "scripts/demo/run-demo.mjs",
+      "sha256": "6c474fad2744e90697ae2c066d333e1613bb70feaec3dd8d2728d2415e201b3e"
+    },
+    {
+      "file": "scripts/demo/seed-match.ts",
+      "sha256": "435b5456aad426e3a9b2c5c922b4fce69f5decb69dc2006e30bda770eecdd7d6"
+    },
+    {
+      "file": "scripts/demo/snapshot-demo.mjs",
+      "sha256": "ac04ec40a832195eb0ab959b5610faad89d27df693f2d1923d5615d8a84564b5"
+    },
+    {
+      "file": "scripts/dump-payload-sample.ts",
+      "sha256": "b4e6b3112bf5d56940697910f988820a80fb707419e8b194497d60232d9c221f"
+    },
+    {
+      "file": "scripts/fix-player-names.ts",
+      "sha256": "fbc947af590b60798d81b364cc62ac23796fe228360fe61f998cdbad72cecb40"
+    },
+    {
+      "file": "scripts/inspect-boundary-matches.ts",
+      "sha256": "529011e88557b67d223704067a6aa52adf0c39a2c4049b12ac2057332e0f20a6"
+    },
+    {
+      "file": "scripts/inspect-divergent-match.ts",
+      "sha256": "a308076e24a50ec1991058ecdea2d0200fd2a3d50978522fc8ff0d151a6a825b"
+    },
+    {
+      "file": "scripts/inspect-older-seasons-monitored.ts",
+      "sha256": "27c6142932ed5ef043e0507e12fb3798f14cd152d1c03a52c8d202a45d598868"
+    },
+    {
+      "file": "scripts/inspect-payload-coverage.ts",
+      "sha256": "40e52e3d03ca2386109fd999ea134155b5dba3b0db50e1c37995bb0ee1f2ecfe"
+    },
+    {
+      "file": "scripts/inspect-payload-dates.ts",
+      "sha256": "92e1bc0c02d0f2ed559796f17d1d8bf82b65609971a1840e5c0373cc5970d630"
+    },
+    {
+      "file": "scripts/inspect-seasons.ts",
+      "sha256": "2d9773233146366c2775e65342d80fed24fa4685530d4073096e53b6174c7034"
+    },
+    {
+      "file": "scripts/post-remap-validation.ts",
+      "sha256": "e4a4ddcc55da4b6919f954fa44203b2b62ae450b51ebe66245aab42d9625b2e8"
+    },
+    {
+      "file": "scripts/precheck-env.ts",
+      "sha256": "904125268ab3cede8767413752f353d39d2cc0f5ec94e82e30c299f518eda0ec"
+    },
+    {
+      "file": "scripts/reassign-june-matches.ts",
+      "sha256": "a62a4f857b328ba486d7af8c0cb5820b0de1de910ff91213bd7c7eec2e4667a3"
+    },
+    {
+      "file": "scripts/repair-corrupted-gc-data.ts",
+      "sha256": "9bf79b390558ebdce43e09c42f393cc6f8ee57320ff42be08bcb27755d692f96"
+    },
+    {
+      "file": "scripts/repair-seasons.ts",
+      "sha256": "d905909a447c8b72e7158a090ec7bfd6a0a88565b57f0cf4b9a083553acdf0aa"
+    },
+    {
+      "file": "scripts/rollback-june-matches.ts",
+      "sha256": "51c863194b6489954f8d5fa5e7a0344648ec207f1a2544a079bfc97a65f384fc"
+    },
+    {
+      "file": "scripts/seed-dev-from-production.sql",
+      "sha256": "b426312f45d542c9f055e126fca1904485b0c3f3996cf9451f55ee7953cd2fa5"
+    },
+    {
+      "file": "scripts/simulate-monitored-min-matches.ts",
+      "sha256": "37e4afe068c26d1b9e0b9cf1b3f25d6c2a8aebe968d59499ad3c2f59c9b9c22d"
+    },
+    {
+      "file": "scripts/sync-db-from-vps.ps1",
+      "sha256": "e622d661c84474f4bb21d6256773a6f14296f62a44c44c29e09df8da54b3ccdb"
+    },
+    {
+      "file": "scripts/sync-dev-to-vps.ps1",
+      "sha256": "73ccdbd68bef6ba60341114dc976af57d3433b7258c522bfbff54186973a0e52"
+    },
+    {
+      "file": "scripts/sync-dev-to-vps.ts",
+      "sha256": "1b64b2448ff16d57f636b24675cd6ecb9720175b8c3c3d44592f2f5e93fdeb24"
+    },
+    {
+      "file": "scripts/sync-from-vps-to-pg.ts",
+      "sha256": "c956e07c76716cc0508c2a22b9a909cc807033e135fb3192bf37c96c4cb47032"
+    },
+    {
+      "file": "scripts/test-season-rollover.ts",
+      "sha256": "3f472a6132f1547ebd2fc92a263ee461f6a3dd09a080ca7ede595389832476ce"
+    },
+    {
+      "file": "scripts/verify-carousel-implementation.ts",
+      "sha256": "a58c76efc265ca316ad793e4d1c58ee29056f476aba4db00ae40a84b82da8130"
+    },
+    {
+      "file": "shot.png",
+      "sha256": "06128f159adde5c161daa981b5ff90dc7062f7ec8e8302d8ce2a9dd900468dd4"
+    },
+    {
+      "file": "src/app/(admin)/admin/(auth)/page.tsx",
+      "sha256": "be636b9a169caee71e1ae80ee59b50d05edc18d377448933b86ce9bbd848db4b"
+    },
+    {
+      "file": "src/app/(admin)/admin/(dashboard)/dashboard/page.tsx",
+      "sha256": "8f59a4df3989b828607c315347616bf0f875efdbfe2cee7b66354cc2d59af24a"
+    },
+    {
+      "file": "src/app/(admin)/admin/(dashboard)/layout.tsx",
+      "sha256": "13a159a7a7dbc11ef53ad68f31430d3481d46c081b075ff81d6859ed429c7216"
+    },
+    {
+      "file": "src/app/(admin)/admin/(dashboard)/players/[id]/page.tsx",
+      "sha256": "1c006aef45ee0436f3608807c040105cb8999e0035280ff3afab705a15be930e"
+    },
+    {
+      "file": "src/app/(admin)/admin/(dashboard)/players/page.tsx",
+      "sha256": "06e2f9c70147a48b625ad0efef78b5665b2f2b236147a59b180b666f3d2d3b2d"
+    },
+    {
+      "file": "src/app/(admin)/admin/(dashboard)/sync/page.tsx",
+      "sha256": "9cb1468c5ecf0e41ce7b9750eb4d185a369a8e785ffe2a4f2d19cf338733081e"
+    },
+    {
+      "file": "src/app/(admin)/admin/layout.tsx",
+      "sha256": "7d27f4e1e438523a120fe7d7248adfb2aeeb647cac673b72797ff0ee1d891beb"
+    },
+    {
+      "file": "src/app/(public)/achievements/page.tsx",
+      "sha256": "3291b2ac00df22b763110fedbbe5a990629733cb0e94a1aaa8a4e86c0b44a8df"
+    },
+    {
+      "file": "src/app/(public)/compare/page.tsx",
+      "sha256": "d69afc28db45342813a8dc70c2bd410426caad20eac9d67a89b8b98e91a494ea"
+    },
+    {
+      "file": "src/app/(public)/layout.tsx",
+      "sha256": "8c1ffda2ff3c3623f620888f87cff9298013809a62e5ec3f3906091e36770880"
+    },
+    {
+      "file": "src/app/(public)/matches/[id]/page.tsx",
+      "sha256": "3765d15f33370c8cfb921c93b936f71be434d2f815a68d1ca948abeea6f448b3"
+    },
+    {
+      "file": "src/app/(public)/matches/page.tsx",
+      "sha256": "3421eeae0c49dfa2e2d5013db14d6ee689e4546355913592a113ab3c963df9cd"
+    },
+    {
+      "file": "src/app/(public)/page.seasons.test.ts",
+      "sha256": "50c5b886c204a1eaa56dd9c680e66736f7ea72e06435d008daacbb0069f8af4e"
+    },
+    {
+      "file": "src/app/(public)/page.tsx",
+      "sha256": "375a32de2d432f393929d9d5a37a640d9f0e1bcb920c82a50f7fc3b9a4b51e8b"
+    },
+    {
+      "file": "src/app/(public)/performance/page.tsx",
+      "sha256": "42337b7d85e2e260fb50a575b6a40b0d763662750ccfd8090e5365d59ebb15db"
+    },
+    {
+      "file": "src/app/(public)/players/[id]/page.tsx",
+      "sha256": "3cdd34171031d5e854b34d8ba5d8666a791319fe1c189bbf502e28246e7d75f6"
+    },
+    {
+      "file": "src/app/(public)/players/page.tsx",
+      "sha256": "1c30de671a64837adeb486975f68f3f5712708198356835ff801ea913a7adf27"
+    },
+    {
+      "file": "src/app/(public)/rankings/page.tsx",
+      "sha256": "faa8747ee891b4ce69dc55522db23f9a1d2bddced7de256a8e7831a29ca97c4d"
+    },
+    {
+      "file": "src/app/(public)/sessions/[id]/page.tsx",
+      "sha256": "6263f78359af621082863892fcfb9c414a820336c5762376836cfbe8cac28f90"
+    },
+    {
+      "file": "src/app/(public)/sessions/page.tsx",
+      "sha256": "2703328d62121fb5ccb5afa31dff3d4d4a05418b687a59022ca327fe9416d73b"
+    },
+    {
+      "file": "src/app/(public)/team-balance/page.tsx",
+      "sha256": "0c89465b8a835c4c4218f8895e719dde7fc6f0226b9dda9549c60cfaa493fc11"
+    },
+    {
+      "file": "src/app/(public)/team-balance/team-balance-client.tsx",
+      "sha256": "7c418045207c590b86238baa91999010a281eeb6d41b0d4a0de4bdfe8fa44014"
+    },
+    {
+      "file": "src/app/.gemini/antigravity/brain/84d98151-fe10-44d5-a6c0-1ba21a03f606/scratch/check_db.ts",
+      "sha256": "639b45da112d07f4dc791c51ac4da12046a10602983ca7be4b6e3afb4c6414b5"
+    },
+    {
+      "file": "src/app/.gemini/antigravity/brain/84d98151-fe10-44d5-a6c0-1ba21a03f606/scratch/reprocess_db.ts",
+      "sha256": "bbae27ec1ce73298be377e400ec4fe92ffccc8928188c27363ee9f0ff2c027c9"
+    },
+    {
+      "file": "src/app/.gemini/antigravity/brain/84d98151-fe10-44d5-a6c0-1ba21a03f606/task.md",
+      "sha256": "5746ba37dfafe3ea094fad91ace80729b2a93f3e6b5bdeb8e0960af5f46b330f"
+    },
+    {
+      "file": "src/app/api/achievements/recent/route.ts",
+      "sha256": "1f2eb645766fb93004f70aaf8b282915c97b60ed9adb909d2b46caababf72d33"
+    },
+    {
+      "file": "src/app/api/achievements/route.ts",
+      "sha256": "fa6d016f666e89dbd15107fe04a36dd19f92ae57779687ab98fce1f6e8e08a58"
+    },
+    {
+      "file": "src/app/api/admin/health/route.ts",
+      "sha256": "4c89da4458ab61a93e44c022dc0a23104aff974fd614eb149b97c936f3ca52e5"
+    },
+    {
+      "file": "src/app/api/admin/login/route.ts",
+      "sha256": "9ea681106df74bfb01f3cd64fb5bb4c0a2cf83f159f50725ebb76cd4ddbfe185"
+    },
+    {
+      "file": "src/app/api/admin/logout/route.ts",
+      "sha256": "ade74eb7f7132b37de384b3c32d22bc7bb99b69a530a7735c83061d6f0c391d6"
+    },
+    {
+      "file": "src/app/api/admin/players/[id]/route.ts",
+      "sha256": "22ac4f4cec91d31b737c31585da0a78169f268f3500a3474fe9809fa7ba7f337"
+    },
+    {
+      "file": "src/app/api/admin/players/[id]/sync/route.ts",
+      "sha256": "71dcefedb2c22f68e86190c4b2639fdff0be46a91430ccfcdd1c8504d0f4a0ec"
+    },
+    {
+      "file": "src/app/api/admin/players/route.ts",
+      "sha256": "587c805fb7768594bf0dc1376c82773ff4190d4f86540de798d7236a90a9e8db"
+    },
+    {
+      "file": "src/app/api/admin/repair-tracked-players/route.ts",
+      "sha256": "49ea6759cb45de534e1d31c0e4b90fcbf3d8ffb65b508480583f9f9c72f77b8a"
+    },
+    {
+      "file": "src/app/api/admin/seasons/rollover/route.ts",
+      "sha256": "9791af7497ec7c007668066700d042371087a8ce8000a6ba4d72f46f7bee378a"
+    },
+    {
+      "file": "src/app/api/admin/sync-steam-avatars/route.ts",
+      "sha256": "8e080b4cfc7435104b959f9e178a98a77d31d354b4f81fd08d22d22b88e6da12"
+    },
+    {
+      "file": "src/app/api/coach/compare/route.ts",
+      "sha256": "a69547d5e563571f0c1ff684141acefb4a76ab66f57bc11b6420ae59da32bc86"
+    },
+    {
+      "file": "src/app/api/coach/dashboard/route.test.ts",
+      "sha256": "48741302d5e33a805809dadccd2feddbfc1048652bf1fc6fa15399f9ed37ba09"
+    },
+    {
+      "file": "src/app/api/coach/dashboard/route.ts",
+      "sha256": "b9b6e91b40f8b0ceed1ff84a89c92f95556f62b9da1342dad2a6f0af018a0ac7"
+    },
+    {
+      "file": "src/app/api/coach/match/[id]/route.ts",
+      "sha256": "bcc16fa56d986ddb37478a4bc79cd44843f51fe01e30bf621b3b8e0e41aa62dd"
+    },
+    {
+      "file": "src/app/api/coach/player/[id]/route.ts",
+      "sha256": "59556ef8e175fdb8efd08b76a08622773feaf40024b67a1b0e99e84e3bda326d"
+    },
+    {
+      "file": "src/app/api/coach/preview/route.ts",
+      "sha256": "3ca4d1422660e82346cb3d80b694e0e4eae603a7e51fc4594950a0a0a49b4cb2"
+    },
+    {
+      "file": "src/app/api/coach/session/[id]/route.ts",
+      "sha256": "e90e7da5544995e32d7b9a1732805e41bfefa91e51a6377fa18e2efa38ebb920"
+    },
+    {
+      "file": "src/app/api/comparisons/player/route.ts",
+      "sha256": "c112ff8996a7952c0ddeec25d23de63785706b1918998f2c28049fe804a7a270"
+    },
+    {
+      "file": "src/app/api/config/route.ts",
+      "sha256": "bb353d87e1a43f9211e8511afc977da7a53555f1f4185e94b44747dc3c5d8cf3"
+    },
+    {
+      "file": "src/app/api/dashboard/route.ts",
+      "sha256": "9b3c4ba4c9c78b583f815cefc1b2e735c283f87f802546fae04c902f2242d62b"
+    },
+    {
+      "file": "src/app/api/imports/route.ts",
+      "sha256": "ee871a669400617ac63a98c953c0131f1d2f3ab924c7375212afa3f58aac94e2"
+    },
+    {
+      "file": "src/app/api/internal/ingest/match/route.ts",
+      "sha256": "0cee94a4614e966ed19e0092fde056fa23f21572fa230f6310bba2a473de22e0"
+    },
+    {
+      "file": "src/app/api/internal/jobs/pending/route.ts",
+      "sha256": "81995ac2889302fbe6c65bafb6796a391d1b62ce5f3eae4a2be1467f6f329b7c"
+    },
+    {
+      "file": "src/app/api/matches/[id]/analyze/route.ts",
+      "sha256": "9839bceff601c912620c2b15b897a3e12c1418c00864b472c3584b40c0448e1b"
+    },
+    {
+      "file": "src/app/api/matches/[id]/route.ts",
+      "sha256": "6589b91b4e7358222852fc9e584b053254574ed749876714fca2caff41a91323"
+    },
+    {
+      "file": "src/app/api/matches/route.ts",
+      "sha256": "f4b3fd8e1d3c61f36a1028af11e15806aaa8f098c5afad73f8638ed408fd369c"
+    },
+    {
+      "file": "src/app/api/players/[id]/achievements/route.ts",
+      "sha256": "fba395b79ca259ffeebe9d0c4a7ced9af8e2ffe9e85ebce264230e662c2700df"
+    },
+    {
+      "file": "src/app/api/players/[id]/matches/route.ts",
+      "sha256": "8d93260794101600acce917ce2eb6a8d6b30b230aa556f84d1b3e56fff5a30a1"
+    },
+    {
+      "file": "src/app/api/players/[id]/rivalries/route.ts",
+      "sha256": "a9be1bd3ea73fdd5fe3a947c9baefa73bcab6b6c78135f970e50da9875576734"
+    },
+    {
+      "file": "src/app/api/players/[id]/route.ts",
+      "sha256": "9dbf4f246ad920dd07f17ccb64d0a4e550a43d56dea6ffc7dd01874e2398b0e5"
+    },
+    {
+      "file": "src/app/api/players/route.ts",
+      "sha256": "b97de6c272116cc7e400684114e2c0f9a580acf4db5f9a8fb1827c5845fbab08"
+    },
+    {
+      "file": "src/app/api/rivalries/top/route.ts",
+      "sha256": "218bbdd05381585459c8c41c63bc49676ade826298a28679b542c18fa219f17c"
+    },
+    {
+      "file": "src/app/api/sessions/[id]/route.ts",
+      "sha256": "be2658f2b2683c309180ebf737aeda3242294b8614ec96dd81d487132827dfc5"
+    },
+    {
+      "file": "src/app/api/sessions/route.ts",
+      "sha256": "435eec589bb92d7327e4376dcad688b8d9d6f8e22a5899ad749703a82d761774"
+    },
+    {
+      "file": "src/app/api/stats/maps/route.ts",
+      "sha256": "d326e2133892f13c1b5e5f927ad5092a37425fc48b0ad781ac5efc1a4aee5f52"
+    },
+    {
+      "file": "src/app/api/stats/ranking/route.ts",
+      "sha256": "d2bc9ffa7e6d7e5e3abba0cb3b209be58c6cd62299d942f1c0557de7ad0ac84b"
+    },
+    {
+      "file": "src/app/api/stats/timeline/route.ts",
+      "sha256": "510f0a3592b29a2fce6ae4099024214f0bae617a5706e525ffd29ad8d5af3573"
+    },
+    {
+      "file": "src/app/api/sync/gamersclub/match/route.ts",
+      "sha256": "e0c4df89014e09ae866449fceaa25cb5a7cd0d6ce162ff05392d561a75315e18"
+    },
+    {
+      "file": "src/app/api/sync/match/route.ts",
+      "sha256": "cc028711cbc39ed49d706ef9527a0c7bef5c54cb18cb4bd21852e9b437829f22"
+    },
+    {
+      "file": "src/app/api/sync/ping/route.ts",
+      "sha256": "eebe69cb81e58020d2294d3567e205c6cc1eaa97454ec0d94132d5aa07d56c36"
+    },
+    {
+      "file": "src/app/api/sync/player/route.ts",
+      "sha256": "ebba305212cb1e69c2cc5b9b8c6aba90a0159dc933147d60ecdf2fbfbc5d6679"
+    },
+    {
+      "file": "src/app/api/sync/session/route.ts",
+      "sha256": "3acda165898fff61a3c76aa629f69e3b440d106ad0d8a9431be4ade74a78e7aa"
+    },
+    {
+      "file": "src/app/api/team-balance/matches/[id]/route.ts",
+      "sha256": "7655cac5d2081c03d6362c527b155bc341140d0315ecdd6cc72b610de6e50a56"
+    },
+    {
+      "file": "src/app/api/team-balance/matches/replay/route.ts",
+      "sha256": "00f5bd4f85ad281eaebc6476583be51ddbbd63de2b05c8f3a351511b8b948560"
+    },
+    {
+      "file": "src/app/api/team-balance/matches/route.ts",
+      "sha256": "9872ec1528e5e767f1758827b21aef1072383a53151a765ba036e3879167da08"
+    },
+    {
+      "file": "src/app/api/team-balance/players/route.ts",
+      "sha256": "bb273a18b6bff4256d9c71ada3165f25f9e5f29c910347d5ca9524f58f5c20da"
+    },
+    {
+      "file": "src/app/favicon.ico",
+      "sha256": "2b8ad2d33455a8f736fc3a8ebf8f0bdea8848ad4c0db48a2833bd0f9cd775932"
+    },
+    {
+      "file": "src/app/globals.css",
+      "sha256": "726085a8cc2d0a4de3e02f17b2778b8febe4147c8b40ad6c77562b6343adc2f0"
+    },
+    {
+      "file": "src/app/layout.tsx",
+      "sha256": "73f497b4259d6d796a1791372bd620fd8f32ad3a6a5a91e61b568a9562d9a50e"
+    },
+    {
+      "file": "src/app/providers.tsx",
+      "sha256": "ca2115be1f71db0263ab9d74ea1ec15dd1e685f2e9a5b5f8d72c453bbeb5b5a7"
+    },
+    {
+      "file": "src/components/achievements/achievement-card.tsx",
+      "sha256": "958d05e865e452850d94ca8c965f14c1bae69fb3ca3142a22d3b353d457b5e94"
+    },
+    {
+      "file": "src/components/achievements/achievement-catalog.tsx",
+      "sha256": "567a7a1563dbe6331dc8da6519de1837923de400f4eeda0f10df230fefa75a4e"
+    },
+    {
+      "file": "src/components/achievements/achievement-category.tsx",
+      "sha256": "e3406f0d6c1f999e33fb89f2deb24bc60a2ab0ad7333b7a97ca096531887a191"
+    },
+    {
+      "file": "src/components/achievements/achievement-feed-item.tsx",
+      "sha256": "39c50bad70f4440492bd69f5c575cc616c6ff64c9effc7f5e49dcdac24ab87b9"
+    },
+    {
+      "file": "src/components/achievements/achievement-feed.tsx",
+      "sha256": "4977b93309941acc84c018404f53216903dd47e190a146e6aea55c57b37cbbc0"
+    },
+    {
+      "file": "src/components/achievements/achievement-hero.tsx",
+      "sha256": "5fe6583bc8ca6ed3d2a265f285d87cddaf216435ec904c6080d2128cb1585db4"
+    },
+    {
+      "file": "src/components/achievements/achievement-highlights.tsx",
+      "sha256": "78134683d645789cc36aca46a2d146527d89dd30ee959927e28b1d926620105c"
+    },
+    {
+      "file": "src/components/achievements/achievement-tier-badge.tsx",
+      "sha256": "6319df7ecf953ccd3235892b78edc7742620f7f3eeefa01d4d05ebc961cd0a80"
+    },
+    {
+      "file": "src/components/admin/Breadcrumb.tsx",
+      "sha256": "e4f3c42af2a9183066c2236ab02a7f3f898f2b11500e9b06546b648618433087"
+    },
+    {
+      "file": "src/components/admin/Header.tsx",
+      "sha256": "5ce8e6f4f0b3025e287969ad282ae67a09f51e52985e714df5e92aed31f8d891"
+    },
+    {
+      "file": "src/components/admin/LoginForm.tsx",
+      "sha256": "f5edaa2a18b1a36ad2fda932e456c5a7ef97b2b819e59f75de33d37395f25307"
+    },
+    {
+      "file": "src/components/admin/LogoutButton.tsx",
+      "sha256": "d716879acfab08c37fbadcfb6ee01ffcaee5257e37944984fec0e4c3b4a90a4e"
+    },
+    {
+      "file": "src/components/admin/MetricCard.tsx",
+      "sha256": "03ab964b01c60fedeb2cd99473fa8b55a6884933bf09131d51ff6c5515841a96"
+    },
+    {
+      "file": "src/components/admin/Sidebar.tsx",
+      "sha256": "990b789cfb675bb785d517177ca5edc8b17d56c7731ae2338c009c1e02404d14"
+    },
+    {
+      "file": "src/components/admin/dashboard/ActiveAlerts.tsx",
+      "sha256": "00c42c55876346d824f32f7487275c106e1121f4ee3a42808da7f0877aea7e0e"
+    },
+    {
+      "file": "src/components/admin/dashboard/AdminStatsCards.tsx",
+      "sha256": "07ded78657576a70cf42dab63ddf8898665c52839de24afb70abdbfb2fec4a1b"
+    },
+    {
+      "file": "src/components/admin/dashboard/OperationalTimeline.tsx",
+      "sha256": "d262d1c332695472357b0b9a9f0966061e190811a071f811fe06bc6c967d72a1"
+    },
+    {
+      "file": "src/components/admin/dashboard/PlatformData.tsx",
+      "sha256": "e6485c8d50528e0038aae3312a768b67ddbd0fa0ebb5b543b49e710fdbc39fbb"
+    },
+    {
+      "file": "src/components/admin/dashboard/PlatformHealthBanner.tsx",
+      "sha256": "7647402897ecf778958e75652c12343972a712faadf18bd9eb838be4c96e598f"
+    },
+    {
+      "file": "src/components/admin/dashboard/QuickMetrics.tsx",
+      "sha256": "07781d5a50563e1eeb2064f5b11f141817fedff391f5960f850189e7330919d2"
+    },
+    {
+      "file": "src/components/admin/dashboard/RecentActivity.tsx",
+      "sha256": "aeb491663115f0a7995db892e59963b03dc96f579755421fd9160805fbd90b29"
+    },
+    {
+      "file": "src/components/admin/dashboard/ServiceStatus.tsx",
+      "sha256": "8e2b7ac71fa3c9fd98f2e59e944e4a1785c073e3fa5e6be6b38e78cb0c775079"
+    },
+    {
+      "file": "src/components/admin/dashboard/ServicesGrid.tsx",
+      "sha256": "838af6e87694ad5e27f3178b4e98c2eea3f57aa12a35d4ad2019366c912f07d8"
+    },
+    {
+      "file": "src/components/admin/dashboard/SyncOverview.tsx",
+      "sha256": "64b66f2e1bb742792622a5a1e032437363b2a402347168699b37b606bfc25bce"
+    },
+    {
+      "file": "src/components/admin/dashboard/SystemHealthCards.tsx",
+      "sha256": "22328d8612d91858fae03fc8a5426439cba5d337d199f4815bf3cae0fa4f006a"
+    },
+    {
+      "file": "src/components/admin/players/AddPlayerModal.tsx",
+      "sha256": "81310ba8a06cf884fd02d1148b812dee4114896286dac59c6f5198da429ae242"
+    },
+    {
+      "file": "src/components/admin/players/EditPlayerModal.tsx",
+      "sha256": "4377d3083bc58316e83f261b36fe750019d30c47cff0f9f80aa1c1f309103a53"
+    },
+    {
+      "file": "src/components/admin/players/Pagination.tsx",
+      "sha256": "f8737b5169e5279c340cb33362397a0b024abfe41dcb7963e749bf4fb8f7ae68"
+    },
+    {
+      "file": "src/components/admin/players/PlayersFilters.tsx",
+      "sha256": "e14e101160fef48ed8e4d9e4ee163365ca592834144e1e53c2ee607705a45559"
+    },
+    {
+      "file": "src/components/admin/players/PlayersManager.tsx",
+      "sha256": "95e27581e9216ff5bbf715c79f383726dd08a1f7026586e8ca849601639d203d"
+    },
+    {
+      "file": "src/components/admin/players/PlayersSummaryCards.tsx",
+      "sha256": "2977b7a423a27e102d8673da823e2ea76b20c5bf47012ed972c1644ec8b81453"
+    },
+    {
+      "file": "src/components/admin/players/PlayersTable.tsx",
+      "sha256": "420b669c6a70f413ce1567eed2b8322be0c435268f15e8c5b346c4c0b0a128d0"
+    },
+    {
+      "file": "src/components/admin/players/PlayersTableRow.tsx",
+      "sha256": "cb1fac1aadcc41e6f5c7ce4a1bc903f8c52f1457a8a745c4f8725f33d708122a"
+    },
+    {
+      "file": "src/components/admin/players/PlayersToolbar.tsx",
+      "sha256": "205d019588416ff8b8d71c2f876583e3ae23e20a28012b698f931c958fd3b02c"
+    },
+    {
+      "file": "src/components/admin/players/RemovePlayerModal.tsx",
+      "sha256": "8352add22f470b6ad747b42a5524ff682b6d76c9e82eee75884b6cc445af3b68"
+    },
+    {
+      "file": "src/components/admin/players/SyncPlayerModal.tsx",
+      "sha256": "913744a374712791b8cf9691ffd6833cd9b871dd1274d3310a5a22606fa390b4"
+    },
+    {
+      "file": "src/components/admin/sync/SyncManager.tsx",
+      "sha256": "03fd0734b28bcd24751fb808973911b210778abd66b7c1f1beab68d2b4cfde47"
+    },
+    {
+      "file": "src/components/charts/elo-chart.tsx",
+      "sha256": "82c192eb4a2c451e09e5135f54684bf404339cac2e9124702af3af4fcc52c1c6"
+    },
+    {
+      "file": "src/components/charts/map-winrate-chart.tsx",
+      "sha256": "9ac61deaee267de433b4c53df9017d433c0fad16d109c4ad82cdeaf497a16dd5"
+    },
+    {
+      "file": "src/components/charts/session-performance-chart.tsx",
+      "sha256": "036ba6f523bf05ea7d0f7fa404403508051f971739524e6610ad245bcac82db4"
+    },
+    {
+      "file": "src/components/charts/timeline-chart.tsx",
+      "sha256": "ccb72b1a9e3009a0bba27613210bbf9e08e1f64c8b3ee31de0fefec215daa75d"
+    },
+    {
+      "file": "src/components/dashboard/AdvancedPerformanceSection.tsx",
+      "sha256": "87ba03dca58ba2717a25719546c546a8efb19409e39f89ebc5a89c649bf26f78"
+    },
+    {
+      "file": "src/components/dashboard/AnnouncementBanner.tsx",
+      "sha256": "07b23ce4c9aafc899b1e5c6246cacee4b959de2cc1099d92dc44f5ee91efcf68"
+    },
+    {
+      "file": "src/components/dashboard/archetypes-carousel.tsx",
+      "sha256": "42c0e02d1d9b02ee0236f414808359864bbe6af108383595c06ba76973ad6b81"
+    },
+    {
+      "file": "src/components/dashboard/best-recent-duo-card.tsx",
+      "sha256": "6768d542f29875d745849be98a4a31fd464b4daa19224b648285418e6c526f04"
+    },
+    {
+      "file": "src/components/dashboard/decisive-players-section.tsx",
+      "sha256": "eb9e9951559a1e225340d045ca07544b92e8f549976904911868174b8cd8566e"
+    },
+    {
+      "file": "src/components/dashboard/duo-parcerias-section.tsx",
+      "sha256": "f569493d53f6894c0282b8ea800e893cc365af336b61f2b6fa9c332b9ac507dc"
+    },
+    {
+      "file": "src/components/dashboard/hall-of-fame.tsx",
+      "sha256": "085e699ac9872cda51c73fab69893fcd72c9c64ef9adf4f554992d5c4b265ac6"
+    },
+    {
+      "file": "src/components/dashboard/insight-tiles.tsx",
+      "sha256": "cc547fa0012210e6e9942af7e00da7d1be4f401397242a825eac106b45f8474b"
+    },
+    {
+      "file": "src/components/dashboard/map-specialists-grid.tsx",
+      "sha256": "f4410ad2ac3e7dc715e290a0cfb5e76b90dad0f5793cd05bc13135f7bf133140"
+    },
+    {
+      "file": "src/components/dashboard/matchups-carousel.tsx",
+      "sha256": "7abc9d13c91b4f37f861495e2a8be167e412c4b45f8992616ed31341d3504cc4"
+    },
+    {
+      "file": "src/components/dashboard/mural-competitivo.tsx",
+      "sha256": "8693982314e21ba9e1e2af72c0b7ba058507521ab50b404b6035fbaa1ffc50c1"
+    },
+    {
+      "file": "src/components/dashboard/mural-da-temporada.tsx",
+      "sha256": "0bca045c7b4a30d1699acb93c27357c24201ebf2958a4341832d38d691f0947c"
+    },
+    {
+      "file": "src/components/dashboard/narrator-section.tsx",
+      "sha256": "cd2e238a55f6d81de3a9e3c7eeefabd14a76fb93c6029c3c849a9a21d0506721"
+    },
+    {
+      "file": "src/components/dashboard/performance-extremes-section.tsx",
+      "sha256": "739b47ce8fe4a4f9509d8dda74774a7c4f23d81c99bfc99cd6610a961456bb6d"
+    },
+    {
+      "file": "src/components/dashboard/performance-gc-section.test.ts",
+      "sha256": "8cdc822eecf514fe976f2ac633978df6cc16ebcf5a9e59f1b7ec578ee46c187b"
+    },
+    {
+      "file": "src/components/dashboard/performance-gc-section.tsx",
+      "sha256": "49729c1741acdfdf20b83da5f9494b6f063a1002def9d1aa607b244dbb738699"
+    },
+    {
+      "file": "src/components/dashboard/radar-da-temporada.tsx",
+      "sha256": "dc04fed8c365f179ac6be76e42cbe6dc7bfaf1ace04dfd5fcd82537770151835"
+    },
+    {
+      "file": "src/components/dashboard/reis-dos-mapas.test.ts",
+      "sha256": "2ce7933f7234d9761a84f691eaffe21a2c27ce5675694c1d941fe429eba81bef"
+    },
+    {
+      "file": "src/components/dashboard/reis-dos-mapas.tsx",
+      "sha256": "a08075ac9be556edead15bbea4be6eda4e05c3533b8f012ab479dacd09a2d6e9"
+    },
+    {
+      "file": "src/components/dashboard/season-evolution-section.tsx",
+      "sha256": "038ded2ac6e4c72643003bd3c12272b0bc180164b156c93bf6db0d805de944ac"
+    },
+    {
+      "file": "src/components/dashboard/season-hero.tsx",
+      "sha256": "6f40385c608889515f9bea5c2a05b2b5d80d6c0030b3e28bba9beb3f0d919de6"
+    },
+    {
+      "file": "src/components/dashboard/season-select.tsx",
+      "sha256": "6ac72c5e0508aec43b85bf5d7edc2878bac10647550c7a7589d7ecd7ef975054"
+    },
+    {
+      "file": "src/components/dashboard/section-container.tsx",
+      "sha256": "0be4ffe5b027d3a6405ba9f257f0437ab7e01cf42ba70e0bdc7df2831c4fb0dc"
+    },
+    {
+      "file": "src/components/dashboard/section-header.tsx",
+      "sha256": "ae1c7f19921e6a24a6401ca32a06825be47823ecacc81a8de9e4b99fd13bda16"
+    },
+    {
+      "file": "src/components/dashboard/sinergia-section.tsx",
+      "sha256": "c1636f2a5053cbc1cc56d055ec38f0ae6ff9bbea1369ab866bd8ca9147817f6b"
+    },
+    {
+      "file": "src/components/dashboard/smart-alerts-card.tsx",
+      "sha256": "68b05661f1567fc511ca94f97c62f354f7cc9269a886c30d49b08b6001986ad0"
+    },
+    {
+      "file": "src/components/dashboard/streaks-section.tsx",
+      "sha256": "5720f890f7eafd4905e0e33da192df5ca8ff4c77e50e19aa6b314551565a6a61"
+    },
+    {
+      "file": "src/components/dashboard/tendencias-da-temporada.tsx",
+      "sha256": "69203f468c24b749528ea57924fd2905f9a0b1d4411e72233411640fed396079"
+    },
+    {
+      "file": "src/components/dashboard/weekly-curiosity-card.tsx",
+      "sha256": "817fc9c99e8e94de32d0de3da0e9e0caaa1ef3a73ce8ef0629acf7cc08dd46a0"
+    },
+    {
+      "file": "src/components/layout/footer.tsx",
+      "sha256": "54d97291a05da7d8f2fddb06ad64bfb97e6477d46f5dcb8995575addc7f8d72b"
+    },
+    {
+      "file": "src/components/layout/layout-shell.tsx",
+      "sha256": "7289c0f0a51d930be7eae6e9858a5d7b336f0031c15e3bd5778f2a94da6fcb14"
+    },
+    {
+      "file": "src/components/layout/sidebar.tsx",
+      "sha256": "238adbc839e58babf4e59cf63da70760c89b55b5fea8cfdf263c6fe14e73460b"
+    },
+    {
+      "file": "src/components/matches/confrontations-carousel.tsx",
+      "sha256": "bdb90b0b15195740ed52ef1f3ef4d33e345fd547c7d862b144bca3a369006247"
+    },
+    {
+      "file": "src/components/matches/match-header.tsx",
+      "sha256": "bc2bcb72a2f198c6ad2ad6b1d874a6b1e736ff2f60541319df722fe4f68bf514"
+    },
+    {
+      "file": "src/components/matches/match-highlights.tsx",
+      "sha256": "152b56398909df511c26f42c91ab5394e99047066f3018632dc7828ca457db82"
+    },
+    {
+      "file": "src/components/matches/match-row.tsx",
+      "sha256": "a379bfe0176e10104fc2e311a2eee0c744ce0dde63330690fab9ebfc2cf9a77b"
+    },
+    {
+      "file": "src/components/matches/match-summary.tsx",
+      "sha256": "5e63af84ccf8b0fc35af445718d2ba580b8dc84b83d454feb1bfd2840151bb72"
+    },
+    {
+      "file": "src/components/matches/match-timeline.tsx",
+      "sha256": "c1a2e42fd0f9072c3ba0f5aae734b6a41ff1699cb5ae3389eeea03c848e149c9"
+    },
+    {
+      "file": "src/components/matches/match-type-badge.tsx",
+      "sha256": "9ab411ead9fee7b768f4c9742e4e07b044a3b3eac41546923a2d486ddadc17d9"
+    },
+    {
+      "file": "src/components/matches/player-match-table.tsx",
+      "sha256": "71a7fdec5000ff3ef601904301165e006d96265ad85b7b0d5b7fffce577ab7f5"
+    },
+    {
+      "file": "src/components/matches/player-row.tsx",
+      "sha256": "e2fdd1350cfa6deb1e38883071a771aebf52e16cb7498c2f394aceb6d7458696"
+    },
+    {
+      "file": "src/components/matches/recent-matches-carousel.tsx",
+      "sha256": "c4e0d1a85194a007651da97b0674d9276915fea9cb5fb133c5567d2691c17a56"
+    },
+    {
+      "file": "src/components/matches/stat-cell.tsx",
+      "sha256": "408ecdddc846765b6b003f694fd5175fc89cc9233b59a2509d4b7a93bf2eecf9"
+    },
+    {
+      "file": "src/components/motion/animated-number.tsx",
+      "sha256": "16e5134cf631d9d845e1e2217f13626a4250d20279c3f214d407619e71cbcb3e"
+    },
+    {
+      "file": "src/components/motion/cinematic-intro.tsx",
+      "sha256": "d8393990792dfa3e2386cf96264ea045fd301d64513d261b84f2018b993ff6cb"
+    },
+    {
+      "file": "src/components/motion/fade-in.tsx",
+      "sha256": "2744ac8f7df143c799c3a505ab36ca2f9df47d66b97e86d7224be8d0b26d2d1d"
+    },
+    {
+      "file": "src/components/players/comparison-insights.tsx",
+      "sha256": "f9a5533372dccb5c4a60f7815cf05dc89c249356e5d11deba5b90c814a21fb03"
+    },
+    {
+      "file": "src/components/players/comparison-maps.tsx",
+      "sha256": "0c24778e3ba452469aaf30667021b4cef1af12e983d98b02605a4f464ca6725b"
+    },
+    {
+      "file": "src/components/players/comparison-overview.tsx",
+      "sha256": "60069f2757fcc15fbec7c8e029377c4f4d2062236911905207fd277159474987"
+    },
+    {
+      "file": "src/components/players/comparison-radar.tsx",
+      "sha256": "a20f4d9a998c5aa5d35165a10ebb74d51d06707d2d4b461c06e6bd240df7a43e"
+    },
+    {
+      "file": "src/components/players/comparison-selector.tsx",
+      "sha256": "611d95e0abb704f95f0a74901194c36be84a4be06029ef664d7e76c40ad87ee4"
+    },
+    {
+      "file": "src/components/players/comparison-stats.tsx",
+      "sha256": "466f14c148fa4c9a8ed1de8921c33b464fe89b5a2955531e6e20bbd14c807c7e"
+    },
+    {
+      "file": "src/components/players/comparison-timeline.tsx",
+      "sha256": "59b75af8683a1ae0c9b9f89822c23aec7c0e3eb0336ccd5701d4a4123789f474"
+    },
+    {
+      "file": "src/components/players/monitored-players-carousel.tsx",
+      "sha256": "047b36cfcea040238138ae7e713a605535e6961bb221a53a13a13def61c2d242"
+    },
+    {
+      "file": "src/components/players/player-avatar.tsx",
+      "sha256": "709240181fb1a1ed22c0d54d689a1dc00f1b39335caaf76545eb440d08249029"
+    },
+    {
+      "file": "src/components/players/premium-stats-panel.tsx",
+      "sha256": "f96f9ba047eba5fc1c1e97252a30d2c4590f28daea0049ed2f2e0bf99bd4806a"
+    },
+    {
+      "file": "src/components/players/profile-charts-section.tsx",
+      "sha256": "1ee5f75f6c946fa633de5c24e2c789cc0725c12a6c3123eb1bc095ff24b245e2"
+    },
+    {
+      "file": "src/components/players/rating-badge.tsx",
+      "sha256": "b2fef2538b2d799502bc0b26abb523fb6494f3f677983ec614d194c856a54de7"
+    },
+    {
+      "file": "src/components/ranking/ranking-table.tsx",
+      "sha256": "e1b9958f3b43b837f929dc69df6316f344b22a61e834e03bb3f1d854a83332a3"
+    },
+    {
+      "file": "src/components/rivalries/rivalry-carousel.tsx",
+      "sha256": "c739e096433506a384b1512f6f34307579c7f513e1b0201d15841f076326339d"
+    },
+    {
+      "file": "src/components/rivalries/rivalry-row.tsx",
+      "sha256": "9f091919438bf2e42b73fdeb4fa8eba6b2601319ff1868403123158f071ecfe3"
+    },
+    {
+      "file": "src/components/sessions/session-card.tsx",
+      "sha256": "69a30f0b3665362bbf34c059697d8e4f4cf087b19cd96cb6de66aa2aa7935003"
+    },
+    {
+      "file": "src/components/sessions/session-empty-state.tsx",
+      "sha256": "4b493234e68ee099b182e0e0e9c6962c723957729f67985f296d9945fb0f80d5"
+    },
+    {
+      "file": "src/components/sessions/session-filters.tsx",
+      "sha256": "06cc9fa5258cb665cb0dd0f4808471d36dbfb701a3cfff5df2f17f6ddc483089"
+    },
+    {
+      "file": "src/components/sessions/session-hero.tsx",
+      "sha256": "810876161b17775f379b7ba9f9151124aa2aa330c1833899c319e34a8f6daa74"
+    },
+    {
+      "file": "src/components/sessions/session-performance-view.tsx",
+      "sha256": "5bebceeaa8b2ef52f1c49b7a5715020c1c573121cff3e7ffee2036ede6b9aecf"
+    },
+    {
+      "file": "src/components/sessions/session-timeline.tsx",
+      "sha256": "15da8ac4227637aaeec4d487cbd37932d4bef6596e91e82ecada6c71b7027ac1"
+    },
+    {
+      "file": "src/components/ui/button.tsx",
+      "sha256": "7642c22d9b4f144ca9b8ab97bc15e670f8166f01f93acfb15835ea646cf27059"
+    },
+    {
+      "file": "src/components/ui/coach-report-card.tsx",
+      "sha256": "028b010d26ba3d0d2873a7f9081aa1349f264f94d71f59e12dc2b7e117d91351"
+    },
+    {
+      "file": "src/components/ui/coach-summary-card.tsx",
+      "sha256": "6d46619082a5fc8d38d401aa66cf3220ff50f1104f6599ee61b636450cd365a2"
+    },
+    {
+      "file": "src/components/ui/cs-icons.tsx",
+      "sha256": "7509ef2438671fc08d894666d2775e19a55d0fd8150a0281eb0049d26bb75cc5"
+    },
+    {
+      "file": "src/components/ui/data-panel.tsx",
+      "sha256": "88c4db570c551cc4526c348b681d5ac62a456c10fc9f49c59d8270b9e6f72819"
+    },
+    {
+      "file": "src/components/ui/data-reaction.ts",
+      "sha256": "e39a446cfd24f787b4df71d7ac4fd3cbb23dd27f745c6179ed75b2788f43a162"
+    },
+    {
+      "file": "src/components/ui/delta-indicator.tsx",
+      "sha256": "06343ae310b079a0dde132625f81d07fadff889014111570cf0c32e786e1dedf"
+    },
+    {
+      "file": "src/components/ui/empty-state.tsx",
+      "sha256": "bb22215db4a46c0c02caa0bd36d194389c26b16e05395fa706770382a6d8b840"
+    },
+    {
+      "file": "src/components/ui/feature-panel.tsx",
+      "sha256": "83d8e8287d2fd92fbb969ed9a2bb4a2f64bddc0b69e2a710b3d0fcafdd5fe699"
+    },
+    {
+      "file": "src/components/ui/filter-chips.tsx",
+      "sha256": "eac1f666821a4fbc07bd4307693f8364551ea1f716f34aeb844679e8721628be"
+    },
+    {
+      "file": "src/components/ui/hud-badge.tsx",
+      "sha256": "37ec3f3480851e1a5d50ab91e6e9f045208f3ed08bbfdacf00232173d31c6a09"
+    },
+    {
+      "file": "src/components/ui/hud-divider.tsx",
+      "sha256": "9d8d06c42a8dacf8294029d616c4705e6e411f6fce6d5e41a67df253dcc39c25"
+    },
+    {
+      "file": "src/components/ui/item-progress-list.tsx",
+      "sha256": "fa43b4c616cdff7e6bce6ec31c343ebe9784904ef1f16fa60750f3afb11cf3e8"
+    },
+    {
+      "file": "src/components/ui/loading-skeleton.tsx",
+      "sha256": "ea4fbe260672ef5b7ea33529bfdadc29528e4a3b67d2a8a7eac787e777d3f433"
+    },
+    {
+      "file": "src/components/ui/map-performance-card.tsx",
+      "sha256": "9dd329051f7e9fe7dfcfb3a180c38db909787fa1bb684516543693e567c6053d"
+    },
+    {
+      "file": "src/components/ui/metric-badge.tsx",
+      "sha256": "0355504605062782668072ef10b3e7fc70968e9b8a4244b2ceea33937a72519d"
+    },
+    {
+      "file": "src/components/ui/metric-display.tsx",
+      "sha256": "1fe740960122eb0b26b5ad4cd2ea81e24eea2dba51071f5881bd024f81d0b2d1"
+    },
+    {
+      "file": "src/components/ui/page-header.tsx",
+      "sha256": "4e46cb2657112fdd0b17a7e00f79370b81e1a1ba2b5cb4eb5b6f1430da5d7bda"
+    },
+    {
+      "file": "src/components/ui/performance-badge.tsx",
+      "sha256": "93164a046b13952bde3ba68d811d5d56323512a19a1b51595051980ae8d11253"
+    },
+    {
+      "file": "src/components/ui/rank-movement.tsx",
+      "sha256": "71bb97942417cd0c7701f7cc8272c0f9297c5014fee3b9a9dd68351d250f334e"
+    },
+    {
+      "file": "src/components/ui/rank-row.tsx",
+      "sha256": "1ca016ade8085dbcefaced5de4e47a70977523faae609fe0c830e9f6ac244919"
+    },
+    {
+      "file": "src/components/ui/record-indicator.tsx",
+      "sha256": "5fc40c07add97df98cbdfb951b844ec92b8d65aa5684d240f8912232b4903f54"
+    },
+    {
+      "file": "src/components/ui/relationship-list.tsx",
+      "sha256": "3d79f576165a9493e56605f3938edf6745e20f796f3478eed1d88ad2eb910f44"
+    },
+    {
+      "file": "src/components/ui/sample-indicator.tsx",
+      "sha256": "1de2e202fd26fe5edb2abad8a9ae95a3e124c5832c66ca28c6b34088bfc9e39e"
+    },
+    {
+      "file": "src/components/ui/section-card.tsx",
+      "sha256": "ccd1117cbd293967f8a623f632c88e477b968a91b731f825ab0f83a91c92c12e"
+    },
+    {
+      "file": "src/components/ui/section-header.tsx",
+      "sha256": "2f6a11ad42803b88ff9382358a77a5c9119bb331640835d3adf79c0ec2c048f9"
+    },
+    {
+      "file": "src/components/ui/sparkline.tsx",
+      "sha256": "a404b9bb692c88f4d5b10e6e785e32c9dc7f4caac332fd9818752c4485b38d42"
+    },
+    {
+      "file": "src/components/ui/stat-tile.tsx",
+      "sha256": "85d3131b193e5732230577121113269c59ab1eaace4c6c74959aae27a729e588"
+    },
+    {
+      "file": "src/components/ui/tactical-badge.tsx",
+      "sha256": "470fca88f470d74617e9429d322b7e08e61203ee73216b23704ec974d6daf142"
+    },
+    {
+      "file": "src/components/ui/tactical-tabs.tsx",
+      "sha256": "67fc45800967811465f2e937c1b354351e3c11d2af29e4790bf44f789af7d875"
+    },
+    {
+      "file": "src/components/ui/trend-indicator.tsx",
+      "sha256": "42dcabf68fb6e5969ba193f893c6e0841df605a32225bd06296f4dd90772d29e"
+    },
+    {
+      "file": "src/lib/admin/auth.ts",
+      "sha256": "5030bd13f1cdc84a8cb7d4c14ae47edf3f5893fba63f3cd7ac0886f5f86b3329"
+    },
+    {
+      "file": "src/lib/admin/constants.ts",
+      "sha256": "48b84bb5cfb206508fd2cc8cd1c898bc48adfe2cfe42badec02d3ad615239a8e"
+    },
+    {
+      "file": "src/lib/admin/cookies.ts",
+      "sha256": "c234acce4ef0824a4c925ce3d83601339a5ddfac080845b06af1a208c3c4a79e"
+    },
+    {
+      "file": "src/lib/admin/health/types.ts",
+      "sha256": "4575a6fff382ddfd2786457d0fc603dabf43e0d1e6ca462d33a90e45308172e9"
+    },
+    {
+      "file": "src/lib/admin/navigation.ts",
+      "sha256": "77d3b9da98e2a5cf640fcdb3a781b7e275695a1b1f26f0a4c093b849d643db14"
+    },
+    {
+      "file": "src/lib/admin/parser.test.ts",
+      "sha256": "225a67595c746486061f5424355274279c22a6e82989076d08dbb607d54ffaa7"
+    },
+    {
+      "file": "src/lib/admin/parser.ts",
+      "sha256": "feb76f6d9b8cda6965e6f1690a4cb8badfb739a775299c74b0f89d71a8c70be9"
+    },
+    {
+      "file": "src/lib/admin/session.ts",
+      "sha256": "c063daf40926dd8902170412f671dc60fe9f2d9e2fcb4386af1b3e7f5341fdbb"
+    },
+    {
+      "file": "src/lib/forma.ts",
+      "sha256": "96893baff4ad67be5b2940992d129849fd0402d426f4572483fb6743f0395c04"
+    },
+    {
+      "file": "src/lib/monitored-players.test.ts",
+      "sha256": "93a72237ef37c1f19ecbed3d9b0352cd08ed851b0d544730f7fbe2d2ce8521e5"
+    },
+    {
+      "file": "src/lib/monitored-players.ts",
+      "sha256": "1eeebf29585e78b07e461045563dcca22b73a00198cf391f602848602dbcf79d"
+    },
+    {
+      "file": "src/lib/narrator/templates.ts",
+      "sha256": "793f0858d50f4dc061ed25a7607abc6243d4739aadea5ea051f7e3cf913615dc"
+    },
+    {
+      "file": "src/lib/rate-limit.ts",
+      "sha256": "edb3ed76ef1394b9e25cea2c78810c614aceb82478e2c739969dbf6a3102fa74"
+    },
+    {
+      "file": "src/lib/season-podium.test.ts",
+      "sha256": "83a4dc8af0c4dbd67a7095b960cc66606aec7a6b98ae2005fad5e59c4a38a282"
+    },
+    {
+      "file": "src/lib/season-podium.ts",
+      "sha256": "0674b6d2afcf18a436706a320daf67875805a30e0bda1fe9bed254be73d6e54d"
+    },
+    {
+      "file": "src/lib/statContext.ts",
+      "sha256": "18ef4393ab1aba424661e2c08e45c22c69c313d38a200ac075bfded8229066d3"
+    },
+    {
+      "file": "src/lib/sync-auth.ts",
+      "sha256": "c26cbde39434956b291ad7252a46a6bd35eac1c2f8f9bc9d5867666f7c6f9b41"
+    },
+    {
+      "file": "src/lib/sync-worker-client.ts",
+      "sha256": "6ac315b0cee2cf7b951d193509d9bd64ee9741d1e7e7feb77e16673193acdf4d"
+    },
+    {
+      "file": "src/lib/team-balance/balancer.ts",
+      "sha256": "8590817d3c3f0afe6b8e7ea3a0f627cce2705076c836c9a607a3b6a8ef711f5c"
+    },
+    {
+      "file": "src/lib/team-balance/helpers.ts",
+      "sha256": "825cbe216f02f2d1f240d79ca158d0b152f176d86dee70ec540f8b09182a3232"
+    },
+    {
+      "file": "src/lib/team-balance/metrics.ts",
+      "sha256": "8132406e161e6da79d14798d8c71b5f53520a1a243f7fa190d69c3a49d2ad8e9"
+    },
+    {
+      "file": "src/lib/team-balance/rng.ts",
+      "sha256": "77a5169fa9b2124edd50eff3b121c216a0f0ea67d37774d51cb801fb181bf633"
+    },
+    {
+      "file": "src/lib/team-balance/types.ts",
+      "sha256": "249b8040ef382b693a367cfc7c8c48cad097a212a25b42028419eb31fd5740ed"
+    },
+    {
+      "file": "src/lib/utils.test.ts",
+      "sha256": "b79b52cca1377b261deadf8719351dfa3195e136953747d820090986b26a8829"
+    },
+    {
+      "file": "src/lib/utils.ts",
+      "sha256": "61fd08b9e042a59362a61f035239f8072a23f2d4ed6a16c37b414b36c390ce78"
+    },
+    {
+      "file": "src/proxy.ts",
+      "sha256": "9126f26879f5cffbbbab742645f4c460988bb3e90560fe54b6d3abcd52929886"
+    },
+    {
+      "file": "src/server/adapters/gamersclub/fixtures/match-partial.json",
+      "sha256": "3b6fcd2bcef4ce45ea0af3afb84c0c44c81d5d5fe5fc9b56acaba028aa90ea2e"
+    },
+    {
+      "file": "src/server/adapters/gamersclub/fixtures/match-real-2-mirage.json",
+      "sha256": "87a6187bddcb4fe9d3378ef3deb2ff645bdea89354efa2b011f8ad586920622b"
+    },
+    {
+      "file": "src/server/adapters/gamersclub/fixtures/match-real-27483022.json",
+      "sha256": "cc01bae465cd076f6619dee88a07928c55da1db4ae61938de9cf5873080eda2d"
+    },
+    {
+      "file": "src/server/adapters/gamersclub/fixtures/match-standard.json",
+      "sha256": "c09658aec7d6909c64b68c64ceea1bf4c94f820b024b66260afc258c9ecc1f79"
+    },
+    {
+      "file": "src/server/adapters/gamersclub/normalize.test.ts",
+      "sha256": "f534f6954b323950ac49edb25994d380d82704ef9da8118c4316345cae182b14"
+    },
+    {
+      "file": "src/server/adapters/gamersclub/normalize.ts",
+      "sha256": "e80c5a7d0ee9cbed1a766bf35a90f414a50562664f991fe380d34a9309c0e55c"
+    },
+    {
+      "file": "src/server/adapters/gamersclub/types.ts",
+      "sha256": "d8cea2a348ef7c8a79140e23879f6128c1e8feb76567c7154ae5005dd980dd95"
+    },
+    {
+      "file": "src/server/adapters/parser/normalize.ts",
+      "sha256": "6da8a45f8a3de1bd4d3a66076f5f230d0f53cadeacbc6dc95fccaf6c04bbc52a"
+    },
+    {
+      "file": "src/server/admin/backfill-match-seasons.ts",
+      "sha256": "3a267f339e344bc1a3704073f38a21a443bccf6e633986ae692978cc4a103858"
+    },
+    {
+      "file": "src/server/analytics/comparison.analytics.ts",
+      "sha256": "ce0002c7203c8affbe6a5891d71033a63893cd51ad2631323ea01c6e27e5c648"
+    },
+    {
+      "file": "src/server/analytics/match.analytics.ts",
+      "sha256": "89a6c66917fa11566221fad37c5f66dcebbb9929e4ebb505f42328de5820d100"
+    },
+    {
+      "file": "src/server/analytics/player.analytics.ts",
+      "sha256": "143093ed4ab9e4b6fbcae723511569f429f2a9b118e76b6b6b9e1ff62679d30c"
+    },
+    {
+      "file": "src/server/analytics/session.analytics.ts",
+      "sha256": "43c19b69a96a0d175c689aab798b545c4c9899633431f619a3b21045a68103eb"
+    },
+    {
+      "file": "src/server/analytics/team.analytics.ts",
+      "sha256": "b0f7f3f1f12be0d0ab52275753dc5ea702021d83189218f8a7e58c68b0fc709c"
+    },
+    {
+      "file": "src/server/coach/builders/comparison.builder.ts",
+      "sha256": "72bb4b74521c9cc9196cc8afbc478bae112472bd663862c0709f537a1d6a242c"
+    },
+    {
+      "file": "src/server/coach/builders/dashboard.builder.test.ts",
+      "sha256": "8435aad04262db1fdbea4fc2d52a7f6312420a3ed131a02e621c2a28ad811bfb"
+    },
+    {
+      "file": "src/server/coach/builders/dashboard.builder.ts",
+      "sha256": "b5302a432c5d638351344cae60d261b5d2550335eafcf9920235bde5b1482d9d"
+    },
+    {
+      "file": "src/server/coach/builders/match.builder.ts",
+      "sha256": "177178633721e4843256bd4579b524c1b43d87ac07655fcb8b76b8520aaa6013"
+    },
+    {
+      "file": "src/server/coach/builders/player.builder.ts",
+      "sha256": "181f6616929b3b7f6f10ad82152ad7e8b0059907273befd6676ec064dd0364c3"
+    },
+    {
+      "file": "src/server/coach/builders/session.builder.ts",
+      "sha256": "5e1e67e0092018536535d451b8ed34e8a736176f8d5a77a80ffee39b369d20f8"
+    },
+    {
+      "file": "src/server/coach/providers/coach-provider.ts",
+      "sha256": "3a4d7bb436880d161b5dc134138bf09e4936f985c7ca9def323bcd0ec0d62bbb"
+    },
+    {
+      "file": "src/server/coach/providers/deepseek.provider.ts",
+      "sha256": "de6fbc152472220cd2ed6aa410cb8f4f1cda58815206ad1f64278249fd140986"
+    },
+    {
+      "file": "src/server/coach/providers/factory.ts",
+      "sha256": "c00e72fd560daae270a0559ee09169761ca8070423c7a641bf937d9b6937f219"
+    },
+    {
+      "file": "src/server/coach/services/coach.service.ts",
+      "sha256": "f0668da0f42cc4698e92e1268f55fe6d252ea07e315bf16406cceb9758db5d84"
+    },
+    {
+      "file": "src/server/coach/templates/comparison.md",
+      "sha256": "83690ac6f5933ee2cc573488c3ba3d0f8e713a9618dca472033b92a16fcedf40"
+    },
+    {
+      "file": "src/server/coach/templates/dashboard.md",
+      "sha256": "464a6f4a21d22b952849bd562e58b101c3b9f27ac56a4d8f1dc602a26cb979f8"
+    },
+    {
+      "file": "src/server/coach/templates/match.md",
+      "sha256": "2fa93f1063ad2fe11958d6cbf16061456987a687060d00aaeedda5d8040b80bf"
+    },
+    {
+      "file": "src/server/coach/templates/player.md",
+      "sha256": "b3aefeca2e411bef338e19556dae0f96692487a662e2f2995dbaeae36313071d"
+    },
+    {
+      "file": "src/server/coach/templates/session.md",
+      "sha256": "1e8d406a5faadbb113223c2f25d6cad2ef65264a9635252bb54405a3707bf053"
+    },
+    {
+      "file": "src/server/coach/templates/vocabulary.md",
+      "sha256": "cfdae77d3a2a6275064bbf9a70c671965724cb5cb965ace3d2042eca9b7ef09b"
+    },
+    {
+      "file": "src/server/config/ai.ts",
+      "sha256": "485d2167e035b2aa0c490f12c3400db4d1186d607bc869fed92a6780bf48a66c"
+    },
+    {
+      "file": "src/server/db.ts",
+      "sha256": "87ba5f28129553cecfb52c387ac69da5a4b56158d88861be360ca63c40281719"
+    },
+    {
+      "file": "src/server/domain/README.md",
+      "sha256": "d6de5436e192926dbf8adda5f9cf4ab4fbc1ce2fd18c14f0222c843c7ad770d6"
+    },
+    {
+      "file": "src/server/domain/achievementCatalog.ts",
+      "sha256": "4ac4df2123312a5c336b07a26afb9ac0bfa9642df5831c317e9013c7ecd00b1d"
+    },
+    {
+      "file": "src/server/domain/achievements.ts",
+      "sha256": "be92412a2e8edaedb4621cc35f9238688c8a2350a4f0238c4cbc368a714aa9da"
+    },
+    {
+      "file": "src/server/domain/adr.test.ts",
+      "sha256": "0c09ce8d61635bd0758f513a068c4f2abc2b1a967bbaffe93c88f352781a28d2"
+    },
+    {
+      "file": "src/server/domain/adr.ts",
+      "sha256": "4c9c85795078ae82fe340592f9f5da5a8e4382260db7e9fc9c2c0fa0814d46b3"
+    },
+    {
+      "file": "src/server/domain/elo.ts",
+      "sha256": "76c53b1d6936e841b5860d7b7e8f41b58772996bca3c30fb4ef12279984af8bf"
+    },
+    {
+      "file": "src/server/domain/lineage.ts",
+      "sha256": "82be6ce7c037202ed7c1caa9794fca2baad1b9dc65524dd6ba0ceac897f88a21"
+    },
+    {
+      "file": "src/server/domain/matchClassification.test.ts",
+      "sha256": "c4dde64ff38fa69f607233eb3a5a312a9ef1a3eec53d402189562e90b320075f"
+    },
+    {
+      "file": "src/server/domain/matchClassification.ts",
+      "sha256": "292cf3100a5855976c062c09db77d048d872217690bd558ad654a0678f879b21"
+    },
+    {
+      "file": "src/server/domain/rating.ts",
+      "sha256": "b7bb4e6d66d19fc5f7b996734c7ebf72ae99c0206e996b0c3a4c58a7210a4369"
+    },
+    {
+      "file": "src/server/domain/rivalry.ts",
+      "sha256": "029bece1788edc56b0d32dab3ee5d381545946b77a61d484dbca3444a06c818b"
+    },
+    {
+      "file": "src/server/domain/seasonScore.test.ts",
+      "sha256": "cfdf74858d178d0d9ee6ee40ce48f0cc0aa29d91485f05186a3fdac632fbf2ac"
+    },
+    {
+      "file": "src/server/domain/seasonScore.ts",
+      "sha256": "7959ffbbc5479f137f90ca3d6b8925e387320e5a5f953377de631667dc414916"
+    },
+    {
+      "file": "src/server/dtos/README.md",
+      "sha256": "cfbe87b7d34b2fefb62896692b6ed0defdf1ab9c5b662c931ef9f61cef8cc919"
+    },
+    {
+      "file": "src/server/dtos/coachReport.dto.ts",
+      "sha256": "4288bd039e98bd34629c5dddf94ccbfb933684540d390d07b24a9f797acbbcc4"
+    },
+    {
+      "file": "src/server/dtos/common.dto.ts",
+      "sha256": "e14477feba7edfc330eae21f0fcccf8fc0a1e383af85ce70816020af532edd37"
+    },
+    {
+      "file": "src/server/dtos/config.dto.ts",
+      "sha256": "4e4c6b2ecf22da64c329b48a02150e0261759dbe2b468b40a1796cc3b0b2d2f4"
+    },
+    {
+      "file": "src/server/dtos/matchDetails.dto.ts",
+      "sha256": "4c647955f64aafa78759298af12e7aa6c27283486019b892ac8db8e86fbddc70"
+    },
+    {
+      "file": "src/server/dtos/parser.dto.ts",
+      "sha256": "7eef9639985159cc0e81032b3da4227b1a95227ca8e333d2d7245ad58f1f8f9a"
+    },
+    {
+      "file": "src/server/dtos/parser.test.ts",
+      "sha256": "2618126a05af9fd4d2da749794118dad8f7bfb0cbf36a9bc1b7490052d3a3b1a"
+    },
+    {
+      "file": "src/server/dtos/playerComparison.dto.ts",
+      "sha256": "92db5af73886c674dc661461aa30c1c4bb8dba4eda2a4968a3141d8530067f94"
+    },
+    {
+      "file": "src/server/dtos/playerProfile.dto.ts",
+      "sha256": "244bdd60177100c010845a8123a74fbb5df72389b6ba38f13b6c43185a588825"
+    },
+    {
+      "file": "src/server/dtos/sessionSummary.dto.ts",
+      "sha256": "0b8b4d88c9192d3cd7c73aa6a4cee6e65e0842d9b31bd4ca972964622f0bd048"
+    },
+    {
+      "file": "src/server/dtos/stats.dto.ts",
+      "sha256": "0b496ddf031aca69b7909edf362dcb0dc39acc9263386471856f95bcea4cb1a8"
+    },
+    {
+      "file": "src/server/dtos/sync.dto.ts",
+      "sha256": "4e6e0665fe4b4bc28dbb8ed01eee58c7cf10f0d1bd47368fe15765a0ea653dcc"
+    },
+    {
+      "file": "src/server/http.ts",
+      "sha256": "c8a8b8f135feabe77265b75d9f8feba443e9899e66a7c6ca4f8fd992c06cd622"
+    },
+    {
+      "file": "src/server/repositories/README.md",
+      "sha256": "9903e4439c60e98fbbbce87e1ed7a564e7ed5c40b164c37f8f1733746d3bd94b"
+    },
+    {
+      "file": "src/server/repositories/achievement.repository.ts",
+      "sha256": "e0a8a38259ad13d0537e29494a7d5e4bb86d41cd50571354ab235d0c2a140c7a"
+    },
+    {
+      "file": "src/server/repositories/configuration.repository.ts",
+      "sha256": "0af74281cf5bc4efaa2cbe5c36dc90bc1ac4fd43f88e7c0878c220c5089bf09d"
+    },
+    {
+      "file": "src/server/repositories/event.repository.ts",
+      "sha256": "60253f776bcb9297ff9ff84493f870157964480c3f91d918f7d23e62aa4379f4"
+    },
+    {
+      "file": "src/server/repositories/import.repository.ts",
+      "sha256": "26d6b88dfd143785c47a64149f79c479aff6011b77ce90d4225bddbd6824cfb3"
+    },
+    {
+      "file": "src/server/repositories/map.repository.ts",
+      "sha256": "ccc4e2f20bd55ddbab6ee1c6ac232b3ee0f6ebd3b181d27cb857fe935ec64e9a"
+    },
+    {
+      "file": "src/server/repositories/match.repository.ts",
+      "sha256": "99ea9d849f2da5e0a12079f364150088460f0d4a34eed93c3d156bf11d245dc3"
+    },
+    {
+      "file": "src/server/repositories/matchPayload.repository.ts",
+      "sha256": "fcc565a30c0b2c73a61a5da634ba72651d32a01778bf3cd4f36e8f1c2ba1013b"
+    },
+    {
+      "file": "src/server/repositories/player.repository.ts",
+      "sha256": "be393ebff1875971f0bf812db3b9b724b1b48708132a2c5a919f52af2283571c"
+    },
+    {
+      "file": "src/server/repositories/playerAchievement.repository.ts",
+      "sha256": "86d691a39699299edfa7c1535da9a5c5c08d559e6c47a43ea5f285110a8a3166"
+    },
+    {
+      "file": "src/server/repositories/playerMatchStats.repository.ts",
+      "sha256": "ccb366de593df83cb8b3aa76eca5f1cd4c273a92c41eb3a63fabc8f6046cde10"
+    },
+    {
+      "file": "src/server/repositories/rivalry.repository.ts",
+      "sha256": "87c06f7d0ae4038bca84c147214b0e6655719ab0e80dded0db7b86205c1b2bcf"
+    },
+    {
+      "file": "src/server/repositories/session.repository.ts",
+      "sha256": "b72624351163a613e8e8707af4508a38b636c4a6955dfc56186c5402175be797"
+    },
+    {
+      "file": "src/server/safeQuery.ts",
+      "sha256": "9643cdfb3b4f34a8b9285619473cbaf37561475bb3d352befd096cad29949d87"
+    },
+    {
+      "file": "src/server/services/README.md",
+      "sha256": "56501b44e019cb03672a02d53250687127e7e738dcb3b83f384aea24681666f4"
+    },
+    {
+      "file": "src/server/services/achievement.service.ts",
+      "sha256": "b556b30e1e4ddf07effc9a01c79a9ce14fd550e655d68475e8e63b48a0b0a676"
+    },
+    {
+      "file": "src/server/services/analytics/premium/base.ts",
+      "sha256": "b50adfe49c0a64112fc15129eedadcc1f4d7970c2a021d0399edce5de1eb9f68"
+    },
+    {
+      "file": "src/server/services/analytics/premium/clutch.analytics.ts",
+      "sha256": "c47be9c658dd97c5b1ad47e8d6eed78638e231e87548a987833715d691e2ad95"
+    },
+    {
+      "file": "src/server/services/analytics/premium/combat.analytics.ts",
+      "sha256": "3c8a4d82bd97eeccf599c6b1ac463f3de243513a6498e9293ba5117b64f9776d"
+    },
+    {
+      "file": "src/server/services/analytics/premium/damage.analytics.ts",
+      "sha256": "9361c0494218dafee760c7e20cde716ea7979fbb1f40b6ccdd356abcbaa78be9"
+    },
+    {
+      "file": "src/server/services/analytics/premium/entry.analytics.ts",
+      "sha256": "726515b2cfb90201511b1b725b8eb18ac308702e6d2e178bc54542fb5fb7823c"
+    },
+    {
+      "file": "src/server/services/analytics/premium/matchup.analytics.ts",
+      "sha256": "bc1976ec0ea5cfe49368805445f908f0a71ea69d5357cf22f11b1b125ae28604"
+    },
+    {
+      "file": "src/server/services/analytics/premium/synergy.analytics.ts",
+      "sha256": "9f2fe18ae455cff6cc754bf38ad94ac09761b046244e6ea6f5c413e5254755f8"
+    },
+    {
+      "file": "src/server/services/analytics/premium/trade.analytics.ts",
+      "sha256": "acf0ed9eaecd88dbe94dde91398e656683c91f60f5e11dc7599d24364430f450"
+    },
+    {
+      "file": "src/server/services/comparison.service.ts",
+      "sha256": "b25ded6ca3f2c16227f9d76dc9ae8faae18f07606580e90a6417b426bae03471"
+    },
+    {
+      "file": "src/server/services/competitive.service.ts",
+      "sha256": "bce6a4db249d1a473fbac9c916ef3cd41b10ba49b040d4992428865feef2ce17"
+    },
+    {
+      "file": "src/server/services/competitive.test.ts",
+      "sha256": "b74ea147cea79506e44ccd8b71f917136c30e3132f3fcd6c06d5d982c65ea6a2"
+    },
+    {
+      "file": "src/server/services/configuration.service.ts",
+      "sha256": "38c3b4f74c2de78639fbb85ea808c357bd2bce1f19dcecf28e40f07233ff1cc5"
+    },
+    {
+      "file": "src/server/services/dashboard-podium.test.ts",
+      "sha256": "c44588c4e6bf20870a3a8ae514cba9a3bf4bfb92bcb6c360b4420c801c1b4f16"
+    },
+    {
+      "file": "src/server/services/dashboard.service.ts",
+      "sha256": "9a20e4eb0e4acb413f82c4be66f8b9edd50b0356a1e847d9a053bb8492c35fdc"
+    },
+    {
+      "file": "src/server/services/dashboard.test.ts",
+      "sha256": "272537b0df1abf91b46eb14c099c13f04449473d7c966ac93577a840621b54c6"
+    },
+    {
+      "file": "src/server/services/elo/elo.service.ts",
+      "sha256": "89f2aef65a659bbd33d4db36837827655bd67d160cfd87044eee80823c502cf5"
+    },
+    {
+      "file": "src/server/services/enrichment/demo-enrichment.service.ts",
+      "sha256": "de0500d8d938b1c2d8f0b25264fe8de08f3650e4d80f2045b129b57b82d576e5"
+    },
+    {
+      "file": "src/server/services/hall-of-fame.test.ts",
+      "sha256": "8d459487241e53c687921786c5d9e3b9aea1286ad870c691c0edb828cfbe7ec6"
+    },
+    {
+      "file": "src/server/services/highlights/highlight.providers.ts",
+      "sha256": "a92eff291f5616533a2be053f486501862703ae7d55bdac8de39fcc126e868a1"
+    },
+    {
+      "file": "src/server/services/highlights/highlight.scoring.ts",
+      "sha256": "5ea90b22df5ffa30457fb1d5c5fb25bd49bc4f1b96aeaa466336a7bd1d522c39"
+    },
+    {
+      "file": "src/server/services/highlights/highlight.types.ts",
+      "sha256": "c2122432a8ce85accc04d0338e291669c2aaa078e1d2d20c1fc0918510cbd1b1"
+    },
+    {
+      "file": "src/server/services/highlights/highlights.service.ts",
+      "sha256": "14fc1673a9015f50742c7482d8c5eebcf065f478e93be9bbe93d3bcdedb7fa32"
+    },
+    {
+      "file": "src/server/services/highlights/highlights.test.ts",
+      "sha256": "ed0057d6077a8cb8c9c1f1803c1953a3d0f15437b544c5d322a72aed594653ac"
+    },
+    {
+      "file": "src/server/services/import.service.ts",
+      "sha256": "6b7549204eb6a4f2900db579f93cbad35a07ad7acb0b544aa5819de474787687"
+    },
+    {
+      "file": "src/server/services/ingest/gc-sync-season.test.ts",
+      "sha256": "04fba0d08dcb1129b617ee55595f72b4a1a75508b11af876b48585ea5751f3ed"
+    },
+    {
+      "file": "src/server/services/ingest/gc-sync.service.ts",
+      "sha256": "b4b569e6c51b80fc95bffe8775bf352e71f26b9910053da6a53d545fe9c903fa"
+    },
+    {
+      "file": "src/server/services/match.service.ts",
+      "sha256": "7d3e4d53d5784cce9b75942961b17edccbc7fd01b10ee0adef23823bbb5d64f3"
+    },
+    {
+      "file": "src/server/services/match/awards.service.ts",
+      "sha256": "b5e61764842ece63ad16859e131dd6f4ac02685525d9178b44a8709963a8bef8"
+    },
+    {
+      "file": "src/server/services/match/match-ingest.test.ts",
+      "sha256": "736ab36f1c985f28a7d17535143062a7178b80e3b940a39d971534de797f8d24"
+    },
+    {
+      "file": "src/server/services/match/players.service.ts",
+      "sha256": "d9102a7e6debc22bbd30b385ff22db7ddbb8b8bd11a80d939d112c3f370e816e"
+    },
+    {
+      "file": "src/server/services/match/summary.service.ts",
+      "sha256": "bdb4751da6c5f603bb84a5cf3b6dcbe26a51f2ed873a960d59628cb314ba4ad1"
+    },
+    {
+      "file": "src/server/services/normalizer.service.ts",
+      "sha256": "e6671bb42fa81e95a308b93010c3597b359fac1580713eedbab9b9c9b21faafc"
+    },
+    {
+      "file": "src/server/services/player-admin.test.ts",
+      "sha256": "de1e9668ea32cb0d48c72ca07c3d73a92a6f4f2de0f9e0ee6f2a784d2ebde104"
+    },
+    {
+      "file": "src/server/services/player.service.ts",
+      "sha256": "e74d26827e37663e351c350bff3a03d57af40a0c28dc33c73a39467ee3ecd242"
+    },
+    {
+      "file": "src/server/services/player/maps.service.ts",
+      "sha256": "f401fefc4deae917fce34b81d2a5e6e7f94f0151dd4686067884bf4fd14f4ba1"
+    },
+    {
+      "file": "src/server/services/player/metrics.service.ts",
+      "sha256": "8acd6e2d9f6b33c8062cb84a674f1f36dacb00ce3b97c5aced12b6711d1b2cf5"
+    },
+    {
+      "file": "src/server/services/player/partners.service.ts",
+      "sha256": "6f650c3eb3fa32a8a7bd1262cec6a39205760728151b5a166ad5515f0e60a318"
+    },
+    {
+      "file": "src/server/services/player/timeline.service.ts",
+      "sha256": "88e74df38f2945e9615ed9b6f89e1ba1e45fdfb3acc76eccdcba604ac79309a2"
+    },
+    {
+      "file": "src/server/services/premium-events.normalizer.ts",
+      "sha256": "af7b9208308fef9fb95656d6985aebfb465381656875c4e788d166a977668f94"
+    },
+    {
+      "file": "src/server/services/radar.test.ts",
+      "sha256": "babecaa09dfe69da14b469dbf791576a05aa5335504e65661b1f5fb1d0f21ff2"
+    },
+    {
+      "file": "src/server/services/rivalry.service.ts",
+      "sha256": "94b2003867f9250a15d824e7591f0b26a5d372181e126a034f557392f1f9cb16"
+    },
+    {
+      "file": "src/server/services/rivalry/rivalry.service.ts",
+      "sha256": "1d1ecc43dce55265b0f22f80cbaa20b083a22e530f0a12c1a8b505e354b6a186"
+    },
+    {
+      "file": "src/server/services/season.service.ts",
+      "sha256": "16c1ff6acd5e234f33f891fa1acce9913ec57b7a8782aa339a48eb46916b1a6b"
+    },
+    {
+      "file": "src/server/services/season.test.ts",
+      "sha256": "82e11b6eec8869b729e562d992ef6554c2ea1cdd0cd087986ddbcf6911bcea80"
+    },
+    {
+      "file": "src/server/services/session.service.ts",
+      "sha256": "8b17861de447ff142a10a6a01582b10ba3688b66c7ee41379db125ba4971b9ed"
+    },
+    {
+      "file": "src/server/services/stats.service.ts",
+      "sha256": "a4a4773c0de7103fd3810f318cf4790d6a9cb5b38568a03ff8c107284157c342"
+    },
+    {
+      "file": "src/server/services/steam-profile.service.ts",
+      "sha256": "f5ec53582ea97dc8d6d75c25e6ae8518699e2373593b4a6c635bd347d2ac84fe"
+    },
+    {
+      "file": "src/server/services/sync-job.service.ts",
+      "sha256": "cd8b5c3f921a6d6300a40b27b4b2a8d6be6dcbee7118a9a1b3fa6bfc87b1ea82"
+    },
+    {
+      "file": "src/server/services/team-balance.service.ts",
+      "sha256": "ca6def45505170a7d92cee66d23ea86904eac8ac9918075cef7175b7997e61c0"
+    },
+    {
+      "file": "src/server/utils/player-name-normalizer.ts",
+      "sha256": "92b55eae9627b10d319e3447f8e6b753bfad993b994529cff232445bbbfcf324"
+    },
+    {
+      "file": "src/server/verify_level_gc.ts",
+      "sha256": "7e3f752aacfcfb5b7bad9c526e02577f48d278b4abc27e1b4e2cb3fc0e8d2388"
+    },
+    {
+      "file": "tsconfig.json",
+      "sha256": "aee33efd85973e12c6b5952464c577f1491c4f972ab9d0910d9d18fe98b27923"
+    },
+    {
+      "file": "vitest.config.ts",
+      "sha256": "1ffd234eaf693dccd65764c63db3c72b66c0049f0ab5bfcbbb6fd02af80ad4f2"
+    }
+  ]
+}

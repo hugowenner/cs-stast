@@ -1,0 +1,141 @@
+{
+  "at": "2026-10-30T17:13:11.127Z",
+  "readOnly": true,
+  "results": [
+    {
+      "season": "cmuow54kq223v01rxwlfgd6o9",
+      "ms": 2270,
+      "rssMiB": 474,
+      "heapMiB": 285,
+      "maxRssMiB": 475,
+      "modules": {
+        "entregamos5v4": {
+          "hasTelemetry": true,
+          "totalEligibleRounds": 2530
+        },
+        "terrorDosAmigos": {
+          "hasTelemetry": true,
+          "totalRoundsAnalyzed": 2530,
+          "totalTeamFlashes": 5552
+        },
+        "economiaDesastre": {
+          "hasTelemetry": true,
+          "totalRoundsAnalyzed": 2530
+        },
+        "melhorDupla": {
+          "hasTelemetry": true,
+          "totalTrackedTrades": 968
+        },
+        "matadorEco": {
+          "hasTelemetry": true,
+          "totalEcoKills": 3905
+        },
+        "plantouGanhou": {
+          "hasTelemetry": true,
+          "totalEligibleRounds": 2530
+        },
+        "especialistaArmas": {
+          "hasTelemetry": true,
+          "totalKillsAnalyzed": 6940
+        },
+        "reiRoundsDecisivos": {
+          "hasTelemetry": true,
+          "totalDecisiveRoundsAnalyzed": 304
+        },
+        "parceiros": {
+          "totalEligibleDuos": 25
+        }
+      }
+    },
+    {
+      "season": "all",
+      "ms": 3703,
+      "rssMiB": 887,
+      "heapMiB": 687,
+      "maxRssMiB": 894,
+      "modules": {
+        "entregamos5v4": {
+          "hasTelemetry": true,
+          "totalEligibleRounds": 4863
+        },
+        "terrorDosAmigos": {
+          "hasTelemetry": true,
+          "totalRoundsAnalyzed": 5787,
+          "totalTeamFlashes": 12566
+        },
+        "economiaDesastre": {
+          "hasTelemetry": true,
+          "totalRoundsAnalyzed": 5787
+        },
+        "melhorDupla": {
+          "hasTelemetry": true,
+          "totalTrackedTrades": 1917
+        },
+        "matadorEco": {
+          "hasTelemetry": true,
+          "totalEcoKills": 9125
+        },
+        "plantouGanhou": {
+          "hasTelemetry": true,
+          "totalEligibleRounds": 4960
+        },
+        "especialistaArmas": {
+          "hasTelemetry": true,
+          "totalKillsAnalyzed": 14444
+        },
+        "reiRoundsDecisivos": {
+          "hasTelemetry": true,
+          "totalDecisiveRoundsAnalyzed": 597
+        },
+        "parceiros": {
+          "totalEligibleDuos": 53
+        }
+      }
+    },
+    {
+      "season": "all",
+      "ms": 528,
+      "rssMiB": 898,
+      "heapMiB": 683,
+      "maxRssMiB": 898,
+      "modules": {
+        "entregamos5v4": {
+          "hasTelemetry": true,
+          "totalEligibleRounds": 4863
+        },
+        "terrorDosAmigos": {
+          "hasTelemetry": true,
+          "totalRoundsAnalyzed": 5787,
+          "totalTeamFlashes": 12566
+        },
+        "economiaDesastre": {
+          "hasTelemetry": true,
+          "totalRoundsAnalyzed": 5787
+        },
+        "melhorDupla": {
+          "hasTelemetry": true,
+          "totalTrackedTrades": 1917
+        },
+        "matadorEco": {
+          "hasTelemetry": true,
+          "totalEcoKills": 9125
+        },
+        "plantouGanhou": {
+          "hasTelemetry": true,
+          "totalEligibleRounds": 4960
+        },
+        "especialistaArmas": {
+          "hasTelemetry": true,
+          "totalKillsAnalyzed": 14444
+        },
+        "reiRoundsDecisivos": {
+          "hasTelemetry": true,
+          "totalDecisiveRoundsAnalyzed": 597
+        },
+        "parceiros": {
+          "totalEligibleDuos": 53
+        }
+      }
+    }
+  ]
+}

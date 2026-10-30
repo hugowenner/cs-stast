@@ -250,28 +250,13 @@ export interface PlayerMomentumEntry {
   winrateChangeText: string; // Ex: "+20% Winrate"
 }
 
-export interface DecisivePlayerEntry {
-  player: { id: string; nickname: string; avatarUrl: string | null };
-  impactPercent: number;
-  entryKills: number;
-  entryDeaths: number;
-  openingWinrate: number;
-  tradeKills: number;
-  tradedDeaths: number;
-  tradeEfficiency: number;
-  clutchWins: number;
-  hideTradesAndClutches: boolean; // Oculta se os dados de toda a comunidade forem 0
-  matchCount?: number;
-  totalRounds?: number;
-  totalDeaths?: number;
-  totalOpeningDuels?: number;
-  rawOpeningWinrate?: number;
-  rawTradeEfficiency?: number;
-  rawImpactPercent?: number;
-  hasOpeningDeathsTelemetry?: boolean;
-  hasTradeTelemetry?: boolean;
-  hasClutchTelemetry?: boolean;
-}
+import type {
+  DecisivePlayerEntry,
+  ClutchTierStats,
+  CategoryLeaderResult,
+  DecisiveCategoriesSummary,
+} from "@/lib/decisive-categories";
+export * from "@/lib/decisive-categories";
 
 export interface TrioSummary {
   players: { id: string; nickname: string; avatarUrl: string | null }[];
@@ -1136,6 +1121,16 @@ function getPlayerMomentumFromDataset(dataset: CompetitiveDataset, take = 3): Pl
   return entries.sort((a, b) => (b.recentRating - b.priorRating) - (a.recentRating - a.priorRating)).slice(0, take);
 }
 
+function getWinnerSide(winnerTeam: string | null): "A" | "B" | null {
+  if (!winnerTeam) return null;
+  const t = winnerTeam.toUpperCase();
+  if (t === "T" || t === "TERRORIST") return "A";
+  if (t === "CT" || t === "COUNTER_TERRORIST") return "B";
+  return null;
+}
+
+
+
 export async function getDecisivePlayersFromDataset(
   dataset: CompetitiveDataset,
   take?: number
@@ -1152,9 +1147,84 @@ export async function getDecisivePlayersFromDataset(
     (aggregateAll._sum.clutchesWon ?? 0);
   const hideTradesAndClutches = totalTradesInDb === 0 && totalClutchesInDb === 0;
 
-  // Coleta dados de telemetria real de trades (PlayerTradeEvent) para as partidas do dataset
   const matchIdsInDataset = Array.from(new Set(dataset.allStats.map((s) => s.matchId)));
   const playerIdsInDataset = dataset.activePlayers.map((p) => p.id);
+
+  // 1. Clutches detalhados por tier (1v1 até 1v5) e desfecho
+  const clutchGroup = matchIdsInDataset.length > 0
+    ? await prisma.playerClutch.groupBy({
+        by: ["playerId", "opponents", "won"],
+        where: {
+          matchId: { in: matchIdsInDataset },
+          playerId: { in: playerIdsInDataset },
+        },
+        _count: { id: true },
+      })
+    : [];
+
+  const clutchDataByPlayer = new Map<
+    string,
+    {
+      totalAttempts: number;
+      totalWins: number;
+      highDisadvantageWins: number;
+      tiers: Record<number, { wins: number; attempts: number }>;
+    }
+  >();
+
+  for (const c of clutchGroup) {
+    let p = clutchDataByPlayer.get(c.playerId);
+    if (!p) {
+      p = {
+        totalAttempts: 0,
+        totalWins: 0,
+        highDisadvantageWins: 0,
+        tiers: {
+          1: { wins: 0, attempts: 0 },
+          2: { wins: 0, attempts: 0 },
+          3: { wins: 0, attempts: 0 },
+          4: { wins: 0, attempts: 0 },
+          5: { wins: 0, attempts: 0 },
+        },
+      };
+      clutchDataByPlayer.set(c.playerId, p);
+    }
+    const count = c._count.id;
+    p.totalAttempts += count;
+    if (p.tiers[c.opponents]) {
+      p.tiers[c.opponents].attempts += count;
+    }
+    if (c.won) {
+      p.totalWins += count;
+      if (p.tiers[c.opponents]) {
+        p.tiers[c.opponents].wins += count;
+      }
+      if (c.opponents >= 2) {
+        p.highDisadvantageWins += count;
+      }
+    }
+  }
+
+  // 2. Telemetria real de trades (PlayerTradeEvent)
+  const traderGroup = matchIdsInDataset.length > 0
+    ? await prisma.playerTradeEvent.groupBy({
+        by: ["traderId"],
+        where: {
+          matchId: { in: matchIdsInDataset },
+          traderId: { in: playerIdsInDataset },
+        },
+        _count: { id: true },
+        _avg: { timeDiff: true },
+      })
+    : [];
+
+  const tradesByPlayer = new Map<string, { count: number; avgTime: number | null }>();
+  for (const t of traderGroup) {
+    tradesByPlayer.set(t.traderId, {
+      count: t._count.id,
+      avgTime: t._avg.timeDiff !== null ? Number(t._avg.timeDiff.toFixed(2)) : null,
+    });
+  }
 
   const tradedDeathsGroup = matchIdsInDataset.length > 0
     ? await prisma.playerTradeEvent.groupBy({
@@ -1172,22 +1242,112 @@ export async function getDecisivePlayersFromDataset(
     tradedDeathsByPlayer.set(group.victimId, group._count.id);
   }
 
+  // Identifica partidas com telemetria de trades para cálculo honesto do denominador
+  const matchesWithTrades = matchIdsInDataset.length > 0
+    ? await prisma.playerTradeEvent.findMany({
+        where: { matchId: { in: matchIdsInDataset } },
+        select: { matchId: true },
+        distinct: ["matchId"],
+      })
+    : [];
+  const tradeMatchIdSet = new Set(matchesWithTrades.map((m) => m.matchId));
+
+  // 3. Telemetria de duelos de abertura (PlayerEntryDuel)
+  const entryGroup = matchIdsInDataset.length > 0
+    ? await prisma.playerEntryDuel.groupBy({
+        by: ["playerId", "isKiller"],
+        where: {
+          matchId: { in: matchIdsInDataset },
+          playerId: { in: playerIdsInDataset },
+        },
+        _count: { id: true },
+      })
+    : [];
+
+  const entryDuelByPlayer = new Map<string, { fk: number; fd: number }>();
+  for (const ed of entryGroup) {
+    let p = entryDuelByPlayer.get(ed.playerId);
+    if (!p) {
+      p = { fk: 0, fd: 0 };
+      entryDuelByPlayer.set(ed.playerId, p);
+    }
+    if (ed.isKiller) {
+      p.fk += ed._count.id;
+    } else {
+      p.fd += ed._count.id;
+    }
+  }
+
+  // First kills para aferição da taxa de vitória da equipe após FK
+  const playerFirstKills = matchIdsInDataset.length > 0
+    ? await prisma.playerEntryDuel.findMany({
+        where: {
+          matchId: { in: matchIdsInDataset },
+          playerId: { in: playerIdsInDataset },
+          isKiller: true,
+        },
+        select: {
+          matchId: true,
+          playerId: true,
+          roundNumber: true,
+          side: true,
+        },
+      })
+    : [];
+
+  const matchRoundsMap = new Map<string, any[]>();
+  for (const s of dataset.allStats) {
+    if (s.match?.roundsJson && !matchRoundsMap.has(s.matchId)) {
+      matchRoundsMap.set(s.matchId, s.match.roundsJson as any[]);
+    }
+  }
+
+  const fkConversionByPlayer = new Map<string, { roundsWonAfterFk: number; firstKillsWithRoundData: number }>();
+  for (const fk of playerFirstKills) {
+    let conv = fkConversionByPlayer.get(fk.playerId);
+    if (!conv) {
+      conv = { roundsWonAfterFk: 0, firstKillsWithRoundData: 0 };
+      fkConversionByPlayer.set(fk.playerId, conv);
+    }
+    const rounds = matchRoundsMap.get(fk.matchId);
+    if (rounds && Array.isArray(rounds)) {
+      const r = rounds.find((rnd) => rnd && (rnd.number === fk.roundNumber || rnd.position === fk.roundNumber));
+      if (r && r.winner_team) {
+        const winnerSide = getWinnerSide(r.winner_team);
+        if (winnerSide) {
+          conv.firstKillsWithRoundData++;
+          if (winnerSide === fk.side) conv.roundsWonAfterFk++;
+        }
+      } else if (r && r.teamAWin !== undefined) {
+        conv.firstKillsWithRoundData++;
+        const won = fk.side === "A" ? r.teamAWin : r.teamBWin;
+        if (won) conv.roundsWonAfterFk++;
+      }
+    }
+  }
+
   // Detecção de cobertura real de telemetria no dataset
-  const totalEntryDeathsInDataset = dataset.allStats.reduce((sum, s) => sum + s.entryDeaths, 0);
-  const totalTradeKillsInDataset = dataset.allStats.reduce((sum, s) => sum + s.tradeKills, 0);
-  const totalClutchesInDataset = dataset.allStats.reduce(
-    (sum, s) =>
-      sum +
-      Math.max(
-        s.clutchesWon,
-        (s.clutch1v1Wins || 0) +
-          (s.clutch1v2Wins || 0) +
-          (s.clutch1v3Wins || 0) +
-          (s.clutch1v4Wins || 0) +
-          (s.clutch1v5Wins || 0),
-      ),
-    0,
-  );
+  const totalEntryDeathsInDataset =
+    dataset.allStats.reduce((sum, s) => sum + s.entryDeaths, 0) +
+    Array.from(entryDuelByPlayer.values()).reduce((sum, e) => sum + e.fd, 0);
+  const totalTradeKillsInDataset =
+    dataset.allStats.reduce((sum, s) => sum + s.tradeKills, 0) +
+    Array.from(tradesByPlayer.values()).reduce((sum, t) => sum + t.count, 0);
+  const totalClutchesInDataset =
+    Array.from(clutchDataByPlayer.values()).reduce((sum, c) => sum + c.totalWins, 0) +
+    dataset.allStats.reduce(
+      (sum, s) =>
+        sum +
+        Math.max(
+          s.clutchesWon,
+          (s.clutch1v1Wins || 0) +
+            (s.clutch1v2Wins || 0) +
+            (s.clutch1v3Wins || 0) +
+            (s.clutch1v4Wins || 0) +
+            (s.clutch1v5Wins || 0),
+        ),
+      0,
+    );
   const totalTradedDeathsInDataset = Array.from(tradedDeathsByPlayer.values()).reduce((a, b) => a + b, 0);
 
   const hasOpeningDeathsTelemetry = totalEntryDeathsInDataset > 0;
@@ -1203,30 +1363,60 @@ export async function getDecisivePlayersFromDataset(
     const totalRounds = stats.reduce((sum, s) => sum + s.match.scoreTeamA + s.match.scoreTeamB, 0);
     if (totalRounds === 0) continue;
 
-    const entryKills = stats.reduce((sum, s) => sum + s.entryKills, 0);
-    const entryDeaths = stats.reduce((sum, s) => sum + s.entryDeaths, 0);
-    const totalOpeningDuels = entryKills + entryDeaths;
-    const rawOpeningWinrate = totalOpeningDuels > 0 ? (entryKills / totalOpeningDuels) * 100 : 0;
-    const openingWinrate = Math.round(rawOpeningWinrate);
+    // Entry Duels & Telemetria de Abertura
+    const entryDuel = entryDuelByPlayer.get(player.id);
+    const entryKills = entryDuel ? entryDuel.fk : stats.reduce((sum, s) => sum + s.entryKills, 0);
 
-    const tradeKills = stats.reduce((sum, s) => sum + s.tradeKills, 0);
-    const totalDeaths = stats.reduce((sum, s) => sum + s.deaths, 0);
+    let entryDeaths: number | null = null;
+    let totalOpeningDuels: number | null = null;
+    let rawOpeningWinrate: number | null = null;
+    let openingWinrate: number | null = null;
 
-    // tradedDeaths: mortes do jogador que foram vingadas por um aliado
-    const tradedDeaths = tradedDeathsByPlayer.get(player.id) ?? 0;
-
-    // Trade Efficiency (taxa de conversão de mortes em re-trade de equipe)
-    let rawTradeEfficiency = 0;
-    if (totalDeaths > 0) {
-      if (tradedDeaths > 0) {
-        rawTradeEfficiency = (tradedDeaths / totalDeaths) * 100;
-      } else if (tradeKills > 0) {
-        rawTradeEfficiency = (tradeKills / totalDeaths) * 100;
+    if (hasOpeningDeathsTelemetry && entryDuel) {
+      entryDeaths = entryDuel.fd;
+      totalOpeningDuels = entryKills + entryDeaths;
+      if (totalOpeningDuels > 0) {
+        rawOpeningWinrate = (entryKills / totalOpeningDuels) * 100;
+        openingWinrate = Math.round(rawOpeningWinrate);
       }
     }
-    const tradeEfficiency = Math.round(rawTradeEfficiency);
 
-    const clutchWins = stats.reduce(
+    // Team Win Rate after FK (só calculável quando há registro de rounds)
+    const fkConv = fkConversionByPlayer.get(player.id);
+    let rawTeamWinrateAfterFk: number | null = null;
+    let teamWinrateAfterFk: number | null = null;
+    let roundsWonAfterFk: number | null = null;
+    let firstKillsWithRoundData: number | null = null;
+
+    if (fkConv && fkConv.firstKillsWithRoundData > 0) {
+      roundsWonAfterFk = fkConv.roundsWonAfterFk;
+      firstKillsWithRoundData = fkConv.firstKillsWithRoundData;
+      rawTeamWinrateAfterFk = (roundsWonAfterFk / firstKillsWithRoundData) * 100;
+      teamWinrateAfterFk = Math.round(rawTeamWinrateAfterFk);
+    }
+
+    // Trades
+    const tradeInfo = tradesByPlayer.get(player.id);
+    const tradeKills = tradeInfo ? tradeInfo.count : stats.reduce((sum, s) => sum + s.tradeKills, 0);
+    const avgTradeReactionTime = tradeInfo?.avgTime ?? null;
+    const totalDeaths = stats.reduce((sum, s) => sum + s.deaths, 0);
+    const tradedDeaths = tradedDeathsByPlayer.get(player.id) ?? 0;
+
+    // Denominador correto para Trade Efficiency (apenas partidas com telemetria de trade)
+    const tradeMatchesStats = stats.filter((s) => tradeMatchIdSet.has(s.matchId));
+    const deathsInTradeMatches = tradeMatchesStats.reduce((sum, s) => sum + s.deaths, 0);
+    const tradeTelemetryMatchesCount = tradeMatchesStats.length;
+
+    let rawTradeEfficiency: number | null = null;
+    let tradeEfficiency: number | null = null;
+    if (deathsInTradeMatches > 0) {
+      rawTradeEfficiency = (tradedDeaths / deathsInTradeMatches) * 100;
+      tradeEfficiency = Math.round(rawTradeEfficiency);
+    }
+
+    // Clutches
+    const clutchData = clutchDataByPlayer.get(player.id);
+    const statsClutchWins = stats.reduce(
       (sum, s) =>
         sum +
         Math.max(
@@ -1240,10 +1430,30 @@ export async function getDecisivePlayersFromDataset(
       0,
     );
 
+    const clutchWins = clutchData ? clutchData.totalWins : statsClutchWins;
+    const clutchAttempts = clutchData ? clutchData.totalAttempts : null;
+    const rawClutchWinrate = clutchAttempts && clutchAttempts > 0 ? (clutchWins / clutchAttempts) * 100 : null;
+    const clutchWinrate = rawClutchWinrate !== null ? Math.round(rawClutchWinrate) : null;
+    const clutchHighDisadvantageWins = clutchData?.highDisadvantageWins ?? null;
+
+    let clutchTiers: DecisivePlayerEntry["clutchTiers"] = null;
+    if (clutchData) {
+      const buildTierStats = (tier: number): ClutchTierStats => {
+        const t = clutchData.tiers[tier] ?? { wins: 0, attempts: 0 };
+        const wr = t.attempts > 0 ? Math.round((t.wins / t.attempts) * 100) : 0;
+        return { wins: t.wins, attempts: t.attempts, winrate: wr };
+      };
+
+      clutchTiers = {
+        "1v1": buildTierStats(1),
+        "1v2": buildTierStats(2),
+        "1v3": buildTierStats(3),
+        "1v4": buildTierStats(4),
+        "1v5": buildTierStats(5),
+      };
+    }
+
     const impactedRounds = entryKills + (hideTradesAndClutches ? 0 : tradeKills + clutchWins);
-    // Entry/trade/clutch não são mutuamente exclusivos por round (podem ocorrer no
-    // mesmo round), então a soma pode superar totalRounds — sem o cap, o percentual
-    // exibido poderia passar de 100%, o que não faz sentido para o usuário.
     const rawImpactPercent = Math.min(100, (impactedRounds / totalRounds) * 100);
     const impactPercent = Math.round(rawImpactPercent);
 
@@ -1268,6 +1478,22 @@ export async function getDecisivePlayersFromDataset(
       hasOpeningDeathsTelemetry,
       hasTradeTelemetry,
       hasClutchTelemetry,
+
+      // Novas métricas estruturadas
+      clutchAttempts,
+      clutchWinrate,
+      rawClutchWinrate,
+      clutchHighDisadvantageWins,
+      clutchTiers,
+
+      teamWinrateAfterFk,
+      rawTeamWinrateAfterFk,
+      roundsWonAfterFk,
+      firstKillsWithRoundData,
+
+      avgTradeReactionTime,
+      deathsInTradeMatches,
+      tradeTelemetryMatchesCount,
     });
   }
 

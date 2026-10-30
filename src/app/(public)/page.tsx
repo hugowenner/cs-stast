@@ -16,6 +16,9 @@ import { SinergiaSection } from "@/components/dashboard/sinergia-section";
 import { ReisDosMapa } from "@/components/dashboard/reis-dos-mapas";
 import { PerformanceGcSection } from "@/components/dashboard/performance-gc-section";
 import { TendenciasDaTemporada } from "@/components/dashboard/tendencias-da-temporada";
+import { RaioXCompactSummary } from "@/components/dashboard/raio-x/raio-x-compact-summary";
+import { getRaioXBundle } from "@/server/services/raio-x.service";
+import type { RaioXBundle } from "@/lib/raio-x-types";
 import { safeQuery } from "@/server/safeQuery";
 import * as statsService from "@/server/services/stats.service";
 import * as dashboardService from "@/server/services/dashboard.service";
@@ -141,6 +144,105 @@ const EMPTY_COMPETITIVE_BUNDLE: competitiveService.DashboardCompetitiveBundle = 
   highlightsPool: [],
 };
 
+const DEFAULT_RAIO_X_BUNDLE: RaioXBundle = {
+  entregamos5v4: {
+    totalEligibleRounds: 0,
+    totalAdvantagesCreated: 0,
+    roundsWonAfterFk: 0,
+    roundsLostAfterFk: 0,
+    conversionRate: null,
+    surrenderRate: null,
+    hasTelemetry: false,
+    telemetryUnavailableReason: "Nenhum dado disponível para o período selecionado.",
+  },
+  terrorDosAmigos: {
+    totalMatchesAnalyzed: 0,
+    totalRoundsAnalyzed: 0,
+    totalTeamDamage: 0,
+    totalTeamKills: 0,
+    totalTeamFlashes: 0,
+    topTeamFlasher: null,
+    topTeamDamager: null,
+    rankings: [],
+    hasTelemetry: false,
+    telemetryUnavailableReason: "Telemetria de incidentes aliados em normalização.",
+  },
+  economiaDesastre: {
+    totalRoundsAnalyzed: 0,
+    forceBuyRounds: 0,
+    forceBuyWins: 0,
+    forceBuyWinrate: null,
+    fullEcoRounds: 0,
+    fullEcoWins: 0,
+    fullEcoWinrate: null,
+    fullBuyRounds: 0,
+    fullBuyWins: 0,
+    fullBuyWinrate: null,
+    estimatedEquipmentLostValue: null,
+    hasTelemetry: false,
+    telemetryUnavailableReason: "Telemetria de economia em normalização.",
+  },
+  melhorDupla: {
+    minTradesThreshold: 5,
+    totalTrackedTrades: 0,
+    mostSynergicDuo: null,
+    fastestTradeDuo: null,
+    allEligibleDuos: [],
+    hasTelemetry: false,
+    telemetryUnavailableReason: "Nenhuma troca rastreada.",
+  },
+  matadorEco: {
+    totalAnalyzedKills: 0,
+    totalEcoKills: 0,
+    topEcoHunter: null,
+    rankings: [],
+    hasTelemetry: false,
+    telemetryUnavailableReason: "Telemetria de rounds econômicos em normalização.",
+  },
+  plantouGanhou: {
+    totalEligibleRounds: 0,
+    totalPostPlants: 0,
+    bombsExploded: 0,
+    bombsDefused: 0,
+    postPlantConversionRate: null,
+    retakeSuccessRate: null,
+    topDefusers: [],
+    hasTelemetry: false,
+    telemetryUnavailableReason: "Telemetria de C4 indisponível.",
+  },
+  especialistaArmas: {
+    totalKillsAnalyzed: 0,
+    topRifler: null,
+    topSniper: null,
+    topPistoleiro: null,
+    topSmg: null,
+    playerProfiles: [],
+    hasTelemetry: false,
+    telemetryUnavailableReason: "Telemetria de armas indisponível.",
+  },
+  reiRoundsDecisivos: {
+    totalDecisiveRoundsAnalyzed: 0,
+    topDecisivePlayer: null,
+    topDecisiveMvp: null,
+    topDecisiveFirstKiller: null,
+    topDecisiveClutcher: null,
+    rankings: [],
+    hasTelemetry: false,
+    telemetryUnavailableReason: "Nenhum round decisivo encontrado.",
+  },
+  parceiros: {
+    minMatchesThreshold: 10,
+    totalEligibleDuos: 0,
+    mostWinsDuo: null,
+    mostLossesDuo: null,
+    bestWinrateDuo: null,
+    worstWinrateDuo: null,
+    allEligibleDuos: [],
+    playersMap: {},
+    monitoredPlayers: [],
+  },
+};
+
 export default async function DashboardPage(props: {
   searchParams: Promise<{ season?: string }>;
 }) {
@@ -158,14 +260,17 @@ export default async function DashboardPage(props: {
 
   let summary: Awaited<ReturnType<typeof dashboardService.getDashboardSummary>>;
   let competitive: competitiveService.DashboardCompetitiveBundle;
+  let raioX: RaioXBundle;
   let recentMatches: Awaited<ReturnType<typeof matchService.listRecentMatches>>;
   let recentAchievements: Awaited<ReturnType<typeof achievementService.listRecent>>;
   let topRivalries: Awaited<ReturnType<typeof rivalryService.listTopRivalriesWithH2H>>;
 
   if (snapshot && selectedSeason?.status === "CLOSED") {
-    const data = snapshot.dashboard as any;
-    summary = data.dashboard ? data.dashboard.summary : data.summary;
-    competitive = data.dashboard ? data.dashboard.competitive : data.competitive;
+    const data = snapshot.dashboard as Record<string, unknown>;
+    const nested = data.dashboard as Record<string, unknown> | undefined;
+    summary = (nested ? nested.summary : data.summary) as Awaited<ReturnType<typeof dashboardService.getDashboardSummary>>;
+    competitive = (nested ? nested.competitive : data.competitive) as competitiveService.DashboardCompetitiveBundle;
+    raioX = (data.raioX as RaioXBundle | undefined) ?? (await safeQuery(() => getRaioXBundle(resolvedSeasonId), DEFAULT_RAIO_X_BUNDLE));
     const [liveRecentMatches, liveAchievements, liveRivalries] = await Promise.all([
       safeQuery(() => matchService.listRecentMatches(10, resolvedSeasonId), []),
       safeQuery(() => achievementService.listRecent(4), []),
@@ -179,7 +284,7 @@ export default async function DashboardPage(props: {
     const isLegacySpecialists =
       !competitive.mapSpecialists ||
       competitive.mapSpecialists.length === 0 ||
-      competitive.mapSpecialists.some((s: any) => typeof s.winrate !== "number");
+      competitive.mapSpecialists.some((s: unknown) => typeof (s as { winrate?: unknown })?.winrate !== "number");
 
     if (isLegacySpecialists) {
       const liveDataset = await safeQuery(
@@ -199,7 +304,7 @@ export default async function DashboardPage(props: {
   } else {
     const datasetPromise = competitiveService.loadCompetitiveDataset(resolvedSeasonId);
 
-    const [calcSummary, calcRecentMatches, calcCompetitive, calcAchievements, calcRivalries] =
+    const [calcSummary, calcRecentMatches, calcCompetitive, calcAchievements, calcRivalries, calcRaioX] =
       await Promise.all([
         safeQuery(async () => dashboardService.getDashboardSummary(resolvedSeasonId, await datasetPromise), {
           totalMatches: 0,
@@ -217,6 +322,10 @@ export default async function DashboardPage(props: {
         ),
         safeQuery(() => achievementService.listRecent(4), []),
         safeQuery(() => rivalryService.listTopRivalriesWithH2H(10), []),
+        safeQuery(
+          async () => getRaioXBundle(resolvedSeasonId, await datasetPromise),
+          DEFAULT_RAIO_X_BUNDLE,
+        ),
       ]);
 
     summary = calcSummary;
@@ -224,6 +333,7 @@ export default async function DashboardPage(props: {
     competitive = calcCompetitive;
     recentAchievements = calcAchievements;
     topRivalries = calcRivalries;
+    raioX = calcRaioX;
   }
 
   const [officialRanking, lastSyncJob] = await Promise.all([
@@ -463,9 +573,20 @@ export default async function DashboardPage(props: {
         />
       </SectionContainer>
 
-      {/* ═══ 09. TELEMETRIA AVANÇADA DE COMBATE ═══ */}
+      {/* ═══ 09. RAIO-X DA CRITICÂNCIA ═══ */}
       <SectionContainer
         index={9}
+        tag="RAIO-X TÁTICO"
+        title="Raio-X da Criticância"
+        subtitle="Os números que revelam como a Criticância realmente joga."
+        delay={0.095}
+      >
+        <RaioXCompactSummary bundle={raioX} seasonName={selectedSeason?.name} />
+      </SectionContainer>
+
+      {/* ═══ 10. TELEMETRIA AVANÇADA DE COMBATE ═══ */}
+      <SectionContainer
+        index={10}
         tag="TELEMETRIA GC"
         title="Estatísticas Avançadas de Combate"
         subtitle="Multikills, clutches 1vX e telemetria de dano por disparo da temporada."
@@ -479,10 +600,10 @@ export default async function DashboardPage(props: {
         />
       </SectionContainer>
 
-      {/* ═══ 10. RADAR DO GRUPO ═══ */}
+      {/* ═══ 11. RADAR DO GRUPO ═══ */}
       {(radar || jogadorDaSemana || weeklyCuriosity || smartAlerts.length > 0) && (
         <SectionContainer
-          index={10}
+          index={11}
           tag="RADAR DO GRUPO"
           title="Radar do Grupo"
           subtitle="Momento coletivo, sessões e participação no período selecionado."
@@ -497,10 +618,10 @@ export default async function DashboardPage(props: {
         </SectionContainer>
       )}
 
-      {/* ═══ 11. RECORDES & MARCAS DA TEMPORADA ═══ */}
+      {/* ═══ 12. RECORDES & MARCAS DA TEMPORADA ═══ */}
       {(records.length > 0 || worstRecords.length > 0) && (
         <SectionContainer
-          index={11}
+          index={12}
           tag="HALL DA FAMA"
           title="Recordes da Temporada"
           subtitle="Marcas extremas, atuações de destaque e anomalias registradas pelo grupo."
@@ -514,9 +635,9 @@ export default async function DashboardPage(props: {
         </SectionContainer>
       )}
 
-      {/* ═══ 12. RELATÓRIO TÁTICO DO COACH IA ═══ */}
+      {/* ═══ 13. RELATÓRIO TÁTICO DO COACH IA ═══ */}
       <SectionContainer
-        index={12}
+        index={13}
         tag="INTELIGÊNCIA IA"
         title="Relatório Tático do Coach"
         subtitle="Diagnóstico analítico e direto do desempenho coletivo da temporada."
@@ -527,9 +648,9 @@ export default async function DashboardPage(props: {
         </div>
       </SectionContainer>
 
-      {/* ═══ 13. CONQUISTAS RECENTES ═══ */}
+      {/* ═══ 14. CONQUISTAS RECENTES ═══ */}
       <SectionContainer
-        index={13}
+        index={14}
         tag="FEED DE CONQUISTAS"
         title="Conquistas Desbloqueadas"
         subtitle="Feitos e marcos recentemente alcançados pelos membros."

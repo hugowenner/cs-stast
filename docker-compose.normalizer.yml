@@ -1,0 +1,20 @@
+# Optional, reviewed deployment override. Not started by the default compose file.
+# The image must be the SAME reviewed Hub build, containing normalizer.cjs.
+services:
+  normalizer:
+    image: ${CS2_NORMALIZER_IMAGE:?Set the reviewed Hub image tag}
+    profiles: [durable-ingest]
+    command: [node, normalizer.cjs, --run]
+    restart: unless-stopped
+    init: true
+    env_file: [.env]
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      DURABLE_INGEST_ENABLED: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [default]
+    mem_limit: 384m
+    cpus: 0.5
+    stop_grace_period: 75s

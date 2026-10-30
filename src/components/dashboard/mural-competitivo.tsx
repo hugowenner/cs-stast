@@ -9,7 +9,14 @@ import { PlayerAvatar } from "@/components/players/player-avatar";
 import { AnimatedNumber } from "@/components/motion/animated-number";
 import { TacticalTabs } from "@/components/ui/tactical-tabs";
 import { TacticalBadge } from "@/components/ui/tactical-badge";
-import type { PowerRankingEntry, DecisivePlayerEntry, PlayerArchetype } from "@/server/services/competitive.service";
+import {
+  computeDecisiveCategories,
+  type DecisivePlayerEntry,
+} from "@/lib/decisive-categories";
+import type {
+  PowerRankingEntry,
+  PlayerArchetype,
+} from "@/server/services/competitive.service";
 import { cn } from "@/lib/utils";
 
 export interface MuralCompetitivoProps {
@@ -283,7 +290,7 @@ function LideresTab({
   );
 }
 
-// ─── Tab 2: Impacto & Duelos ──────────────────────────────────────────────────
+// ─── Tab 2: Impacto & Duelos (Categorias de Jogador Decisivo) ─────────────────
 function ImpactoTab({
   decisive,
   isHistoricalSnapshot,
@@ -299,22 +306,10 @@ function ImpactoTab({
     );
   }
 
-  // Detecção honesta da disponibilidade de telemetria no conjunto de dados recebido
-  const hasOpeningDeathsTelemetry =
-    decisive[0]?.hasOpeningDeathsTelemetry ?? decisive.some((d) => d.entryDeaths > 0);
-
-  const hasTradeTelemetry =
-    decisive[0]?.hasTradeTelemetry ?? decisive.some((d) => d.tradeKills > 0 || (d.tradedDeaths ?? 0) > 0);
-
-  const hasClutchTelemetry =
-    decisive[0]?.hasClutchTelemetry ?? decisive.some((d) => d.clutchWins > 0);
-
-  // Impacto Total depende de trades e clutches — se ambos faltarem, o cálculo fica suspenso
-  const isImpactTotalSuspended = !hasTradeTelemetry && !hasClutchTelemetry;
-
-  // Filtragem de candidatos elegíveis (mínimo de 10 partidas para posições numeradas)
-  const eligibleCandidates = decisive.filter((d) => (d.matchCount ?? 0) >= 10);
-  const initialCandidates = decisive.filter((d) => (d.matchCount ?? 0) >= 5 && (d.matchCount ?? 0) < 10);
+  const { reiDoClutch, pontaDeLanca, anjoDaGuarda } = useMemo(
+    () => computeDecisiveCategories(decisive),
+    [decisive],
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -323,7 +318,7 @@ function ImpactoTab({
         <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground/90">
           <Info className="size-3.5 text-primary shrink-0" />
           <span>
-            Estatísticas individuais de abertura e impacto · mínimo de 10 partidas válidas para líderes numerados (#1..#3)
+            Categorias de Jogador Decisivo apuradas com base em telemetria avançada de partidas comunitárias.
           </span>
         </div>
         {isHistoricalSnapshot && (
@@ -333,447 +328,421 @@ function ImpactoTab({
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {/* 1. OPENING KILLS (Disponível - Cobertura 100% via API da GC) */}
-        {(() => {
-          const sorted = [...eligibleCandidates].sort((a, b) => {
-            const diff = b.entryKills - a.entryKills;
-            if (diff !== 0) return diff;
-            return (b.matchCount ?? 0) - (a.matchCount ?? 0) || a.player.nickname.localeCompare(b.player.nickname);
-          });
-          const top = sorted.slice(0, 3);
-          const initialTop = [...initialCandidates]
-            .sort((a, b) => b.entryKills - a.entryKills)
-            .slice(0, 1)[0];
-
-          return (
-            <div className="flex flex-col justify-between gap-3 p-3.5 bg-surface-deck border border-border/50 rounded-xs">
-              <div>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-[0.14em] text-foreground block">
-                    OPENING KILLS
-                  </span>
-                  <TacticalBadge variant="good" size="xs">
-                    Disponível
-                  </TacticalBadge>
-                </div>
-                <span className="text-[10px] text-muted-foreground/70 font-sans block mt-0.5">
-                  Total de abates em abertura de round
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        {/* 1. REI DO CLUTCH */}
+        <div className="flex flex-col justify-between gap-3 p-3.5 bg-surface-deck border border-border/50 rounded-xs">
+          <div>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <Trophy className="size-3.5 text-amber-400 shrink-0" />
+                <span className="text-[10px] font-mono font-bold uppercase tracking-[0.14em] text-foreground block">
+                  REI DO CLUTCH
                 </span>
               </div>
+              <TacticalBadge
+                variant={reiDoClutch.hasTelemetry ? (reiDoClutch.isPreliminary ? "warning" : "good") : "neutral"}
+                size="xs"
+              >
+                {reiDoClutch.hasTelemetry
+                  ? reiDoClutch.isPreliminary
+                    ? "Amostra preliminar"
+                    : "Disponível"
+                  : "Dados indisponíveis"}
+              </TacticalBadge>
+            </div>
+            <span className="text-[10px] text-muted-foreground/70 font-sans block mt-0.5">
+              Maior número de situações 1vX vencidas
+            </span>
+          </div>
 
-              <div className="flex flex-col gap-2 border-t border-border/30 pt-2">
-                {top.length === 0 ? (
-                  <p className="text-[11px] font-mono text-muted-foreground/60 py-2">
-                    Sem jogadores com 10+ partidas.
-                  </p>
-                ) : (
-                  top.map((d, idx) => (
-                    <div key={d.player.id} className="flex items-center justify-between gap-2 text-xs">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span
-                          className={cn(
-                            "font-mono text-[10px] font-black w-3 text-center",
-                            idx === 0 ? "text-gold" : "text-muted-foreground/50"
-                          )}
-                        >
-                          #{idx + 1}
+          {!reiDoClutch.hasTelemetry || !reiDoClutch.leader ? (
+            <div className="border-t border-border/30 pt-3 pb-1">
+              <p className="text-[11px] font-mono text-muted-foreground/70 leading-relaxed">
+                Telemetria de situações 1vX ausente na súmula desta temporada.
+              </p>
+              <p className="text-[10px] font-mono text-muted-foreground/50 mt-1">
+                Disponível em temporadas com parsing avançado de demos.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3 border-t border-border/30 pt-2.5">
+              {/* Destaque #1 */}
+              <div className="flex items-center justify-between gap-2 p-2 bg-surface-elevated/40 border border-border/40 rounded-xs">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="relative shrink-0">
+                    <PlayerAvatar
+                      nickname={reiDoClutch.leader.player.nickname}
+                      avatarUrl={reiDoClutch.leader.player.avatarUrl}
+                      size="sm"
+                    />
+                    <span className="absolute -bottom-1 -right-1 text-[8px] font-mono font-black px-1 py-0.2 rounded-xs bg-amber-500/20 text-amber-400 border border-amber-500/40">
+                      #1
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <Link
+                      href={`/players/${reiDoClutch.leader.player.id}`}
+                      className="font-medium text-xs text-foreground hover:text-primary transition-micro truncate block"
+                    >
+                      {reiDoClutch.leader.player.nickname}
+                    </Link>
+                    <span className="text-[9px] font-mono text-muted-foreground/60 block">
+                      {reiDoClutch.leader.clutchHighDisadvantageWins ?? 0} vitórias em 1v2+
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="font-mono text-sm font-black text-foreground tabular-nums block">
+                    <AnimatedNumber value={reiDoClutch.leader.clutchWins} decimals={0} duration={0.6} /> V
+                  </span>
+                  <span className="text-[9px] font-mono text-muted-foreground/60 block">
+                    {reiDoClutch.leader.clutchWinrate}% WR ({reiDoClutch.leader.clutchAttempts} att)
+                  </span>
+                </div>
+              </div>
+
+              {/* Distribuição por Tier (1v1 até 1v5) */}
+              <div>
+                <span className="text-[8px] font-mono font-bold uppercase tracking-wider text-muted-foreground/50 block mb-1">
+                  Distribuição por Tier (V / T)
+                </span>
+                <div className="grid grid-cols-5 gap-1">
+                  {(["1v1", "1v2", "1v3", "1v4", "1v5"] as const).map((tier) => {
+                    const t = reiDoClutch.leader?.clutchTiers?.[tier] ?? { wins: 0, attempts: 0 };
+                    return (
+                      <div
+                        key={tier}
+                        className="flex flex-col items-center justify-center p-1 bg-surface-deck/80 border border-border/30 rounded-xs text-center"
+                      >
+                        <span className="text-[8px] font-mono text-muted-foreground/50">{tier}</span>
+                        <span className="text-[10px] font-mono font-bold text-foreground tabular-nums">
+                          {t.wins}/{t.attempts}
                         </span>
-                        <PlayerAvatar nickname={d.player.nickname} avatarUrl={d.player.avatarUrl} size="sm" />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Demais colocados (#2 e #3) */}
+              {reiDoClutch.candidates.slice(1, 3).length > 0 && (
+                <div className="flex flex-col gap-1.5 pt-1 border-t border-border/20">
+                  {reiDoClutch.candidates.slice(1, 3).map((c, idx) => (
+                    <div key={c.player.id} className="flex items-center justify-between gap-2 text-xs">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-mono text-[10px] font-bold text-muted-foreground/50 w-3 text-center">
+                          #{idx + 2}
+                        </span>
+                        <PlayerAvatar nickname={c.player.nickname} avatarUrl={c.player.avatarUrl} size="sm" />
                         <Link
-                          href={`/players/${d.player.id}`}
-                          className="font-medium text-foreground hover:text-primary transition-micro truncate"
+                          href={`/players/${c.player.id}`}
+                          className="font-medium text-[11px] text-foreground hover:text-primary transition-micro truncate"
                         >
-                          {d.player.nickname}
+                          {c.player.nickname}
                         </Link>
                       </div>
                       <div className="text-right shrink-0">
-                        <span className="font-mono font-bold text-foreground tabular-nums block">
-                          {d.entryKills} abates
+                        <span className="font-mono text-[11px] font-bold text-foreground tabular-nums block">
+                          {c.clutchWins}V ({c.clutchWinrate}%)
                         </span>
-                        <span className="text-[9px] font-mono text-muted-foreground/50 block">
-                          {d.matchCount} partidas
+                        <span className="text-[8px] font-mono text-muted-foreground/50 block">
+                          {c.clutchAttempts} tentativas
                         </span>
                       </div>
                     </div>
-                  ))
-                )}
+                  ))}
+                </div>
+              )}
 
-                {initialTop && (
-                  <div className="mt-1 pt-1.5 border-t border-border/20 flex items-center justify-between text-[11px] font-mono text-muted-foreground/70">
-                    <span className="truncate">Amostra inicial: {initialTop.player.nickname}</span>
-                    <span className="tabular-nums font-semibold shrink-0">
-                      {initialTop.entryKills} ({initialTop.matchCount}p)
-                    </span>
-                  </div>
-                )}
+              <div className="pt-1.5 border-t border-border/20 text-[9px] font-mono text-muted-foreground/50">
+                Critério: clutches vencidos · Desempate: conversão % → vitórias 1v2+ → ID
               </div>
             </div>
-          );
-        })()}
+          )}
+        </div>
 
-        {/* 2. OPENING DUELS WR% (Condicional a telemetria de mortes em abertura) */}
-        {(() => {
-          if (!hasOpeningDeathsTelemetry) {
-            return (
-              <div className="flex flex-col justify-between gap-3 p-3.5 bg-surface-deck border border-border/50 rounded-xs opacity-80">
-                <div>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-[0.14em] text-foreground block">
-                      OPENING DUELS WR%
-                    </span>
-                    <TacticalBadge variant="neutral" size="xs">
-                      Dados indisponíveis
-                    </TacticalBadge>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground/70 font-sans block mt-0.5">
-                    Taxa de vitória no 1º duelo de abertura
-                  </span>
-                </div>
-                <div className="border-t border-border/30 pt-3 pb-1">
-                  <p className="text-[11px] font-mono text-muted-foreground/70 leading-relaxed">
-                    Requer registro de mortes em abertura de round (ausente na súmula da GC nesta temporada).
-                  </p>
-                  <p className="text-[10px] font-mono text-muted-foreground/50 mt-1">
-                    Disponível apenas em temporadas com parsing de demos.
-                  </p>
-                </div>
-              </div>
-            );
-          }
-
-          const sorted = [...eligibleCandidates]
-            .filter((d) => (d.totalOpeningDuels ?? (d.entryKills + d.entryDeaths)) >= 5)
-            .sort((a, b) => {
-              const diff = (b.rawOpeningWinrate ?? b.openingWinrate) - (a.rawOpeningWinrate ?? a.openingWinrate);
-              if (Math.abs(diff) > 1e-9) return diff;
-              return (b.totalOpeningDuels ?? 0) - (a.totalOpeningDuels ?? 0);
-            });
-          const top = sorted.slice(0, 3);
-
-          return (
-            <div className="flex flex-col justify-between gap-3 p-3.5 bg-surface-deck border border-border/50 rounded-xs">
-              <div>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-[0.14em] text-foreground block">
-                    OPENING DUELS WR%
-                  </span>
-                  <TacticalBadge variant="good" size="xs">
-                    Disponível
-                  </TacticalBadge>
-                </div>
-                <span className="text-[10px] text-muted-foreground/70 font-sans block mt-0.5">
-                  Taxa de vitória no 1º duelo de abertura
+        {/* 2. PONTA DE LANÇA */}
+        <div className="flex flex-col justify-between gap-3 p-3.5 bg-surface-deck border border-border/50 rounded-xs">
+          <div>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <Flame className="size-3.5 text-orange-400 shrink-0" />
+                <span className="text-[10px] font-mono font-bold uppercase tracking-[0.14em] text-foreground block">
+                  PONTA DE LANÇA
                 </span>
               </div>
-              <div className="flex flex-col gap-2 border-t border-border/30 pt-2">
-                {top.map((d, idx) => (
-                  <div key={d.player.id} className="flex items-center justify-between gap-2 text-xs">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className={cn("font-mono text-[10px] font-black w-3 text-center", idx === 0 ? "text-gold" : "text-muted-foreground/50")}>
-                        #{idx + 1}
-                      </span>
-                      <PlayerAvatar nickname={d.player.nickname} avatarUrl={d.player.avatarUrl} size="sm" />
-                      <Link href={`/players/${d.player.id}`} className="font-medium text-foreground hover:text-primary transition-micro truncate">
-                        {d.player.nickname}
-                      </Link>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <span className="font-mono font-bold text-foreground tabular-nums block">
-                        {d.openingWinrate}%
-                      </span>
-                      <span className="text-[9px] font-mono text-muted-foreground/50 block">
-                        {d.entryKills}/{d.totalOpeningDuels ?? (d.entryKills + d.entryDeaths)} duelos
-                      </span>
-                    </div>
+              <TacticalBadge
+                variant={
+                  pontaDeLanca.hasTelemetry
+                    ? pontaDeLanca.isPartial || pontaDeLanca.isPreliminary
+                      ? "warning"
+                      : "good"
+                    : "neutral"
+                }
+                size="xs"
+              >
+                {pontaDeLanca.hasTelemetry
+                  ? pontaDeLanca.isPartial
+                    ? "Amostra parcial (GC)"
+                    : pontaDeLanca.isPreliminary
+                      ? "Amostra preliminar"
+                      : "Disponível"
+                  : "Dados indisponíveis"}
+              </TacticalBadge>
+            </div>
+            <span className="text-[10px] text-muted-foreground/70 font-sans block mt-0.5">
+              Maior número de duelos de abertura vencidos (First Kills)
+            </span>
+          </div>
+
+          {!pontaDeLanca.hasTelemetry || !pontaDeLanca.leader ? (
+            <div className="border-t border-border/30 pt-3 pb-1">
+              <p className="text-[11px] font-mono text-muted-foreground/70 leading-relaxed">
+                Telemetria de abates de abertura ausente nesta temporada.
+              </p>
+              <p className="text-[10px] font-mono text-muted-foreground/50 mt-1">
+                Disponível em temporadas com súmula ou parsing de demos.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3 border-t border-border/30 pt-2.5">
+              {/* Destaque #1 */}
+              <div className="flex items-center justify-between gap-2 p-2 bg-surface-elevated/40 border border-border/40 rounded-xs">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="relative shrink-0">
+                    <PlayerAvatar
+                      nickname={pontaDeLanca.leader.player.nickname}
+                      avatarUrl={pontaDeLanca.leader.player.avatarUrl}
+                      size="sm"
+                    />
+                    <span className="absolute -bottom-1 -right-1 text-[8px] font-mono font-black px-1 py-0.2 rounded-xs bg-orange-500/20 text-orange-400 border border-orange-500/40">
+                      #1
+                    </span>
                   </div>
-                ))}
+                  <div className="min-w-0">
+                    <Link
+                      href={`/players/${pontaDeLanca.leader.player.id}`}
+                      className="font-medium text-xs text-foreground hover:text-primary transition-micro truncate block"
+                    >
+                      {pontaDeLanca.leader.player.nickname}
+                    </Link>
+                    <span className="text-[9px] font-mono text-muted-foreground/60 block">
+                      {pontaDeLanca.isPartial || pontaDeLanca.leader.entryDeaths === null
+                        ? "First Deaths ausentes na GC"
+                        : `${pontaDeLanca.leader.entryKills} FK / ${pontaDeLanca.leader.entryDeaths} FD`}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="font-mono text-sm font-black text-foreground tabular-nums block">
+                    <AnimatedNumber value={pontaDeLanca.leader.entryKills} decimals={0} duration={0.6} /> FK
+                  </span>
+                  <span className="text-[9px] font-mono text-muted-foreground/60 block">
+                    {pontaDeLanca.leader.openingWinrate !== null && pontaDeLanca.leader.openingWinrate !== undefined
+                      ? `${pontaDeLanca.leader.openingWinrate}% taxa abertura`
+                      : "— taxa abertura"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Conversão de Round Pós-First-Kill */}
+              <div className="p-2 bg-surface-deck/80 border border-border/30 rounded-xs flex items-center justify-between">
+                <div>
+                  <span className="text-[8px] font-mono font-bold uppercase tracking-wider text-muted-foreground/50 block">
+                    Vitória da Equipe Pós-FK
+                  </span>
+                  <span className="text-[9px] font-mono text-muted-foreground/70 block mt-0.5">
+                    {pontaDeLanca.leader.firstKillsWithRoundData
+                      ? `${pontaDeLanca.leader.roundsWonAfterFk}/${pontaDeLanca.leader.firstKillsWithRoundData} rounds convertidos`
+                      : "Conversão requer telemetria de demo"}
+                  </span>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="font-mono text-xs font-bold text-foreground tabular-nums">
+                    {pontaDeLanca.leader.teamWinrateAfterFk !== null && pontaDeLanca.leader.teamWinrateAfterFk !== undefined ? (
+                      <AnimatedNumber
+                        value={pontaDeLanca.leader.teamWinrateAfterFk}
+                        decimals={0}
+                        suffix="%"
+                        duration={0.6}
+                      />
+                    ) : (
+                      "—"
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              {/* Demais colocados (#2 e #3) */}
+              {pontaDeLanca.candidates.slice(1, 3).length > 0 && (
+                <div className="flex flex-col gap-1.5 pt-1 border-t border-border/20">
+                  {pontaDeLanca.candidates.slice(1, 3).map((c, idx) => (
+                    <div key={c.player.id} className="flex items-center justify-between gap-2 text-xs">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-mono text-[10px] font-bold text-muted-foreground/50 w-3 text-center">
+                          #{idx + 2}
+                        </span>
+                        <PlayerAvatar nickname={c.player.nickname} avatarUrl={c.player.avatarUrl} size="sm" />
+                        <Link
+                          href={`/players/${c.player.id}`}
+                          className="font-medium text-[11px] text-foreground hover:text-primary transition-micro truncate"
+                        >
+                          {c.player.nickname}
+                        </Link>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="font-mono text-[11px] font-bold text-foreground tabular-nums block">
+                          {c.entryKills} FK{c.openingWinrate !== null && c.openingWinrate !== undefined ? ` (${c.openingWinrate}%)` : ""}
+                        </span>
+                        <span className="text-[8px] font-mono text-muted-foreground/50 block">
+                          {c.teamWinrateAfterFk !== null && c.teamWinrateAfterFk !== undefined
+                            ? `${c.teamWinrateAfterFk}% vitória time`
+                            : "Telemetria de demo pendente"}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="pt-1.5 border-t border-border/20 text-[9px] font-mono text-muted-foreground/50">
+                {pontaDeLanca.isPartial
+                  ? "Amostra parcial: súmula da GC registra apenas First Kills. Duelos completos e conversões requerem parsing de demos."
+                  : "Critério: first kills · Desempate: opening WR% → winrate time pós-FK → ID"}
               </div>
             </div>
-          );
-        })()}
+          )}
+        </div>
 
-        {/* 3. IMPACTO TOTAL % (Suspenso quando faltam trades e clutches) */}
-        {(() => {
-          if (isImpactTotalSuspended) {
-            return (
-              <div className="flex flex-col justify-between gap-3 p-3.5 bg-surface-deck border border-border/50 rounded-xs opacity-80">
-                <div>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-[0.14em] text-foreground block">
-                      IMPACTO TOTAL %
-                    </span>
-                    <TacticalBadge variant="warning" size="xs">
-                      Cálculo suspenso
-                    </TacticalBadge>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground/70 font-sans block mt-0.5">
-                    Participação decisiva em rounds
-                  </span>
-                </div>
-                <div className="border-t border-border/30 pt-3 pb-1">
-                  <p className="text-[11px] font-mono text-muted-foreground/70 leading-relaxed">
-                    Fórmula depende de eventos de trade e clutch, ausentes na súmula desta temporada.
-                  </p>
-                  <p className="text-[10px] font-mono text-muted-foreground/50 mt-1">
-                    Cálculo preservado para temporadas com telemetria completa.
-                  </p>
-                </div>
-              </div>
-            );
-          }
-
-          const sorted = [...eligibleCandidates].sort((a, b) => {
-            const diff = (b.rawImpactPercent ?? b.impactPercent) - (a.rawImpactPercent ?? a.impactPercent);
-            if (Math.abs(diff) > 1e-9) return diff;
-            return (b.matchCount ?? 0) - (a.matchCount ?? 0);
-          });
-          const top = sorted.slice(0, 3);
-
-          return (
-            <div className="flex flex-col justify-between gap-3 p-3.5 bg-surface-deck border border-border/50 rounded-xs">
-              <div>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-[0.14em] text-foreground block">
-                    IMPACTO TOTAL %
-                  </span>
-                  <TacticalBadge variant="good" size="xs">
-                    Disponível
-                  </TacticalBadge>
-                </div>
-                <span className="text-[10px] text-muted-foreground/70 font-sans block mt-0.5">
-                  Aberturas + trades + clutches
+        {/* 3. ANJO DA GUARDA */}
+        <div className="flex flex-col justify-between gap-3 p-3.5 bg-surface-deck border border-border/50 rounded-xs">
+          <div>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <Shield className="size-3.5 text-cyan-400 shrink-0" />
+                <span className="text-[10px] font-mono font-bold uppercase tracking-[0.14em] text-foreground block">
+                  ANJO DA GUARDA
                 </span>
               </div>
-              <div className="flex flex-col gap-2 border-t border-border/30 pt-2">
-                {top.map((d, idx) => (
-                  <div key={d.player.id} className="flex items-center justify-between gap-2 text-xs">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className={cn("font-mono text-[10px] font-black w-3 text-center", idx === 0 ? "text-gold" : "text-muted-foreground/50")}>
-                        #{idx + 1}
-                      </span>
-                      <PlayerAvatar nickname={d.player.nickname} avatarUrl={d.player.avatarUrl} size="sm" />
-                      <Link href={`/players/${d.player.id}`} className="font-medium text-foreground hover:text-primary transition-micro truncate">
-                        {d.player.nickname}
-                      </Link>
-                    </div>
-                    <span className="font-mono font-bold text-foreground tabular-nums shrink-0">
-                      {d.impactPercent}%
+              <TacticalBadge
+                variant={anjoDaGuarda.hasTelemetry ? (anjoDaGuarda.isPreliminary ? "warning" : "good") : "neutral"}
+                size="xs"
+              >
+                {anjoDaGuarda.hasTelemetry
+                  ? anjoDaGuarda.isPreliminary
+                    ? "Amostra preliminar"
+                    : "Disponível"
+                  : "Dados indisponíveis"}
+              </TacticalBadge>
+            </div>
+            <span className="text-[10px] text-muted-foreground/70 font-sans block mt-0.5">
+              Maior volume de trades realizados em resposta rápida
+            </span>
+          </div>
+
+          {!anjoDaGuarda.hasTelemetry || !anjoDaGuarda.leader ? (
+            <div className="border-t border-border/30 pt-3 pb-1">
+              <p className="text-[11px] font-mono text-muted-foreground/70 leading-relaxed">
+                Telemetria de trocas de abates ausente na súmula desta temporada.
+              </p>
+              <p className="text-[10px] font-mono text-muted-foreground/50 mt-1">
+                Disponível em temporadas com parsing de demos.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3 border-t border-border/30 pt-2.5">
+              {/* Destaque #1 */}
+              <div className="flex items-center justify-between gap-2 p-2 bg-surface-elevated/40 border border-border/40 rounded-xs">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="relative shrink-0">
+                    <PlayerAvatar
+                      nickname={anjoDaGuarda.leader.player.nickname}
+                      avatarUrl={anjoDaGuarda.leader.player.avatarUrl}
+                      size="sm"
+                    />
+                    <span className="absolute -bottom-1 -right-1 text-[8px] font-mono font-black px-1 py-0.2 rounded-xs bg-cyan-500/20 text-cyan-400 border border-cyan-500/40">
+                      #1
                     </span>
                   </div>
-                ))}
+                  <div className="min-w-0">
+                    <Link
+                      href={`/players/${anjoDaGuarda.leader.player.id}`}
+                      className="font-medium text-xs text-foreground hover:text-primary transition-micro truncate block"
+                    >
+                      {anjoDaGuarda.leader.player.nickname}
+                    </Link>
+                    <span className="text-[9px] font-mono text-muted-foreground/60 block">
+                      {anjoDaGuarda.leader.avgTradeReactionTime !== null ? `${anjoDaGuarda.leader.avgTradeReactionTime}s reação média` : "—"}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="font-mono text-sm font-black text-foreground tabular-nums block">
+                    <AnimatedNumber value={anjoDaGuarda.leader.tradeKills} decimals={0} duration={0.6} />
+                  </span>
+                  <span className="text-[9px] font-mono text-muted-foreground/60 block">
+                    trades realizados
+                  </span>
+                </div>
               </div>
-            </div>
-          );
-        })()}
 
-        {/* 4. EFICIÊNCIA EM TRADE (Condicional a telemetria de trocas) */}
-        {(() => {
-          if (!hasTradeTelemetry) {
-            return (
-              <div className="flex flex-col justify-between gap-3 p-3.5 bg-surface-deck border border-border/50 rounded-xs opacity-80">
+              {/* Retaliação de Mortes (Re-trade Aliado) */}
+              <div className="p-2 bg-surface-deck/80 border border-border/30 rounded-xs flex items-center justify-between">
                 <div>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-[0.14em] text-foreground block">
-                      EFICIÊNCIA EM TRADE
-                    </span>
-                    <TacticalBadge variant="neutral" size="xs">
-                      Dados indisponíveis
-                    </TacticalBadge>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground/70 font-sans block mt-0.5">
-                    Conversão de mortes em re-trade aliado
+                  <span className="text-[8px] font-mono font-bold uppercase tracking-wider text-muted-foreground/50 block">
+                    Taxa de Retaliação da Equipe
+                  </span>
+                  <span className="text-[9px] font-mono text-muted-foreground/70 block mt-0.5">
+                    {anjoDaGuarda.leader.tradedDeaths} mortes vingadas em {anjoDaGuarda.leader.deathsInTradeMatches ?? 0}
                   </span>
                 </div>
-                <div className="border-t border-border/30 pt-3 pb-1">
-                  <p className="text-[11px] font-mono text-muted-foreground/70 leading-relaxed">
-                    Telemetria de trocas de abates ausente na súmula desta temporada.
-                  </p>
-                  <p className="text-[10px] font-mono text-muted-foreground/50 mt-1">
-                    Requer parsing detalhado de demos para apuração.
-                  </p>
-                </div>
-              </div>
-            );
-          }
-
-          const sorted = [...eligibleCandidates].sort((a, b) => {
-            const diff = (b.rawTradeEfficiency ?? b.tradeEfficiency) - (a.rawTradeEfficiency ?? a.tradeEfficiency);
-            if (Math.abs(diff) > 1e-9) return diff;
-            return (b.matchCount ?? 0) - (a.matchCount ?? 0);
-          });
-          const top = sorted.slice(0, 3);
-
-          return (
-            <div className="flex flex-col justify-between gap-3 p-3.5 bg-surface-deck border border-border/50 rounded-xs">
-              <div>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-[0.14em] text-foreground block">
-                    EFICIÊNCIA EM TRADE
+                <div className="text-right shrink-0">
+                  <span className="font-mono text-xs font-bold text-foreground tabular-nums">
+                    {anjoDaGuarda.leader.tradeEfficiency !== null ? (
+                      <AnimatedNumber value={anjoDaGuarda.leader.tradeEfficiency} decimals={0} suffix="%" duration={0.6} />
+                    ) : (
+                      "—"
+                    )}
                   </span>
-                  <TacticalBadge variant="good" size="xs">
-                    Disponível
-                  </TacticalBadge>
                 </div>
-                <span className="text-[10px] text-muted-foreground/70 font-sans block mt-0.5">
-                  Mortes de aliados vingadas
-                </span>
               </div>
-              <div className="flex flex-col gap-2 border-t border-border/30 pt-2">
-                {top.map((d, idx) => (
-                  <div key={d.player.id} className="flex items-center justify-between gap-2 text-xs">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className={cn("font-mono text-[10px] font-black w-3 text-center", idx === 0 ? "text-gold" : "text-muted-foreground/50")}>
-                        #{idx + 1}
-                      </span>
-                      <PlayerAvatar nickname={d.player.nickname} avatarUrl={d.player.avatarUrl} size="sm" />
-                      <Link href={`/players/${d.player.id}`} className="font-medium text-foreground hover:text-primary transition-micro truncate">
-                        {d.player.nickname}
-                      </Link>
+
+              {/* Demais colocados (#2 e #3) */}
+              {anjoDaGuarda.candidates.slice(1, 3).length > 0 && (
+                <div className="flex flex-col gap-1.5 pt-1 border-t border-border/20">
+                  {anjoDaGuarda.candidates.slice(1, 3).map((c, idx) => (
+                    <div key={c.player.id} className="flex items-center justify-between gap-2 text-xs">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-mono text-[10px] font-bold text-muted-foreground/50 w-3 text-center">
+                          #{idx + 2}
+                        </span>
+                        <PlayerAvatar nickname={c.player.nickname} avatarUrl={c.player.avatarUrl} size="sm" />
+                        <Link
+                          href={`/players/${c.player.id}`}
+                          className="font-medium text-[11px] text-foreground hover:text-primary transition-micro truncate"
+                        >
+                          {c.player.nickname}
+                        </Link>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="font-mono text-[11px] font-bold text-foreground tabular-nums block">
+                          {c.tradeKills} trades
+                        </span>
+                        <span className="text-[8px] font-mono text-muted-foreground/50 block">
+                          {c.avgTradeReactionTime !== null ? `${c.avgTradeReactionTime}s` : "—"} · {c.tradeEfficiency}% retal.
+                        </span>
+                      </div>
                     </div>
-                    <span className="font-mono font-bold text-foreground tabular-nums shrink-0">
-                      {d.tradeEfficiency}%
-                    </span>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              )}
+
+              <div className="pt-1.5 border-t border-border/20 text-[9px] font-mono text-muted-foreground/50">
+                Critério: trades executados · Desempate: menor tempo reação → taxa retaliação → ID
               </div>
             </div>
-          );
-        })()}
-
-        {/* 5. TRADES CONCRETIZADOS (Condicional a telemetria de trocas) */}
-        {(() => {
-          if (!hasTradeTelemetry) {
-            return (
-              <div className="flex flex-col justify-between gap-3 p-3.5 bg-surface-deck border border-border/50 rounded-xs opacity-80">
-                <div>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-[0.14em] text-foreground block">
-                      TRADES CONCRETIZADOS
-                    </span>
-                    <TacticalBadge variant="neutral" size="xs">
-                      Dados indisponíveis
-                    </TacticalBadge>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground/70 font-sans block mt-0.5">
-                    Abates em resposta rápida de equipe
-                  </span>
-                </div>
-                <div className="border-t border-border/30 pt-3 pb-1">
-                  <p className="text-[11px] font-mono text-muted-foreground/70 leading-relaxed">
-                    Telemetria de trocas não registrada na súmula desta temporada.
-                  </p>
-                </div>
-              </div>
-            );
-          }
-
-          const sorted = [...eligibleCandidates].sort((a, b) => b.tradeKills - a.tradeKills);
-          const top = sorted.slice(0, 3);
-
-          return (
-            <div className="flex flex-col justify-between gap-3 p-3.5 bg-surface-deck border border-border/50 rounded-xs">
-              <div>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-[0.14em] text-foreground block">
-                    TRADES CONCRETIZADOS
-                  </span>
-                  <TacticalBadge variant="good" size="xs">
-                    Disponível
-                  </TacticalBadge>
-                </div>
-                <span className="text-[10px] text-muted-foreground/70 font-sans block mt-0.5">
-                  Kills em resposta rápida
-                </span>
-              </div>
-              <div className="flex flex-col gap-2 border-t border-border/30 pt-2">
-                {top.map((d, idx) => (
-                  <div key={d.player.id} className="flex items-center justify-between gap-2 text-xs">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className={cn("font-mono text-[10px] font-black w-3 text-center", idx === 0 ? "text-gold" : "text-muted-foreground/50")}>
-                        #{idx + 1}
-                      </span>
-                      <PlayerAvatar nickname={d.player.nickname} avatarUrl={d.player.avatarUrl} size="sm" />
-                      <Link href={`/players/${d.player.id}`} className="font-medium text-foreground hover:text-primary transition-micro truncate">
-                        {d.player.nickname}
-                      </Link>
-                    </div>
-                    <span className="font-mono font-bold text-foreground tabular-nums shrink-0">
-                      {d.tradeKills}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })()}
-
-        {/* 6. CLUTCHES GANHOS (Condicional a telemetria de clutches) */}
-        {(() => {
-          if (!hasClutchTelemetry) {
-            return (
-              <div className="flex flex-col justify-between gap-3 p-3.5 bg-surface-deck border border-border/50 rounded-xs opacity-80">
-                <div>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-[0.14em] text-foreground block">
-                      CLUTCHES GANHOS
-                    </span>
-                    <TacticalBadge variant="neutral" size="xs">
-                      Dados indisponíveis
-                    </TacticalBadge>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground/70 font-sans block mt-0.5">
-                    Rounds 1vX vencidos
-                  </span>
-                </div>
-                <div className="border-t border-border/30 pt-3 pb-1">
-                  <p className="text-[11px] font-mono text-muted-foreground/70 leading-relaxed">
-                    Telemetria de situações 1vX não registrada na súmula desta temporada.
-                  </p>
-                </div>
-              </div>
-            );
-          }
-
-          const sorted = [...eligibleCandidates].sort((a, b) => b.clutchWins - a.clutchWins);
-          const top = sorted.slice(0, 3);
-
-          return (
-            <div className="flex flex-col justify-between gap-3 p-3.5 bg-surface-deck border border-border/50 rounded-xs">
-              <div>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-[0.14em] text-foreground block">
-                    CLUTCHES GANHOS
-                  </span>
-                  <TacticalBadge variant="good" size="xs">
-                    Disponível
-                  </TacticalBadge>
-                </div>
-                <span className="text-[10px] text-muted-foreground/70 font-sans block mt-0.5">
-                  Rounds 1vX vencidos
-                </span>
-              </div>
-              <div className="flex flex-col gap-2 border-t border-border/30 pt-2">
-                {top.map((d, idx) => (
-                  <div key={d.player.id} className="flex items-center justify-between gap-2 text-xs">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className={cn("font-mono text-[10px] font-black w-3 text-center", idx === 0 ? "text-gold" : "text-muted-foreground/50")}>
-                        #{idx + 1}
-                      </span>
-                      <PlayerAvatar nickname={d.player.nickname} avatarUrl={d.player.avatarUrl} size="sm" />
-                      <Link href={`/players/${d.player.id}`} className="font-medium text-foreground hover:text-primary transition-micro truncate">
-                        {d.player.nickname}
-                      </Link>
-                    </div>
-                    <span className="font-mono font-bold text-foreground tabular-nums shrink-0">
-                      {d.clutchWins}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })()}
+          )}
+        </div>
       </div>
     </div>
   );

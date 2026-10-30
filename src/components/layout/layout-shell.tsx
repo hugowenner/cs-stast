@@ -8,6 +8,7 @@ import {
   X,
   Home,
   Swords,
+  Crosshair,
   Target,
   BarChart3,
   Award,
@@ -21,6 +22,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { href: "/", label: "Hub", icon: Home },
   { href: "/sessions", label: "Partidas", icon: Swords },
+  { href: "/raio-x", label: "Raio-X", icon: Crosshair },
   { href: "/players", label: "Players", icon: Target },
   { href: "/sessions?view=performance", label: "Performance", icon: BarChart3 },
   { href: "/rankings", label: "Rankings", icon: Award },
@@ -139,7 +141,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                     CS2 STATS
                   </span>
                   <span className="font-mono text-[9px] font-bold text-primary/60 tracking-widest uppercase hidden sm:inline">
-                    //
+                    {"//"}
                   </span>
                 </div>
                 <span className="font-mono text-[8px] sm:text-[9px] font-medium text-muted-foreground tracking-wider uppercase truncate mt-0.5">

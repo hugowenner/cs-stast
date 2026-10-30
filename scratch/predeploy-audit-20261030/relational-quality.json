@@ -1,0 +1,14 @@
+{
+  "trades": {
+    "rows": 6804,
+    "above_5s": 0,
+    "zero_time": 0,
+    "max_seconds": 5,
+    "min_seconds": 0.01
+  },
+  "duplicate_download_jobs": {
+    "groups": 37,
+    "extra_rows": 93
+  },
+  "unvalidated_constraints": 0
+}

@@ -1,0 +1,3371 @@
+{
+  "at": "2026-10-30T17:09:32.076Z",
+  "schema": {
+    "tables": [
+      {
+        "name": "Achievement",
+        "heap_bytes": 8192,
+        "total_bytes": 49152,
+        "estimated_rows": -1
+      },
+      {
+        "name": "Configuration",
+        "heap_bytes": 8192,
+        "total_bytes": 32768,
+        "estimated_rows": -1
+      },
+      {
+        "name": "Event",
+        "heap_bytes": 10600448,
+        "total_bytes": 16646144,
+        "estimated_rows": 69097
+      },
+      {
+        "name": "Import",
+        "heap_bytes": 73728,
+        "total_bytes": 3989504,
+        "estimated_rows": 455
+      },
+      {
+        "name": "Log",
+        "heap_bytes": 0,
+        "total_bytes": 32768,
+        "estimated_rows": -1
+      },
+      {
+        "name": "Map",
+        "heap_bytes": 8192,
+        "total_bytes": 49152,
+        "estimated_rows": -1
+      },
+      {
+        "name": "Match",
+        "heap_bytes": 827392,
+        "total_bytes": 1163264,
+        "estimated_rows": 750
+      },
+      {
+        "name": "Player",
+        "heap_bytes": 737280,
+        "total_bytes": 1564672,
+        "estimated_rows": 4938
+      },
+      {
+        "name": "PlayerAchievement",
+        "heap_bytes": 2654208,
+        "total_bytes": 6987776,
+        "estimated_rows": 17088
+      },
+      {
+        "name": "PlayerClutch",
+        "heap_bytes": 1015808,
+        "total_bytes": 1703936,
+        "estimated_rows": 7152
+      },
+      {
+        "name": "PlayerEntryDuel",
+        "heap_bytes": 1826816,
+        "total_bytes": 2793472,
+        "estimated_rows": 10170
+      },
+      {
+        "name": "PlayerMatchStats",
+        "heap_bytes": 2236416,
+        "total_bytes": 4087808,
+        "estimated_rows": 7649
+      },
+      {
+        "name": "PlayerMatchup",
+        "heap_bytes": 5595136,
+        "total_bytes": 9314304,
+        "estimated_rows": 10798
+      },
+      {
+        "name": "PlayerTradeEvent",
+        "heap_bytes": 1138688,
+        "total_bytes": 1957888,
+        "estimated_rows": 6374
+      },
+      {
+        "name": "Rivalry",
+        "heap_bytes": 5652480,
+        "total_bytes": 14565376,
+        "estimated_rows": 31677
+      },
+      {
+        "name": "Season",
+        "heap_bytes": 8192,
+        "total_bytes": 65536,
+        "estimated_rows": -1
+      },
+      {
+        "name": "SeasonSnapshot",
+        "heap_bytes": 8192,
+        "total_bytes": 106496,
+        "estimated_rows": -1
+      },
+      {
+        "name": "Session",
+        "heap_bytes": 16384,
+        "total_bytes": 65536,
+        "estimated_rows": 150
+      },
+      {
+        "name": "TeamBalanceMatch",
+        "heap_bytes": 8192,
+        "total_bytes": 65536,
+        "estimated_rows": -1
+      },
+      {
+        "name": "User",
+        "heap_bytes": 0,
+        "total_bytes": 32768,
+        "estimated_rows": -1
+      },
+      {
+        "name": "_prisma_migrations",
+        "heap_bytes": 8192,
+        "total_bytes": 32768,
+        "estimated_rows": -1
+      },
+      {
+        "name": "match_payloads",
+        "heap_bytes": 114688,
+        "total_bytes": 41533440,
+        "estimated_rows": 475
+      },
+      {
+        "name": "sync_jobs",
+        "heap_bytes": 163840,
+        "total_bytes": 319488,
+        "estimated_rows": 611
+      },
+      {
+        "name": "team_balance_players",
+        "heap_bytes": 32768,
+        "total_bytes": 81920,
+        "estimated_rows": 120
+      },
+      {
+        "name": "tracked_players",
+        "heap_bytes": 8192,
+        "total_bytes": 65536,
+        "estimated_rows": -1
+      }
+    ],
+    "columns": [
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Achievement",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Achievement",
+        "column_name": "code",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Achievement",
+        "column_name": "name",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Achievement",
+        "column_name": "description",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Achievement",
+        "column_name": "iconUrl",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 5
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Achievement",
+        "column_name": "tier",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 6
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Configuration",
+        "column_name": "key",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "jsonb",
+        "data_type": "jsonb",
+        "table_name": "Configuration",
+        "column_name": "value",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "Configuration",
+        "column_name": "updatedAt",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Event",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Event",
+        "column_name": "matchId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Event",
+        "column_name": "playerId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Event",
+        "column_name": "victimId",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "udt_name": "EventType",
+        "data_type": "USER-DEFINED",
+        "table_name": "Event",
+        "column_name": "type",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 5
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "Event",
+        "column_name": "roundNumber",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 6
+      },
+      {
+        "udt_name": "jsonb",
+        "data_type": "jsonb",
+        "table_name": "Event",
+        "column_name": "metadata",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 7
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "Event",
+        "column_name": "createdAt",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "ordinal_position": 8
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Import",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Import",
+        "column_name": "source",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "Import",
+        "column_name": "providerVersion",
+        "is_nullable": "NO",
+        "column_default": "1",
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "jsonb",
+        "data_type": "jsonb",
+        "table_name": "Import",
+        "column_name": "rawPayload",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "udt_name": "ImportStatus",
+        "data_type": "USER-DEFINED",
+        "table_name": "Import",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'PENDING'::\"ImportStatus\"",
+        "ordinal_position": 5
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "Import",
+        "column_name": "startedAt",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "ordinal_position": 6
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "Import",
+        "column_name": "finishedAt",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 7
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "Import",
+        "column_name": "matchesImported",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "ordinal_position": 8
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Import",
+        "column_name": "errorMessage",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 9
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Log",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "LogLevel",
+        "data_type": "USER-DEFINED",
+        "table_name": "Log",
+        "column_name": "level",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Log",
+        "column_name": "message",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "jsonb",
+        "data_type": "jsonb",
+        "table_name": "Log",
+        "column_name": "context",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "Log",
+        "column_name": "createdAt",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "ordinal_position": 5
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Map",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Map",
+        "column_name": "name",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Map",
+        "column_name": "imageUrl",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Match",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Match",
+        "column_name": "sessionId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Match",
+        "column_name": "mapId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Match",
+        "column_name": "gamersClubMatchId",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "Match",
+        "column_name": "playedAt",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 5
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "Match",
+        "column_name": "scoreTeamA",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 6
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "Match",
+        "column_name": "scoreTeamB",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 7
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "Match",
+        "column_name": "durationSeconds",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 8
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Match",
+        "column_name": "demoUrl",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 9
+      },
+      {
+        "udt_name": "jsonb",
+        "data_type": "jsonb",
+        "table_name": "Match",
+        "column_name": "roundsJson",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 10
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "Match",
+        "column_name": "trackedPlayersCount",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "ordinal_position": 11
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Match",
+        "column_name": "seasonId",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 12
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Player",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Player",
+        "column_name": "steamId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Player",
+        "column_name": "nickname",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Player",
+        "column_name": "avatarUrl",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Player",
+        "column_name": "gamersClubId",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 5
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "Player",
+        "column_name": "levelGc",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 6
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "Player",
+        "column_name": "createdAt",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "ordinal_position": 7
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Player",
+        "column_name": "steamNickname",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 8
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Player",
+        "column_name": "steamAvatarSmall",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 9
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Player",
+        "column_name": "steamAvatarMedium",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 10
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Player",
+        "column_name": "steamAvatarFull",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 11
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Player",
+        "column_name": "steamProfileUrl",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 12
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "Player",
+        "column_name": "steamLastSync",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 13
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerAchievement",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerAchievement",
+        "column_name": "playerId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerAchievement",
+        "column_name": "achievementId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerAchievement",
+        "column_name": "matchId",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "PlayerAchievement",
+        "column_name": "earnedAt",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "ordinal_position": 5
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerClutch",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerClutch",
+        "column_name": "matchId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerClutch",
+        "column_name": "playerId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerClutch",
+        "column_name": "opponents",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "udt_name": "bool",
+        "data_type": "boolean",
+        "table_name": "PlayerClutch",
+        "column_name": "won",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 5
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerClutch",
+        "column_name": "roundNumber",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 6
+      },
+      {
+        "udt_name": "MatchTeam",
+        "data_type": "USER-DEFINED",
+        "table_name": "PlayerClutch",
+        "column_name": "side",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 7
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerClutch",
+        "column_name": "weapon",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 8
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "PlayerClutch",
+        "column_name": "createdAt",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "ordinal_position": 9
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerEntryDuel",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerEntryDuel",
+        "column_name": "matchId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerEntryDuel",
+        "column_name": "playerId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "bool",
+        "data_type": "boolean",
+        "table_name": "PlayerEntryDuel",
+        "column_name": "isKiller",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "udt_name": "MatchTeam",
+        "data_type": "USER-DEFINED",
+        "table_name": "PlayerEntryDuel",
+        "column_name": "side",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 5
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerEntryDuel",
+        "column_name": "weapon",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 6
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerEntryDuel",
+        "column_name": "roundNumber",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 7
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerEntryDuel",
+        "column_name": "opponentId",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 8
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "PlayerEntryDuel",
+        "column_name": "createdAt",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "ordinal_position": 9
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerMatchStats",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerMatchStats",
+        "column_name": "matchId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerMatchStats",
+        "column_name": "playerId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "MatchTeam",
+        "data_type": "USER-DEFINED",
+        "table_name": "PlayerMatchStats",
+        "column_name": "team",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "kills",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 5
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "deaths",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 6
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "assists",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 7
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "headshots",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 8
+      },
+      {
+        "udt_name": "float8",
+        "data_type": "double precision",
+        "table_name": "PlayerMatchStats",
+        "column_name": "adr",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 9
+      },
+      {
+        "udt_name": "float8",
+        "data_type": "double precision",
+        "table_name": "PlayerMatchStats",
+        "column_name": "rating",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 10
+      },
+      {
+        "udt_name": "float8",
+        "data_type": "double precision",
+        "table_name": "PlayerMatchStats",
+        "column_name": "kast",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 11
+      },
+      {
+        "udt_name": "float8",
+        "data_type": "double precision",
+        "table_name": "PlayerMatchStats",
+        "column_name": "impact",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 12
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "damage",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 13
+      },
+      {
+        "udt_name": "float8",
+        "data_type": "double precision",
+        "table_name": "PlayerMatchStats",
+        "column_name": "gcRating",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 14
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "doubleKills",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 15
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "tripleKills",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 16
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "quadKills",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 17
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "aces",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 18
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "entryKills",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 19
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "entryDeaths",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 20
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "tradeKills",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 21
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "clutchesWon",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "ordinal_position": 22
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "flashAssists",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "ordinal_position": 23
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "clutch1v1Attempts",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "ordinal_position": 24
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "clutch1v1Wins",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "ordinal_position": 25
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "clutch1v2Attempts",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "ordinal_position": 26
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "clutch1v2Wins",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "ordinal_position": 27
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "clutch1v3Attempts",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "ordinal_position": 28
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "clutch1v3Wins",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "ordinal_position": 29
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "clutch1v4Attempts",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "ordinal_position": 30
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "clutch1v4Wins",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "ordinal_position": 31
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "clutch1v5Attempts",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "ordinal_position": 32
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "clutch1v5Wins",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "ordinal_position": 33
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "levelGc",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 34
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "eloBefore",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 35
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchStats",
+        "column_name": "eloAfter",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 36
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerMatchup",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerMatchup",
+        "column_name": "matchId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerMatchup",
+        "column_name": "killerId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerMatchup",
+        "column_name": "victimId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchup",
+        "column_name": "kills",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "ordinal_position": 5
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchup",
+        "column_name": "headshots",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "ordinal_position": 6
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchup",
+        "column_name": "entryKills",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "ordinal_position": 7
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerMatchup",
+        "column_name": "tradeKills",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "ordinal_position": 8
+      },
+      {
+        "udt_name": "jsonb",
+        "data_type": "jsonb",
+        "table_name": "PlayerMatchup",
+        "column_name": "weapons",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 9
+      },
+      {
+        "udt_name": "jsonb",
+        "data_type": "jsonb",
+        "table_name": "PlayerMatchup",
+        "column_name": "rounds",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 10
+      },
+      {
+        "udt_name": "float8",
+        "data_type": "double precision",
+        "table_name": "PlayerMatchup",
+        "column_name": "avgDistance",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 11
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "PlayerMatchup",
+        "column_name": "createdAt",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "ordinal_position": 12
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerTradeEvent",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerTradeEvent",
+        "column_name": "matchId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerTradeEvent",
+        "column_name": "victimId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerTradeEvent",
+        "column_name": "traderId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "PlayerTradeEvent",
+        "column_name": "roundNumber",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 5
+      },
+      {
+        "udt_name": "float8",
+        "data_type": "double precision",
+        "table_name": "PlayerTradeEvent",
+        "column_name": "timeDiff",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 6
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "PlayerTradeEvent",
+        "column_name": "weapon",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 7
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "PlayerTradeEvent",
+        "column_name": "createdAt",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "ordinal_position": 8
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Rivalry",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Rivalry",
+        "column_name": "playerAId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Rivalry",
+        "column_name": "playerBId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Rivalry",
+        "column_name": "seasonId",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "Rivalry",
+        "column_name": "killsAOnB",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "ordinal_position": 5
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "Rivalry",
+        "column_name": "killsBOnA",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "ordinal_position": 6
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "Rivalry",
+        "column_name": "matchesTogether",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "ordinal_position": 7
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "Rivalry",
+        "column_name": "matchesAgainst",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "ordinal_position": 8
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "Rivalry",
+        "column_name": "updatedAt",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 9
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Season",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Season",
+        "column_name": "name",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "Season",
+        "column_name": "startDate",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "Season",
+        "column_name": "endDate",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "udt_name": "SeasonStatus",
+        "data_type": "USER-DEFINED",
+        "table_name": "Season",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'ACTIVE'::\"SeasonStatus\"",
+        "ordinal_position": 5
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "Season",
+        "column_name": "createdAt",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "ordinal_position": 6
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "SeasonSnapshot",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "SeasonSnapshot",
+        "column_name": "seasonId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "jsonb",
+        "data_type": "jsonb",
+        "table_name": "SeasonSnapshot",
+        "column_name": "dashboard",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "SeasonSnapshot",
+        "column_name": "createdAt",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "ordinal_position": 4
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Session",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "Session",
+        "column_name": "name",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "Session",
+        "column_name": "date",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "Session",
+        "column_name": "createdAt",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "ordinal_position": 4
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "TeamBalanceMatch",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "TeamBalanceMatch",
+        "column_name": "seed",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "TeamBalanceMatch",
+        "column_name": "mode",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "TeamBalanceMatch",
+        "column_name": "metric",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "udt_name": "float8",
+        "data_type": "double precision",
+        "table_name": "TeamBalanceMatch",
+        "column_name": "difference",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 5
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "TeamBalanceMatch",
+        "column_name": "winner",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 6
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "TeamBalanceMatch",
+        "column_name": "createdAt",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "ordinal_position": 7
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "User",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "User",
+        "column_name": "email",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "User",
+        "column_name": "playerId",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "User",
+        "column_name": "createdAt",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "ordinal_position": 4
+      },
+      {
+        "udt_name": "varchar",
+        "data_type": "character varying",
+        "table_name": "_prisma_migrations",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "varchar",
+        "data_type": "character varying",
+        "table_name": "_prisma_migrations",
+        "column_name": "checksum",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "timestamptz",
+        "data_type": "timestamp with time zone",
+        "table_name": "_prisma_migrations",
+        "column_name": "finished_at",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "varchar",
+        "data_type": "character varying",
+        "table_name": "_prisma_migrations",
+        "column_name": "migration_name",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "_prisma_migrations",
+        "column_name": "logs",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 5
+      },
+      {
+        "udt_name": "timestamptz",
+        "data_type": "timestamp with time zone",
+        "table_name": "_prisma_migrations",
+        "column_name": "rolled_back_at",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 6
+      },
+      {
+        "udt_name": "timestamptz",
+        "data_type": "timestamp with time zone",
+        "table_name": "_prisma_migrations",
+        "column_name": "started_at",
+        "is_nullable": "NO",
+        "column_default": "now()",
+        "ordinal_position": 7
+      },
+      {
+        "udt_name": "int4",
+        "data_type": "integer",
+        "table_name": "_prisma_migrations",
+        "column_name": "applied_steps_count",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "ordinal_position": 8
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "match_payloads",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "match_payloads",
+        "column_name": "source",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "match_payloads",
+        "column_name": "sourceMatchId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "match_payloads",
+        "column_name": "parserVersion",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "match_payloads",
+        "column_name": "schemaVersion",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 5
+      },
+      {
+        "udt_name": "jsonb",
+        "data_type": "jsonb",
+        "table_name": "match_payloads",
+        "column_name": "payload",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 6
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "match_payloads",
+        "column_name": "payloadHash",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 7
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "match_payloads",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'STORED'::text",
+        "ordinal_position": 8
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "match_payloads",
+        "column_name": "processedAt",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 9
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "match_payloads",
+        "column_name": "errorMessage",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 10
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "match_payloads",
+        "column_name": "createdAt",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "ordinal_position": 11
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "match_payloads",
+        "column_name": "updatedAt",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 12
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "sync_jobs",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "sync_jobs",
+        "column_name": "sourceMatchId",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "sync_jobs",
+        "column_name": "source",
+        "is_nullable": "NO",
+        "column_default": "'gamersclub'::text",
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "sync_jobs",
+        "column_name": "downloadUrl",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "udt_name": "SyncJobStatus",
+        "data_type": "USER-DEFINED",
+        "table_name": "sync_jobs",
+        "column_name": "status",
+        "is_nullable": "NO",
+        "column_default": "'PENDING'::\"SyncJobStatus\"",
+        "ordinal_position": 5
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "sync_jobs",
+        "column_name": "sentAt",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 6
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "sync_jobs",
+        "column_name": "completedAt",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 7
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "sync_jobs",
+        "column_name": "errorMessage",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 8
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "sync_jobs",
+        "column_name": "createdAt",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "ordinal_position": 9
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "sync_jobs",
+        "column_name": "updatedAt",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 10
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "team_balance_players",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "team_balance_players",
+        "column_name": "match_id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "team_balance_players",
+        "column_name": "player_id",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "team_balance_players",
+        "column_name": "nickname",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "team_balance_players",
+        "column_name": "avatar",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 5
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "team_balance_players",
+        "column_name": "team",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 6
+      },
+      {
+        "udt_name": "float8",
+        "data_type": "double precision",
+        "table_name": "team_balance_players",
+        "column_name": "weight",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 7
+      },
+      {
+        "udt_name": "bool",
+        "data_type": "boolean",
+        "table_name": "team_balance_players",
+        "column_name": "guest",
+        "is_nullable": "NO",
+        "column_default": "false",
+        "ordinal_position": 8
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "tracked_players",
+        "column_name": "id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 1
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "tracked_players",
+        "column_name": "gamersclub_id",
+        "is_nullable": "NO",
+        "column_default": null,
+        "ordinal_position": 2
+      },
+      {
+        "udt_name": "bool",
+        "data_type": "boolean",
+        "table_name": "tracked_players",
+        "column_name": "active",
+        "is_nullable": "NO",
+        "column_default": "true",
+        "ordinal_position": 3
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "tracked_players",
+        "column_name": "nickname",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 4
+      },
+      {
+        "udt_name": "timestamp",
+        "data_type": "timestamp without time zone",
+        "table_name": "tracked_players",
+        "column_name": "created_at",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "ordinal_position": 5
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "tracked_players",
+        "column_name": "player_id",
+        "is_nullable": "YES",
+        "column_default": null,
+        "ordinal_position": 6
+      }
+    ],
+    "indexes": [
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"Achievement_code_key\" ON public.\"Achievement\" USING btree (code)",
+        "indexname": "Achievement_code_key",
+        "tablename": "Achievement"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"Achievement_pkey\" ON public.\"Achievement\" USING btree (id)",
+        "indexname": "Achievement_pkey",
+        "tablename": "Achievement"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"Configuration_pkey\" ON public.\"Configuration\" USING btree (key)",
+        "indexname": "Configuration_pkey",
+        "tablename": "Configuration"
+      },
+      {
+        "indexdef": "CREATE INDEX \"Event_matchId_idx\" ON public.\"Event\" USING btree (\"matchId\")",
+        "indexname": "Event_matchId_idx",
+        "tablename": "Event"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"Event_pkey\" ON public.\"Event\" USING btree (id)",
+        "indexname": "Event_pkey",
+        "tablename": "Event"
+      },
+      {
+        "indexdef": "CREATE INDEX \"Event_playerId_idx\" ON public.\"Event\" USING btree (\"playerId\")",
+        "indexname": "Event_playerId_idx",
+        "tablename": "Event"
+      },
+      {
+        "indexdef": "CREATE INDEX \"Event_victimId_idx\" ON public.\"Event\" USING btree (\"victimId\")",
+        "indexname": "Event_victimId_idx",
+        "tablename": "Event"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"Import_pkey\" ON public.\"Import\" USING btree (id)",
+        "indexname": "Import_pkey",
+        "tablename": "Import"
+      },
+      {
+        "indexdef": "CREATE INDEX \"Log_createdAt_idx\" ON public.\"Log\" USING btree (\"createdAt\")",
+        "indexname": "Log_createdAt_idx",
+        "tablename": "Log"
+      },
+      {
+        "indexdef": "CREATE INDEX \"Log_level_idx\" ON public.\"Log\" USING btree (level)",
+        "indexname": "Log_level_idx",
+        "tablename": "Log"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"Log_pkey\" ON public.\"Log\" USING btree (id)",
+        "indexname": "Log_pkey",
+        "tablename": "Log"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"Map_name_key\" ON public.\"Map\" USING btree (name)",
+        "indexname": "Map_name_key",
+        "tablename": "Map"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"Map_pkey\" ON public.\"Map\" USING btree (id)",
+        "indexname": "Map_pkey",
+        "tablename": "Map"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"Match_gamersClubMatchId_key\" ON public.\"Match\" USING btree (\"gamersClubMatchId\")",
+        "indexname": "Match_gamersClubMatchId_key",
+        "tablename": "Match"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"Match_pkey\" ON public.\"Match\" USING btree (id)",
+        "indexname": "Match_pkey",
+        "tablename": "Match"
+      },
+      {
+        "indexdef": "CREATE INDEX \"Match_playedAt_idx\" ON public.\"Match\" USING btree (\"playedAt\")",
+        "indexname": "Match_playedAt_idx",
+        "tablename": "Match"
+      },
+      {
+        "indexdef": "CREATE INDEX \"Match_seasonId_idx\" ON public.\"Match\" USING btree (\"seasonId\")",
+        "indexname": "Match_seasonId_idx",
+        "tablename": "Match"
+      },
+      {
+        "indexdef": "CREATE INDEX \"Match_seasonId_playedAt_idx\" ON public.\"Match\" USING btree (\"seasonId\", \"playedAt\")",
+        "indexname": "Match_seasonId_playedAt_idx",
+        "tablename": "Match"
+      },
+      {
+        "indexdef": "CREATE INDEX \"Match_sessionId_idx\" ON public.\"Match\" USING btree (\"sessionId\")",
+        "indexname": "Match_sessionId_idx",
+        "tablename": "Match"
+      },
+      {
+        "indexdef": "CREATE INDEX \"Match_trackedPlayersCount_idx\" ON public.\"Match\" USING btree (\"trackedPlayersCount\")",
+        "indexname": "Match_trackedPlayersCount_idx",
+        "tablename": "Match"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"Player_gamersClubId_key\" ON public.\"Player\" USING btree (\"gamersClubId\")",
+        "indexname": "Player_gamersClubId_key",
+        "tablename": "Player"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"Player_pkey\" ON public.\"Player\" USING btree (id)",
+        "indexname": "Player_pkey",
+        "tablename": "Player"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"Player_steamId_key\" ON public.\"Player\" USING btree (\"steamId\")",
+        "indexname": "Player_steamId_key",
+        "tablename": "Player"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"PlayerAchievement_pkey\" ON public.\"PlayerAchievement\" USING btree (id)",
+        "indexname": "PlayerAchievement_pkey",
+        "tablename": "PlayerAchievement"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"PlayerAchievement_playerId_achievementId_matchId_key\" ON public.\"PlayerAchievement\" USING btree (\"playerId\", \"achievementId\", \"matchId\")",
+        "indexname": "PlayerAchievement_playerId_achievementId_matchId_key",
+        "tablename": "PlayerAchievement"
+      },
+      {
+        "indexdef": "CREATE INDEX \"PlayerAchievement_playerId_idx\" ON public.\"PlayerAchievement\" USING btree (\"playerId\")",
+        "indexname": "PlayerAchievement_playerId_idx",
+        "tablename": "PlayerAchievement"
+      },
+      {
+        "indexdef": "CREATE INDEX \"PlayerClutch_matchId_idx\" ON public.\"PlayerClutch\" USING btree (\"matchId\")",
+        "indexname": "PlayerClutch_matchId_idx",
+        "tablename": "PlayerClutch"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"PlayerClutch_pkey\" ON public.\"PlayerClutch\" USING btree (id)",
+        "indexname": "PlayerClutch_pkey",
+        "tablename": "PlayerClutch"
+      },
+      {
+        "indexdef": "CREATE INDEX \"PlayerClutch_playerId_idx\" ON public.\"PlayerClutch\" USING btree (\"playerId\")",
+        "indexname": "PlayerClutch_playerId_idx",
+        "tablename": "PlayerClutch"
+      },
+      {
+        "indexdef": "CREATE INDEX \"PlayerEntryDuel_matchId_idx\" ON public.\"PlayerEntryDuel\" USING btree (\"matchId\")",
+        "indexname": "PlayerEntryDuel_matchId_idx",
+        "tablename": "PlayerEntryDuel"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"PlayerEntryDuel_pkey\" ON public.\"PlayerEntryDuel\" USING btree (id)",
+        "indexname": "PlayerEntryDuel_pkey",
+        "tablename": "PlayerEntryDuel"
+      },
+      {
+        "indexdef": "CREATE INDEX \"PlayerEntryDuel_playerId_idx\" ON public.\"PlayerEntryDuel\" USING btree (\"playerId\")",
+        "indexname": "PlayerEntryDuel_playerId_idx",
+        "tablename": "PlayerEntryDuel"
+      },
+      {
+        "indexdef": "CREATE INDEX \"PlayerMatchStats_matchId_idx\" ON public.\"PlayerMatchStats\" USING btree (\"matchId\")",
+        "indexname": "PlayerMatchStats_matchId_idx",
+        "tablename": "PlayerMatchStats"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"PlayerMatchStats_matchId_playerId_key\" ON public.\"PlayerMatchStats\" USING btree (\"matchId\", \"playerId\")",
+        "indexname": "PlayerMatchStats_matchId_playerId_key",
+        "tablename": "PlayerMatchStats"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"PlayerMatchStats_pkey\" ON public.\"PlayerMatchStats\" USING btree (id)",
+        "indexname": "PlayerMatchStats_pkey",
+        "tablename": "PlayerMatchStats"
+      },
+      {
+        "indexdef": "CREATE INDEX \"PlayerMatchStats_playerId_idx\" ON public.\"PlayerMatchStats\" USING btree (\"playerId\")",
+        "indexname": "PlayerMatchStats_playerId_idx",
+        "tablename": "PlayerMatchStats"
+      },
+      {
+        "indexdef": "CREATE INDEX \"PlayerMatchup_killerId_victimId_idx\" ON public.\"PlayerMatchup\" USING btree (\"killerId\", \"victimId\")",
+        "indexname": "PlayerMatchup_killerId_victimId_idx",
+        "tablename": "PlayerMatchup"
+      },
+      {
+        "indexdef": "CREATE INDEX \"PlayerMatchup_matchId_idx\" ON public.\"PlayerMatchup\" USING btree (\"matchId\")",
+        "indexname": "PlayerMatchup_matchId_idx",
+        "tablename": "PlayerMatchup"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"PlayerMatchup_matchId_killerId_victimId_key\" ON public.\"PlayerMatchup\" USING btree (\"matchId\", \"killerId\", \"victimId\")",
+        "indexname": "PlayerMatchup_matchId_killerId_victimId_key",
+        "tablename": "PlayerMatchup"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"PlayerMatchup_pkey\" ON public.\"PlayerMatchup\" USING btree (id)",
+        "indexname": "PlayerMatchup_pkey",
+        "tablename": "PlayerMatchup"
+      },
+      {
+        "indexdef": "CREATE INDEX \"PlayerTradeEvent_matchId_idx\" ON public.\"PlayerTradeEvent\" USING btree (\"matchId\")",
+        "indexname": "PlayerTradeEvent_matchId_idx",
+        "tablename": "PlayerTradeEvent"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"PlayerTradeEvent_pkey\" ON public.\"PlayerTradeEvent\" USING btree (id)",
+        "indexname": "PlayerTradeEvent_pkey",
+        "tablename": "PlayerTradeEvent"
+      },
+      {
+        "indexdef": "CREATE INDEX \"PlayerTradeEvent_traderId_idx\" ON public.\"PlayerTradeEvent\" USING btree (\"traderId\")",
+        "indexname": "PlayerTradeEvent_traderId_idx",
+        "tablename": "PlayerTradeEvent"
+      },
+      {
+        "indexdef": "CREATE INDEX \"PlayerTradeEvent_victimId_idx\" ON public.\"PlayerTradeEvent\" USING btree (\"victimId\")",
+        "indexname": "PlayerTradeEvent_victimId_idx",
+        "tablename": "PlayerTradeEvent"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"Rivalry_pkey\" ON public.\"Rivalry\" USING btree (id)",
+        "indexname": "Rivalry_pkey",
+        "tablename": "Rivalry"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"Rivalry_playerAId_playerBId_seasonId_key\" ON public.\"Rivalry\" USING btree (\"playerAId\", \"playerBId\", \"seasonId\")",
+        "indexname": "Rivalry_playerAId_playerBId_seasonId_key",
+        "tablename": "Rivalry"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"Season_pkey\" ON public.\"Season\" USING btree (id)",
+        "indexname": "Season_pkey",
+        "tablename": "Season"
+      },
+      {
+        "indexdef": "CREATE INDEX \"Season_startDate_endDate_idx\" ON public.\"Season\" USING btree (\"startDate\", \"endDate\")",
+        "indexname": "Season_startDate_endDate_idx",
+        "tablename": "Season"
+      },
+      {
+        "indexdef": "CREATE INDEX \"Season_status_idx\" ON public.\"Season\" USING btree (status)",
+        "indexname": "Season_status_idx",
+        "tablename": "Season"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"SeasonSnapshot_pkey\" ON public.\"SeasonSnapshot\" USING btree (id)",
+        "indexname": "SeasonSnapshot_pkey",
+        "tablename": "SeasonSnapshot"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"SeasonSnapshot_seasonId_key\" ON public.\"SeasonSnapshot\" USING btree (\"seasonId\")",
+        "indexname": "SeasonSnapshot_seasonId_key",
+        "tablename": "SeasonSnapshot"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"Session_pkey\" ON public.\"Session\" USING btree (id)",
+        "indexname": "Session_pkey",
+        "tablename": "Session"
+      },
+      {
+        "indexdef": "CREATE INDEX \"TeamBalanceMatch_createdAt_idx\" ON public.\"TeamBalanceMatch\" USING btree (\"createdAt\")",
+        "indexname": "TeamBalanceMatch_createdAt_idx",
+        "tablename": "TeamBalanceMatch"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"TeamBalanceMatch_pkey\" ON public.\"TeamBalanceMatch\" USING btree (id)",
+        "indexname": "TeamBalanceMatch_pkey",
+        "tablename": "TeamBalanceMatch"
+      },
+      {
+        "indexdef": "CREATE INDEX \"TeamBalanceMatch_seed_idx\" ON public.\"TeamBalanceMatch\" USING btree (seed)",
+        "indexname": "TeamBalanceMatch_seed_idx",
+        "tablename": "TeamBalanceMatch"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"User_email_key\" ON public.\"User\" USING btree (email)",
+        "indexname": "User_email_key",
+        "tablename": "User"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"User_pkey\" ON public.\"User\" USING btree (id)",
+        "indexname": "User_pkey",
+        "tablename": "User"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"User_playerId_key\" ON public.\"User\" USING btree (\"playerId\")",
+        "indexname": "User_playerId_key",
+        "tablename": "User"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX _prisma_migrations_pkey ON public._prisma_migrations USING btree (id)",
+        "indexname": "_prisma_migrations_pkey",
+        "tablename": "_prisma_migrations"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX match_payloads_pkey ON public.match_payloads USING btree (id)",
+        "indexname": "match_payloads_pkey",
+        "tablename": "match_payloads"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX \"match_payloads_source_sourceMatchId_key\" ON public.match_payloads USING btree (source, \"sourceMatchId\")",
+        "indexname": "match_payloads_source_sourceMatchId_key",
+        "tablename": "match_payloads"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX sync_jobs_pkey ON public.sync_jobs USING btree (id)",
+        "indexname": "sync_jobs_pkey",
+        "tablename": "sync_jobs"
+      },
+      {
+        "indexdef": "CREATE INDEX \"sync_jobs_sourceMatchId_idx\" ON public.sync_jobs USING btree (\"sourceMatchId\")",
+        "indexname": "sync_jobs_sourceMatchId_idx",
+        "tablename": "sync_jobs"
+      },
+      {
+        "indexdef": "CREATE INDEX sync_jobs_status_idx ON public.sync_jobs USING btree (status)",
+        "indexname": "sync_jobs_status_idx",
+        "tablename": "sync_jobs"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX team_balance_players_pkey ON public.team_balance_players USING btree (id)",
+        "indexname": "team_balance_players_pkey",
+        "tablename": "team_balance_players"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX tracked_players_gamersclub_id_key ON public.tracked_players USING btree (gamersclub_id)",
+        "indexname": "tracked_players_gamersclub_id_key",
+        "tablename": "tracked_players"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX tracked_players_pkey ON public.tracked_players USING btree (id)",
+        "indexname": "tracked_players_pkey",
+        "tablename": "tracked_players"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX tracked_players_player_id_key ON public.tracked_players USING btree (player_id)",
+        "indexname": "tracked_players_player_id_key",
+        "tablename": "tracked_players"
+      }
+    ],
+    "version": "PostgreSQL 16.15 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+    "database": "cs2stats",
+    "db_bytes": 116096023,
+    "migrations": [
+      {
+        "checksum": "fdb10bac21fd39ccfeefd0c6201b700c237a196bccceb7e9c183e14be9bcd2f2",
+        "finished_at": "2026-09-01T13:32:27.343674+00:00",
+        "migration_name": "20260716173246_init",
+        "rolled_back_at": null,
+        "applied_steps_count": 0
+      },
+      {
+        "checksum": "090c0865054a3f05cc5f9cfdc42fe78be46d191cbf5824b15df4c1cd781558d0",
+        "finished_at": "2026-09-01T13:33:32.015263+00:00",
+        "migration_name": "20260722194621_add_level_gc",
+        "rolled_back_at": null,
+        "applied_steps_count": 0
+      },
+      {
+        "checksum": "d323a75149feb634a49f529f741c57dcf41d58b9eec7794e42097513378d362a",
+        "finished_at": "2026-09-01T13:33:33.253554+00:00",
+        "migration_name": "20260723181823_add_steam_profile_fields",
+        "rolled_back_at": null,
+        "applied_steps_count": 0
+      },
+      {
+        "checksum": "4452f85dee9c3d0ba19d4d38be918bc08e9afcd4b942ec096960f98ce71902ed",
+        "finished_at": "2026-09-01T13:33:34.512595+00:00",
+        "migration_name": "20260727000000_add_match_tracked_players_count",
+        "rolled_back_at": null,
+        "applied_steps_count": 0
+      },
+      {
+        "checksum": "a9a492c4bbb852d3531617079a09b499974a46f88d3f680971e8c3b24ee77073",
+        "finished_at": "2026-09-01T13:33:35.7829+00:00",
+        "migration_name": "20260727131202_add_sprint_metrics",
+        "rolled_back_at": null,
+        "applied_steps_count": 0
+      },
+      {
+        "checksum": "57b6a8d1f5630405f7a9bbc06c3d75575876d2f303fcf485ce0ac6260e625bc7",
+        "finished_at": "2026-09-01T13:33:37.052019+00:00",
+        "migration_name": "20260727194719_add_gc_stats_phase1",
+        "rolled_back_at": null,
+        "applied_steps_count": 0
+      },
+      {
+        "checksum": "c2d2b130d69d9d9ea4b9363a7a5a163ffe86bf42caf4068938a6ae151651b524",
+        "finished_at": "2026-09-01T13:33:38.290494+00:00",
+        "migration_name": "20260729114015_add_seasons_models",
+        "rolled_back_at": null,
+        "applied_steps_count": 0
+      },
+      {
+        "checksum": "6f79c9366dcacfd39bca82f3dc73c5c9eac7670484cb310029e6d213ba86842a",
+        "finished_at": "2026-09-01T13:33:39.501492+00:00",
+        "migration_name": "20260729180328_add_team_balance",
+        "rolled_back_at": null,
+        "applied_steps_count": 0
+      },
+      {
+        "checksum": "95d7f4cea81da28b12fdc4dfdf41001b09eef69cb10cae627e5914a4255cfcd3",
+        "finished_at": "2026-09-01T13:33:40.760122+00:00",
+        "migration_name": "20260729181626_change_relation_to_player",
+        "rolled_back_at": null,
+        "applied_steps_count": 0
+      }
+    ],
+    "constraints": [
+      {
+        "name": "Achievement_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "Achievement"
+      },
+      {
+        "name": "Configuration_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (key)",
+        "table_name": "Configuration"
+      },
+      {
+        "name": "Event_matchId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"matchId\") REFERENCES \"Match\"(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "table_name": "Event"
+      },
+      {
+        "name": "Event_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "Event"
+      },
+      {
+        "name": "Event_playerId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"playerId\") REFERENCES \"Player\"(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "table_name": "Event"
+      },
+      {
+        "name": "Event_victimId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"victimId\") REFERENCES \"Player\"(id) ON UPDATE CASCADE ON DELETE SET NULL",
+        "table_name": "Event"
+      },
+      {
+        "name": "Import_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "Import"
+      },
+      {
+        "name": "Log_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "Log"
+      },
+      {
+        "name": "Map_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "Map"
+      },
+      {
+        "name": "Match_mapId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"mapId\") REFERENCES \"Map\"(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "table_name": "Match"
+      },
+      {
+        "name": "Match_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "Match"
+      },
+      {
+        "name": "Match_seasonId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"seasonId\") REFERENCES \"Season\"(id) ON UPDATE CASCADE ON DELETE SET NULL",
+        "table_name": "Match"
+      },
+      {
+        "name": "Match_sessionId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"sessionId\") REFERENCES \"Session\"(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "table_name": "Match"
+      },
+      {
+        "name": "Player_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "Player"
+      },
+      {
+        "name": "PlayerAchievement_achievementId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"achievementId\") REFERENCES \"Achievement\"(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "table_name": "PlayerAchievement"
+      },
+      {
+        "name": "PlayerAchievement_matchId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"matchId\") REFERENCES \"Match\"(id) ON UPDATE CASCADE ON DELETE SET NULL",
+        "table_name": "PlayerAchievement"
+      },
+      {
+        "name": "PlayerAchievement_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "PlayerAchievement"
+      },
+      {
+        "name": "PlayerAchievement_playerId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"playerId\") REFERENCES \"Player\"(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "table_name": "PlayerAchievement"
+      },
+      {
+        "name": "PlayerClutch_matchId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"matchId\") REFERENCES \"Match\"(id) ON UPDATE CASCADE ON DELETE CASCADE",
+        "table_name": "PlayerClutch"
+      },
+      {
+        "name": "PlayerClutch_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "PlayerClutch"
+      },
+      {
+        "name": "PlayerClutch_playerId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"playerId\") REFERENCES \"Player\"(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "table_name": "PlayerClutch"
+      },
+      {
+        "name": "PlayerEntryDuel_matchId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"matchId\") REFERENCES \"Match\"(id) ON UPDATE CASCADE ON DELETE CASCADE",
+        "table_name": "PlayerEntryDuel"
+      },
+      {
+        "name": "PlayerEntryDuel_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "PlayerEntryDuel"
+      },
+      {
+        "name": "PlayerEntryDuel_playerId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"playerId\") REFERENCES \"Player\"(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "table_name": "PlayerEntryDuel"
+      },
+      {
+        "name": "PlayerMatchStats_matchId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"matchId\") REFERENCES \"Match\"(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "table_name": "PlayerMatchStats"
+      },
+      {
+        "name": "PlayerMatchStats_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "PlayerMatchStats"
+      },
+      {
+        "name": "PlayerMatchStats_playerId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"playerId\") REFERENCES \"Player\"(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "table_name": "PlayerMatchStats"
+      },
+      {
+        "name": "PlayerMatchup_killerId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"killerId\") REFERENCES \"Player\"(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "table_name": "PlayerMatchup"
+      },
+      {
+        "name": "PlayerMatchup_matchId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"matchId\") REFERENCES \"Match\"(id) ON UPDATE CASCADE ON DELETE CASCADE",
+        "table_name": "PlayerMatchup"
+      },
+      {
+        "name": "PlayerMatchup_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "PlayerMatchup"
+      },
+      {
+        "name": "PlayerMatchup_victimId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"victimId\") REFERENCES \"Player\"(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "table_name": "PlayerMatchup"
+      },
+      {
+        "name": "PlayerTradeEvent_matchId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"matchId\") REFERENCES \"Match\"(id) ON UPDATE CASCADE ON DELETE CASCADE",
+        "table_name": "PlayerTradeEvent"
+      },
+      {
+        "name": "PlayerTradeEvent_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "PlayerTradeEvent"
+      },
+      {
+        "name": "PlayerTradeEvent_traderId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"traderId\") REFERENCES \"Player\"(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "table_name": "PlayerTradeEvent"
+      },
+      {
+        "name": "PlayerTradeEvent_victimId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"victimId\") REFERENCES \"Player\"(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "table_name": "PlayerTradeEvent"
+      },
+      {
+        "name": "Rivalry_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "Rivalry"
+      },
+      {
+        "name": "Rivalry_playerAId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"playerAId\") REFERENCES \"Player\"(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "table_name": "Rivalry"
+      },
+      {
+        "name": "Rivalry_playerBId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"playerBId\") REFERENCES \"Player\"(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "table_name": "Rivalry"
+      },
+      {
+        "name": "Rivalry_seasonId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"seasonId\") REFERENCES \"Season\"(id) ON UPDATE CASCADE ON DELETE SET NULL",
+        "table_name": "Rivalry"
+      },
+      {
+        "name": "Season_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "Season"
+      },
+      {
+        "name": "SeasonSnapshot_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "SeasonSnapshot"
+      },
+      {
+        "name": "SeasonSnapshot_seasonId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"seasonId\") REFERENCES \"Season\"(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "table_name": "SeasonSnapshot"
+      },
+      {
+        "name": "Session_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "Session"
+      },
+      {
+        "name": "TeamBalanceMatch_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "TeamBalanceMatch"
+      },
+      {
+        "name": "User_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "User"
+      },
+      {
+        "name": "User_playerId_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (\"playerId\") REFERENCES \"Player\"(id) ON UPDATE CASCADE ON DELETE SET NULL",
+        "table_name": "User"
+      },
+      {
+        "name": "_prisma_migrations_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "_prisma_migrations"
+      },
+      {
+        "name": "match_payloads_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "match_payloads"
+      },
+      {
+        "name": "sync_jobs_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "sync_jobs"
+      },
+      {
+        "name": "team_balance_players_match_id_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (match_id) REFERENCES \"TeamBalanceMatch\"(id) ON UPDATE CASCADE ON DELETE CASCADE",
+        "table_name": "team_balance_players"
+      },
+      {
+        "name": "team_balance_players_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "team_balance_players"
+      },
+      {
+        "name": "team_balance_players_player_id_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (player_id) REFERENCES \"Player\"(id) ON UPDATE CASCADE ON DELETE SET NULL",
+        "table_name": "team_balance_players"
+      },
+      {
+        "name": "tracked_players_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "tracked_players"
+      },
+      {
+        "name": "tracked_players_player_id_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (player_id) REFERENCES \"Player\"(id) ON UPDATE CASCADE ON DELETE SET NULL",
+        "table_name": "tracked_players"
+      }
+    ]
+  },
+  "data": {
+    "jobs": {
+      "COMPLETED": 550,
+      "SENT_TO_WORKER": 61
+    },
+    "counts": {
+      "Match": 750,
+      "Player": 4938,
+      "PlayerClutch": 7152,
+      "PlayerMatchup": 11411,
+      "SeasonSnapshot": 1,
+      "match_payloads": 480,
+      "PlayerEntryDuel": 10969,
+      "tracked_players": 13,
+      "PlayerMatchStats": 7649,
+      "PlayerTradeEvent": 6804
+    },
+    "seasons": [
+      {
+        "id": "cmubawjgq1nhx01rx480u0286",
+        "name": "Maio/2025",
+        "urls": 10,
+        "status": "CLOSED",
+        "matches": 10,
+        "outside": 0,
+        "end_date": "2025-05-31T23:59:59.999",
+        "community": 7,
+        "start_date": "2025-05-01T00:00:00"
+      },
+      {
+        "id": "cmubajalk1m6c01rxsylu5syr",
+        "name": "Junho/2025",
+        "urls": 9,
+        "status": "CLOSED",
+        "matches": 9,
+        "outside": 0,
+        "end_date": "2025-06-30T23:59:59.999",
+        "community": 6,
+        "start_date": "2025-06-01T00:00:00"
+      },
+      {
+        "id": "cmubanrt81mi601rx8gnyputt",
+        "name": "Julho/2025",
+        "urls": 7,
+        "status": "CLOSED",
+        "matches": 7,
+        "outside": 0,
+        "end_date": "2025-07-31T23:59:59.999",
+        "community": 7,
+        "start_date": "2025-07-01T00:00:00"
+      },
+      {
+        "id": "cmvhi9ou713fa01lgt931vhis",
+        "name": "Dezembro/2025",
+        "urls": 1,
+        "status": "CLOSED",
+        "matches": 1,
+        "outside": 0,
+        "end_date": "2025-12-31T23:59:59.999",
+        "community": 0,
+        "start_date": "2025-12-01T00:00:00"
+      },
+      {
+        "id": "cmubo2hxs1oh101rxcsnkdbqo",
+        "name": "Março/2026",
+        "urls": 1,
+        "status": "CLOSED",
+        "matches": 1,
+        "outside": 0,
+        "end_date": "2026-03-31T23:59:59.999",
+        "community": 0,
+        "start_date": "2026-03-01T00:00:00"
+      },
+      {
+        "id": "cmsxy6mgg00h204jpw6vnigun",
+        "name": "Maio/2026",
+        "urls": 2,
+        "status": "CLOSED",
+        "matches": 2,
+        "outside": 0,
+        "end_date": "2026-05-31T23:59:59.999",
+        "community": 0,
+        "start_date": "2026-05-01T00:00:00"
+      },
+      {
+        "id": "cmubaw1qu1nh901rxm4slybld",
+        "name": "Junho/2026",
+        "urls": 0,
+        "status": "CLOSED",
+        "matches": 1,
+        "outside": 0,
+        "end_date": "2026-06-30T23:59:59.999",
+        "community": 0,
+        "start_date": "2026-06-01T00:00:00"
+      },
+      {
+        "id": "default-season",
+        "name": "Julho/2026",
+        "urls": 50,
+        "status": "CLOSED",
+        "matches": 173,
+        "outside": 29,
+        "end_date": "2026-08-01T02:59:59.999",
+        "community": 97,
+        "start_date": "2026-07-01T03:00:00"
+      },
+      {
+        "id": "cmsaesdby0001a8wp6g0e0pvp",
+        "name": "Agosto/2026",
+        "urls": 169,
+        "status": "CLOSED",
+        "matches": 169,
+        "outside": 0,
+        "end_date": "2026-08-31T23:59:59.999",
+        "community": 77,
+        "start_date": "2026-08-01T00:00:00"
+      },
+      {
+        "id": "season-sep-2026",
+        "name": "Setembro/2026",
+        "urls": 191,
+        "status": "CLOSED",
+        "matches": 191,
+        "outside": 0,
+        "end_date": "2026-09-30T23:59:59.999",
+        "community": 84,
+        "start_date": "2026-09-01T00:00:00"
+      },
+      {
+        "id": "cmuow54kq223v01rxwlfgd6o9",
+        "name": "Outubro/2026",
+        "urls": 186,
+        "status": "ACTIVE",
+        "matches": 186,
+        "outside": 0,
+        "end_date": "2026-10-31T23:59:59.999",
+        "community": 116,
+        "start_date": "2026-10-01T00:00:00"
+      }
+    ],
+    "snapshots": [
+      {
+        "keys": [
+          "version",
+          "seasonId",
+          "dashboard",
+          "seasonName",
+          "generatedAt",
+          "generatedBy",
+          "schemaVersion",
+          "applicationVersion"
+        ],
+        "kind": "object",
+        "seasonId": "season-sep-2026",
+        "nested_keys": [
+          "coach",
+          "summary",
+          "competitive"
+        ]
+      }
+    ],
+    "payload_status": {
+      "PROCESSED": 480
+    },
+    "parser_versions": [
+      {
+        "n": 480,
+        "parserVersion": "0.41.4",
+        "schemaVersion": "1.0.0"
+      }
+    ]
+  },
+  "bounded_samples": [
+    {
+      "status": "PROCESSED",
+      "defused": 1,
+      "seasonId": "cmsaesdby0001a8wp6g0e0pvp",
+      "kill_keys": [
+        "id",
+        "air",
+        "tick",
+        "round",
+        "weapon",
+        "noscope",
+        "distance",
+        "headshot",
+        "wallbang",
+        "analytics",
+        "thrusmoke",
+        "killer_team",
+        "victim_team",
+        "time_seconds",
+        "attacker_blind",
+        "killer_steamid",
+        "victim_steamid",
+        "assister_steamid",
+        "penetration_count"
+      ],
+      "raw_rounds": 35,
+      "round_keys": [
+        "type",
+        "number",
+        "reason",
+        "end_tick",
+        "start_tick",
+        "mvp_steamid",
+        "reason_code",
+        "winner_team",
+        "excluded_reason",
+        "excluded_from_stats"
+      ],
+      "payload_keys": [
+        "bomb",
+        "kills",
+        "match",
+        "damage",
+        "rounds",
+        "economy",
+        "players",
+        "clutches",
+        "grenades",
+        "purchases",
+        "multikills",
+        "round_facts",
+        "blind_events",
+        "opening_duels",
+        "weapon_events",
+        "parser_version",
+        "schema_version"
+      ],
+      "stored_bytes": 131074,
+      "parserVersion": "0.41.4",
+      "analytics_keys": [
+        "eco",
+        "entry",
+        "trade",
+        "suicide",
+        "anti_eco",
+        "teamkill",
+        "exit_kill",
+        "entry_kill",
+        "trade_kill",
+        "trade_victim"
+      ],
+      "relational_rounds": 35,
+      "rounds_with_mvp_key": 35,
+      "rounds_with_mvp_value": 35,
+      "relational_rounds_type": "array"
+    },
+    {
+      "status": "PROCESSED",
+      "defused": 2,
+      "seasonId": "cmuow54kq223v01rxwlfgd6o9",
+      "kill_keys": [
+        "id",
+        "air",
+        "tick",
+        "round",
+        "weapon",
+        "noscope",
+        "distance",
+        "headshot",
+        "wallbang",
+        "analytics",
+        "thrusmoke",
+        "killer_team",
+        "victim_team",
+        "time_seconds",
+        "attacker_blind",
+        "killer_steamid",
+        "victim_steamid",
+        "assister_steamid",
+        "penetration_count"
+      ],
+      "raw_rounds": 22,
+      "round_keys": [
+        "type",
+        "number",
+        "reason",
+        "end_tick",
+        "start_tick",
+        "mvp_steamid",
+        "reason_code",
+        "winner_team",
+        "excluded_reason",
+        "excluded_from_stats"
+      ],
+      "payload_keys": [
+        "bomb",
+        "kills",
+        "match",
+        "damage",
+        "rounds",
+        "economy",
+        "players",
+        "clutches",
+        "grenades",
+        "purchases",
+        "multikills",
+        "round_facts",
+        "blind_events",
+        "opening_duels",
+        "weapon_events",
+        "parser_version",
+        "schema_version"
+      ],
+      "stored_bytes": 66425,
+      "parserVersion": "0.41.4",
+      "analytics_keys": [
+        "eco",
+        "entry",
+        "trade",
+        "suicide",
+        "anti_eco",
+        "teamkill",
+        "exit_kill",
+        "entry_kill",
+        "trade_kill",
+        "trade_victim"
+      ],
+      "relational_rounds": 22,
+      "rounds_with_mvp_key": 22,
+      "rounds_with_mvp_value": 22,
+      "relational_rounds_type": "array"
+    },
+    {
+      "status": "PROCESSED",
+      "defused": 7,
+      "seasonId": "default-season",
+      "kill_keys": [
+        "id",
+        "air",
+        "tick",
+        "round",
+        "weapon",
+        "noscope",
+        "distance",
+        "headshot",
+        "wallbang",
+        "analytics",
+        "thrusmoke",
+        "killer_team",
+        "victim_team",
+        "time_seconds",
+        "attacker_blind",
+        "killer_steamid",
+        "victim_steamid",
+        "assister_steamid",
+        "penetration_count"
+      ],
+      "raw_rounds": 25,
+      "round_keys": [
+        "type",
+        "number",
+        "reason",
+        "end_tick",
+        "start_tick",
+        "mvp_steamid",
+        "reason_code",
+        "winner_team",
+        "excluded_reason",
+        "excluded_from_stats"
+      ],
+      "payload_keys": [
+        "bomb",
+        "kills",
+        "match",
+        "damage",
+        "rounds",
+        "economy",
+        "players",
+        "clutches",
+        "grenades",
+        "purchases",
+        "multikills",
+        "round_facts",
+        "blind_events",
+        "opening_duels",
+        "weapon_events",
+        "parser_version",
+        "schema_version"
+      ],
+      "stored_bytes": 86528,
+      "parserVersion": "0.41.4",
+      "analytics_keys": [
+        "eco",
+        "entry",
+        "trade",
+        "suicide",
+        "anti_eco",
+        "teamkill",
+        "exit_kill",
+        "entry_kill",
+        "trade_kill",
+        "trade_victim"
+      ],
+      "relational_rounds": null,
+      "rounds_with_mvp_key": 25,
+      "rounds_with_mvp_value": 25,
+      "relational_rounds_type": "null"
+    },
+    {
+      "status": "PROCESSED",
+      "defused": 3,
+      "seasonId": "season-sep-2026",
+      "kill_keys": [
+        "id",
+        "air",
+        "tick",
+        "round",
+        "weapon",
+        "noscope",
+        "distance",
+        "headshot",
+        "wallbang",
+        "analytics",
+        "thrusmoke",
+        "killer_team",
+        "victim_team",
+        "time_seconds",
+        "attacker_blind",
+        "killer_steamid",
+        "victim_steamid",
+        "assister_steamid",
+        "penetration_count"
+      ],
+      "raw_rounds": 24,
+      "round_keys": [
+        "type",
+        "number",
+        "reason",
+        "end_tick",
+        "start_tick",
+        "mvp_steamid",
+        "reason_code",
+        "winner_team",
+        "excluded_reason",
+        "excluded_from_stats"
+      ],
+      "payload_keys": [
+        "bomb",
+        "kills",
+        "match",
+        "damage",
+        "rounds",
+        "economy",
+        "players",
+        "clutches",
+        "grenades",
+        "purchases",
+        "multikills",
+        "round_facts",
+        "blind_events",
+        "opening_duels",
+        "weapon_events",
+        "parser_version",
+        "schema_version"
+      ],
+      "stored_bytes": 80985,
+      "parserVersion": "0.41.4",
+      "analytics_keys": [
+        "eco",
+        "entry",
+        "trade",
+        "suicide",
+        "anti_eco",
+        "teamkill",
+        "exit_kill",
+        "entry_kill",
+        "trade_kill",
+        "trade_victim"
+      ],
+      "relational_rounds": 24,
+      "rounds_with_mvp_key": 24,
+      "rounds_with_mvp_value": 24,
+      "relational_rounds_type": "array"
+    }
+  ]
+}

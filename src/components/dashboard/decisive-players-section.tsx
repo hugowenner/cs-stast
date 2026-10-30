@@ -1,110 +1,167 @@
 "use client";
 
 import Link from "next/link";
+import { Trophy, Flame, Shield } from "lucide-react";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import { AnimatedNumber } from "@/components/motion/animated-number";
-import type { DecisivePlayerEntry } from "@/server/services/competitive.service";
+import { TacticalBadge } from "@/components/ui/tactical-badge";
+import {
+  computeDecisiveCategories,
+  type DecisivePlayerEntry,
+} from "@/lib/decisive-categories";
 
 interface Props {
   decisive: DecisivePlayerEntry[];
 }
 
-const RANK_STYLE: Record<number, { border: string; badge: string; badgeText: string }> = {
-  1: {
-    border: "border-status-warning/35 shadow-[0_0_12px_0_rgba(245,158,11,0.1)]",
-    badge: "bg-status-warning text-black border-status-warning/50",
-    badgeText: "#1",
-  },
-  2: {
-    border: "border-white/[0.12]",
-    badge: "bg-white/15 text-white border-white/20",
-    badgeText: "#2",
-  },
-  3: {
-    border: "border-accent-violet/25",
-    badge: "bg-accent-violet/20 text-accent-violet border-accent-violet/30",
-    badgeText: "#3",
-  },
-};
-
 export function DecisivePlayersSection({ decisive }: Props) {
   if (decisive.length === 0) return null;
 
+  const { reiDoClutch, pontaDeLanca, anjoDaGuarda } = computeDecisiveCategories(decisive);
+
+  const categories = [
+    {
+      id: "clutch",
+      title: "REI DO CLUTCH",
+      subtitle: "Maior número de situações 1vX vencidas",
+      icon: Trophy,
+      iconColor: "text-amber-400",
+      badgeColor: "bg-amber-500/20 text-amber-400 border-amber-500/40",
+      data: reiDoClutch,
+      renderMetrics: (leader: DecisivePlayerEntry) => (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between text-xs font-mono">
+            <span className="text-muted-foreground/70">Clutches Vencidos</span>
+            <span className="font-bold text-foreground">
+              <AnimatedNumber value={leader.clutchWins} decimals={0} />V ({leader.clutchWinrate}%)
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground/60 border-t border-border/20 pt-1">
+            <span>Alta Desvantagem (1v2+)</span>
+            <span>{leader.clutchHighDisadvantageWins ?? 0} vitórias</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "ponta",
+      title: "PONTA DE LANÇA",
+      subtitle: "Maior número de duelos de abertura vencidos",
+      icon: Flame,
+      iconColor: "text-orange-400",
+      badgeColor: "bg-orange-500/20 text-orange-400 border-orange-500/40",
+      data: pontaDeLanca,
+      renderMetrics: (leader: DecisivePlayerEntry) => (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between text-xs font-mono">
+            <span className="text-muted-foreground/70">First Kills</span>
+            <span className="font-bold text-foreground">
+              <AnimatedNumber value={leader.entryKills} decimals={0} /> FK
+              {leader.openingWinrate !== null && leader.openingWinrate !== undefined
+                ? ` (${leader.openingWinrate}%)`
+                : ""}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground/60 border-t border-border/20 pt-1">
+            <span>Vitória Time Pós-FK</span>
+            <span>
+              {leader.teamWinrateAfterFk !== null && leader.teamWinrateAfterFk !== undefined
+                ? `${leader.teamWinrateAfterFk}% dos rounds`
+                : "—"}
+            </span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "anjo",
+      title: "ANJO DA GUARDA",
+      subtitle: "Maior volume de trades realizados",
+      icon: Shield,
+      iconColor: "text-cyan-400",
+      badgeColor: "bg-cyan-500/20 text-cyan-400 border-cyan-500/40",
+      data: anjoDaGuarda,
+      renderMetrics: (leader: DecisivePlayerEntry) => (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between text-xs font-mono">
+            <span className="text-muted-foreground/70">Trades Realizados</span>
+            <span className="font-bold text-foreground">
+              <AnimatedNumber value={leader.tradeKills} decimals={0} /> trades
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground/60 border-t border-border/20 pt-1">
+            <span>Tempo Médio Reação</span>
+            <span>{leader.avgTradeReactionTime !== null ? `${leader.avgTradeReactionTime}s` : "—"}</span>
+          </div>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-      {decisive.map((entry, i) => {
-        const rank = i + 1;
-        const style = RANK_STYLE[rank] ?? RANK_STYLE[3];
-        const hideExtra = entry.hideTradesAndClutches;
+      {categories.map((cat) => {
+        const { leader, hasTelemetry, isPreliminary } = cat.data;
+        const Icon = cat.icon;
 
         return (
-          <Link
-            key={entry.player.id}
-            href={`/players/${entry.player.id}`}
-            className={`glass-panel card-hover rounded-2xl border overflow-hidden flex flex-col ${style.border}`}
+          <div
+            key={cat.id}
+            className="flex flex-col justify-between gap-3 p-3.5 bg-surface-deck border border-border/50 rounded-xs"
           >
-            {/* Header */}
-            <div className="px-4 pt-3.5 pb-3 border-b border-white/[0.05] flex items-center gap-3">
-              <div className="relative">
-                <PlayerAvatar
-                  nickname={entry.player.nickname}
-                  avatarUrl={entry.player.avatarUrl}
-                  size="md"
-                />
-                <span className={`absolute -bottom-1 -right-1 text-[8px] font-black leading-none px-1 py-0.5 rounded-full border ${style.badge}`}>
-                  {style.badgeText}
-                </span>
+            <div>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <Icon className={`size-3.5 ${cat.iconColor} shrink-0`} />
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-[0.14em] text-foreground block">
+                    {cat.title}
+                  </span>
+                </div>
+                <TacticalBadge
+                  variant={hasTelemetry ? (isPreliminary ? "warning" : "good") : "neutral"}
+                  size="xs"
+                >
+                  {hasTelemetry ? (isPreliminary ? "Amostra preliminar" : "Disponível") : "Indisponível"}
+                </TacticalBadge>
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-black text-white truncate">{entry.player.nickname}</p>
-                <p className="text-[9px] text-muted-foreground/55 font-semibold mt-0.5">⚡ Decide o Round</p>
-              </div>
+              <span className="text-[10px] text-muted-foreground/70 font-sans block mt-0.5">
+                {cat.subtitle}
+              </span>
             </div>
 
-            {/* Impacto — métrica principal */}
-            <div className="px-4 py-3 border-b border-white/[0.04]">
-              <p className="text-[8px] uppercase tracking-widest font-bold text-muted-foreground/55">
-                Presença no Round
-              </p>
-              <p className="text-2xl font-black text-white tabular-nums leading-tight mt-0.5">
-                <AnimatedNumber value={entry.impactPercent} decimals={0} suffix="%" duration={0.8} />
-              </p>
-            </div>
-
-            {/* Entry kills sempre visível */}
-            <div className={`px-4 py-2.5 ${hideExtra ? "" : "border-b border-white/[0.04]"} mt-auto`}>
-              <div>
-                <p className="text-[7px] uppercase tracking-widest font-bold text-muted-foreground/50">
-                  Entry Kills
-                </p>
-                <p className="text-xs font-black text-white/80 tabular-nums mt-0.5">
-                  <AnimatedNumber value={entry.entryKills} decimals={0} duration={0.6} />
+            {!hasTelemetry || !leader ? (
+              <div className="border-t border-border/30 pt-3 pb-1">
+                <p className="text-[11px] font-mono text-muted-foreground/70">
+                  Dados ausentes na súmula desta temporada.
                 </p>
               </div>
-            </div>
+            ) : (
+              <div className="flex flex-col gap-2.5 border-t border-border/30 pt-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="relative shrink-0">
+                      <PlayerAvatar
+                        nickname={leader.player.nickname}
+                        avatarUrl={leader.player.avatarUrl}
+                        size="sm"
+                      />
+                      <span className={`absolute -bottom-1 -right-1 text-[8px] font-mono font-black px-1 py-0.2 rounded-xs border ${cat.badgeColor}`}>
+                        #1
+                      </span>
+                    </div>
+                    <Link
+                      href={`/players/${leader.player.id}`}
+                      className="font-medium text-xs text-foreground hover:text-primary transition-micro truncate"
+                    >
+                      {leader.player.nickname}
+                    </Link>
+                  </div>
+                </div>
 
-            {/* Trade kills + Clutch wins — só exibidos se o banco tem esses dados */}
-            {!hideExtra && (
-              <div className="px-4 py-2.5 grid grid-cols-2 gap-2">
-                <div>
-                  <p className="text-[7px] uppercase tracking-widest font-bold text-muted-foreground/50">
-                    Trade Kills
-                  </p>
-                  <p className="text-xs font-black text-white/80 tabular-nums mt-0.5">
-                    <AnimatedNumber value={entry.tradeKills} decimals={0} duration={0.55} />
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[7px] uppercase tracking-widest font-bold text-muted-foreground/50">
-                    Clutch Wins
-                  </p>
-                  <p className="text-xs font-black text-white/80 tabular-nums mt-0.5">
-                    <AnimatedNumber value={entry.clutchWins} decimals={0} duration={0.55} />
-                  </p>
-                </div>
+                {cat.renderMetrics(leader)}
               </div>
             )}
-          </Link>
+          </div>
         );
       })}
     </div>

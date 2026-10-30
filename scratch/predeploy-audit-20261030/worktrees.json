@@ -1,0 +1,79 @@
+[
+  {
+    "folder": "C:/Users/ramobh/Documents/cs2-stats",
+    "head": "2d3227ce29ea1857a1f0bc8742b33a7b6b0dbd61",
+    "branch": "refs/heads/main",
+    "divergence": "0\t0",
+    "dirty": 67
+  },
+  {
+    "folder": "C:/Users/ramobh/Documents/cs2-stats/.claude/worktrees/ai-analysis-cache-invalidation-01493b",
+    "head": "2ecc3fcf4659ead9150dd9ca3aeee5806f54e66c",
+    "branch": "refs/heads/claude/ai-analysis-cache-invalidation-01493b",
+    "divergence": "29\t0",
+    "dirty": 5
+  },
+  {
+    "folder": "C:/Users/ramobh/Documents/cs2-stats/.claude/worktrees/certificate-installation-error-32e57d",
+    "head": "c118aabc1f749965aed55539631860860ba540e0",
+    "branch": "refs/heads/claude/announcement-banner-dashboard-6ee0aa",
+    "divergence": "63\t0",
+    "dirty": 2
+  },
+  {
+    "folder": "C:/Users/ramobh/Documents/cs2-stats/.claude/worktrees/cs2-admin-dashboard-restructure-8cae90",
+    "head": "49d4c7957d704e23a71455d55c7bbe4cd10ef161",
+    "branch": "detached",
+    "divergence": "40\t0",
+    "dirty": 0
+  },
+  {
+    "folder": "C:/Users/ramobh/Documents/cs2-stats/.claude/worktrees/cs2-gameplay-video-analysis-6ada6a",
+    "head": "f7e253c384b4bc7ba7afc92cecb8b4feaa4a110c",
+    "branch": "refs/heads/claude/cs2-gameplay-video-analysis-6ada6a",
+    "divergence": "40\t0",
+    "dirty": 1
+  },
+  {
+    "folder": "C:/Users/ramobh/Documents/cs2-stats/.claude/worktrees/cs2-player-profile-audit-9e8813",
+    "head": "ab121b90b9bff0f1e72558823cc86c96e005fa91",
+    "branch": "refs/heads/claude/cs2-player-profile-audit-9e8813",
+    "divergence": "24\t0",
+    "dirty": 5
+  },
+  {
+    "folder": "C:/Users/ramobh/Documents/cs2-stats/.claude/worktrees/cs2-stats-integrity-audit-5ab6c1",
+    "head": "f05381b79fa0ae14c4be4c8bc3ff168ca6efe7c6",
+    "branch": "refs/heads/claude/cs2-stats-integrity-audit-5ab6c1",
+    "divergence": "59\t2",
+    "dirty": 1
+  },
+  {
+    "folder": "C:/Users/ramobh/Documents/cs2-stats/.claude/worktrees/cs2-sync-404-investigation-acede8",
+    "head": "b9468367a4903cfe477a40b5db7b305045a248de",
+    "branch": "refs/heads/claude/cs2-stats-table-audit-31a499",
+    "divergence": "45\t1",
+    "dirty": 0
+  },
+  {
+    "folder": "C:/Users/ramobh/Documents/cs2-stats/.claude/worktrees/deepseek-coach-410-error-85a123",
+    "head": "bd2ea2b595c8c3084fdec3c3671e491e63bd4f2c",
+    "branch": "refs/heads/claude/deepseek-coach-410-error-85a123",
+    "divergence": "46\t0",
+    "dirty": 8
+  },
+  {
+    "folder": "C:/Users/ramobh/Documents/cs2-stats/.claude/worktrees/goofy-germain-23c972",
+    "head": "b481451de06c24a85b3d850958c115d2225302a2",
+    "branch": "refs/heads/claude/goofy-germain-23c972",
+    "divergence": "126\t0",
+    "dirty": 3
+  },
+  {
+    "folder": "C:/Users/ramobh/Documents/cs2-stats/.claude/worktrees/raio-x-7-modulos",
+    "head": "2d3227ce29ea1857a1f0bc8742b33a7b6b0dbd61",
+    "branch": "refs/heads/feat/raio-x-7-modulos",
+    "divergence": "0\t0",
+    "dirty": 5
+  }
+]

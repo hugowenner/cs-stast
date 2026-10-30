@@ -92,6 +92,7 @@ model Match {
   playerStats         PlayerMatchStats[]
   matchups            PlayerMatchup[]
   trades              PlayerTradeEvent[]
+  demoProjections     DemoMatchProjection[]
 
   @@index([sessionId])
   @@index([playedAt])
@@ -349,9 +350,79 @@ model MatchPayload {
   errorMessage  String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  revisions     IngestPayloadRevision[]
 
   @@unique([source, sourceMatchId])
   @@map("match_payloads")
+}
+
+model IngestPayloadRevision {
+  id            String   @id @db.Uuid
+  payloadId     String   @map("payload_id")
+  payloadHash   String   @map("payload_hash")
+  payload       Json
+  parserVersion String   @map("parser_version")
+  schemaVersion String   @map("schema_version")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamp(3)
+  latest        MatchPayload @relation(fields: [payloadId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  jobs          NormalizationJob[]
+  @@unique([payloadId, payloadHash])
+  @@map("ingest_payload_revisions")
+}
+
+model NormalizationJob {
+  id                String @id @db.Uuid
+  revisionId        String @map("revision_id") @db.Uuid
+  source            String
+  sourceMatchId     String @map("source_match_id")
+  normalizerVersion String @map("normalizer_version")
+  status            String @default("PENDING")
+  attempts          Int @default(0)
+  maxAttempts       Int @default(5) @map("max_attempts")
+  availableAt       DateTime @default(now()) @map("available_at") @db.Timestamp(3)
+  leaseToken        String? @map("lease_token") @db.Uuid
+  leaseUntil        DateTime? @map("lease_until") @db.Timestamp(3)
+  owner             String?
+  lastError         Json? @map("last_error")
+  startedAt         DateTime? @map("started_at") @db.Timestamp(3)
+  finishedAt        DateTime? @map("finished_at") @db.Timestamp(3)
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamp(3)
+  updatedAt         DateTime @default(now()) @map("updated_at") @db.Timestamp(3)
+  revision          IngestPayloadRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  attemptsLog       NormalizationAttempt[]
+  projection        DemoMatchProjection?
+  @@unique([revisionId, normalizerVersion])
+  @@index([normalizerVersion, status, availableAt, leaseUntil], map: "normalization_jobs_claim")
+  @@index([source, sourceMatchId], map: "normalization_jobs_match")
+  @@index([status, leaseUntil], map: "normalization_jobs_lease")
+  @@map("normalization_jobs")
+}
+
+model NormalizationAttempt {
+  id         String @id @db.Uuid
+  jobId      String @map("job_id") @db.Uuid
+  leaseToken String @unique @map("lease_token") @db.Uuid
+  attempt    Int
+  owner      String
+  startedAt  DateTime @default(now()) @map("started_at") @db.Timestamp(3)
+  finishedAt DateTime? @map("finished_at") @db.Timestamp(3)
+  outcome    String?
+  error      Json?
+  job        NormalizationJob @relation(fields: [jobId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  @@index([jobId, startedAt], map: "normalization_attempts_job")
+  @@map("normalization_attempts")
+}
+
+model DemoMatchProjection {
+  jobId             String @id @map("job_id") @db.Uuid
+  matchId           String @map("match_id")
+  normalizerVersion String @map("normalizer_version")
+  normalized        Json
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamp(3)
+  job               NormalizationJob @relation(fields: [jobId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  match             Match @relation(fields: [matchId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  @@index([matchId, createdAt], map: "demo_match_projections_match")
+  @@map("demo_match_projections")
 }
 
 model PlayerMatchup {

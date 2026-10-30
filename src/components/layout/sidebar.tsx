@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Home,
   Swords,
+  Crosshair,
   Target,
   BarChart3,
   Award,
@@ -19,6 +20,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { href: "/", label: "Hub", icon: Home },
   { href: "/sessions", label: "Partidas", icon: Swords },
+  { href: "/raio-x", label: "Raio-X", icon: Crosshair },
   { href: "/players", label: "Players", icon: Target },
   { href: "/sessions?view=performance", label: "Performance", icon: BarChart3 },
   { href: "/rankings", label: "Rankings", icon: Award },
@@ -54,7 +56,6 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
 
       <nav className="flex flex-1 flex-col gap-1">
         {NAV_ITEMS.map((item) => {
-          // simple check for sidebar (query params check not fully needed but good to align)
           const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href.split("?")[0]);
           const Icon = item.icon;
           return (

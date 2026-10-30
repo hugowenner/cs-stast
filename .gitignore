@@ -24,6 +24,7 @@
 
 # production
 /build
+/normalizer.cjs
 
 # misc
 .DS_Store

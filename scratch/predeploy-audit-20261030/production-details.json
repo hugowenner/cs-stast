@@ -1,0 +1,381 @@
+{
+  "at": "2026-10-30T17:11:28.069Z",
+  "integrity": [
+    {
+      "name": "team_balance_players_match_id_fkey",
+      "violations": 0
+    },
+    {
+      "name": "SeasonSnapshot_seasonId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "Match_sessionId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "Match_mapId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "Match_seasonId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "team_balance_players_player_id_fkey",
+      "violations": 0
+    },
+    {
+      "name": "tracked_players_player_id_fkey",
+      "violations": 0
+    },
+    {
+      "name": "User_playerId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "PlayerClutch_matchId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "PlayerTradeEvent_matchId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "PlayerClutch_playerId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "PlayerTradeEvent_traderId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "PlayerTradeEvent_victimId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "PlayerEntryDuel_matchId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "PlayerMatchStats_matchId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "PlayerMatchup_matchId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "PlayerEntryDuel_playerId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "PlayerMatchStats_playerId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "PlayerAchievement_achievementId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "PlayerAchievement_matchId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "PlayerAchievement_playerId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "PlayerMatchup_victimId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "Event_victimId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "Event_matchId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "Rivalry_playerAId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "Rivalry_seasonId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "Event_playerId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "Rivalry_playerBId_fkey",
+      "violations": 0
+    },
+    {
+      "name": "PlayerMatchup_killerId_fkey",
+      "violations": 0
+    }
+  ],
+  "allcounts": {
+    "Log": 0,
+    "Map": 10,
+    "User": 0,
+    "Event": 71435,
+    "Match": 750,
+    "Import": 459,
+    "Player": 4938,
+    "Season": 11,
+    "Rivalry": 31677,
+    "Session": 172,
+    "sync_jobs": 611,
+    "Achievement": 35,
+    "PlayerClutch": 7152,
+    "Configuration": 1,
+    "PlayerMatchup": 11411,
+    "SeasonSnapshot": 1,
+    "match_payloads": 480,
+    "PlayerEntryDuel": 10969,
+    "tracked_players": 13,
+    "PlayerMatchStats": 7649,
+    "PlayerTradeEvent": 6804,
+    "TeamBalanceMatch": 13,
+    "PlayerAchievement": 17870,
+    "_prisma_migrations": 9,
+    "team_balance_players": 130
+  },
+  "bounded_samples": [
+    {
+      "planted": 8,
+      "winners": [
+        "CT",
+        "T"
+      ],
+      "anti_eco": 35,
+      "bomb_keys": [
+        "id",
+        "site",
+        "tick",
+        "round",
+        "event_type",
+        "player_name",
+        "player_steamid"
+      ],
+      "blind_keys": [
+        "id",
+        "tick",
+        "round",
+        "blind_duration",
+        "thrower_steamid",
+        "blind_player_steamid"
+      ],
+      "clutch_wins": 7,
+      "round_types": [
+        "knife_round",
+        "normal"
+      ],
+      "economy_keys": [
+        "id",
+        "cash",
+        "side",
+        "round",
+        "cash_spent",
+        "loadout_value",
+        "player_steamid",
+        "equipment_value"
+      ],
+      "economy_sides": [
+        "CT",
+        "T"
+      ],
+      "parserVersion": "0.41.4",
+      "purchase_keys": [
+        "id",
+        "cost",
+        "side",
+        "team",
+        "tick",
+        "round",
+        "weapon",
+        "category",
+        "is_primary",
+        "is_utility",
+        "player_steamid"
+      ],
+      "clutch_won_types": [
+        "boolean"
+      ]
+    },
+    {
+      "planted": 6,
+      "winners": [
+        "CT",
+        "T"
+      ],
+      "anti_eco": 33,
+      "bomb_keys": [
+        "id",
+        "site",
+        "tick",
+        "round",
+        "event_type",
+        "player_name",
+        "player_steamid"
+      ],
+      "blind_keys": [
+        "id",
+        "tick",
+        "round",
+        "blind_duration",
+        "thrower_steamid",
+        "blind_player_steamid"
+      ],
+      "clutch_wins": 4,
+      "round_types": [
+        "knife_round",
+        "normal"
+      ],
+      "economy_keys": [
+        "id",
+        "cash",
+        "side",
+        "round",
+        "cash_spent",
+        "loadout_value",
+        "player_steamid",
+        "equipment_value"
+      ],
+      "economy_sides": [
+        "CT",
+        "T"
+      ],
+      "parserVersion": "0.41.4",
+      "purchase_keys": [
+        "id",
+        "cost",
+        "side",
+        "team",
+        "tick",
+        "round",
+        "weapon",
+        "category",
+        "is_primary",
+        "is_utility",
+        "player_steamid"
+      ],
+      "clutch_won_types": [
+        "boolean"
+      ]
+    },
+    {
+      "planted": 7,
+      "winners": [
+        "CT",
+        "T"
+      ],
+      "anti_eco": 26,
+      "bomb_keys": [
+        "id",
+        "site",
+        "tick",
+        "round",
+        "event_type",
+        "player_name",
+        "player_steamid"
+      ],
+      "blind_keys": [
+        "id",
+        "tick",
+        "round",
+        "blind_duration",
+        "thrower_steamid",
+        "blind_player_steamid"
+      ],
+      "clutch_wins": 7,
+      "round_types": [
+        "knife_round",
+        "normal"
+      ],
+      "economy_keys": [
+        "id",
+        "cash",
+        "side",
+        "round",
+        "cash_spent",
+        "loadout_value",
+        "player_steamid",
+        "equipment_value"
+      ],
+      "economy_sides": [
+        "CT",
+        "T"
+      ],
+      "parserVersion": "0.41.4",
+      "purchase_keys": [
+        "id",
+        "cost",
+        "side",
+        "team",
+        "tick",
+        "round",
+        "weapon",
+        "category",
+        "is_primary",
+        "is_utility",
+        "player_steamid"
+      ],
+      "clutch_won_types": [
+        "boolean"
+      ]
+    }
+  ],
+  "runtime": "0 0 unless-stopped\n 14:11:28 up 2 days,  2:26,  0 users,  load average: 0.02, 0.11, 0.09\nimport { enrichMatchWithDemo } from \"@/server/services/enrichment/demo-enrichment.service\";\nimport * as matchPayloadRepo from \"@/server/repositories/matchPayload.repository\";\n\nexport async function processPayload(id: string): Promise<{ success: boolean; error?: string }> {\n  // 1. Tenta bloquear o payload para processamento\n  const locked = await matchPayloadRepo.lockPayloadForProcessing(id);\n  if (!locked) {\n    return { success: false, error: \"Payload já está sendo processado ou não está pendente.\" };\n  }\n\n  const payloadRecord = await matchPayloadRepo.findPayloadById(id);\n  if (!payloadRecord) {\n    await matchPayloadRepo.markPayloadFailed(id, \"Payload não localizado no banco de dados.\");\n    return { success: false, error: \"Payload não localizado.\" };\n  }\n\n  try {\n    // 2. Processa o enriquecimento da demo usando o serviço de enriquecimento isolado\n    const result = await enrichMatchWithDemo(\n      payloadRecord.payload,\n      payloadRecord.sourceMatchId,\n      payloadRecord.createdAt\n    );\n\n    if (!result.success) {\n      throw new Error(result.error ?? \"Erro desconhecido durante enriquecimento\");\n    }\n\n    // 3. Marca o payload como processado com sucesso\n    await matchPayloadRepo.markPayloadProcessed(id);\n\n    return { success: true };\n  } catch (err: any) {\n    const errMsg = err instanceof Error ? err.message : String(err);\n    // 4. Registra o erro no log físico da tabela MatchPayload\n    await matchPayloadRepo.markPayloadFailed(id, errMsg);\n    return { success: false, error: errMsg };\n  }\n}\n\n/**\n * Busca o próximo payload pendente e o processa.\n */\nexport async function processNextPendingPayload(): Promise<{ processed: boolean; success?: boolean; error?: string }> {\n  const pending = await matchPayloadRepo.findNextPendingPayload();\n  if (!pending) {\n    return { processed: false };\n  }\n\n  const result = await processPayload(pending.id);\n  return { processed: true, ...result };\n}\n",
+  "checksums": [
+    {
+      "name": "20260716173246_init",
+      "raw_match": true,
+      "lf_match": true
+    },
+    {
+      "name": "20260722194621_add_level_gc",
+      "raw_match": true,
+      "lf_match": true
+    },
+    {
+      "name": "20260723181823_add_steam_profile_fields",
+      "raw_match": true,
+      "lf_match": true
+    },
+    {
+      "name": "20260727000000_add_match_tracked_players_count",
+      "raw_match": true,
+      "lf_match": true
+    },
+    {
+      "name": "20260727131202_add_sprint_metrics",
+      "raw_match": true,
+      "lf_match": true
+    },
+    {
+      "name": "20260727194719_add_gc_stats_phase1",
+      "raw_match": true,
+      "lf_match": true
+    },
+    {
+      "name": "20260729114015_add_seasons_models",
+      "raw_match": true,
+      "lf_match": true
+    },
+    {
+      "name": "20260729180328_add_team_balance",
+      "raw_match": true,
+      "lf_match": true
+    },
+    {
+      "name": "20260729181626_change_relation_to_player",
+      "raw_match": true,
+      "lf_match": true
+    }
+  ]
+}

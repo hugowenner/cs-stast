@@ -1,5 +1,7 @@
 import { PrismaClient as PrismaClientPg } from "@/generated/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { AsyncLocalStorage } from "node:async_hooks";
+import type { Prisma } from "@/generated/prisma";
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClientPg };
 
@@ -40,8 +42,32 @@ function createPrismaClient(): PrismaClientPg {
   }
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+const basePrisma = globalForPrisma.prisma ?? createPrismaClient();
+const transactionScope = new AsyncLocalStorage<Prisma.TransactionClient>();
+
+// Repositories and derived projections share the same interactive transaction.
+// Nested transaction helpers join the scope; they do not commit independently.
+export const prisma = new Proxy(basePrisma, {
+  get(target, property) {
+    const scoped = transactionScope.getStore();
+    if (scoped && property === "$transaction") return async (operation: unknown) => {
+      if (typeof operation === "function") return operation(prisma);
+      if (Array.isArray(operation)) return Promise.all(operation);
+      throw new Error("Unsupported nested transaction operation");
+    };
+    const instance = scoped ?? target;
+    const value = Reflect.get(instance, property);
+    return typeof value === "function" ? value.bind(instance) : value;
+  },
+});
+
+export function withDatabaseTransaction<T>(run: () => Promise<T>): Promise<T> {
+  if (transactionScope.getStore()) return run();
+  return basePrisma.$transaction(tx => transactionScope.run(tx, run), {
+    isolationLevel: "Serializable", maxWait: 10_000, timeout: 60_000,
+  });
+}
 
 if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+  globalForPrisma.prisma = basePrisma;
 }

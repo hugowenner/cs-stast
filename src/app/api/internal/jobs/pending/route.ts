@@ -25,23 +25,18 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const jobs = await prisma.$transaction(async (tx) => {
-    const pending = await tx.syncJob.findMany({
-      where: { status: { in: ["PENDING", "FAILED"] } },
-      orderBy: { createdAt: "asc" },
-      take: 10,
-      select: { id: true, sourceMatchId: true, downloadUrl: true },
-    });
-
-    if (pending.length === 0) return [];
-
-    await tx.syncJob.updateMany({
-      where: { id: { in: pending.map((j) => j.id) } },
-      data: { status: "SENT_TO_WORKER", sentAt: new Date() },
-    });
-
-    return pending;
-  });
+  // One statement, row-level reservation; abandoned downloads become eligible
+  // after 30 minutes. PROCESSING receipts belong to the durable normalizer.
+  const jobs = await prisma.$queryRaw`
+    WITH candidates AS (
+      SELECT id FROM sync_jobs WHERE status IN ('PENDING','FAILED')
+        OR (status='SENT_TO_WORKER' AND "sentAt"<now()-interval '30 minutes')
+      ORDER BY "createdAt",id FOR UPDATE SKIP LOCKED LIMIT 10
+    )
+    UPDATE sync_jobs j SET status='SENT_TO_WORKER',"sentAt"=now(),"updatedAt"=now()
+    FROM candidates c WHERE j.id=c.id
+    RETURNING j.id,j."sourceMatchId",j."downloadUrl",j.source,
+      j."sentAt"+interval '30 minutes' AS "leaseUntil"`;
 
   return NextResponse.json({ jobs });
 }
